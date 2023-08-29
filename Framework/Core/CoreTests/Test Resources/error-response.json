@@ -1,0 +1,7 @@
+{
+  "_v": "21.10",
+  "fault": {
+    "type": "InvalidAuthorizationHeaderException",
+    "message": "The request is unauthorized. In the 'Authorization' header, the 'Bearer <access token>' is expected."
+  }
+}
