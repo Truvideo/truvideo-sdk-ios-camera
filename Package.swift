@@ -18,8 +18,6 @@ let package = Package(
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
-        .package(url: "https://github.com/Alamofire/Alamofire.git", from: "5.6.1"),
-        .package(url: "https://github.com/kishikawakatsumi/KeychainAccess", from: "4.2.2"),
         .package(url: "https://github.com/Truvideo/truvideo-sdk-ios-common.git", from: "0.0.2"),
     ],
     targets: [
@@ -28,9 +26,7 @@ let package = Package(
         .target(
             name: "TruVideoCamera",
             dependencies: [
-                "Alamofire",
-                .product(name: "Common", package: "truvideo-sdk-ios-common"),
-                "KeychainAccess"
+                .product(name: "Common", package: "truvideo-sdk-ios-common"),                
             ],
             path: "Sources"
         ),
