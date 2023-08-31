@@ -3,7 +3,7 @@
 
 import PackageDescription
 
-let packageVersion = "0.0.3"
+let packageVersion = "0.0.4"
 
 let package = Package(
     name: "TruvideoSdkCamera",
@@ -23,7 +23,7 @@ let package = Package(
         .binaryTarget(
             name: "TruvideoSdkCamera",
             url: "https://github.com/Truvideo/truvideo-sdk-ios-camera/releases/download/\(packageVersion)/TruvideoSdkCamera.xcframework.zip",
-            checksum: "9af5cf976ac115bfb4326501045fdfdcbcfe4d259dd21028b77009f41d2d3214"
+            checksum: "a650414b97919c52bcb78b2683860db2ed3bd6b957f60cf828ecf7d7c57e338f"
         ),
     ]
 )
