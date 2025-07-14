@@ -2,7 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import Foundation
+import CommonUtilities
 
 extension ErrorReason {
     /// A struct that defines common core-data-related error reasons.

@@ -2,6 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+import CommonUtilities
 import CoreData
 
 /// A protocol that defines a contract for types that can be queried within a Core Data context.
@@ -17,7 +18,6 @@ public protocol CoreDataQueryable: NSManagedObject, Identifiable {
 }
 
 extension CoreDataQueryable {
-    // swiftlint:disable first_where
     /// Finds an existing managed object in the specified context or creates a new one if it does not exist.
     ///
     /// This function attempts to locate an existing `NSManagedObject` in the provided `NSManagedObjectContext`
@@ -37,6 +37,5 @@ extension CoreDataQueryable {
             .first()
 
         return existing ?? Self(context: context)
-    }
-    // swiftlint:enable first_where
+    }    
 }

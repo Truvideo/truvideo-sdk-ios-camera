@@ -2,6 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+import CommonUtilities
 import CoreData
 
 extension NSManagedObject {

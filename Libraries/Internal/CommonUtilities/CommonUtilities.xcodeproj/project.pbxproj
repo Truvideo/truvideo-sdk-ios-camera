@@ -12,27 +12,14 @@
 		CF6256262E1E0C700078B3D2 /* NWPath+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CF6256252E1E0C700078B3D2 /* NWPath+Extension.swift */; };
 		CFF5AFD72E09BBA3002B8819 /* CommonUtilities.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFF5AFCC2E09BBA3002B8819 /* CommonUtilities.framework */; };
 		CFF5B0042E09BC4D002B8819 /* Error+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFFD2E09BC4D002B8819 /* Error+Extension.swift */; };
-		CFF5B0052E09BC4D002B8819 /* Expression+Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFF12E09BC4D002B8819 /* Expression+Operators.swift */; };
 		CFF5B0062E09BC4D002B8819 /* Data+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFFC2E09BC4D002B8819 /* Data+Extension.swift */; };
-		CFF5B0072E09BC4D002B8819 /* NSManagedObject+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFEB2E09BC4D002B8819 /* NSManagedObject+Extension.swift */; };
-		CFF5B0082E09BC4D002B8819 /* NSManagedObjectContext+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFEC2E09BC4D002B8819 /* NSManagedObjectContext+Extension.swift */; };
-		CFF5B00A2E09BC4D002B8819 /* Query.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFF52E09BC4D002B8819 /* Query.swift */; };
-		CFF5B00B2E09BC4D002B8819 /* CoreDataQueryable.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFF82E09BC4D002B8819 /* CoreDataQueryable.swift */; };
-		CFF5B00C2E09BC4D002B8819 /* Predicate+Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFF32E09BC4D002B8819 /* Predicate+Operators.swift */; };
-		CFF5B00D2E09BC4D002B8819 /* ErrorReason+CoreData.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFE92E09BC4D002B8819 /* ErrorReason+CoreData.swift */; };
-		CFF5B00E2E09BC4D002B8819 /* Attribute.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFE72E09BC4D002B8819 /* Attribute.swift */; };
 		CFF5B00F2E09BC4D002B8819 /* String+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFFF2E09BC4D002B8819 /* String+Extension.swift */; };
 		CFF5B0102E09BC4D002B8819 /* Optional+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFFE2E09BC4D002B8819 /* Optional+Extension.swift */; };
-		CFF5B0122E09BC4D002B8819 /* QueryPredicate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFF62E09BC4D002B8819 /* QueryPredicate.swift */; };
-		CFF5B0132E09BC4D002B8819 /* AsyncSequenceObserver.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFEF2E09BC4D002B8819 /* AsyncSequenceObserver.swift */; };
-		CFF5B0142E09BC4D002B8819 /* KeyPath+Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFF22E09BC4D002B8819 /* KeyPath+Operators.swift */; };
-		CFF5B0152E09BC4D002B8819 /* NSPersistentContainer+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5AFED2E09BC4D002B8819 /* NSPersistentContainer+Extension.swift */; };
 		CFF5B0442E09C663002B8819 /* MediaJson.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5B0412E09C663002B8819 /* MediaJson.swift */; };
 		CFF5B0452E09C663002B8819 /* TokenProviderMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5B03E2E09C663002B8819 /* TokenProviderMock.swift */; };
 		CFF5B0462E09C663002B8819 /* HTTPClientMock.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5B03C2E09C663002B8819 /* HTTPClientMock.swift */; };
 		CFF5B0662E09C746002B8819 /* TruvideoSdk in Frameworks */ = {isa = PBXBuildFile; productRef = CFF5B0652E09C746002B8819 /* TruvideoSdk */; };
 		CFF5B0682E09C77C002B8819 /* CommonUtilityError.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5B0672E09C77C002B8819 /* CommonUtilityError.swift */; };
-		CFF5B06B2E09C8ED002B8819 /* Operators.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5B0692E09C8ED002B8819 /* Operators.swift */; };
 		CFF5B06F2E09CA25002B8819 /* CommonUtilities.h in Headers */ = {isa = PBXBuildFile; fileRef = CFF5B06E2E09CA25002B8819 /* CommonUtilities.h */; };
 		CFF5B0AD2E0A0B52002B8819 /* Bundle+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFF5B0AC2E0A0B4D002B8819 /* Bundle+Extension.swift */; };
 /* End PBXBuildFile section */
@@ -53,18 +40,6 @@
 		CF6256252E1E0C700078B3D2 /* NWPath+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NWPath+Extension.swift"; sourceTree = "<group>"; };
 		CFF5AFCC2E09BBA3002B8819 /* CommonUtilities.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = CommonUtilities.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CFF5AFD62E09BBA3002B8819 /* CommonUtilitiesTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CommonUtilitiesTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		CFF5AFE72E09BC4D002B8819 /* Attribute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attribute.swift; sourceTree = "<group>"; };
-		CFF5AFE92E09BC4D002B8819 /* ErrorReason+CoreData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "ErrorReason+CoreData.swift"; sourceTree = "<group>"; };
-		CFF5AFEB2E09BC4D002B8819 /* NSManagedObject+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSManagedObject+Extension.swift"; sourceTree = "<group>"; };
-		CFF5AFEC2E09BC4D002B8819 /* NSManagedObjectContext+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSManagedObjectContext+Extension.swift"; sourceTree = "<group>"; };
-		CFF5AFED2E09BC4D002B8819 /* NSPersistentContainer+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSPersistentContainer+Extension.swift"; sourceTree = "<group>"; };
-		CFF5AFEF2E09BC4D002B8819 /* AsyncSequenceObserver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AsyncSequenceObserver.swift; sourceTree = "<group>"; };
-		CFF5AFF12E09BC4D002B8819 /* Expression+Operators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Expression+Operators.swift"; sourceTree = "<group>"; };
-		CFF5AFF22E09BC4D002B8819 /* KeyPath+Operators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "KeyPath+Operators.swift"; sourceTree = "<group>"; };
-		CFF5AFF32E09BC4D002B8819 /* Predicate+Operators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Predicate+Operators.swift"; sourceTree = "<group>"; };
-		CFF5AFF52E09BC4D002B8819 /* Query.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Query.swift; sourceTree = "<group>"; };
-		CFF5AFF62E09BC4D002B8819 /* QueryPredicate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryPredicate.swift; sourceTree = "<group>"; };
-		CFF5AFF82E09BC4D002B8819 /* CoreDataQueryable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataQueryable.swift; sourceTree = "<group>"; };
 		CFF5AFFC2E09BC4D002B8819 /* Data+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Data+Extension.swift"; sourceTree = "<group>"; };
 		CFF5AFFD2E09BC4D002B8819 /* Error+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Error+Extension.swift"; sourceTree = "<group>"; };
 		CFF5AFFE2E09BC4D002B8819 /* Optional+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Optional+Extension.swift"; sourceTree = "<group>"; };
@@ -73,7 +48,6 @@
 		CFF5B03E2E09C663002B8819 /* TokenProviderMock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TokenProviderMock.swift; sourceTree = "<group>"; };
 		CFF5B0412E09C663002B8819 /* MediaJson.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaJson.swift; sourceTree = "<group>"; };
 		CFF5B0672E09C77C002B8819 /* CommonUtilityError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonUtilityError.swift; sourceTree = "<group>"; };
-		CFF5B0692E09C8ED002B8819 /* Operators.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Operators.swift; sourceTree = "<group>"; };
 		CFF5B06E2E09CA25002B8819 /* CommonUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CommonUtilities.h; sourceTree = "<group>"; };
 		CFF5B0AC2E0A0B4D002B8819 /* Bundle+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bundle+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -116,73 +90,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		CFF5AFE82E09BC4D002B8819 /* Attribute */ = {
-			isa = PBXGroup;
-			children = (
-				CFF5AFE72E09BC4D002B8819 /* Attribute.swift */,
-			);
-			path = Attribute;
-			sourceTree = "<group>";
-		};
-		CFF5AFEA2E09BC4D002B8819 /* Error */ = {
-			isa = PBXGroup;
-			children = (
-				CFF5AFE92E09BC4D002B8819 /* ErrorReason+CoreData.swift */,
-			);
-			path = Error;
-			sourceTree = "<group>";
-		};
-		CFF5AFEE2E09BC4D002B8819 /* Extensions */ = {
-			isa = PBXGroup;
-			children = (
-				CFF5AFEB2E09BC4D002B8819 /* NSManagedObject+Extension.swift */,
-				CFF5AFEC2E09BC4D002B8819 /* NSManagedObjectContext+Extension.swift */,
-				CFF5AFED2E09BC4D002B8819 /* NSPersistentContainer+Extension.swift */,
-			);
-			path = Extensions;
-			sourceTree = "<group>";
-		};
-		CFF5AFF02E09BC4D002B8819 /* Observer */ = {
-			isa = PBXGroup;
-			children = (
-				CFF5AFEF2E09BC4D002B8819 /* AsyncSequenceObserver.swift */,
-			);
-			path = Observer;
-			sourceTree = "<group>";
-		};
-		CFF5AFF42E09BC4D002B8819 /* Operators */ = {
-			isa = PBXGroup;
-			children = (
-				CFF5AFF12E09BC4D002B8819 /* Expression+Operators.swift */,
-				CFF5AFF22E09BC4D002B8819 /* KeyPath+Operators.swift */,
-				CFF5AFF32E09BC4D002B8819 /* Predicate+Operators.swift */,
-			);
-			path = Operators;
-			sourceTree = "<group>";
-		};
-		CFF5AFF72E09BC4D002B8819 /* Query */ = {
-			isa = PBXGroup;
-			children = (
-				CFF5AFF52E09BC4D002B8819 /* Query.swift */,
-				CFF5AFF62E09BC4D002B8819 /* QueryPredicate.swift */,
-			);
-			path = Query;
-			sourceTree = "<group>";
-		};
-		CFF5AFF92E09BC4D002B8819 /* CoreData */ = {
-			isa = PBXGroup;
-			children = (
-				CFF5AFE82E09BC4D002B8819 /* Attribute */,
-				CFF5AFEA2E09BC4D002B8819 /* Error */,
-				CFF5AFEE2E09BC4D002B8819 /* Extensions */,
-				CFF5AFF02E09BC4D002B8819 /* Observer */,
-				CFF5AFF42E09BC4D002B8819 /* Operators */,
-				CFF5AFF72E09BC4D002B8819 /* Query */,
-				CFF5AFF82E09BC4D002B8819 /* CoreDataQueryable.swift */,
-			);
-			path = CoreData;
-			sourceTree = "<group>";
-		};
 		CFF5AFFB2E09BC4D002B8819 /* Error */ = {
 			isa = PBXGroup;
 			children = (
@@ -209,8 +116,6 @@
 		CFF5B0012E09BC4D002B8819 /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				CFF5B06A2E09C8ED002B8819 /* Operators */,
-				CFF5AFF92E09BC4D002B8819 /* CoreData */,
 				CFF5AFFB2E09BC4D002B8819 /* Error */,
 				CFF5B0002E09BC4D002B8819 /* Extensions */,
 				CFF5B06E2E09CA25002B8819 /* CommonUtilities.h */,
@@ -266,14 +171,6 @@
 				CFF5B0422E09C663002B8819 /* JSONS */,
 			);
 			path = Resources;
-			sourceTree = "<group>";
-		};
-		CFF5B06A2E09C8ED002B8819 /* Operators */ = {
-			isa = PBXGroup;
-			children = (
-				CFF5B0692E09C8ED002B8819 /* Operators.swift */,
-			);
-			path = Operators;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -395,27 +292,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				CF6256232E1E0B560078B3D2 /* ProccessInfo+Extension.swift in Sources */,
-				CFF5B06B2E09C8ED002B8819 /* Operators.swift in Sources */,
 				CF35FACA2E1DE777003D218C /* UIDevice+Extension.swift in Sources */,
 				CFF5B0042E09BC4D002B8819 /* Error+Extension.swift in Sources */,
-				CFF5B0052E09BC4D002B8819 /* Expression+Operators.swift in Sources */,
 				CFF5B0062E09BC4D002B8819 /* Data+Extension.swift in Sources */,
 				CFF5B0AD2E0A0B52002B8819 /* Bundle+Extension.swift in Sources */,
-				CFF5B0072E09BC4D002B8819 /* NSManagedObject+Extension.swift in Sources */,
-				CFF5B0082E09BC4D002B8819 /* NSManagedObjectContext+Extension.swift in Sources */,
-				CFF5B00A2E09BC4D002B8819 /* Query.swift in Sources */,
-				CFF5B00B2E09BC4D002B8819 /* CoreDataQueryable.swift in Sources */,
-				CFF5B00C2E09BC4D002B8819 /* Predicate+Operators.swift in Sources */,
-				CFF5B00D2E09BC4D002B8819 /* ErrorReason+CoreData.swift in Sources */,
-				CFF5B00E2E09BC4D002B8819 /* Attribute.swift in Sources */,
 				CFF5B0682E09C77C002B8819 /* CommonUtilityError.swift in Sources */,
 				CFF5B00F2E09BC4D002B8819 /* String+Extension.swift in Sources */,
 				CFF5B0102E09BC4D002B8819 /* Optional+Extension.swift in Sources */,
-				CFF5B0122E09BC4D002B8819 /* QueryPredicate.swift in Sources */,
-				CFF5B0132E09BC4D002B8819 /* AsyncSequenceObserver.swift in Sources */,
 				CF6256262E1E0C700078B3D2 /* NWPath+Extension.swift in Sources */,
-				CFF5B0142E09BC4D002B8819 /* KeyPath+Operators.swift in Sources */,
-				CFF5B0152E09BC4D002B8819 /* NSPersistentContainer+Extension.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
