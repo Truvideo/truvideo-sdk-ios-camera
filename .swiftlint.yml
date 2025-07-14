@@ -1,0 +1,307 @@
+# https://realm.github.io/SwiftLint/rule-directory.html
+# By default, SwiftLint uses a set of sensible default rules you can adjust:
+# disabled_rules: # rule identifiers turned on by default to exclude from running
+#  - line_length
+#  - colon
+#  - comma
+#  - control_statement
+#  - empty_count # Find all the available rules by running: `swiftlint rules`
+
+# Alternatively, specify all rules explicitly by uncommenting this option:
+# only_rules: # delete `disabled_rules` & `opt_in_rules` if using this
+#   - empty_parameters
+#   - vertical_whitespace
+
+#included: # paths to include during linting. `--path` is ignored if present.
+#  - Source
+
+#  - Pods
+#  - Source/ExcludedFolder
+#  - Source/ExcludedFile.swift
+#  - Source/*/ExcludedFile.swift # Exclude files with a wildcard
+#analyzer_rules: # Rules run by `swiftlint analyze` (experimental)
+#  - explicit_self
+#
+## configurable rules can be customized from this configuration file
+## binary rules can set their severity level
+
+## rules that have both warning and error levels, can set just the warning level
+## implicitly
+## they can set both implicitly with an array
+
+#  - 400 # error
+## or they can set both explicitly
+
+#  warning: 500
+#  error: 1200
+## naming rules can set warnings/errors for min_length and max_length
+## additionally they can set excluded names
+
+#  min_length: 4 # only warning
+#  max_length: # warning and error
+#    warning: 40
+#    error: 50
+#  excluded: iPhone # excluded via string
+#  allowed_symbols: ["_"] # these are allowed in type names
+
+# DOCUMENATION
+# https://github.com/realm/SwiftLint
+
+# RULES
+# https://realm.github.io/SwiftLint/rule-directory.html
+
+# CLI
+# https://github.com/realm/SwiftLint#command-line
+# Run 'swiftlint rules' from the command line in the root of the project directory to see a list of available
+# rules as well as options you can change and their current setting. You'll have to expand your terminal to be very
+# wide to see the rule options all the way to the right before running the command. Rendering in the terminal
+# cuts of the output to the right...
+
+# DISABLING WARNINGS
+# // swiftlint:disable line_length
+# // swiftlint:enable line_length
+# The enable option is optional. Put the disable line as the top to disable a rule or rules for the whole page
+
+# https://realm.github.io/SwiftLint/rule-directory.html
+# SwiftLint Configuration
+
+disabled_rules:
+  - trailing_whitespace
+
+opt_in_rules:
+  - array_init
+  - attributes
+  - closure_end_indentation
+  - closure_spacing
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - empty_collection_literal
+  - empty_count
+  - empty_string
+  - empty_xctest_method
+  - explicit_init
+  - fatal_error_message
+  - file_name
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - joined_default_parameter
+  - last_where
+  - legacy_multiple
+  - let_var_whitespace
+  - literal_expression_end_indentation
+  - lower_acl_than_parent
+  - mark
+  - missing_docs
+  - modifier_order
+  - multiline_arguments
+  - multiline_arguments_brackets
+  - multiline_function_chains
+  - multiline_literal_brackets
+  - multiline_parameters
+  - multiline_parameters_brackets
+  - no_fallthrough_only
+  - number_separator
+  - object_literal
+  - operator_usage_whitespace
+  - protocol_property_accessors_order
+  - overridden_super_call
+  - override_in_extension
+  - pattern_matching_keywords
+  - reduce_into
+  - redundant_nil_coalescing
+  - single_test_class
+  - sorted_first_last
+  - sorted_imports
+  - switch_case_on_newline
+  - trailing_closure
+  - unavailable_function
+  - unneeded_parentheses_in_closure_argument
+  - unowned_variable_capture
+  - untyped_error_in_catch
+  - vertical_parameter_alignment_on_call
+  - vertical_parameter_alignment
+  - vertical_whitespace_between_cases
+  - vertical_whitespace_closing_braces
+  - yoda_condition
+  - redundant_discardable_let
+  - redundant_optional_initialization
+  - return_arrow_whitespace
+  - self_in_property_initialization
+  - shorthand_operator
+  - syntactic_sugar
+  - function_parameter_count
+  - file_length
+  - weak_delegate
+  - toggle_bool
+  - explicit_top_level_acl
+  - redundant_type_annotation
+  - discarded_notification_center_observer
+
+included:
+  - Libraries/**
+
+excluded:  
+  - Libraries/*/*/Tests/*
+
+analyzer_rules:
+  - explicit_self
+
+multiline_arguments:
+  first_argument_location: any_line
+  only_enforce_after_first_closure_on_first_line: false
+
+multiline_parameters:
+  allows_single_line: true
+
+function_parameter_count:
+  warning: 8
+  error: 10
+
+cyclomatic_complexity:
+  warning: 10
+  error: 15
+
+force_cast: error
+
+force_try:
+  severity: error
+
+force_unwrapping:
+  severity: error
+
+line_length:
+  warning: 299
+  error: 300
+  ignores_comments: true
+  ignores_urls: true
+  ignores_function_declarations: false
+  ignores_interpolated_strings: true
+
+file_length:
+  warning: 500
+  error: 1200
+  ignore_comment_only_lines: true
+
+type_name:
+  min_length:
+    warning: 3
+  max_length:
+    warning: 50
+    error: 60
+  excluded: iPhone
+  allowed_symbols: ["_", "__unknown"]
+
+identifier_name:
+  validates_start_with_lowercase: warning
+  min_length:
+    warning: 3
+  excluded:
+    - id
+    - URL
+
+shorthand_operator:
+  severity: warning
+
+function_body_length:
+  warning: 40
+
+nesting:
+  type_level: 2
+
+number_separator:
+  minimum_length: 3
+
+missing_docs:
+  excludes_extensions: false
+  excludes_inherited_types: true
+  excludes_trivial_init: false
+  warning:
+    - open
+    - public
+
+trailing_closure:
+  only_single_muted_parameter: true
+
+type_body_length:
+  warning: 350
+  error: 500
+
+type_contents_order:
+  order:
+    - case
+    - type_alias
+    - associated_type
+    - instance_property
+    - type_property
+    - subscript
+    - subtype
+    - type_method
+    - initializer
+    - deinitializer
+    - other_method
+
+custom_rules:
+  comments_space:
+    included: ".*.swift"
+    name: "Space After Comment"
+    regex: "(^ *//\\w+)"
+    message: "There should be a space after //"
+    severity: warning
+
+  double_space:
+    included: "*.swift"
+    name: "Double space"
+    regex: "([a-z,A-Z] \\s+)"
+    message: "Double space between keywords"
+    severity: warning
+
+  empty_line_after_guard:
+    included: ".*.swift"
+    name: "Empty Line After Guard"
+    regex: "(^ *guard[ a-zA-Z0-9=?.\\(\\),><!]*\\{[ a-zA-Z0-9=?.\\(\\),><!]*\\}\n *(?!(?:return|guard))\\S+)"
+    message: "There should be an empty line after a guard"
+    severity: warning
+
+  empty_line_after_super:
+    included: ".*.swift"
+    name: "Empty Line After Super"
+    regex: "(^ *super\\.[ a-zA-Z0-9=?.\\(\\)\\{\\}:,><!]*\n *(?!(?:\\}|return))\\S+)"
+    message: "There should be an empty line after super"
+    severity: warning
+
+  hardcoded_credential:
+    included: ".*.swift"
+    name: "Credentials should not be hard-coded"
+    regex: 'let \s*(?:token|password|Token|Password)\s*= ".+"'
+    message: "Do not hardcode credentials in source code."
+    severity: warning
+
+  ip_address:
+    included: ".*.swift"
+    name: "IP addresses should not be hardcoded"
+    regex: '\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}'
+    message: "Hardcoding an IP address into source code is a bad idea"
+    severity: warning
+
+  vertical_whitespaces_around_mark:
+    included: ".*.swift"
+    name: "Vertical Whitespaces Around MARK:"
+    regex: '\/\/\s*MARK:[^\n]*(\n)(?!\s*\n)|(\n\n\n)[ \t]*\/\/\s*MARK:|[^\s{]\n[^\n\/]*\/\/\s*MARK:'
+    message: "Include a single vertical whitespace (empty line) before and after MARK: comments."
+    severity: warning
+
+  fatal_error_call:
+    included: ".*.swift"
+    name: "Avoid fatalError() in production"
+    regex: "\\bfatalError\\("
+    message: "Avoid `fatalError()` unless it's a last-resort or used in prototyping."
+    severity: warning
+
+  async_after_usage:
+    included: ".*.swift"
+    name: "Discourage asyncAfter usage"
+    regex: "DispatchQueue\\.main\\.asyncAfter"
+    message: "Avoid `asyncAfter` unless there's a user-facing timing reason."
+    severity: warning
+
+reporter: "xcode"
