@@ -8,6 +8,9 @@
       location = "group:Libraries/Internal/Core/Core.xcodeproj">
    </FileRef>
    <FileRef
+      location = "group:Libraries/Internal/DI/DI.xcodeproj">
+   </FileRef>
+   <FileRef
       location = "group:Libraries/Internal/Networking/Networking.xcodeproj">
    </FileRef>
    <FileRef

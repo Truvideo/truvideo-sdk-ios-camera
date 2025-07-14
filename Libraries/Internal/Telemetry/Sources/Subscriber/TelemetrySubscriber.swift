@@ -28,4 +28,3 @@ public protocol TelemetryManagerSubscriber: AnyObject {
     ///   metadata, breadcrumbs, and event details.
     func didReceive(_ report: TelemetryReport)
 }
-

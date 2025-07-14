@@ -14,7 +14,7 @@ public struct ErrorReason: Equatable, RawRepresentable {
     // MARK: - Static Properties
     
     /// Unknown error.
-    public static let unknown = ErrorReason(rawValue: "com.truVideo.commonUtility.unknownError")
+    public static let unknown = ErrorReason(rawValue: "com.truvideo.commonUtility.unknownError")
 
     // MARK: - Initializer
 

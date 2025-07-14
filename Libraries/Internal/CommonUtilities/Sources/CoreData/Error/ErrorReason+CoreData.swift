@@ -12,10 +12,10 @@ extension ErrorReason {
         /// This static constant represents a specific error reason that occurs when the initialization of a model fails.
         /// It uses the `ErrorReason` type and is identified by a unique error code.
         public static let failedModelInitialization = ErrorReason(
-            rawValue: "com.truVideo.foundation.model.initialization"
+            rawValue: "com.truvideo.foundation.model.initialization"
         )
 
         /// This error occurs when attempting to work with an invalid or non-existent Core Data entity name.
-        public static let invalidEntityName = ErrorReason(rawValue: "com.truVideo.foundation.invalid.entity.name")
+        public static let invalidEntityName = ErrorReason(rawValue: "com.truvideo.foundation.invalid.entity.name")
     }
 }

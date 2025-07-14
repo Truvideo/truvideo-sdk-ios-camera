@@ -27,7 +27,7 @@ public struct Dependency<Value>: Sendable {
     /// The resolved dependency value.
     public var wrappedValue: Value {
         let dependencies = initialValues.merging(DependencyValues.current)
-        return DependencyValues.current[keyPath: keyPath]
+        return dependencies[keyPath: keyPath]
     }
     
     // MARK: - Initializer

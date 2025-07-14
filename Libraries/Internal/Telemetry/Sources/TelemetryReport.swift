@@ -18,45 +18,49 @@ import Foundation
 public struct TelemetryReport: Codable, Identifiable, Sendable {
     /// A unique identifier for the report.
     public let id: UUID
-
-    /// A chronological list of breadcrumbs that describe notable events leading up to the telemetry event.
-    public let breadcrumbs: [Breadcrumb]?
-
+    
     /// The full contextual snapshot of the device and operating system at the time of the event.
     public let context: Context
 
-    /// The primary telemetry event being reported.
-    public let event: Event
-
-    /// An optional exception object containing the message and stack frame when the event involves an error or failure.
-    public let exception: Exception?
+    /// The list of telemetry events being reported.
+    public let events: [Event]
+    
+    /// The information of the current user session.
+    public let session: Session
 
     // MARK: - Initializer
 
     /// Creates a new telemetry report instance.
     ///
     /// - Parameters:
-    ///   - event: The event to report.
+    ///   - event: The list of telemetry events being reported.
     ///   - context: The context of the device and OS at the time of the event.
-    ///   - breadcrumbs: An optional breadcrumb trail leading up to the event.
-    ///   - exception: An optional exception if the event involves an error.
-    init(event: Event, context: Context, breadcrumbs: [Breadcrumb]? = nil, exception: Exception? = nil) {
+    ///   - session: The information of the current user session.
+    init(events: [Event], context: Context, session: Session) {
         self.id = UUID()
-        self.breadcrumbs = breadcrumbs
         self.context = context
-        self.event = event
-        self.exception = exception
+        self.events = events
+        self.session = session
     }
 
     // MARK: - Types
 
     /// Represents the core telemetry event, including its name, severity, source, metadata, and timestamp.
     public struct Event: Codable, Sendable {
-        /// A descriptive name identifying the type of event (e.g., "camera.session.failed").
-        public let name: String
+        /// A chronological list of breadcrumbs that describe notable events leading up to the telemetry event.
+        public let breadcrumbs: [Breadcrumb]?
+        
+        /// An optional exception object containing the message and stack frame when the event involves an error or failure.
+        public let exception: Exception?
+        
+        /// Additional information attached to the event.
+        public let message: String?
         
         /// Additional metadata relevant to the event, such as device config or capture context.
         public let metadata: Metadata
+        
+        /// A descriptive name identifying the type of event (e.g., "camera.session.failed").
+        public let name: String
         
         /// The severity level of the event (e.g., info, warning, error).
         public let severity: Severity
@@ -66,6 +70,30 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
         
         /// The time the event occurred.
         public let timestamp: Date
+        
+        // MARK: - Types
+        
+        /// Represents an exception that occurred during the execution of the app,
+        /// including an error message and a captured stack frame.
+        public struct Exception: Codable, Hashable, Sendable {
+            /// A human-readable error message describing the failure.
+            public let message: String
+
+            /// The stack frame where the exception occurred.
+            public let stackFrame: StackFrame
+
+            // MARK: - Initializer
+
+            /// Creates a new exception instance.
+            ///
+            /// - Parameters:
+            ///   - message: A description of the exception.
+            ///   - stackFrame: The location in the code where the exception was thrown.
+            init(message: String, stackFrame: StackFrame) {
+                self.message = message
+                self.stackFrame = stackFrame
+            }
+        }
 
         // MARK: - Initializer
 
@@ -75,36 +103,30 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
         ///   - name: A descriptive name for the event.
         ///   - severity: The severity level of the event.
         ///   - source: The originating component or module.
+        ///   - message: Additional information attached to the event.
+        ///   - breadcrumbs: An optional breadcrumb trail leading up to the event.
+        ///   - exception: An optional exception if the event involves an error.
         ///   - timestamp: The time the event occurred. Defaults to the current time.
         ///   - metadata: Optional metadata associated with the event.
-        init(name: String, severity: Severity, source: String, timestamp: Date = Date(), metadata: Metadata = [:]) {
+        init(
+            name: String,
+            severity: Severity,
+            source: String,
+            message: String? = nil,
+            breadcrumbs: [Breadcrumb]? = nil,
+            exception: Exception? = nil,
+            timestamp: Date = Date(),
+            metadata: Metadata = [:]
+        ) {
+
+            self.breadcrumbs = breadcrumbs
+            self.exception = exception
+            self.message = message
+            self.metadata = metadata
             self.name = name
             self.severity = severity
             self.source = source
             self.timestamp = timestamp
-            self.metadata = metadata
-        }
-    }
-
-    /// Represents an exception that occurred during the execution of the app,
-    /// including an error message and a captured stack frame.
-    public struct Exception: Codable, Hashable, Sendable {
-        /// A human-readable error message describing the failure.
-        public let message: String
-
-        /// The stack frame where the exception occurred.
-        public let stackFrame: StackFrame
-
-        // MARK: - Initializer
-
-        /// Creates a new exception instance.
-        ///
-        /// - Parameters:
-        ///   - message: A description of the exception.
-        ///   - stackFrame: The location in the code where the exception was thrown.
-        init(message: String, stackFrame: StackFrame) {
-            self.message = message
-            self.stackFrame = stackFrame
         }
     }
 }

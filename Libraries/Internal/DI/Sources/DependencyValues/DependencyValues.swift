@@ -57,7 +57,7 @@ public final class DependencyValues: @unchecked Sendable {
         
         defer { lock.unlock() }
         
-        var values = self
+        let values = self
         values.storage.merge(other.storage, uniquingKeysWith: { $1 })
         return values
     }

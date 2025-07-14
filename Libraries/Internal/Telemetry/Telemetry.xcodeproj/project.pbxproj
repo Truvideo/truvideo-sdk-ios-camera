@@ -22,12 +22,24 @@
 		CFA6ACA02E20485600DE14E6 /* Metadata.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6AC9F2E20484E00DE14E6 /* Metadata.swift */; };
 		CFA6ACE62E20B46800DE14E6 /* Core.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFA6ACE52E20B46800DE14E6 /* Core.framework */; };
 		CFA6ACE72E20B46800DE14E6 /* Core.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CFA6ACE52E20B46800DE14E6 /* Core.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CFA6ADAD2E2162DE00DE14E6 /* AutoSessionTrackerIntegration.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADAC2E2162D900DE14E6 /* AutoSessionTrackerIntegration.swift */; };
+		CFA6ADB02E21736300DE14E6 /* Session.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADAF2E21735D00DE14E6 /* Session.swift */; };
+		CFA6ADB32E21A92800DE14E6 /* Installation.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADB22E21A92400DE14E6 /* Installation.swift */; };
+		CFA6ADBF2E21B0E600DE14E6 /* InMemoryStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADB52E21B0E600DE14E6 /* InMemoryStorage.swift */; };
+		CFA6ADC02E21B0E600DE14E6 /* UserDefaultsStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADBB2E21B0E600DE14E6 /* UserDefaultsStorage.swift */; };
+		CFA6ADC12E21B0E600DE14E6 /* Storage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADBA2E21B0E600DE14E6 /* Storage.swift */; };
+		CFA6ADC52E21B38400DE14E6 /* StorageErrorReason.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADC32E21B38400DE14E6 /* StorageErrorReason.swift */; };
+		CFA6ADC72E21B49500DE14E6 /* FileSystemStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADC62E21B48E00DE14E6 /* FileSystemStorage.swift */; };
+		CFA6ADC92E21D91A00DE14E6 /* StorageKey.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6ADC82E21D91600DE14E6 /* StorageKey.swift */; };
+		CFA6AE072E21DB5D00DE14E6 /* DI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFA6AE062E21DB5D00DE14E6 /* DI.framework */; };
+		CFA6AE082E21DB5D00DE14E6 /* DI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = CFA6AE062E21DB5D00DE14E6 /* DI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		CFA6AE0B2E21DCE200DE14E6 /* DI.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFA6AE0A2E21DCE000DE14E6 /* DI.swift */; };
 		CFCA614D2E15CB0800FE88CC /* Telemetry.h in Headers */ = {isa = PBXBuildFile; fileRef = CFCA614A2E15CB0800FE88CC /* Telemetry.h */; };
 		CFCA614E2E15CB0800FE88CC /* Telemetry.docc in Sources */ = {isa = PBXBuildFile; fileRef = CFCA614B2E15CB0800FE88CC /* Telemetry.docc */; };
 		CFCA61512E15CB4000FE88CC /* TelemetryTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCA614F2E15CB4000FE88CC /* TelemetryTests.swift */; };
 		CFCA61552E15CC2E00FE88CC /* TelemetryManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCA61542E15CC2800FE88CC /* TelemetryManager.swift */; };
 		CFCA61582E15CCBC00FE88CC /* TelemetryReport.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCA61572E15CCB900FE88CC /* TelemetryReport.swift */; };
-		CFCA615B2E15CD0C00FE88CC /* BreadcrumbBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCA615A2E15CD0700FE88CC /* BreadcrumbBuffer.swift */; };
+		CFCA615B2E15CD0C00FE88CC /* RingBuffer.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCA615A2E15CD0700FE88CC /* RingBuffer.swift */; };
 		CFCA615D2E15CDB400FE88CC /* Breadcrumb.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCA615C2E15CDAD00FE88CC /* Breadcrumb.swift */; };
 		CFFE85812E15C80F00DAB430 /* Telemetry.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CFFE85762E15C80F00DAB430 /* Telemetry.framework */; };
 /* End PBXBuildFile section */
@@ -49,6 +61,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 10;
 			files = (
+				CFA6AE082E21DB5D00DE14E6 /* DI.framework in Embed Frameworks */,
 				CF62562A2E1E0FEF0078B3D2 /* CommonUtilities.framework in Embed Frameworks */,
 				CFA6ACE72E20B46800DE14E6 /* Core.framework in Embed Frameworks */,
 			);
@@ -71,12 +84,23 @@
 		CF6256282E1E0FEF0078B3D2 /* CommonUtilities.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = CommonUtilities.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CFA6AC9F2E20484E00DE14E6 /* Metadata.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Metadata.swift; sourceTree = "<group>"; };
 		CFA6ACE52E20B46800DE14E6 /* Core.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = Core.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFA6ADAC2E2162D900DE14E6 /* AutoSessionTrackerIntegration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AutoSessionTrackerIntegration.swift; sourceTree = "<group>"; };
+		CFA6ADAF2E21735D00DE14E6 /* Session.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Session.swift; sourceTree = "<group>"; };
+		CFA6ADB22E21A92400DE14E6 /* Installation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Installation.swift; sourceTree = "<group>"; };
+		CFA6ADB52E21B0E600DE14E6 /* InMemoryStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InMemoryStorage.swift; sourceTree = "<group>"; };
+		CFA6ADBA2E21B0E600DE14E6 /* Storage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Storage.swift; sourceTree = "<group>"; };
+		CFA6ADBB2E21B0E600DE14E6 /* UserDefaultsStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserDefaultsStorage.swift; sourceTree = "<group>"; };
+		CFA6ADC32E21B38400DE14E6 /* StorageErrorReason.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageErrorReason.swift; sourceTree = "<group>"; };
+		CFA6ADC62E21B48E00DE14E6 /* FileSystemStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileSystemStorage.swift; sourceTree = "<group>"; };
+		CFA6ADC82E21D91600DE14E6 /* StorageKey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageKey.swift; sourceTree = "<group>"; };
+		CFA6AE062E21DB5D00DE14E6 /* DI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = DI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CFA6AE0A2E21DCE000DE14E6 /* DI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DI.swift; sourceTree = "<group>"; };
 		CFCA614A2E15CB0800FE88CC /* Telemetry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Telemetry.h; sourceTree = "<group>"; };
 		CFCA614B2E15CB0800FE88CC /* Telemetry.docc */ = {isa = PBXFileReference; lastKnownFileType = folder.documentationcatalog; path = Telemetry.docc; sourceTree = "<group>"; };
 		CFCA614F2E15CB4000FE88CC /* TelemetryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryTests.swift; sourceTree = "<group>"; };
 		CFCA61542E15CC2800FE88CC /* TelemetryManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryManager.swift; sourceTree = "<group>"; };
 		CFCA61572E15CCB900FE88CC /* TelemetryReport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryReport.swift; sourceTree = "<group>"; };
-		CFCA615A2E15CD0700FE88CC /* BreadcrumbBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreadcrumbBuffer.swift; sourceTree = "<group>"; };
+		CFCA615A2E15CD0700FE88CC /* RingBuffer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RingBuffer.swift; sourceTree = "<group>"; };
 		CFCA615C2E15CDAD00FE88CC /* Breadcrumb.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Breadcrumb.swift; sourceTree = "<group>"; };
 		CFFE85762E15C80F00DAB430 /* Telemetry.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Telemetry.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CFFE85802E15C80F00DAB430 /* TelemetryTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TelemetryTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,6 +111,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CFA6AE072E21DB5D00DE14E6 /* DI.framework in Frameworks */,
 				CF6256292E1E0FEF0078B3D2 /* CommonUtilities.framework in Frameworks */,
 				CFA6ACE62E20B46800DE14E6 /* Core.framework in Frameworks */,
 			);
@@ -103,6 +128,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CF2B3A162E240E4100239F81 /* RingBuffer */ = {
+			isa = PBXGroup;
+			children = (
+				CFCA615A2E15CD0700FE88CC /* RingBuffer.swift */,
+			);
+			path = RingBuffer;
+			sourceTree = "<group>";
+		};
 		CF2BF7822E16BCC90031ED3F /* Subscriber */ = {
 			isa = PBXGroup;
 			children = (
@@ -122,8 +155,12 @@
 		CF35FABB2E1C988B003D218C /* Core */ = {
 			isa = PBXGroup;
 			children = (
+				CFCA61592E15CCFF00FE88CC /* Breadcrumb */,
 				CF35FAC02E1CB5F7003D218C /* Context */,
+				CFA6ADB12E21A91A00DE14E6 /* Installation */,
 				CFA6AC9E2E2047E900DE14E6 /* Metadata */,
+				CF2B3A162E240E4100239F81 /* RingBuffer */,
+				CFA6ADAE2E21727E00DE14E6 /* Session */,
 				CF35FABC2E1C9892003D218C /* Severity */,
 				CF35FABD2E1C9ED9003D218C /* StackFrame */,
 			);
@@ -156,13 +193,14 @@
 			path = Context;
 			sourceTree = "<group>";
 		};
-		CF35FAC32E1DBDBD003D218C /* Integration */ = {
+		CF35FAC32E1DBDBD003D218C /* Integrations */ = {
 			isa = PBXGroup;
 			children = (
+				CFA6ADAB2E2162D100DE14E6 /* Session */,
 				CF35FAC62E1DBF80003D218C /* System */,
 				CF35FAC42E1DBDCF003D218C /* TelemetryIntegration.swift */,
 			);
-			path = Integration;
+			path = Integrations;
 			sourceTree = "<group>";
 		};
 		CF35FAC62E1DBF80003D218C /* System */ = {
@@ -184,6 +222,7 @@
 		CF6256272E1E0FEF0078B3D2 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CFA6AE062E21DB5D00DE14E6 /* DI.framework */,
 				CFA6ACE52E20B46800DE14E6 /* Core.framework */,
 				CF6256282E1E0FEF0078B3D2 /* CommonUtilities.framework */,
 			);
@@ -206,14 +245,92 @@
 			path = Processor;
 			sourceTree = "<group>";
 		};
+		CFA6ADAB2E2162D100DE14E6 /* Session */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6ADAC2E2162D900DE14E6 /* AutoSessionTrackerIntegration.swift */,
+			);
+			path = Session;
+			sourceTree = "<group>";
+		};
+		CFA6ADAE2E21727E00DE14E6 /* Session */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6ADAF2E21735D00DE14E6 /* Session.swift */,
+			);
+			path = Session;
+			sourceTree = "<group>";
+		};
+		CFA6ADB12E21A91A00DE14E6 /* Installation */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6ADB22E21A92400DE14E6 /* Installation.swift */,
+			);
+			path = Installation;
+			sourceTree = "<group>";
+		};
+		CFA6ADB42E21B06700DE14E6 /* Storage */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6ADC22E21B11000DE14E6 /* FileSystem */,
+				CFA6ADB62E21B0E600DE14E6 /* InMemory */,
+				CFA6ADBC2E21B0E600DE14E6 /* UserDefaults */,
+				CFA6ADBA2E21B0E600DE14E6 /* Storage.swift */,
+				CFA6ADC82E21D91600DE14E6 /* StorageKey.swift */,
+			);
+			path = Storage;
+			sourceTree = "<group>";
+		};
+		CFA6ADB62E21B0E600DE14E6 /* InMemory */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6ADB52E21B0E600DE14E6 /* InMemoryStorage.swift */,
+			);
+			path = InMemory;
+			sourceTree = "<group>";
+		};
+		CFA6ADBC2E21B0E600DE14E6 /* UserDefaults */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6ADBB2E21B0E600DE14E6 /* UserDefaultsStorage.swift */,
+			);
+			path = UserDefaults;
+			sourceTree = "<group>";
+		};
+		CFA6ADC22E21B11000DE14E6 /* FileSystem */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6ADC62E21B48E00DE14E6 /* FileSystemStorage.swift */,
+			);
+			path = FileSystem;
+			sourceTree = "<group>";
+		};
+		CFA6ADC42E21B38400DE14E6 /* Error */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6ADC32E21B38400DE14E6 /* StorageErrorReason.swift */,
+			);
+			path = Error;
+			sourceTree = "<group>";
+		};
+		CFA6AE092E21DCDA00DE14E6 /* DI */ = {
+			isa = PBXGroup;
+			children = (
+				CFA6AE0A2E21DCE000DE14E6 /* DI.swift */,
+			);
+			path = DI;
+			sourceTree = "<group>";
+		};
 		CFCA614C2E15CB0800FE88CC /* Sources */ = {
 			isa = PBXGroup;
 			children = (
-				CFCA61592E15CCFF00FE88CC /* Breadcrumb */,
 				CF35FABB2E1C988B003D218C /* Core */,
+				CFA6AE092E21DCDA00DE14E6 /* DI */,
+				CFA6ADC42E21B38400DE14E6 /* Error */,
 				CF35FAB62E1C7486003D218C /* Extensions */,
-				CF35FAC32E1DBDBD003D218C /* Integration */,
+				CF35FAC32E1DBDBD003D218C /* Integrations */,
 				CFA6ADAA2E21587100DE14E6 /* Processor */,
+				CFA6ADB42E21B06700DE14E6 /* Storage */,
 				CF2BF7822E16BCC90031ED3F /* Subscriber */,
 				CFCA61572E15CCB900FE88CC /* TelemetryReport.swift */,
 				CFCA61542E15CC2800FE88CC /* TelemetryManager.swift */,
@@ -235,7 +352,6 @@
 			isa = PBXGroup;
 			children = (
 				CFCA615C2E15CDAD00FE88CC /* Breadcrumb.swift */,
-				CFCA615A2E15CD0700FE88CC /* BreadcrumbBuffer.swift */,
 			);
 			path = Breadcrumb;
 			sourceTree = "<group>";
@@ -378,13 +494,23 @@
 				CF35FAC22E1CB605003D218C /* ContextProvider.swift in Sources */,
 				CF62561F2E1E07F70078B3D2 /* RuntimeContextProvider.swift in Sources */,
 				CFCA614E2E15CB0800FE88CC /* Telemetry.docc in Sources */,
+				CFA6ADC72E21B49500DE14E6 /* FileSystemStorage.swift in Sources */,
 				CF35FAC52E1DBDD4003D218C /* TelemetryIntegration.swift in Sources */,
+				CFA6ADB32E21A92800DE14E6 /* Installation.swift in Sources */,
 				CF2BF7842E16BE440031ED3F /* UploadProcessor.swift in Sources */,
 				CF35FAB82E1C74AD003D218C /* FileManager+Extension.swift in Sources */,
 				CF62561C2E1E07240078B3D2 /* TelemetrySubscriber.swift in Sources */,
+				CFA6ADB02E21736300DE14E6 /* Session.swift in Sources */,
 				CFCA615D2E15CDB400FE88CC /* Breadcrumb.swift in Sources */,
-				CFCA615B2E15CD0C00FE88CC /* BreadcrumbBuffer.swift in Sources */,
+				CFCA615B2E15CD0C00FE88CC /* RingBuffer.swift in Sources */,
 				CFCA61552E15CC2E00FE88CC /* TelemetryManager.swift in Sources */,
+				CFA6ADAD2E2162DE00DE14E6 /* AutoSessionTrackerIntegration.swift in Sources */,
+				CFA6ADC52E21B38400DE14E6 /* StorageErrorReason.swift in Sources */,
+				CFA6AE0B2E21DCE200DE14E6 /* DI.swift in Sources */,
+				CFA6ADBF2E21B0E600DE14E6 /* InMemoryStorage.swift in Sources */,
+				CFA6ADC02E21B0E600DE14E6 /* UserDefaultsStorage.swift in Sources */,
+				CFA6ADC12E21B0E600DE14E6 /* Storage.swift in Sources */,
+				CFA6ADC92E21D91A00DE14E6 /* StorageKey.swift in Sources */,
 				CF35FABF2E1C9F1E003D218C /* StackFrame.swift in Sources */,
 				CFA6ACA02E20485600DE14E6 /* Metadata.swift in Sources */,
 				CF35FABA2E1C9831003D218C /* Severity.swift in Sources */,
