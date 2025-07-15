@@ -359,7 +359,12 @@ public class DataRequest: Request, @unchecked Sendable {
             guard let self else { return }
             
             let result = Result {
-                try serializer.serialize(request: request, response: response, data: data, error: error)
+                try serializer.serialize(
+                    request: self.request,
+                    response: self.response,
+                    data: self.data,
+                    error: self.error
+                )
             }
                 .mapError { error in
                     error as? NetworkingError ?? NetworkingError(

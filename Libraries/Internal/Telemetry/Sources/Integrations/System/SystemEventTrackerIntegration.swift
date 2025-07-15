@@ -114,7 +114,7 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
     
     @objc
     func didReceiveTimeZoneDidChangeNotification(_ notification: Notification) {
-        if let abbreviation = Locale.current.timeZone?.abbreviation() {
+        if let abbreviation = TimeZone.current.abbreviation() {
             telemetryManager?.captureBreadcrumb(
                 deviceEventCategory,
                 severity: .info,
