@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import CoreData
+import Utilities
 
 extension NSManagedObject {
     /// Finds or creates a Core Data model object of the specified type, matching a given predicate,
@@ -27,7 +27,7 @@ extension NSManagedObject {
         in context: NSManagedObjectContext
     ) async throws -> Model {
         guard let entityName = Model.entity().name else {
-            throw CommonUtilityError(kind: .CoreDataKitErrorReason.invalidEntityName)
+            throw UtilityError(kind: .CoreDataKitErrorReason.invalidEntityName)
         }
 
         return try Query(entityName, context: context).first() ?? Model(context: context)

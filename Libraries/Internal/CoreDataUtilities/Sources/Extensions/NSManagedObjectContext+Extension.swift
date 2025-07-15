@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import CoreData
+import Utilities
 
 extension NSManagedObjectContext {
     /// Creates a new `Query` instance for the specified model type in the current context.
@@ -12,7 +12,7 @@ extension NSManagedObjectContext {
     /// - Returns: A `Query` instance for the specified model type.
     public func newQuery<Model: NSManagedObject>(of type: Model.Type) throws -> Query<Model> {
         guard let entityName = Model.entity().name else {
-            throw CommonUtilityError(kind: .CoreDataKitErrorReason.invalidEntityName)
+            throw UtilityError(kind: .CoreDataKitErrorReason.invalidEntityName)
         }
 
         return Query(entityName, context: self)

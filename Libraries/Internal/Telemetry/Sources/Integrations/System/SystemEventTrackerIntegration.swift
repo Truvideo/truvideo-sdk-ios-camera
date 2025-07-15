@@ -2,10 +2,10 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import Foundation
 import Network
 import UIKit
+import Utilities
 
 /// A telemetry integration responsible for monitoring and reporting system-level events such as
 /// app lifecycle transitions, battery state changes, connectivity updates, and memory warnings.

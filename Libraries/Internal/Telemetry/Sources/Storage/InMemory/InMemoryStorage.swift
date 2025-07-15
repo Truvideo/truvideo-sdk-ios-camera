@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import Foundation
+import Utilities
 
 /// A Storage client which implements the base `Storage` interface.
 /// `InMemoryStorage` uses a `Dictionary` internally.
@@ -60,7 +60,7 @@ class InMemoryStorage: Storage {
         do {
             return try decoder.decode(Key.Value.self, from: data)
         } catch {
-            throw CommonUtilityError(kind: .StorageErrorReason.readValueFailed, underlyingError: error)
+            throw UtilityError(kind: .StorageErrorReason.readValueFailed, underlyingError: error)
         }
     }
 
@@ -71,12 +71,10 @@ class InMemoryStorage: Storage {
     ///   - key: The key type associated with the value.
     /// - Throws: An error if the write operation fails.
     func write<Key: StorageKey>(_ value: Key.Value, forKey key: Key.Type) throws {
-        do {
-            /// Encodes the value to data using JSONEncoder.
-            let data = try encoder.encode(value)
-            storage[key.name] = data
+        do {            
+            storage[key.name] = try encoder.encode(value)
         } catch {
-            throw CommonUtilityError(kind: .StorageErrorReason.writeFailed, underlyingError: error)
+            throw UtilityError(kind: .StorageErrorReason.writeFailed, underlyingError: error)
         }
     }
 }

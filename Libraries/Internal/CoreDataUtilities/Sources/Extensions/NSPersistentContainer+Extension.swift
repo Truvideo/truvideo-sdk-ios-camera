@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import CoreData
+import Utilities
 
 extension NSPersistentContainer {
     // MARK: - Static Properties
@@ -54,7 +54,7 @@ extension NSPersistentContainer {
             /// The `NSManagedObjectModel` description.
             let managedObjectModel = cache[modelURL] ?? NSManagedObjectModel(contentsOf: modelURL) else {
 
-            throw CommonUtilityError(kind: .CoreDataKitErrorReason.failedModelInitialization)
+            throw UtilityError(kind: .CoreDataKitErrorReason.failedModelInitialization)
         }
 
         cache[modelURL] = managedObjectModel

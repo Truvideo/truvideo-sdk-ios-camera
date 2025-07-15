@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import Foundation
+import Utilities
 
 extension ErrorReason {
     /// A collection of error reasons related to the storage operations.

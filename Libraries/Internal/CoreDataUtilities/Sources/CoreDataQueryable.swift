@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import CoreData
+import Utilities
 
 /// A protocol that defines a contract for types that can be queried within a Core Data context.
 ///
@@ -29,7 +29,7 @@ extension CoreDataQueryable {
     /// - Throws: An error if the search operation fails.
     public static func findOrCreate(_ id: Self.ID, in context: NSManagedObjectContext) throws -> Self {
         guard let entityName = Self.entity().name else {
-            throw CommonUtilityError(kind: .CoreDataKitErrorReason.invalidEntityName)
+            throw UtilityError(kind: .CoreDataKitErrorReason.invalidEntityName)
         }
 
         let existing = try Query<Self>(entityName, context: context)

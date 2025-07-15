@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import Foundation
+import Utilities
 
 /// A Storage client which implements the base `Storage` interface.
 /// `UserDefaultsStorage` uses `UserDefaults` internally.
@@ -62,7 +62,7 @@ struct UserDefaultsStorage: Storage {
         do {
             return try decoder.decode(Key.Value.self, from: data)
         } catch {
-            throw CommonUtilityError(kind: .StorageErrorReason.readValueFailed, underlyingError: error)
+            throw UtilityError(kind: .StorageErrorReason.readValueFailed, underlyingError: error)
         }
     }
 
@@ -77,7 +77,7 @@ struct UserDefaultsStorage: Storage {
             let data = try encoder.encode(value)
             userDefaults.setValue(data, forKey: key.name)
         } catch {
-            throw CommonUtilityError(kind: .StorageErrorReason.writeFailed, underlyingError: error)
+            throw UtilityError(kind: .StorageErrorReason.writeFailed, underlyingError: error)
         }
     }
 }

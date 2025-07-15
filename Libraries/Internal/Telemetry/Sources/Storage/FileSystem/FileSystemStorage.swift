@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import Foundation
+import Utilities
 
 /// A storage implementation that persists `Codable` objects to the local file system using JSON encoding.
 ///
@@ -41,7 +41,7 @@ struct FileSystemStorage: Storage {
         do {
             try fileManager.removeItem(at: url)
         } catch {
-            throw CommonUtilityError(kind: .StorageErrorReason.clearFailed, underlyingError: error)
+            throw UtilityError(kind: .StorageErrorReason.clearFailed, underlyingError: error)
         }
     }
 
@@ -53,7 +53,7 @@ struct FileSystemStorage: Storage {
         do {
             try fileManager.removeItem(at: url.appendingPathComponent("\(key.name).dat"))
         } catch {
-            throw CommonUtilityError(kind: .StorageErrorReason.deleteFailed, underlyingError: error)
+            throw UtilityError(kind: .StorageErrorReason.deleteFailed, underlyingError: error)
         }
     }
 
@@ -70,7 +70,7 @@ struct FileSystemStorage: Storage {
 
             return try decoder.decode(Key.Value.self, from: data)
         } catch {
-            throw CommonUtilityError(kind: .StorageErrorReason.readValueFailed, underlyingError: error)
+            throw UtilityError(kind: .StorageErrorReason.readValueFailed, underlyingError: error)
         }
     }
 
@@ -88,7 +88,7 @@ struct FileSystemStorage: Storage {
             try fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
             try data.write(to: url, options: .atomic)
         } catch {
-            throw CommonUtilityError(kind: .StorageErrorReason.writeFailed, underlyingError: error)
+            throw UtilityError(kind: .StorageErrorReason.writeFailed, underlyingError: error)
         }
     }
 }

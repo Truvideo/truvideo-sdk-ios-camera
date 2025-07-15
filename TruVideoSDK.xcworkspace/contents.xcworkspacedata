@@ -2,9 +2,6 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:Libraries/Internal/CommonUtilities/CommonUtilities.xcodeproj">
-   </FileRef>
-   <FileRef
       location = "group:Libraries/Internal/Core/Core.xcodeproj">
    </FileRef>
    <FileRef
@@ -18,5 +15,8 @@
    </FileRef>
    <FileRef
       location = "group:Libraries/Internal/Telemetry/Telemetry.xcodeproj">
+   </FileRef>
+   <FileRef
+      location = "group:Libraries/Internal/Utilities/Utilities.xcodeproj">
    </FileRef>
 </Workspace>

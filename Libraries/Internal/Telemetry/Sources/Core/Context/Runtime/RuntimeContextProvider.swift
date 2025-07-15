@@ -2,10 +2,10 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CommonUtilities
 import Core
 import Foundation
 import UIKit
+import Utilities
 
 /// A concrete implementation of `ContextProvider` that generates a snapshot of
 /// the current runtime environment at the moment it's invoked.
