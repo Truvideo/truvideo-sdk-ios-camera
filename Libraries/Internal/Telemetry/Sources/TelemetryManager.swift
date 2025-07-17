@@ -29,7 +29,7 @@ open class TelemetryManager: @unchecked Sendable {
     // MARK: - Private Properties
     
     private var breadcrumbsBuffer: RingBuffer<Breadcrumb>
-    private let defaultEventsFlushDuration: TimeInterval = 180
+    private let eventFlushInterval: TimeInterval = 180
     private var eventsBuffer: EventDiskBuffer
     private let lock = NSLock()
     private var previousFlushDate: Date?
@@ -100,6 +100,9 @@ open class TelemetryManager: @unchecked Sendable {
     ///
     /// - Parameter date: The date to mark as the session's end time.
     func flushPreviousSession(endedAt date: Date) {
+        lock.lock()
+        defer { lock.unlock() }
+        
         if var storedSession = sessionStorage.retrieve(), storedSession != session {
             let event = TelemetryReport.Event(
                 name: "session_ended",
@@ -193,7 +196,7 @@ open class TelemetryManager: @unchecked Sendable {
     ///   - name: The name of the event.
     ///   - source: The logical source of the event (e.g., module or component name).
     ///   - metadata: Optional structured metadata.
-    open func captureEvent(name: String, source: String, metadata: Metadata = [:]) {
+    open func captureEvent(name: String, source: String, metadata: Metadata? = nil) {
         let event = TelemetryReport.Event(
             name: name,
             severity: .info,
@@ -211,7 +214,7 @@ open class TelemetryManager: @unchecked Sendable {
     ///   - name: The name of the event.
     ///   - source: The logical source of the event (e.g., module or component name).
     ///   - metadata: Optional structured metadata.
-    open func capture(_ message: String, name: String, source: String, metadata: Metadata = [:]) {
+    open func capture(_ message: String, name: String, source: String, metadata: Metadata? = nil) {
         let event = TelemetryReport.Event(
             name: name,
             severity: .info,
@@ -234,14 +237,9 @@ open class TelemetryManager: @unchecked Sendable {
         _ error: Error,
         name: String,
         source: String,
-        metadata: Metadata = [:],
+        metadata: Metadata? = nil,
         stackFrame: StackFrame = StackFrame()
     ) {
-        guard var session else {
-            // Logging could be added here to capture the info reason.
-            return
-        }
-                
         let event = TelemetryReport.Event(
             name: name,
             severity: .error,
@@ -250,8 +248,7 @@ open class TelemetryManager: @unchecked Sendable {
             exception: TelemetryReport.Event.Exception(message: error.localizedDescription, stackFrame: stackFrame),
             metadata: metadata
         )
-        
-        session.incrementErrors()
+                
         sendEvent(event)
     }
     
@@ -267,18 +264,21 @@ open class TelemetryManager: @unchecked Sendable {
     
     private func flushSession(_ session: Session, force: Bool = false) {
         let lastFlushDate = previousFlushDate ?? Date()
-        let needsFlush = Date().timeIntervalSince(lastFlushDate) > defaultEventsFlushDuration
+        let needsFlush = Date().timeIntervalSince(lastFlushDate) > eventFlushInterval
         
         if eventsBuffer.isFull || force || needsFlush {
+            var session = session
+            let events = eventsBuffer.snapshot()
+            
+            session.errors = events.count { [.critical, .error].contains($0.severity) }
+            
             let report = TelemetryReport(
-                events: eventsBuffer.snapshot(),
+                events: events,
                 context: contextProvider.makeContext(),
                 session: session
             )
             
-            lock.lock()
             subscribers.values.forEach { $0.didReceive(report) }
-            lock.unlock()
             
             eventsBuffer.flush()
             previousFlushDate = Date()
@@ -288,9 +288,9 @@ open class TelemetryManager: @unchecked Sendable {
     private func sendEvent(_ event: TelemetryReport.Event) {
         eventsBuffer.add(event)
         
-        guard let session else { return }
-        
-        flushSession(session)
+        if let session {
+            flushSession(session)
+        }
     }
 }
 
@@ -327,7 +327,7 @@ final class EventDiskBuffer {
     /// - Parameter storageURL: The root directory for storing events. Defaults to the app's telemetry directory.
     init(storageURL: URL = FileManager.default.telemetryDirectory) {
         self.storageURL = storageURL.appendingPathComponent("events.json")
-        
+
         rehydrate()
     }
 
@@ -338,6 +338,10 @@ final class EventDiskBuffer {
     /// - Parameter event: The telemetry event to store.
     func add(_ event: TelemetryReport.Event) {
         buffer.add(event)
+        
+        if !FileManager.default.fileExists(atPath: storageURL.path) {
+            FileManager.default.createFile(atPath: storageURL.path, contents: nil)
+        }
         
         do {
             let fileHandle = try FileHandle(forWritingTo: storageURL)
@@ -362,6 +366,7 @@ final class EventDiskBuffer {
         
         do {
             try FileManager.default.removeItem(at: storageURL)
+            FileManager.default.createFile(atPath: storageURL.path, contents: nil)
         } catch {
             // Logging could be added here to capture the failure reason.
         }

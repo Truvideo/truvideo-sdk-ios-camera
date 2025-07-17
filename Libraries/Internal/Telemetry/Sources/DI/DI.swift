@@ -9,8 +9,6 @@ import DI
 /// `ContextProviderKey` is used by the dependency system to resolve the default
 /// implementation of `ContextProvider`, which is `RuntimeContextProvider`.
 struct ContextProviderKey: DependencyKey {
-    typealias Value = any ContextProvider
-
     /// The default context provider used if none is explicitly set.
     static let defaultValue: any ContextProvider = RuntimeContextProvider()
 }

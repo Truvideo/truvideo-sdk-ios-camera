@@ -206,10 +206,10 @@ private extension TelemetryManager {
     ///   - severity: The severity level of the event.
     ///   - message: An optional message for context.
     ///   - metadata: Additional key-value pairs describing the event.
-    func captureBreadcrumb(_ category: String, severity: Severity, message: String = "", metadata: Metadata = [:]) {
+    func captureBreadcrumb(_ category: String, severity: Severity, message: String? = nil, metadata: Metadata = [:]) {
         let breadcrumb = Breadcrumb(
             severity: severity,
-            source: #file,
+            source: "Telemetry",
             category: category,
             message: message,
             metadata: metadata

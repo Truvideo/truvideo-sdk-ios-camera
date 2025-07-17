@@ -77,19 +77,19 @@ struct RingBuffer<Element>: Sequence {
         }
 
         buffer[bufferIndex] = element
-        bufferIndex += 1
-
-        // Wrap around if we reach the end
-        if bufferIndex >= maxCapacity {
-            bufferIndex = 0
+        
+        if isFull {
+            buffer.removeFirst()
+        } else {
+            bufferIndex += 1
         }
-
+        
         return element
     }
 
     /// Removes all elements from the buffer, resetting its state but keeping capacity.
     mutating func removeAll() {
-        buffer.removeAll(keepingCapacity: true)
+        buffer = Array(repeating: nil, count: maxCapacity)
         bufferIndex = buffer.startIndex
     }
 

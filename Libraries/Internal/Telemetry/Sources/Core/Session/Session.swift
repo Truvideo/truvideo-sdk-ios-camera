@@ -22,7 +22,7 @@ public struct Session: Codable, Equatable, Identifiable, Sendable {
     public private(set) var endedAt: Date?
     
     /// The number of errors recorded during the session.
-    public private(set) var errors: Int
+    public internal(set) var errors: Int
     
     /// The time at which the session started.
     public let startedAt: Date
@@ -33,7 +33,7 @@ public struct Session: Codable, Equatable, Identifiable, Sendable {
     // MARK: - Types
     
     /// Represents the possible final states of a session.
-    public enum Status: Codable, Sendable {
+    public enum Status: String, Codable, Sendable {
         /// The session ended abnormally (e.g., due to OS termination).
         case abnormal
         
@@ -73,10 +73,5 @@ public struct Session: Codable, Equatable, Identifiable, Sendable {
     mutating func endSession(at date: Date = Date(), status: Status = .ok) {
         self.endedAt = date
         self.status = status
-    }
-    
-    /// Increments the internal error count by one.
-    mutating func incrementErrors() {
-        errors += 1
     }
 }

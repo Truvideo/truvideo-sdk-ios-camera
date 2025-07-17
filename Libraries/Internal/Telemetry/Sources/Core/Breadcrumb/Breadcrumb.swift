@@ -29,12 +29,12 @@ public struct Breadcrumb: Codable, Sendable {
     public let category: String
     
     /// An optional message describing the event or context.
-    public let message: String
+    public let message: String?
     
     /// Additional structured metadata that provides details about the event.
-    public let metadata: Metadata
+    public let metadata: Metadata?
     
-    /// The severity level of the breadcrumb (e.g., `.info`, `.warning`, `.error`).
+    /// The severity level of the breadcrumb.
     public let severity: Severity
     
     /// The source of the breadcrumb, typically the file or component name.
@@ -58,9 +58,9 @@ public struct Breadcrumb: Codable, Sendable {
         severity: Severity,
         source: String,
         category: String = "default",
-        message: String = "",
+        message: String? = nil,
         timestamp: Date = Date(),
-        metadata: Metadata = [:]
+        metadata: Metadata? = nil
     ) {
 
         self.category = category

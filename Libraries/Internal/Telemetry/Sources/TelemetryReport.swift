@@ -57,7 +57,7 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
         public let message: String?
         
         /// Additional metadata relevant to the event, such as device config or capture context.
-        public let metadata: Metadata
+        public let metadata: Metadata?
         
         /// A descriptive name identifying the type of event (e.g., "camera.session.failed").
         public let name: String
@@ -116,7 +116,7 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
             breadcrumbs: [Breadcrumb]? = nil,
             exception: Exception? = nil,
             timestamp: Date = Date(),
-            metadata: Metadata = [:]
+            metadata: Metadata? = nil
         ) {
 
             self.breadcrumbs = breadcrumbs

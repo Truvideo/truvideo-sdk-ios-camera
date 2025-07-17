@@ -33,11 +33,9 @@ public final class DependencyValues: @unchecked Sendable {
             
             if let dependency = storage[ObjectIdentifier(key)] as? Key.Value {
                 return dependency
-            } else if let dependency = key.defaultValue {
-                return dependency
             }
             
-            fatalError("The requested dependency for key: \(key) has not been set.")
+            return key.defaultValue
         }
         set {
             lock.lock()

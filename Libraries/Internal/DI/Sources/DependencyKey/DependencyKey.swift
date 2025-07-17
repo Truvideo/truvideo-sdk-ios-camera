@@ -10,12 +10,5 @@ public protocol DependencyKey<Value>: Sendable {
     associatedtype Value: Sendable = Self
 
     /// A default value for they key.
-    static var defaultValue: Value? { get }
-}
-
-extension DependencyKey {
-    /// Sets the defaultValue to nil by default.
-    public static var defaultValue: Value? {
-        nil
-    }
+    static var defaultValue: Value { get }
 }
