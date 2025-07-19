@@ -16,12 +16,6 @@ struct ContentView: View {
     
     @StateObject private var telemetrySubscriber = TelemetrySubsriber()
     
-    // MARK: -  Types
-    
-    enum AppError: Error {
-        case corruptedData
-    }
-    
     // MARK: - Body
     
     var body: some View {
@@ -95,6 +89,12 @@ struct ContentView: View {
             TelemetryManager.shared.add(telemetrySubscriber)
         }
     }
+    
+    // MARK: - Types
+    
+    enum AppError: Error {
+        case corruptedData
+    }
 }
 
 private final class TelemetrySubsriber: ObservableObject, TelemetryManagerSubscriber {
@@ -110,8 +110,7 @@ private final class TelemetrySubsriber: ObservableObject, TelemetryManagerSubscr
         encoder.outputFormatting = .prettyPrinted
         
         if let data = try? encoder.encode(report),
-           let string = String(data: data, encoding: .utf8)
-        {
+           let string = String(data: data, encoding: .utf8) {
             self.report = string
         }
     }

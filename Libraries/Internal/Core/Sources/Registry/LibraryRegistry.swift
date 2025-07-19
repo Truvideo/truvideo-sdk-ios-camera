@@ -70,7 +70,7 @@ public class LibraryRegistry: @unchecked Sendable {
         
         guard library.name.rangeOfCharacter(from: allowedSet) != nil,
               library.name.rangeOfCharacter(from: allowedSet.inverted) == nil else {
-            // TODO: Log warning or raise internal alert
+            
             return
         }
         

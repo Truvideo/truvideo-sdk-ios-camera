@@ -9,26 +9,6 @@ internal import AWSS3
 internal import AWSSDKIdentity
 internal import Smithy
 
-/// `ContentType` provides a set of predefined MIME types commonly used when uploading
-/// files to services like Amazon S3. It conforms to `RawRepresentable`, `Equatable`,
-/// and `Hashable`, allowing for safe comparisons and dictionary usage.
-struct ContentType: RawRepresentable, Equatable, Hashable {
-    /// The raw MIME type string (e.g., `"application/json"`).
-    let rawValue: String
-
-    /// Creates a new `ContentType` from a raw MIME type string.
-    ///
-    /// - Parameter rawValue: The MIME type string.
-    init(rawValue: String) {
-        self.rawValue = rawValue
-    }
-
-    // MARK: - Static Properties
-
-    /// `application/json`
-    static let json = ContentType(rawValue: "application/json")
-}
-
 /// A concrete implementation of the `Uploader` protocol that uploads `Encodable` objects to Amazon S3.
 ///
 /// This class handles the encoding of objects to JSON and uploads them using `AWSS3TransferUtility`,
@@ -43,7 +23,7 @@ final class S3Uploader: Uploader {
     private let bucketName: String
     private let clientProvider: S3ClientProvider
 
-    // MARK: - Initializers
+    // MARK: - Initializer
 
     /// Creates a new instance of the `Uploader`.
     ///

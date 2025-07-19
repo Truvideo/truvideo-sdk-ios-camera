@@ -97,7 +97,7 @@ extension MetadataValue: Decodable {
             self = .double(value)
         } else if let value = try? container.decode(Int.self) {
             self = .int(value)
-        }  else if let value = try? container.decode(String.self) {
+        } else if let value = try? container.decode(String.self) {
             self = .string(value)
         }
         

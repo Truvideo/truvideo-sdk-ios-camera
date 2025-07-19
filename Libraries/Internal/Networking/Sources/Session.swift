@@ -92,8 +92,10 @@ open class Session: @unchecked Sendable {
     
     // MARK: - Public Properties
     
+    // swiftlint:disable weak_delegate
     /// The delegate responsible for handling session events such as task completion and failures.
     public let delegate: SessionDelegate
+    // swiftlint:enable weak_delegate
     
     /// An optional middleware used to modify or intercept requests before execution.
     public let middleware: RequestMiddleware?

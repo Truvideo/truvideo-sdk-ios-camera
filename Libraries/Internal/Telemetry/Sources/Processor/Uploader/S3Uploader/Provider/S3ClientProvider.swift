@@ -22,15 +22,15 @@ protocol S3ClientProvider {
     func makeClient() async throws -> S3ClientProtocol
 }
 
+/// A concrete implementation of the `S3ClientProvider` protocol responsible for creating and managing S3 clients.
 final class S3ClientImpl: S3ClientProvider {
     // MARK: - Private Properties
 
-    private let accessKey: String
     private var client: S3ClientProtocol?
+    private let credential: AWSCredentialIdentity
     private let region: String
-    private let secretKey: String
 
-    // MARK: - Initializer
+    // MARK: - Initializers
 
     /// Creates a new instance of the `Uploader`.
     ///
@@ -41,9 +41,8 @@ final class S3ClientImpl: S3ClientProvider {
     ///   If `nil`, S3 interactions will require initialization elsewhere.
     init(client: S3ClientProtocol?) {
         self.client = client
-        self.accessKey = ""
+        self.credential = AWSCredentialIdentity(accessKey: "", secret: "")
         self.region = ""
-        self.secretKey = ""
     }
 
     /// Creates a new instance of the `Uploader`.
@@ -57,9 +56,8 @@ final class S3ClientImpl: S3ClientProvider {
     ///   - secretKey: Your AWS secret access key. Used for authentication.
     ///   - region: The AWS region where the bucket is located (e.g., `.USEast1`, `.EUWest1`).
     init(accessKey: String, secretKey: String, region: String) {
-        self.accessKey = accessKey
+        self.credential = AWSCredentialIdentity(accessKey: accessKey, secret: secretKey)
         self.region = region
-        self.secretKey = secretKey
     }
 
     // MARK: - S3ClientProvider
@@ -73,8 +71,7 @@ final class S3ClientImpl: S3ClientProvider {
             return client
         }
 
-        let credentials = AWSCredentialIdentity(accessKey: accessKey, secret: secretKey)
-        let identityResolver = StaticAWSCredentialIdentityResolver(credentials)
+        let identityResolver = StaticAWSCredentialIdentityResolver(credential)
         let configuration = try await S3Client.S3ClientConfiguration(
             awsCredentialIdentityResolver: identityResolver,
             region: region
@@ -86,20 +83,3 @@ final class S3ClientImpl: S3ClientProvider {
         return client
     }
 }
-
-/// A protocol that defines the interface for uploading objects to an Amazon S3 bucket.
-///
-/// This abstraction enables dependency injection and unit testing by decoupling
-/// your code from the concrete `S3Client` implementation.
-protocol S3ClientProtocol {
-    /// Uploads an object to an S3 bucket.
-    ///
-    /// - Parameter input: The configuration for the object to upload, including bucket name, key, and body.
-    /// - Returns: A `PutObjectOutput` containing metadata about the uploaded object.
-    /// - Throws: An error if the upload fails (e.g., due to network issues or authentication failure).
-    func putObject(input: PutObjectInput) async throws -> PutObjectOutput
-}
-
-/// Conformance of the official AWS `S3Client` to `S3ClientProtocol`,
-/// allowing it to be used wherever the protocol is expected.
-extension S3Client: S3ClientProtocol {}

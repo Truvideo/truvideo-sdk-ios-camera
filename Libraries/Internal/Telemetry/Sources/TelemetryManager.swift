@@ -350,9 +350,8 @@ final class EventDiskBuffer {
             try fileHandle.seekToEnd()
             try fileHandle.write(contentsOf: data)
             
-            if let breakLine = "\n".data(using: .utf8) {
-                try fileHandle.write(contentsOf: breakLine)
-            }
+            let breakLine = Data("\n".utf8)
+            try fileHandle.write(contentsOf: breakLine)
             
             try fileHandle.close()
         } catch {

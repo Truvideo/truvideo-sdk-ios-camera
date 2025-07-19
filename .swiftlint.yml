@@ -81,6 +81,7 @@ opt_in_rules:
   - empty_xctest_method
   - explicit_init
   - fatal_error_message
+  - file_header
   - file_name
   - force_unwrapping
   - implicitly_unwrapped_optional
@@ -114,6 +115,7 @@ opt_in_rules:
   - sorted_imports
   - switch_case_on_newline
   - trailing_closure
+  - type_contents_order
   - unavailable_function
   - unneeded_parentheses_in_closure_argument
   - unowned_variable_capture
@@ -133,7 +135,6 @@ opt_in_rules:
   - file_length
   - weak_delegate
   - toggle_bool
-  - explicit_top_level_acl
   - redundant_type_annotation
   - discarded_notification_center_observer
 
@@ -151,6 +152,10 @@ file_header:
                     \/\/
                     \/\/ Copyright © \d{2,4} TruVideo. All rights reserved.
                     \/\/
+
+file_name:
+  excluded:
+    - "DI.swift"    
 
 multiline_arguments:
   first_argument_location: any_line
@@ -202,6 +207,7 @@ identifier_name:
   excluded:
     - id
     - URL
+    - ok
 
 shorthand_operator:
   severity: warning
@@ -252,13 +258,6 @@ custom_rules:
     message: "There should be a space after //"
     severity: warning
 
-  double_space:
-    included: "*.swift"
-    name: "Double space"
-    regex: "([a-z,A-Z] \\s+)"
-    message: "Double space between keywords"
-    severity: warning
-
   empty_line_after_guard:
     included: ".*.swift"
     name: "Empty Line After Guard"
@@ -292,13 +291,6 @@ custom_rules:
     name: "Vertical Whitespaces Around MARK:"
     regex: '\/\/\s*MARK:[^\n]*(\n)(?!\s*\n)|(\n\n\n)[ \t]*\/\/\s*MARK:|[^\s{]\n[^\n\/]*\/\/\s*MARK:'
     message: "Include a single vertical whitespace (empty line) before and after MARK: comments."
-    severity: warning
-
-  fatal_error_call:
-    included: ".*.swift"
-    name: "Avoid fatalError() in production"
-    regex: "\\bfatalError\\("
-    message: "Avoid `fatalError()` unless it's a last-resort or used in prototyping."
     severity: warning
 
   async_after_usage:

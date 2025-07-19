@@ -72,7 +72,7 @@ struct RingBuffer<Element>: Sequence {
     /// - Returns: The inserted element, or `nil` if the buffer is empty.
     @discardableResult
     mutating func add(_ element: Element) -> Element? {
-        guard buffer.count > 0 else {
+        guard !buffer.isEmpty else {
             return nil
         }
 

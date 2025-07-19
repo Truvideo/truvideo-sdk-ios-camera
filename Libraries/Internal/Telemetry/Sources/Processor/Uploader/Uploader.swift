@@ -23,3 +23,16 @@ protocol Uploader {
     /// - Throws: An error of type `CommonUtilityError` if the upload fails.
     func upload(_ data: Data, fileName: String, contentType: ContentType) async throws
 }
+
+/// `ContentType` provides a set of predefined MIME types commonly used when uploading
+/// files to services like Amazon S3. It conforms to `RawRepresentable`, `Equatable`,
+/// and `Hashable`, allowing for safe comparisons and dictionary usage.
+struct ContentType: RawRepresentable, Equatable, Hashable {
+    /// The raw MIME type string (e.g., `"application/json"`).
+    let rawValue: String
+
+    // MARK: - Static Properties
+
+    /// `application/json`
+    static let json = ContentType(rawValue: "application/json")
+}

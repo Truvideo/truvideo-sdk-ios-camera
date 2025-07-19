@@ -27,22 +27,7 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
     
     /// The information of the current user session.
     public let session: Session
-
-    // MARK: - Initializer
-
-    /// Creates a new telemetry report instance.
-    ///
-    /// - Parameters:
-    ///   - event: The list of telemetry events being reported.
-    ///   - context: The context of the device and OS at the time of the event.
-    ///   - session: The information of the current user session.
-    init(events: [Event], context: Context, session: Session) {
-        self.id = UUID()
-        self.context = context
-        self.events = events
-        self.session = session
-    }
-
+    
     // MARK: - Types
 
     /// Represents the core telemetry event, including its name, severity, source, metadata, and timestamp.
@@ -81,18 +66,6 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
 
             /// The stack frame where the exception occurred.
             public let stackFrame: StackFrame
-
-            // MARK: - Initializer
-
-            /// Creates a new exception instance.
-            ///
-            /// - Parameters:
-            ///   - message: A description of the exception.
-            ///   - stackFrame: The location in the code where the exception was thrown.
-            init(message: String, stackFrame: StackFrame) {
-                self.message = message
-                self.stackFrame = stackFrame
-            }
         }
 
         // MARK: - Initializer
@@ -128,5 +101,20 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
             self.source = source
             self.timestamp = timestamp
         }
+    }
+
+    // MARK: - Initializer
+
+    /// Creates a new telemetry report instance.
+    ///
+    /// - Parameters:
+    ///   - event: The list of telemetry events being reported.
+    ///   - context: The context of the device and OS at the time of the event.
+    ///   - session: The information of the current user session.
+    init(events: [Event], context: Context, session: Session) {
+        self.id = UUID()
+        self.context = context
+        self.events = events
+        self.session = session
     }
 }
