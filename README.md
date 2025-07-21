@@ -2,6 +2,20 @@
 
 A modular iOS SDK built with Swift, featuring multiple internal frameworks for different functionalities.
 
+## Table of Contents
+
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [Coding Style](#coding-style)
+- [Code Formatting](#code-formatting)
+- [Available Commands](#available-commands)
+- [Framework Dependencies](#framework-dependencies)
+- [XCFramework Creation](#xcframework-creation)
+- [Running Unit Tests](#running-unit-tests)
+- [Contributing](#contributing)
+
 ## Project Structure
 
 ```
@@ -14,6 +28,8 @@ truvideo-ios-sdk/
 │       ├── Networking/           # Network layer and HTTP client
 │       ├── Telemetry/            # Analytics and telemetry system
 │       └── Utilities/            # Common utilities and extensions
+├── docs/                         # Project documentation
+│   └── swift-style-guide.md      # Swift coding standards and guidelines
 ├── project.yml                   # XcodeGen configuration
 ├── Makefile                      # Build automation
 └── README.md                     # This file
@@ -30,7 +46,7 @@ truvideo-ios-sdk/
 
 ### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone git@github.com:Truvideo/truvideo-ios-sdk.git
 cd truvideo-ios-sdk
 ```
 
@@ -42,76 +58,98 @@ make genbuild
 
 That's it! The project will be generated, all frameworks built, and Xcode will open automatically.
 
-## Available Commands
+## Documentation
 
-### Project Generation
+### 📚 Framework Documentation
+Each framework includes comprehensive documentation for its specific functionality:
+
+- **[Core Framework](Libraries/Internal/Core/Sources/Core.docc/Core.md)** - Core functionality and utilities
+- **[CoreDataUtilities](Libraries/Internal/CoreDataUtilities/Sources/CoreDataUtilities.docc/CoreDataUtilities.md)** - Core Data helper utilities
+- **[DI Framework](Libraries/Internal/DI/Sources/DI.docc/DI.md)** - Dependency injection system
+- **[Networking](Libraries/Internal/Networking/Sources/Networking.docc/Networking.md)** - Network layer and HTTP client
+- **[Telemetry](Libraries/Internal/Telemetry/Sources/Telemetry.docc/README.md)** - Analytics and telemetry system
+- **[Utilities](Libraries/Internal/Utilities/Sources/Utilities.docc/Utilities.md)** - Common utilities and extensions
+
+## Coding Style
+
+See [docs/swift-style-guide.md](docs/swift-style-guide.md) for our comprehensive coding standards and guidelines.
+
+## Code Formatting
+
+To ensure code consistency across the project, we use the official [swift-format](https://github.com/apple/swift-format) tool.
+
+**All code is automatically formatted on build**, but you can also run it manually before creating a pull request (PR):
+
 ```bash
-make generate          # Generate Xcode project using XcodeGen
-make genbuild          # Generate, build, and open Xcode project
+swift-format format -r Libraries/Internal -i
 ```
 
-### Building
+> **Tip:** You can also format the entire project by running the above command from the project root.
+
+GitHub Actions will verify that any code changes are style-compliant. Please make sure your code is formatted before submitting a PR.
+
+**Install swift-format:**
+```bash
+brew install swift-format
+```
+
+## Available Commands
+
+### 🚀 Quick Start Commands
+```bash
+make genbuild          # Generate, build, and open Xcode project (recommended)
+make generate          # Generate Xcode project using XcodeGen
+make open              # Open Xcode project (after generation)
+```
+
+### 🔨 Building Commands
 ```bash
 make build             # Build all frameworks in dependency order
-make framework SCHEME=Core          # Build specific framework
-make framework SCHEME=Utilities     # Build specific framework
-make framework SCHEME=Networking    # Build specific framework
+make framework SCHEME=<name>  # Build specific framework as XCFramework
 # Available schemes: Core, CoreDataUtilities, DI, Networking, Telemetry, Utilities
 ```
 
-### Testing
+### 🧪 Testing & Quality
 ```bash
 make test              # Run all unit tests
+make lint              # Run SwiftLint for code quality checks
 ```
 
-### Development Workflows
+### 🛠️ Development Workflows
 ```bash
-make dev               # Clean, generate, and build
-make all               # Generate, build, and test (CI workflow)
+make dev               # Clean, generate, and build (development reset)
+make all               # Generate, build, and test (full CI workflow)
+make clean             # Clean all generated files and build artifacts
 ```
 
-### Utilities
+### 📚 Help & Information
 ```bash
-make clean             # Clean generated files
-make lint              # Run SwiftLint
-make open              # Open Xcode project
-make help              # Show all available commands
+make help              # Show all available commands with descriptions
 ```
+
+> **Pro Tip:** Start with `make genbuild` for a complete setup, then use `make framework SCHEME=<name>` for individual framework development.
 
 ## Framework Dependencies
 
-The frameworks have the following dependency order:
+```mermaid
+graph TD
+    Utilities["Utilities"]
+    Core["Core"]
+    CoreDataUtilities["CoreDataUtilities"]
+    DI["DI"]
+    Networking["Networking"]
+    Telemetry["Telemetry"]
 
-1. **Utilities** - No dependencies
-2. **Core** - Depends on Utilities
-3. **CoreDataUtilities** - Depends on Utilities
-4. **DI** - No dependencies
-5. **Networking** - Depends on Utilities
-6. **Telemetry** - Depends on Utilities
-
-## Building Individual Frameworks
-
-### Build a Single Framework
-```bash
-# Build Core framework
-make framework SCHEME=Core
-
-# Build Utilities framework
-make framework SCHEME=Utilities
-
-# Build Networking framework
-make framework SCHEME=Networking
+    Core --> Utilities
+    CoreDataUtilities --> Utilities
+    Networking --> Utilities
+    Telemetry --> Utilities
+    
+    %% Explicitly show DI as independent
+    DI
 ```
 
-### Build Dependencies First
-```bash
-# Build Utilities first (dependency)
-make framework SCHEME=Utilities
-
-# Then build frameworks that depend on it
-make framework SCHEME=Core
-make framework SCHEME=Networking
-```
+The diagram above shows the dependency relationships between frameworks. **Utilities** is the foundational module, while **DI** is completely independent.
 
 ## XCFramework Creation
 
@@ -126,68 +164,12 @@ This will:
 2. Build the framework for simulator (iphonesimulator)
 3. Create an XCFramework in `DerivedData/XCFrameworks/`
 
-## Development Workflow
+## Running Unit Tests
 
-### Daily Development
-```bash
-# Start your day
-make dev
+Select a scheme and press <kbd>Command</kbd>+<kbd>U</kbd> in Xcode to build a component and run its unit tests.
 
-# Work on a specific framework
-make framework SCHEME=Core
-
-# Run tests
-make test
-
-# Lint code
-make lint
-```
-
-### CI/CD Pipeline
-```bash
-# Full CI workflow
-make all
-```
-
-## Project Configuration
-
-### XcodeGen (project.yml)
-- Defines all frameworks, their sources, and dependencies
-- Configures SwiftLint build phases
-- Sets up schemes for each framework
-- Includes AWS SDK Swift dependency for Telemetry
-
-### SwiftLint
-- Runs automatically on build for all frameworks
-- Uses configuration from `.swiftlint.yml` in project root
-- Custom rules for code quality enforcement
-
-## Troubleshooting
-
-### Build Issues
-```bash
-# Clean everything and start fresh
-make clean
-make dev
-```
-
-### XCFramework Issues
-```bash
-# Ensure frameworks are built with proper module settings
-make framework SCHEME=Core
-```
-
-### Missing Dependencies
-```bash
-# Install required tools
-brew install xcodegen swiftlint
-```
 
 ## Contributing
 
-1. Use the provided Makefile commands for all build operations
-2. Ensure your code passes SwiftLint: `make lint`
-3. Run tests before committing: `make test`
-4. Follow the dependency order when building frameworks
+See [CONTRIBUTING.md](CONTRIBUTING.md) for more information on contributing to the Truvideo iOS SDK.
 
-## License

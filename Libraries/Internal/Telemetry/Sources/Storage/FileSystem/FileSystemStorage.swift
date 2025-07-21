@@ -14,7 +14,7 @@ import Utilities
 /// This is particularly useful for caching or persisting lightweight state across app launches.
 struct FileSystemStorage: Storage {
     // MARK: - Private Properties
-    
+
     private let decoder = JSONDecoder()
     private let encoder = JSONEncoder()
     private let fileManager: FileManager

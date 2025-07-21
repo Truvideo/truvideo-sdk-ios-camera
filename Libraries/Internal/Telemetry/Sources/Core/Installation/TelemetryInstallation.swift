@@ -25,20 +25,20 @@ public protocol TelemetryInstallation {
 /// consistency across app launches, unless the app data is removed or reset.
 struct InstallationProvider: TelemetryInstallation {
     // MARK: - Private Properties
-            
+
     private let storage: Storage
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a new `InstallationProvider` using the specified `Storage` instance.
     ///
     /// - Parameter storage: A type that can convert types into and out of an external representation.
     init(storage: Storage = FileSystemStorage()) {
         self.storage = storage
     }
-    
+
     // MARK: - TelemetryInstallation
-    
+
     /// Retrieves the unique identifier associated with the current app installation.
     ///
     /// - Returns: A stable `UUID` identifier that uniquely represents the current installation.
@@ -46,11 +46,11 @@ struct InstallationProvider: TelemetryInstallation {
         do {
             guard let uniqueIdentifier = try storage.readValue(for: InstallationIdStorageKey.self) else {
                 let uniqueIdentifier = UUID()
-                
+
                 try storage.write(uniqueIdentifier, forKey: InstallationIdStorageKey.self)
                 return uniqueIdentifier
             }
-            
+
             return uniqueIdentifier
         } catch {
             // LOG Error

@@ -66,6 +66,7 @@
 # SwiftLint Configuration
 
 disabled_rules:
+  - trailing_comma
   - trailing_whitespace
 
 opt_in_rules:

@@ -32,13 +32,13 @@ public enum MetadataValue: Sendable {
 
     /// A metadata value which is a `Bool`.
     case bool(Bool)
-    
+
     /// A metadata value which is a dictionary from `String` to `MetadataValue`.
     case dictionary(Metadata)
-    
+
     /// A metadata value which is a `Double`.
     case double(Double)
-    
+
     /// A metadata value which is a `Int`.
     case int(Int)
 
@@ -55,16 +55,16 @@ extension MetadataValue: CustomStringConvertible {
         switch self {
         case .array(let list):
             return list.map(\.description).description
-            
+
         case .bool(let bool):
             return bool.description
-            
+
         case .dictionary(let dict):
             return dict.mapValues(\.description).description
 
         case .double(let double):
             return double.description
-            
+
         case .int(let int):
             return int.description
 
@@ -75,9 +75,9 @@ extension MetadataValue: CustomStringConvertible {
 }
 
 extension MetadataValue: Decodable {
-    
+
     // MARK: - Decodable
-    
+
     /// Creates a new instance by decoding from the given decoder.
     ///
     /// This initializer throws an error if reading from the decoder fails, or
@@ -86,7 +86,7 @@ extension MetadataValue: Decodable {
     /// - Parameter decoder: The decoder to read data from.
     public init(from decoder: any Decoder) throws {
         let container = try decoder.singleValueContainer()
-        
+
         if let value = try? container.decode([MetadataValue].self) {
             self = .array(value)
         } else if let value = try? container.decode(Bool.self) {
@@ -100,15 +100,15 @@ extension MetadataValue: Decodable {
         } else if let value = try? container.decode(String.self) {
             self = .string(value)
         }
-        
+
         throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid MetadataValue")
     }
 }
 
 extension MetadataValue: Encodable {
-    
+
     // MARK: - Encodable
-    
+
     /// Encodes this value into the given encoder.
     ///
     /// If the value fails to encode anything, `encoder` will encode an empty
@@ -122,19 +122,19 @@ extension MetadataValue: Encodable {
         switch self {
         case .array(let array):
             try array.encode(to: encoder)
-            
+
         case .bool(let bool):
             try bool.encode(to: encoder)
-            
+
         case .dictionary(let dictionary):
             try dictionary.encode(to: encoder)
-            
+
         case .double(let double):
             try double.encode(to: encoder)
-            
+
         case .int(let int):
             try int.encode(to: encoder)
-            
+
         case .string(let string):
             try string.encode(to: encoder)
         }
@@ -157,13 +157,13 @@ extension MetadataValue: Equatable {
 
         case let (.bool(lhs), .bool(rhs)):
             return lhs == rhs
-            
+
         case let (.dictionary(lhs), .dictionary(rhs)):
             return lhs == rhs
-            
+
         case let (.double(lhs), .double(rhs)):
             return lhs == rhs
-            
+
         case let (.int(lhs), .int(rhs)):
             return lhs == rhs
 
@@ -189,7 +189,7 @@ extension MetadataValue: ExpressibleByArrayLiteral {
 extension MetadataValue: ExpressibleByBooleanLiteral {
 
     // MARK: - ExpressibleByBooleanLiteral
-    
+
     /// Creates an instance initialized to the given Boolean value.
     public init(booleanLiteral value: Bool) {
         self = .bool(value)
@@ -209,7 +209,7 @@ extension MetadataValue: ExpressibleByDictionaryLiteral {
 extension MetadataValue: ExpressibleByFloatLiteral {
 
     // MARK: - ExpressibleByFloatLiteral
-    
+
     /// Creates an instance initialized to the specified floating-point value.
     public init(floatLiteral value: Double) {
         self = .double(value)
@@ -219,7 +219,7 @@ extension MetadataValue: ExpressibleByFloatLiteral {
 extension MetadataValue: ExpressibleByIntegerLiteral {
 
     // MARK: - ExpressibleByIntegerLiteral
-    
+
     /// Creates an instance initialized to the specified integer value.
     public init(integerLiteral value: Int) {
         self = .int(value)

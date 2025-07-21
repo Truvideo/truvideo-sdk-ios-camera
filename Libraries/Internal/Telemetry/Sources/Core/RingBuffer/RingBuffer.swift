@@ -23,18 +23,18 @@ import Foundation
 /// ```
 struct RingBuffer<Element>: Sequence {
     // MARK: - Private Properties
-        
+
     private var buffer: [Element?]
     private var bufferIndex: Array<Element>.Index
     private let maxCapacity: Int
-    
+
     // MARK: - Computed Properties
-    
+
     /// The number of elements in the array.
     var count: Int {
         bufferIndex + 1
     }
-    
+
     /// A boolean indicating if the ring is full.
     var isFull: Bool {
         bufferIndex == maxCapacity - 1
@@ -77,13 +77,13 @@ struct RingBuffer<Element>: Sequence {
         }
 
         buffer[bufferIndex] = element
-        
+
         if isFull {
             buffer.removeFirst()
         } else {
             bufferIndex += 1
         }
-        
+
         return element
     }
 

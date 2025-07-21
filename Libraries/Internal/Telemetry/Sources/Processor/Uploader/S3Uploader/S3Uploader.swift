@@ -2,12 +2,11 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import Foundation
-import Utilities
-
 internal import AWSS3
 internal import AWSSDKIdentity
+import Foundation
 internal import Smithy
+import Utilities
 
 /// A concrete implementation of the `Uploader` protocol that uploads `Encodable` objects to Amazon S3.
 ///

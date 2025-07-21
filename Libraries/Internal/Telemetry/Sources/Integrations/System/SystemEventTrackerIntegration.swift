@@ -15,59 +15,59 @@ import Utilities
 /// for diagnostic and observability purposes.
 final class SystemEventTrackerIntegration: TelemetryIntegration {
     // MARK: - Private Properties
-    
+
     private let pathMonitor: NWPathMonitor
     private let queue = DispatchQueue(label: "com.truvideo.telemetry.systemEventTracker.queue")
-    
+
     private weak var telemetryManager: TelemetryManager?
-    
+
     // MARK: - Breadcrumb Categories
-    
+
     private let appLifecycleCategory = "app.lifecycle"
     private let deviceConnectivityCategory = "device.connectivity"
     private let deviceEventCategory = "device.event"
     private let deviceOrientationCategory = "device.orientation"
-    
+
     // MARK: - Initializer
-    
+
     /// Initializes a new instance of the system event tracker.
     ///
     /// - Parameter pathMonitor: Optional dependency injection for the network monitor.
     init(pathMonitor: NWPathMonitor = NWPathMonitor()) {
         self.pathMonitor = pathMonitor
-        
+
         startMonitoringAppLifecycleChanges()
         startMonitoringDeviceStateChanges()
         startMonitoringTimeZoneChanges()
-        
+
         pathMonitor.pathUpdateHandler = { [weak self] newPath in
             guard let self = self else { return }
-            
+
             telemetryManager?.captureBreadcrumb(
                 deviceConnectivityCategory,
                 severity: .info,
                 metadata: [
                     "connectivityType": .string(newPath.connectivityType),
-                    "status": .string(newPath.status.debugDescription)
+                    "status": .string(newPath.status.debugDescription),
                 ]
             )
         }
-        
+
         pathMonitor.start(queue: queue)
     }
-    
+
     deinit {
         NotificationCenter.default.removeObserver(self)
         pathMonitor.cancel()
     }
-    
+
     // MARK: - Notification methods
-    
+
     @objc
     func didReceiveBackgroundNotification(_ notification: Notification) {
         telemetryManager?.captureBreadcrumb(appLifecycleCategory, severity: .info, metadata: ["state": "background"])
     }
-    
+
     @objc
     func didReceiveBatteryStateDidChangeNotification(_ notification: Notification) {
         if let currentDevice = notification.object as? UIDevice {
@@ -77,17 +77,17 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
                 metadata: [
                     "isLowPowerModeEnabled": .bool(ProcessInfo.processInfo.isLowPowerModeEnabled),
                     "isPlugged": .bool([.charging, .full].contains(currentDevice.batteryState)),
-                    "level": currentDevice.batteryState != .unknown ? "\(currentDevice.batteryLevel * 100)" : "Unknown"
+                    "level": currentDevice.batteryState != .unknown ? "\(currentDevice.batteryLevel * 100)" : "Unknown",
                 ]
             )
         }
     }
-    
+
     @objc
     func didReceiveBecomeActiveNotification(_ notification: Notification) {
         telemetryManager?.captureBreadcrumb(appLifecycleCategory, severity: .info, metadata: ["state": "foreground"])
     }
-    
+
     @objc
     func didReceiveMemoryWarningNotification(_ notification: Notification) {
         telemetryManager?.captureBreadcrumb(
@@ -96,11 +96,11 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
             message: "Low memory",
             metadata: [
                 "freeMemory": .string(UIDevice.current.freeMemory?.description ?? "Unknown"),
-                "totalMemory": .int(Int(ProcessInfo.processInfo.physicalMemory))
+                "totalMemory": .int(Int(ProcessInfo.processInfo.physicalMemory)),
             ]
         )
     }
-    
+
     @objc
     func didReceiveOrientationDidChangeNotification(_ notification: Notification) {
         if let currentDevice = notification.object as? UIDevice, currentDevice.orientation.isValidInterfaceOrientation {
@@ -111,7 +111,7 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
             )
         }
     }
-    
+
     @objc
     func didReceiveTimeZoneDidChangeNotification(_ notification: Notification) {
         if let abbreviation = TimeZone.current.abbreviation() {
@@ -122,18 +122,18 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
             )
         }
     }
-        
+
     // MARK: - TelemetryIntegration
-    
+
     /// Installs the telemetry integration into the provided telemetry manager.
     ///
     /// - Parameter manager: The central `TelemetryManager` responsible for coordinating integrations.
     func install(on manager: TelemetryManager) {
         telemetryManager = manager
     }
-    
+
     // MARK: - Private methods
-    
+
     private func startMonitoringAppLifecycleChanges() {
         NotificationCenter.default.addObserver(
             self,
@@ -141,14 +141,14 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
             name: UIApplication.didEnterBackgroundNotification,
             object: nil
         )
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didReceiveBecomeActiveNotification(_:)),
             name: UIApplication.didBecomeActiveNotification,
             object: nil
         )
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didReceiveMemoryWarningNotification(_:)),
@@ -156,30 +156,30 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
             object: nil
         )
     }
-    
+
     private func startMonitoringDeviceStateChanges() {
         if !UIDevice.current.isBatteryMonitoringEnabled {
             UIDevice.current.isBatteryMonitoringEnabled = true
         }
-        
+
         if !UIDevice.current.isGeneratingDeviceOrientationNotifications {
             UIDevice.current.beginGeneratingDeviceOrientationNotifications()
         }
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didReceiveBatteryStateDidChangeNotification(_:)),
             name: UIDevice.batteryLevelDidChangeNotification,
             object: nil
         )
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didReceiveBatteryStateDidChangeNotification(_:)),
             name: UIDevice.batteryStateDidChangeNotification,
             object: nil
         )
-        
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didReceiveOrientationDidChangeNotification(_:)),
@@ -187,7 +187,7 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
             object: nil
         )
     }
-    
+
     private func startMonitoringTimeZoneChanges() {
         NotificationCenter.default.addObserver(
             self,
@@ -198,7 +198,7 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
     }
 }
 
-private extension TelemetryManager {
+extension TelemetryManager {
     /// Captures a breadcrumb entry with the given parameters and sends it to the telemetry system.
     ///
     /// - Parameters:
@@ -206,7 +206,12 @@ private extension TelemetryManager {
     ///   - severity: The severity level of the event.
     ///   - message: An optional message for context.
     ///   - metadata: Additional key-value pairs describing the event.
-    func captureBreadcrumb(_ category: String, severity: Severity, message: String? = nil, metadata: Metadata = [:]) {
+    fileprivate func captureBreadcrumb(
+        _ category: String,
+        severity: Severity,
+        message: String? = nil,
+        metadata: Metadata = [:]
+    ) {
         let breadcrumb = Breadcrumb(
             severity: severity,
             source: "Telemetry",
@@ -214,7 +219,7 @@ private extension TelemetryManager {
             message: message,
             metadata: metadata
         )
-        
+
         capture(breadcrumb)
     }
 }

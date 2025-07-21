@@ -58,7 +58,7 @@ struct UserDefaultsStorage: Storage {
         guard let data = userDefaults.value(forKey: key.name) as? Data else {
             return nil
         }
-        
+
         do {
             return try decoder.decode(Key.Value.self, from: data)
         } catch {

@@ -20,6 +20,14 @@ targets:
         - CoreTests
     postCompileScripts:
       - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Core/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
           if which swiftlint > /dev/null; then
             swiftlint
           else
@@ -49,6 +57,14 @@ targets:
       testTargets:
         - CoreDataUtilitiesTests
     postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/CoreDataUtilities/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
       - script: |
           if which swiftlint > /dev/null; then
             swiftlint
@@ -80,6 +96,14 @@ targets:
         - DITests
     postCompileScripts:
       - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/DI/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
           if which swiftlint > /dev/null; then
             swiftlint
           else
@@ -110,6 +134,14 @@ targets:
         - NetworkingTests
     postCompileScripts:
       - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Networking/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
           if which swiftlint > /dev/null; then
             swiftlint
           else
@@ -139,6 +171,14 @@ targets:
       testTargets:
         - TelemetryTests
     postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Telemetry/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
       - script: |
           if which swiftlint > /dev/null; then
             swiftlint
@@ -171,6 +211,14 @@ targets:
       testTargets:
         - UtilitiesTests
     postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Utilities/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
       - script: |
           if which swiftlint > /dev/null; then
             swiftlint

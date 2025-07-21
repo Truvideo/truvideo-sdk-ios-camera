@@ -2,9 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import Foundation
-
 internal import AWSS3
+import Foundation
 
 /// A protocol that defines the interface for uploading objects to an Amazon S3 bucket.
 ///

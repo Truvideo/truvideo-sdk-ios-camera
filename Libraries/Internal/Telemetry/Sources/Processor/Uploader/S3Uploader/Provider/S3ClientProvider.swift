@@ -2,10 +2,9 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import Foundation
-
 internal import AWSS3
 internal import AWSSDKIdentity
+import Foundation
 internal import Smithy
 
 /// A protocol that defines a provider responsible for creating instances of `S3ClientProtocol`.

@@ -18,13 +18,13 @@ import Foundation
 public struct StackFrame: Codable, Hashable, Sendable {
     /// The name of the function where the stack frame was captured.
     public let function: String
-    
+
     /// The file path where the function is defined.
     public let file: String
-    
+
     /// The line number in the file where the stack frame was captured.
     public let line: Int
-    
+
     // MARK: - Initializer
 
     /// Initializes a new instance of `StackFrame` with the provided function, file, and line.

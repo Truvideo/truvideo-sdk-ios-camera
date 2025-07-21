@@ -19,18 +19,18 @@ import Utilities
 struct RuntimeContextProvider: ContextProvider {
 
     // MARK: - ContextProvider
-    
+
     /// Creates and returns a `Context` object representing the current system and environment state.
     ///
     /// - Returns: A `Context` instance containing up-to-date device and OS information.
     func makeContext() -> Context {
         let currentDevice = UIDevice.current
         let processInfo = ProcessInfo.processInfo
-        
+
         if !currentDevice.isBatteryMonitoringEnabled {
             currentDevice.isBatteryMonitoringEnabled = true
         }
-        
+
         return Context(
             device: Context.Device(
                 battery: Context.Device.Battery(

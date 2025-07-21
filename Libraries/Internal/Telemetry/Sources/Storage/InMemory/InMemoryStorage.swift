@@ -18,7 +18,7 @@ import Utilities
 /// let value = storage.read(key:  "mykey")
 class InMemoryStorage: Storage {
     // MARK: - Private Properties
-    
+
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private var storage: [String: Data] = [:]
@@ -56,7 +56,7 @@ class InMemoryStorage: Storage {
         guard let data = storage[key.name] else {
             return nil
         }
-        
+
         do {
             return try decoder.decode(Key.Value.self, from: data)
         } catch {
@@ -71,7 +71,7 @@ class InMemoryStorage: Storage {
     ///   - key: The key type associated with the value.
     /// - Throws: An error if the write operation fails.
     func write<Key: StorageKey>(_ value: Key.Value, forKey key: Key.Type) throws {
-        do {            
+        do {
             storage[key.name] = try encoder.encode(value)
         } catch {
             throw UtilityError(kind: .StorageErrorReason.writeFailed, underlyingError: error)

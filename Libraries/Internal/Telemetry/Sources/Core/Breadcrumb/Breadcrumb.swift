@@ -27,19 +27,19 @@ import Foundation
 public struct Breadcrumb: Codable, Sendable {
     /// The logical grouping of the breadcrumb, typically used for filtering or categorizing related events.
     public let category: String
-    
+
     /// An optional message describing the event or context.
     public let message: String?
-    
+
     /// Additional structured metadata that provides details about the event.
     public let metadata: Metadata?
-    
+
     /// The severity level of the breadcrumb.
     public let severity: Severity
-    
+
     /// The source of the breadcrumb, typically the file or component name.
     public let source: String
-    
+
     /// The timestamp indicating when the breadcrumb was recorded.
     public let timestamp: Date
 

@@ -14,41 +14,41 @@ import Foundation
 public struct Session: Codable, Equatable, Identifiable, Sendable {
     /// A unique identifier for the session.
     public let id: UUID
-    
+
     /// A unique identifier for the installation associated with this session.
     public let installationId: UUID
-    
+
     /// The time at which the session ended, if applicable.
     public private(set) var endedAt: Date?
-    
+
     /// The number of errors recorded during the session.
     public internal(set) var errors: Int
-    
+
     /// The time at which the session started.
     public let startedAt: Date
-    
+
     /// The final status of the session, indicating how it ended.
     public private(set) var status: Status
-    
+
     // MARK: - Types
-    
+
     /// Represents the possible final states of a session.
     public enum Status: String, Codable, Sendable {
         /// The session ended abnormally (e.g., due to OS termination).
         case abnormal
-        
+
         /// The session ended due to an application crash.
         case crashed
-        
+
         /// The session ended gracefully via an exit.
         case exited
-        
+
         /// The session completed successfully without issues.
         case ok
     }
-    
+
     // MARK: - Initializer
-    
+
     /// Initializes a new session with the given installation ID and optional start time.
     ///
     /// - Parameters:
@@ -62,7 +62,7 @@ public struct Session: Codable, Equatable, Identifiable, Sendable {
         self.startedAt = startedAt
         self.status = .ok
     }
-    
+
     // MARK: - Instance methods
 
     /// Marks the session as ended, recording the given date and status.

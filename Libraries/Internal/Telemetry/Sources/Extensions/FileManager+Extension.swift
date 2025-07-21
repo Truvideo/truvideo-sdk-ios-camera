@@ -8,8 +8,9 @@ extension FileManager {
     var telemetryDirectory: URL {
         let fileManager = FileManager.default
         let url = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first ?? fileManager.temporaryDirectory
-        
-        return url
+
+        return
+            url
             .appendingPathComponent("com.truvideo.telemetry")
     }
 }
