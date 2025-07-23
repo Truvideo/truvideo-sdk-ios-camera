@@ -82,35 +82,35 @@ public protocol RequestBuilder {
 ///   - All networking tasks are automatically handled on background queues to avoid blocking the main thread.
 open class Session: @unchecked Sendable {
     // MARK: - Private Properties
-    
+
     private let cache: URLCache?
-    
+
     // MARK: - Properties
-    
+
     /// The list of currently active `Request`s.
     var activeRequests: Set<Request> = []
-    
+
     // MARK: - Public Properties
-    
+
     // swiftlint:disable weak_delegate
     /// The delegate responsible for handling session events such as task completion and failures.
     public let delegate: SessionDelegate
     // swiftlint:enable weak_delegate
-    
+
     /// An optional middleware used to modify or intercept requests before execution.
     public let middleware: RequestMiddleware?
-    
+
     /// An optional monitor for observing and logging request events throughout their lifecycle.
     public let monitor: Monitor?
-    
+
     /// The dispatch queue responsible for executing networking operations.
     public let queue: DispatchQueue
-    
+
     /// The underlying `URLSession` instance that manages HTTP networking.
     public let session: URLSession
-    
+
     // MARK: - Types
-    
+
     /// A builder responsible for constructing a `URLRequest` with configurable parameters, method, headers, and encoding.
     ///
     /// `URLRequestBuilder` conforms to the `RequestBuilder` protocol and provides a structured way to build HTTP requests.
@@ -135,21 +135,21 @@ open class Session: @unchecked Sendable {
     struct URLRequestBuilder: RequestBuilder {
         /// The target URL for the HTTP request, conforming to `URLConvertible`.
         let url: URLConvertible
-        
+
         /// The HTTP method to be used for the request (e.g., `GET`, `POST`, `PUT`).
         let method: HTTPMethod
-        
+
         /// A dictionary of parameters to be included in the request.
         let parameters: Parameters?
-        
+
         /// An encoder responsible for encoding the parameters into the request.
         let encoder: ParameterEncoder
-        
+
         /// Additional HTTP headers to include in the request.
         let headers: HTTPHeaders?
-            
+
         // MARK: - RequestBuilder
-        
+
         /// Builds and returns a configured `URLRequest` instance.
         ///
         /// This method should be implemented by conforming types to provide the necessary logic for constructing
@@ -160,13 +160,13 @@ open class Session: @unchecked Sendable {
         /// - Returns: A fully configured `URLRequest` instance ready for execution.
         func build() throws -> URLRequest {
             let request = try URLRequest(url: url, method: method, headers: headers)
-            
+
             return try encoder.encode(parameters, into: request)
         }
     }
-    
+
     // MARK: - Initializer
-    
+
     /// Initializes a custom networking session with the specified configuration and dependencies.
     ///
     /// - Parameters:
@@ -186,18 +186,18 @@ open class Session: @unchecked Sendable {
         monitors: [Monitor] = [],
         queue: DispatchQueue = DispatchQueue(label: "com.networking.session.queue")
     ) {
-        
+
         self.cache = cache
         self.delegate = delegate
         self.middleware = middleware
         self.monitor = CompositeMonitor(monitors: monitors)
         self.queue = queue
         self.session = session
-        
+
         delegate.monitor = monitor
         delegate.provider = self
     }
-    
+
     /// Creates and initializes a networking session using default configuration settings.
     ///
     /// This convenience initializer automatically sets up a `URLSession` with a specified configuration, a delegate, and operation queues.
@@ -206,7 +206,7 @@ open class Session: @unchecked Sendable {
     /// - Parameters:
     ///   - configuration: A `URLSessionConfiguration` instance that defines behavior for the networking session (default is `.createDefault()`).
     ///   - delegate: A `SessionDelegate` instance responsible for handling session events (default is a new `SessionDelegate` instance).
-    ///   - cache: The cache for providing cached responses to requests within the session.    
+    ///   - cache: The cache for providing cached responses to requests within the session.
     ///   - middleware: An optional `RequestMiddleware` instance used for modifying requests before execution (default is `nil`).
     ///   - monitors: An optional `RequestMonitor`s list for observing request events.
     ///   - queue: A `DispatchQueue` used for networking operations (default is a custom background queue).
@@ -219,11 +219,11 @@ open class Session: @unchecked Sendable {
         monitors: [Monitor] = [],
         queue: DispatchQueue = DispatchQueue(label: "com.networking.session.queue")
     ) {
-        
+
         let serialQueue = queue === DispatchQueue.main ? queue : DispatchQueue(label: queue.label, target: queue)
         let delegateQueue = OperationQueue.createDefault(with: serialQueue)
         let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: delegateQueue)
-        
+
         self.init(
             session: session,
             delegate: delegate,
@@ -233,7 +233,7 @@ open class Session: @unchecked Sendable {
             queue: serialQueue
         )
     }
-    
+
     deinit {
         let error = NetworkingError(kind: .sessionInvalidated, failureReason: "Session deinitialized.")
 
@@ -244,9 +244,9 @@ open class Session: @unchecked Sendable {
         }
         session.invalidateAndCancel()
     }
-    
+
     // MARK: - Public methods
-    
+
     /// Cancels all active network requests.
     ///
     /// This method asynchronously iterates through all currently active requests and cancels them.
@@ -255,7 +255,7 @@ open class Session: @unchecked Sendable {
             self.activeRequests.forEach { $0.cancel() }
         }
     }
-    
+
     /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
     ///
     /// - Parameters:
@@ -276,7 +276,7 @@ open class Session: @unchecked Sendable {
         middleware: RequestMiddleware? = nil,
         cachePolicy: URLCachePolicy = .reloadIgnoringLocalCacheData
     ) -> DataRequest {
-        
+
         let requestBuilder = URLRequestBuilder(
             url: url,
             method: method,
@@ -284,10 +284,10 @@ open class Session: @unchecked Sendable {
             encoder: encoder,
             headers: headers
         )
-        
+
         return request(requestBuilder, middleware: middleware, cachePolicy: cachePolicy)
     }
-    
+
     /// Creates and initiates a `DataRequest` using the provided request builder and optional middleware.
     ///
     /// This method constructs a `DataRequest` by utilizing the given `RequestBuilder` to configure the request.
@@ -304,7 +304,7 @@ open class Session: @unchecked Sendable {
         middleware: RequestMiddleware? = nil,
         cachePolicy: URLCachePolicy = .reloadIgnoringLocalCacheData
     ) -> DataRequest {
-        
+
         let dataRequest = DataRequest(
             requestBuilder: requestBuilder,
             cache: cache,
@@ -314,71 +314,75 @@ open class Session: @unchecked Sendable {
             monitor: monitor,
             queue: queue
         )
-                
+
         perform(dataRequest)
-        
+
         return dataRequest
     }
-    
+
     // MARK: - Private methods
-    
+
     private func configure(_ request: Request, requestBuilder: RequestBuilder) {
         dispatchPrecondition(condition: .onQueue(queue))
 
         let urlRequest: URLRequest
-        
+
         do {
             urlRequest = try requestBuilder.build()
         } catch {
-            let error = error as? NetworkingError ?? NetworkingError(
-                kind: .requestCreationFailed,
-                underlyingError: error
-            )
-            
+            let error =
+                error as? NetworkingError
+                ?? NetworkingError(
+                    kind: .requestCreationFailed,
+                    underlyingError: error
+                )
+
             request.didFailToCreateURLRequest(with: error)
-            
+
             return
         }
-        
+
         request.didCreateInitial(request: urlRequest)
         request.prepare()
-        
+
         guard ![.cancelled, .finished].contains(request.state) else { return }
-        
+
         guard let middleware = middleware(for: request) else {
             didCreate(urlRequest: urlRequest, for: request)
             return
         }
-        
+
         Task {
             do {
                 let interceptedRequest = try await middleware.intercept(urlRequest, for: self)
-                
+
                 queue.async {
                     request.didIntercept(urlRequest, to: interceptedRequest)
                     self.didCreate(urlRequest: urlRequest, for: request)
                 }
             } catch {
                 queue.async {
-                    let error = error as? NetworkingError ?? NetworkingError(
-                        kind: .requestInterceptationFailed,
-                        underlyingError: error
-                    )
+                    let error =
+                        error as? NetworkingError
+                        ?? NetworkingError(
+                            kind: .requestInterceptationFailed,
+                            underlyingError: error
+                        )
 
                     request.didFailToIntercept(urlRequest, with: error)
                 }
             }
         }
     }
-    
+
     private func didCreate(urlRequest: URLRequest, for request: Request) {
         dispatchPrecondition(condition: .onQueue(queue))
-        
+
         request.didCreate(urlRequest: urlRequest)
-        
+
         if request.state != .cancelled {
             let task = session.dataTask(with: urlRequest)
-            
+
             request.didCreate(task: task)
         }
     }
@@ -387,47 +391,49 @@ open class Session: @unchecked Sendable {
         guard
             /// The local request middleware.
             let requestMiddleware = request.middleware,
-            
+
             /// The global middleware.
-            let sessionMiddleware = middleware else {
-            
+            let sessionMiddleware = middleware
+        else {
+
             return request.middleware ?? middleware
         }
-        
+
         return Middleware(interceptors: [requestMiddleware, sessionMiddleware], retriers: [])
     }
-    
+
     private func perform(_ request: Request) {
         queue.async {
             self.activeRequests.insert(request)
-            
+
             switch request {
             case let dataRequest as DataRequest:
                 self.performDataRequest(dataRequest)
-                
+
             default:
                 fatalError("Unsupported request type: \(type(of: request))")
             }
         }
     }
-    
+
     private func performDataRequest(_ request: DataRequest) {
         dispatchPrecondition(condition: .onQueue(queue))
-        
+
         configure(request, requestBuilder: request.requestBuilder)
     }
-    
+
     private func retrier(for request: Request) -> RequestRetrier? {
         guard
             /// The local request middleware.
             let requestMiddleware = request.middleware,
-            
+
             /// The global middleware.
-            let sessionMiddleware = middleware else {
-            
+            let sessionMiddleware = middleware
+        else {
+
             return request.middleware ?? middleware
         }
-        
+
         return Middleware(interceptors: [], retriers: [requestMiddleware, sessionMiddleware])
     }
 }
@@ -437,9 +443,9 @@ extension Session: RequestDelegate {
     public var sessionConfiguration: URLSessionConfiguration {
         session.configuration
     }
-    
+
     // MARK: - Types
-    
+
     /// An error type that represents failures encountered during the request retry process.
     ///
     /// `RetryError` is used to capture and describe errors that occur when a retry attempt fails.
@@ -448,23 +454,23 @@ extension Session: RequestDelegate {
     public enum RetryError: LocalizedError {
         /// `RequestRetrier` threw an error during the request retry process.
         case retryFailed(error: Error, originalError: Error)
-        
+
         // MARK: LocalizedError
-        
+
         /// A localized message describing what error occurred.
         public var errorDescription: String? {
             switch self {
             case let .retryFailed(error, originalError):
-                                    """
-                                    Request retry failed with retry error: \(error.localizedDescription), \
-                                    original error: \(originalError.localizedDescription)
-                                    """
+                """
+                Request retry failed with retry error: \(error.localizedDescription), \
+                original error: \(originalError.localizedDescription)
+                """
             }
         }
     }
-    
+
     // MARK: - RequestDelegate
-    
+
     /// Handles the completion of a network request.
     ///
     /// This method is called when a `Request` instance has successfully completed its lifecycle,
@@ -476,7 +482,7 @@ extension Session: RequestDelegate {
     public func requestDidComplete(_ request: Request) {
         activeRequests.remove(request)
     }
-    
+
     /// Retries a request after a specified delay.
     ///
     /// This method is called when a request needs to be retried after a failure.
@@ -492,7 +498,7 @@ extension Session: RequestDelegate {
             }
         }
     }
-    
+
     /// Determines whether a failed request should be retried.
     ///
     /// This method evaluates the error that caused the request failure and determines
@@ -507,15 +513,15 @@ extension Session: RequestDelegate {
         guard let retrier = retrier(for: request) else {
             return .doNotRetry
         }
-        
+
         let retryPolicy = await retrier.retry(request, for: self, failedWith: error)
-        
+
         switch retryPolicy {
         case .doNotRetryWithError(let retryError):
             let error = RetryError.retryFailed(error: retryError, originalError: error)
-            
+
             return .doNotRetryWithError(error)
-            
+
         default:
             return retryPolicy
         }
@@ -523,43 +529,43 @@ extension Session: RequestDelegate {
 }
 
 extension Session: SessionDelegateProvider {
-    
+
     // MARK: - SessionDelegateProvider
-    
+
     /// Retrieves the `Request` associated with a given URL session task.
     ///
     /// - Parameter task: The `URLSessionTask` for which to retrieve the request.
     /// - Returns: The corresponding `Request` instance, if available.
     func request(for task: URLSessionTask) -> Request? {
         dispatchPrecondition(condition: .onQueue(queue))
-        
+
         return activeRequests.first(where: { $0.tasks.contains(task) })
     }
-    
+
     /// Called when the session becomes invalid due to an error.
     ///
     /// - Parameter error: An optional `Error` indicating why the session became invalid.
     func sessionDidBecomeInvalid(with error: Error?) {
         dispatchPrecondition(condition: .onQueue(queue))
-        
+
         let error = NetworkingError(kind: .sessionInvalidated, underlyingError: error)
         activeRequests.forEach { $0.finish(error: error) }
     }
 }
 
-private extension OperationQueue {
+extension OperationQueue {
     /// Creates a default `OperationQueue` with the provided name.
     ///
     /// - Parameter queue: The worker queue.
     /// - Returns: A new instance of the `OperationQueue`.
-    static func createDefault(with queue: DispatchQueue) -> OperationQueue {
+    fileprivate static func createDefault(with queue: DispatchQueue) -> OperationQueue {
         let operationQueue = OperationQueue()
-        
+
         operationQueue.maxConcurrentOperationCount = 1
         operationQueue.name = "\(queue.label).sessionDelegate"
         operationQueue.qualityOfService = .default
         operationQueue.underlyingQueue = queue
-        
+
         return operationQueue
     }
 }

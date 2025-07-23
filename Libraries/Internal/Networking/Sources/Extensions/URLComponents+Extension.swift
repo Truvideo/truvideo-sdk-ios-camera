@@ -13,7 +13,7 @@ extension URLComponents: URLConvertible {
         guard let url, !url.absoluteString.isEmpty else {
             throw NetworkingError(kind: .invalidURL, failureReason: "Cannot convert string \(self) to URL.")
         }
-        
+
         return url
     }
 }

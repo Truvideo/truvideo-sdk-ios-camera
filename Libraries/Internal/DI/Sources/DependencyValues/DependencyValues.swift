@@ -11,17 +11,17 @@ import Foundation
 /// custom key types that conform to `DependencyKey`.
 public final class DependencyValues: @unchecked Sendable {
     // MARK: - Private Properties
-    
+
     private let lock = NSLock()
     private var storage: [ObjectIdentifier: any Sendable] = [:]
-    
+
     // MARK: - Properties
-    
+
     /// A task-local storage for managing the current dependency values.
     @TaskLocal public static var current = DependencyValues()
 
     // MARK: - Subscript
-    
+
     /// Allows accessing a dependency by its key type.
     ///
     /// - Parameter key: The key type used to retrieve its associated dependency.
@@ -30,11 +30,11 @@ public final class DependencyValues: @unchecked Sendable {
         get {
             lock.lock()
             defer { lock.unlock() }
-            
+
             if let dependency = storage[ObjectIdentifier(key)] as? Key.Value {
                 return dependency
             }
-            
+
             return key.defaultValue
         }
         set {
@@ -43,7 +43,7 @@ public final class DependencyValues: @unchecked Sendable {
             lock.unlock()
         }
     }
-    
+
     // MARK: - Instance methods
 
     /// Merges the current dependency values with another set of values.
@@ -52,9 +52,9 @@ public final class DependencyValues: @unchecked Sendable {
     /// - Returns: A new `DependencyValues` instance with merged dependencies.
     func merging(_ other: DependencyValues) -> Self {
         lock.lock()
-        
+
         defer { lock.unlock() }
-        
+
         let values = self
         values.storage.merge(other.storage, uniquingKeysWith: { $1 })
         return values
@@ -79,9 +79,9 @@ public func withDependencyValues<R>(
     file: String = #fileID,
     line: UInt = #line
 ) async rethrows -> R {
-    
+
     let dependencyValues = DependencyValues()
-    
+
     return try await DependencyValues.$current.withValue(dependencyValues) {
         try await operation(dependencyValues)
     }

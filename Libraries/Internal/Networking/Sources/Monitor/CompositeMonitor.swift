@@ -21,17 +21,17 @@ import Foundation
 /// In this example, both `loggingMonitor` and `analyticsMonitor` will receive notifications for every request event.
 public struct CompositeMonitor: Monitor {
     // MARK: - Private Properties
-    
+
     private let monitors: [Monitor]
-    
+
     // MARK: - Initializer
-    
+
     public init(monitors: [Monitor]) {
         self.monitors = monitors
     }
-    
+
     // MARK: - RequestMonitor
-    
+
     /// Called when a request is canceled.
     ///
     /// - Parameter request: The `Request` instance that was canceled.
@@ -40,7 +40,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.requestDidCancel(request) }
         }
     }
-    
+
     /// Called when a request finishes successfully.
     ///
     /// - Parameter request: The `Request` instance that completed.
@@ -49,7 +49,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.requestDidFinish(request) }
         }
     }
-    
+
     /// Called when a request is resumed after being suspended.
     ///
     /// - Parameter request: The `Request` instance that resumed execution.
@@ -58,7 +58,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.requestDidResume(request) }
         }
     }
-    
+
     /// Called when a request is suspended.
     ///
     /// - Parameter request: The `Request` instance that was suspended.
@@ -67,7 +67,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.requestDidSuspend(request) }
         }
     }
-    
+
     /// Called when a request is transitioning to a finished state.
     ///
     /// - Parameter request: The `Request` instance preparing to finish.
@@ -76,7 +76,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.requestIsFinishing(request) }
         }
     }
-    
+
     /// Called when a request is being prepared.
     ///
     /// - Parameter request: The `Request` instance that is being prepared.
@@ -85,7 +85,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.requestIsPreparing(request) }
         }
     }
-    
+
     /// Called when a request is being retried.
     ///
     /// - Parameter request: The `Request` instance that is being retried.
@@ -94,7 +94,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.requestIsRetrying(request) }
         }
     }
-    
+
     /// Called when a URLSession task tied to the request is canceled.
     ///
     /// - Parameters:
@@ -105,7 +105,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didCancelTask: task) }
         }
     }
-    
+
     /// Called when a URLSession task completes with or without an error.
     ///
     /// - Parameters:
@@ -117,7 +117,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didCompleteTask: task, with: error) }
         }
     }
-    
+
     /// Called when a `URLRequest` is successfully created.
     ///
     /// - Parameters:
@@ -128,7 +128,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didCreateURLRequest: urlRequest) }
         }
     }
-    
+
     /// Called when the initial `URLRequest` for a request is created.
     ///
     /// - Parameters:
@@ -139,7 +139,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didCreateInitialURLRequest: urlRequest) }
         }
     }
-    
+
     /// Called when a new `URLSessionTask` is created for the request.
     ///
     /// - Parameters:
@@ -150,7 +150,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didCreateTask: task) }
         }
     }
-    
+
     /// Called when a task fails with a specific error.
     ///
     /// - Parameters:
@@ -162,7 +162,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didFailTask: task, with: error) }
         }
     }
-    
+
     /// Called when request interception fails.
     ///
     /// - Parameters:
@@ -174,7 +174,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didFailToIntercept: urlRequest, with: error) }
         }
     }
-    
+
     /// Called when URL request creation fails with an error.
     ///
     /// - Parameters:
@@ -185,7 +185,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didFailToCreateURLRequestWithError: error) }
         }
     }
-    
+
     /// Called when performance metrics for a request are gathered.
     ///
     /// - Parameters:
@@ -196,7 +196,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didGatherMetrics: metrics) }
         }
     }
-    
+
     /// Called when a request is successfully intercepted.
     ///
     /// - Parameters:
@@ -208,7 +208,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didIntercept: initialRequest, to: urlRequest) }
         }
     }
-    
+
     /// Called when a task is resumed.
     ///
     /// - Parameters:
@@ -219,7 +219,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didResumeTask: task) }
         }
     }
-    
+
     /// Called when a task is suspended.
     ///
     /// - Parameters:
@@ -230,7 +230,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didSuspendTask: task) }
         }
     }
-    
+
     /// Called when a request's response is validated.
     ///
     /// - Parameters:
@@ -244,12 +244,12 @@ public struct CompositeMonitor: Monitor {
         data: Data?,
         error: NetworkingError?
     ) {
-        
+
         queue.async {
             monitors.forEach { $0.request(request, didValidate: urlRequest, data: data, error: error) }
         }
     }
-    
+
     /// Called when a `DataRequest` parses a response containing raw data.
     ///
     /// - Parameters:
@@ -260,7 +260,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didParseResponse: response) }
         }
     }
-    
+
     /// Called when a `DataRequest` parses a response with a specified value type.
     ///
     /// - Parameters:
@@ -270,12 +270,12 @@ public struct CompositeMonitor: Monitor {
         _ request: DataRequest,
         didParseResponse response: Response<Value, NetworkingError>
     ) {
-        
+
         queue.async {
             monitors.forEach { $0.request(request, didParseResponse: response) }
         }
     }
-    
+
     /// Called when data is received from the server.
     ///
     /// - Parameters:
@@ -287,7 +287,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.urlSession(session, dataTask: dataTask, didReceive: data) }
         }
     }
-    
+
     /// Called when a response is received from the server.
     ///
     /// - Parameters:
@@ -299,7 +299,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.urlSession(session, dataTask: dataTask, didReceive: response) }
         }
     }
-    
+
     /// Called when the URLSession becomes invalid due to an error.
     ///
     /// - Parameters:
@@ -310,7 +310,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.urlSession(session, didBecomeInvalidWithError: error) }
         }
     }
-    
+
     /// Called when a task completes, either successfully or with an error.
     ///
     /// - Parameters:
@@ -322,7 +322,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.urlSession(session, task: task, didCompleteWithError: error) }
         }
     }
-    
+
     /// Called when performance metrics for a task are collected.
     ///
     /// - Parameters:
@@ -334,7 +334,7 @@ public struct CompositeMonitor: Monitor {
         task: URLSessionTask,
         didFinishCollecting metrics: URLSessionTaskMetrics
     ) {
-        
+
         queue.async {
             monitors.forEach { $0.urlSession(session, task: task, didFinishCollecting: metrics) }
         }

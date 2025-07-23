@@ -28,13 +28,11 @@ import Foundation
 open class TelemetryManager: @unchecked Sendable {
     // MARK: - Private Properties
 
-    private var breadcrumbsBuffer: RingBuffer<Breadcrumb>
     private let eventFlushInterval: TimeInterval = 180
     private var eventsBuffer: EventDiskBuffer
     private let lock = NSLock()
     private var previousFlushDate: Date?
     private var session: Session?
-    private let sessionStorage = SessionStorage()
     private var subscribers: [ObjectIdentifier: any TelemetryManagerSubscriber] = [:]
 
     // MARK: - Dependencies
@@ -45,7 +43,13 @@ open class TelemetryManager: @unchecked Sendable {
     @Dependency(\.installation)
     private var installation: TelemetryInstallation
 
+    @Dependency(\.storage)
+    var storage: Storage
+
     // MARK: - Properties
+
+    /// A ring buffer used to store recent `Breadcrumb` events in memory.
+    private(set) var breadcrumbsBuffer: RingBuffer<Breadcrumb>
 
     /// A list of telemetry integrations that automatically install when the manager is initialized.
     let integrations: [any TelemetryIntegration]
@@ -103,7 +107,7 @@ open class TelemetryManager: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        if var storedSession = sessionStorage.retrieve(), storedSession != session {
+        if var storedSession = try? storage.readValue(for: SessionStorageKey.self), storedSession != session {
             let event = TelemetryReport.Event(
                 name: "session_ended",
                 severity: .info,
@@ -114,7 +118,7 @@ open class TelemetryManager: @unchecked Sendable {
             storedSession.endSession(at: date)
             eventsBuffer.add(event)
 
-            sessionStorage.delete()
+            deleteStoredSession()
             flushSession(storedSession, force: true)
         }
     }
@@ -145,7 +149,11 @@ open class TelemetryManager: @unchecked Sendable {
         flushSession(currentSession, force: true)
 
         session = nil
-        sessionStorage.delete()
+        do {
+            try storage.deleteValue(for: SessionStorageKey.self)
+        } catch {
+            // Consider logging or surfacing the error for observability.
+        }
     }
 
     /// Starts a new telemetry session.
@@ -157,11 +165,11 @@ open class TelemetryManager: @unchecked Sendable {
         lock.lock()
         defer { lock.unlock() }
 
-        if var storedSession = sessionStorage.retrieve(), storedSession != session {
+        if var storedSession = try? storage.readValue(for: SessionStorageKey.self), storedSession != session {
             storedSession.endSession(status: .exited)
 
             flushSession(storedSession, force: true)
-            sessionStorage.delete()
+            deleteStoredSession()
         }
 
         guard session == nil else { return }
@@ -170,8 +178,13 @@ open class TelemetryManager: @unchecked Sendable {
         let event = TelemetryReport.Event(name: "session_started", severity: .info, source: "Telemetry")
 
         sendEvent(event)
-        sessionStorage.store(newSession)
         session = newSession
+
+        do {
+            try storage.write(newSession, forKey: SessionStorageKey.self)
+        } catch {
+            // Consider logging or surfacing the error for observability.
+        }
     }
 
     // MARK: - Public methods
@@ -210,7 +223,7 @@ open class TelemetryManager: @unchecked Sendable {
     /// Captures a basic informational event without an exception.
     ///
     /// - Parameters:
-    ///   - message: An optional descriptive message.
+    ///   - message: A descriptive message for the event.
     ///   - name: The name of the event.
     ///   - source: The logical source of the event (e.g., module or component name).
     ///   - metadata: Optional structured metadata.
@@ -219,6 +232,7 @@ open class TelemetryManager: @unchecked Sendable {
             name: name,
             severity: .info,
             source: source,
+            message: message,
             metadata: metadata
         )
 
@@ -261,6 +275,14 @@ open class TelemetryManager: @unchecked Sendable {
     }
 
     // MARK: - Private methods
+
+    private func deleteStoredSession() {
+        do {
+            try storage.deleteValue(for: SessionStorageKey.self)
+        } catch {
+            // Consider logging or surfacing the error for observability.
+        }
+    }
 
     private func flushSession(_ session: Session, force: Bool = false) {
         let lastFlushDate = previousFlushDate ?? Date()
@@ -325,8 +347,8 @@ final class EventDiskBuffer {
     /// Creates a new disk-backed telemetry buffer.
     ///
     /// - Parameter storageURL: The root directory for storing events. Defaults to the app's telemetry directory.
-    init(storageURL: URL = FileManager.default.telemetryDirectory) {
-        self.storageURL = storageURL.appendingPathComponent("events.json")
+    init(storageURL: URL = FileManager.default.telemetryDirectory.appendingPathComponent("events.json")) {
+        self.storageURL = storageURL
 
         rehydrate()
     }
@@ -398,55 +420,6 @@ final class EventDiskBuffer {
             }
         } catch {
             // Logging could be added here to capture the failure reason.
-        }
-    }
-}
-
-/// A storage utility responsible for persisting and retrieving telemetry session data.
-///
-/// `SessionStorage` abstracts the underlying persistence mechanism to manage a `Session` lifecycle.
-/// It uses the injected `Storage` dependency to store, retrieve, and delete session data tied to a
-/// specific key (`SessionStorageKey`). This helps in restoring session context after app restarts
-/// or handling session-related telemetry tracking.
-struct SessionStorage {
-    // MARK: - Dependencies
-
-    @Dependency(\.storage)
-    var storage: Storage
-
-    // MARK: - Instance Methods
-
-    /// Deletes the current session from persistent storage.
-    ///
-    /// This is typically called when a session ends or needs to be reset.
-    func delete() {
-        do {
-            try storage.deleteValue(for: SessionStorageKey.self)
-        } catch {
-            // Consider logging or surfacing the error for observability.
-        }
-    }
-
-    /// Retrieves the currently stored telemetry session.
-    ///
-    /// - Returns: A `Session` instance if found; otherwise, `nil`. This can be used to restore a session between app launches.
-    func retrieve() -> Session? {
-        do {
-            return try storage.readValue(for: SessionStorageKey.self)
-        } catch {
-            // Consider logging or surfacing the error for observability.
-            return nil
-        }
-    }
-
-    /// Persists the provided session to storage.
-    ///
-    /// - Parameter session: The telemetry `Session` to persist. This method will override any previously stored session.
-    func store(_ session: Session) {
-        do {
-            try storage.write(session, forKey: SessionStorageKey.self)
-        } catch {
-            // Consider logging or surfacing the error for observability.
         }
     }
 }

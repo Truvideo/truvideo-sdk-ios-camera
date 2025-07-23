@@ -32,12 +32,12 @@ struct RingBuffer<Element>: Sequence {
 
     /// The number of elements in the array.
     var count: Int {
-        bufferIndex + 1
+        bufferIndex
     }
 
     /// A boolean indicating if the ring is full.
     var isFull: Bool {
-        bufferIndex == maxCapacity - 1
+        bufferIndex == maxCapacity
     }
 
     // MARK: - Subscript
@@ -76,13 +76,14 @@ struct RingBuffer<Element>: Sequence {
             return nil
         }
 
-        buffer[bufferIndex] = element
-
         if isFull {
             buffer.removeFirst()
-        } else {
-            bufferIndex += 1
+            buffer.append(nil)
+            bufferIndex -= 1
         }
+
+        buffer[bufferIndex] = element
+        bufferIndex += 1
 
         return element
     }
@@ -103,7 +104,7 @@ struct RingBuffer<Element>: Sequence {
     // MARK: - Sequence
 
     /// Returns an iterator over the non-nil elements in the buffer.
-    func makeIterator() -> some IteratorProtocol {
+    func makeIterator() -> IndexingIterator<[Element]> {
         buffer
             .compactMap(\.self)
             .makeIterator()

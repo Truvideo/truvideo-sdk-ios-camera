@@ -1,8 +1,5 @@
 //
-//  Core.h
-//  Core
-//
-//  Created by Jorge Orjuela on 10/07/25.
+// Copyright © 2025 TruVideo. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>

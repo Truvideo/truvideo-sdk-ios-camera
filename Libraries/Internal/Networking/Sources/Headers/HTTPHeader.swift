@@ -21,7 +21,7 @@ public struct HTTPHeader: Hashable, Sendable {
 
     /// The value of the header.
     public let value: String
-    
+
     // MARK: - Static Properties
 
     /// Returns the default `Accept-Language` header based on the preferred languages of the device.
@@ -29,12 +29,12 @@ public struct HTTPHeader: Hashable, Sendable {
     /// This header provides the top six preferred languages, encoded for quality.
     public static var defaultAcceptLanguage: HTTPHeader {
         let value = Locale.preferredLanguages.prefix(6)
-        
+
         return .acceptLanguage(value.qualityEncoded())
     }
-    
+
     // MARK: - Static Methods
-    
+
     /// Creates an `Accept-Language` HTTP header.
     ///
     /// - Parameter value: The language value to be set in the header.
@@ -42,7 +42,7 @@ public struct HTTPHeader: Hashable, Sendable {
     public static func acceptLanguage(_ value: String) -> HTTPHeader {
         .init(name: "Accept-Language", value: value)
     }
-    
+
     /// Creates an `Authorization` HTTP header.
     ///
     /// - Parameter value: The authorization value (e.g., a token).
@@ -50,7 +50,7 @@ public struct HTTPHeader: Hashable, Sendable {
     public static func authorization(_ value: String) -> HTTPHeader {
         .init(name: "Authorization", value: value)
     }
-    
+
     /// Creates a `Bearer` authorization header.
     ///
     /// - Parameter value: The bearer token to be used for authorization.
@@ -58,7 +58,7 @@ public struct HTTPHeader: Hashable, Sendable {
     public static func bearerToken(_ value: String) -> HTTPHeader {
         .init(name: "Authorization", value: "Bearer \(value)")
     }
-    
+
     /// Creates a `Content-Type` HTTP header.
     ///
     /// - Parameter value: The content type value (e.g., `"application/json"`).
@@ -66,9 +66,9 @@ public struct HTTPHeader: Hashable, Sendable {
     public static func contentType(_ value: String) -> HTTPHeader {
         .init(name: "Content-Type", value: value)
     }
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a new instance of `HTTPHeader` with the specified name and value.
     ///
     /// - Parameters:

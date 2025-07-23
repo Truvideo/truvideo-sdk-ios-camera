@@ -11,7 +11,7 @@ import Foundation
 public enum ResponseType: Sendable {
     /// Indicates that the response was served from a local cache.
     case localCache
-    
+
     /// Indicates that the response was fetched from the network.
     case networkLoad
 }

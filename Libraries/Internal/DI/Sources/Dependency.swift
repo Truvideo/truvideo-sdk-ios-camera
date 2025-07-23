@@ -14,14 +14,14 @@ import Foundation
 @propertyWrapper
 public struct Dependency<Value>: Sendable {
     // MARK: - Private Properties
-    
+
     private let keyPath: KeyPath<DependencyValues, Value> & Sendable
-    
+
     // MARK: - Properties
 
     /// The initial set of dependency values when the property wrapper is created.
     let initialValues: DependencyValues
-    
+
     // MARK: - Computed Properties
 
     /// The resolved dependency value.
@@ -29,7 +29,7 @@ public struct Dependency<Value>: Sendable {
         let dependencies = initialValues.merging(DependencyValues.current)
         return dependencies[keyPath: keyPath]
     }
-    
+
     // MARK: - Initializer
 
     /// Initializes the dependency wrapper with a key path to a value in `DependencyValues`.

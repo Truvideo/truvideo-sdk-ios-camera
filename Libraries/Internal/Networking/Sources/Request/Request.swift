@@ -22,7 +22,7 @@ public protocol RequestDelegate: AnyObject, Sendable {
     ///
     /// - Parameter request: The `Request` instance that has completed.
     func requestDidComplete(_ request: Request)
-    
+
     /// Retries a request after a specified delay.
     ///
     /// This method is called when a request needs to be retried after a failure.
@@ -31,7 +31,7 @@ public protocol RequestDelegate: AnyObject, Sendable {
     ///   - request: The `Request` instance that should be retried.
     ///   - delay: The time interval (in seconds) to wait before retrying.
     func retry(request: Request, after delay: TimeInterval)
-    
+
     /// Determines whether a failed request should be retried.
     ///
     /// This method evaluates the error that caused the request failure and determines
@@ -64,96 +64,96 @@ public protocol RequestDelegate: AnyObject, Sendable {
 open class Request: @unchecked Sendable {
     /// A typealias for request validation.
     typealias RequestValidator = @Sendable () -> Void
-    
+
     /// A typealias for response serialization closure.
     typealias ResponseSerializer = @Sendable () -> Void
-    
+
     // MARK: - Private Properties
-    
+
     @Protected private var hasProcessedSerializers = false
-    
+
     // MARK: - Properties
-    
+
     /// The serial queue for all internal async actions.
     let queue: DispatchQueue
-    
+
     /// The list of the `URLRequest` associated to this `Request`.
     @Protected private(set) var requests: [URLRequest] = []
-    
+
     /// The response serializers associated to this `Request`.
     @Protected private(set) var responseSerializers: [ResponseSerializer] = []
-    
+
     /// `Validator` callback closures that store the validation calls enqueued.
     @Protected var validators: [RequestValidator] = []
-    
+
     // MARK: - Public Properties
-    
+
     /// A unique identifier for the request.
     public let id: UUID
-    
+
     /// The delegate responsible for handling retries.
     public private(set) weak var delegate: RequestDelegate?
 
     /// `HTTPURLResponse` received from the server, if any. If the `Request` was retried, this is the response of the last `URLSessionTask`.
     public internal(set) var response: HTTPURLResponse?
-    
+
     /// An optional request interceptor for intercepting the request.
     public let middleware: RequestMiddleware?
-    
+
     /// An optional request monitor for tracking lifecycle events.
     public let monitor: Monitor?
-    
+
     /// The error associated with the request, if any.
     @Protected public internal(set) var error: NetworkingError?
-    
+
     /// The collected metrics from URLSession tasks.
     @Protected public private(set) var metrics: [URLSessionTaskMetrics] = []
-    
+
     /// The current retry count for this request.
     @Protected public private(set) var retryCount = 0
-    
+
     /// The current state of the request.
     @Protected public internal(set) var state: State = .initialized
-    
+
     /// The active `URLSessionTask` instances associated with this request.
     @Protected public private(set) var tasks: [URLSessionTask] = []
-    
+
     // MARK: - Computed Properties
-    
+
     /// The acceptable status codes.
     var acceptableStatusCodes: Range<Int> {
-        200..<300
+        200 ..< 300
     }
-    
+
     /// Current `URLRequest` created on behalf of the `Request`.
     public var request: URLRequest? {
         requests.last
     }
-    
+
     // MARK: - Types
-    
+
     /// Represents the possible states of an operation or process.
     public enum State {
         /// The operation has been explicitly cancelled and cannot proceed further.
         case cancelled
-        
+
         /// The operation has successfully completed.
         case finished
-        
+
         /// The operation is finishing.
         case finishing
-        
+
         /// The operation has been initialized but has not yet started execution.
         case initialized
-        
+
         /// The operation is actively running or executing.
         case resumed
-        
+
         /// The operation is temporarily paused and can be resumed later.
         case suspended
-    
+
         // MARK: - Instance methods
-        
+
         /// Determines whether a transition from the current state to a given state is valid.
         ///
         /// This function evaluates the current state and checks if transitioning to the specified
@@ -165,34 +165,34 @@ open class Request: @unchecked Sendable {
         func canTransition(to state: State) -> Bool {
             switch (self, state) {
             case (.initialized, _),
-                 (.finishing, .finished),
-                 (.finishing, .cancelled),
-                 (.resumed, .cancelled),
-                 (.suspended, .cancelled),
-                 (.suspended, .finishing),
-                 (.resumed, .finishing),
-                 (.resumed, .suspended),
-                 (.suspended, .resumed),
-                 (_, .finished):
-                
+                (.finishing, .finished),
+                (.finishing, .cancelled),
+                (.resumed, .cancelled),
+                (.suspended, .cancelled),
+                (.suspended, .finishing),
+                (.resumed, .finishing),
+                (.resumed, .suspended),
+                (.suspended, .resumed),
+                (_, .finished):
+
                 return true
-                
+
             case (_, .initialized),
-                 (.cancelled, _),
-                 (.finished, _),
-                 (.finishing, .finishing),
-                 (.finishing, .resumed),
-                 (.finishing, .suspended),
-                 (.suspended, .suspended),
-                 (.resumed, .resumed):
-                
+                (.cancelled, _),
+                (.finished, _),
+                (.finishing, .finishing),
+                (.finishing, .resumed),
+                (.finishing, .suspended),
+                (.suspended, .suspended),
+                (.resumed, .resumed):
+
                 return false
             }
         }
     }
-        
+
     // MARK: - Initializer
-    
+
     /// Initializes a new request.
     ///
     /// - Parameters:
@@ -215,9 +215,9 @@ open class Request: @unchecked Sendable {
         self.monitor = monitor
         self.queue = queue
     }
-    
+
     // MARK: - LifeCycle methods
-    
+
     /// Handles the cancellation of the request.
     ///
     /// This method ensures the request is properly marked as cancelled,
@@ -230,7 +230,7 @@ open class Request: @unchecked Sendable {
         error = error ?? NetworkingError(kind: .explicitlyCancelled, failureReason: "Request Explicitly Cancelled")
         monitor?.requestDidCancel(self)
     }
-    
+
     /// Handles the cancellation of a `URLSessionTask`.
     ///
     /// This method is called when a network task is explicitly cancelled. It ensures that the cancellation
@@ -243,7 +243,7 @@ open class Request: @unchecked Sendable {
     /// - Parameter task: The `URLSessionTask` instance that was cancelled.
     func didCancel(task: URLSessionTask) {
         dispatchPrecondition(condition: .onQueue(queue))
-        
+
         monitor?.request(self, didCancelTask: task)
     }
 
@@ -259,10 +259,10 @@ open class Request: @unchecked Sendable {
         dispatchPrecondition(condition: .onQueue(queue))
 
         self.error = self.error ?? error
-    
+
         response = task.response as? HTTPURLResponse
         validators.forEach { $0() }
-        
+
         monitor?.request(self, didCompleteTask: task, with: self.error)
         retryOrFinish(error: self.error)
     }
@@ -285,35 +285,35 @@ open class Request: @unchecked Sendable {
 
         tasks.append(task)
         monitor?.request(self, didCreateTask: task)
-        
+
         switch state {
         case .initialized, .finished, .finishing:
             break
-            
+
         case .cancelled:
             task.resume()
             task.cancel()
-            
+
             queue.async {
                 self.didCancel(task: task)
             }
-            
+
         case .resumed:
             task.resume()
 
             queue.async {
                 self.didResume(task: task)
             }
-            
+
         case .suspended:
             task.suspend()
-            
+
             queue.async {
                 self.didSuspend(task: task)
             }
         }
     }
-    
+
     /// Handles the creation of a `URLRequest` for the request.
     ///
     /// - Parameter request: The initial `URLRequest` created for execution.
@@ -337,7 +337,7 @@ open class Request: @unchecked Sendable {
         monitor?.request(self, didFailToCreateURLRequestWithError: error)
         retryOrFinish(error: error)
     }
-    
+
     /// Handles a failure that occurs during the interception of a `URLRequest`.
     ///
     /// This method is triggered when an attempt to intercept and modify a request fails, typically due to a `NetworkingError`.
@@ -351,7 +351,7 @@ open class Request: @unchecked Sendable {
         self.error = error
 
         monitor?.request(self, didFailToIntercept: request, with: error)
-        
+
         retryOrFinish(error: error)
     }
 
@@ -380,11 +380,11 @@ open class Request: @unchecked Sendable {
         dispatchPrecondition(condition: .onQueue(queue))
 
         self.metrics.append(metrics)
-        
+
         monitor?.request(self, didGatherMetrics: metrics)
     }
-    
-    /// Handles the successful interception and modification of a `URLRequest`.    
+
+    /// Handles the successful interception and modification of a `URLRequest`.
     /// This method is called when an initial network request has been intercepted and modified successfully.
     ///
     /// - Parameters:
@@ -392,9 +392,9 @@ open class Request: @unchecked Sendable {
     ///   - request: The modified `URLRequest` after interception, ready to be sent.
     func didIntercept(_ initialRequest: URLRequest, to request: URLRequest) {
         dispatchPrecondition(condition: .onQueue(queue))
-        
+
         requests.append(request)
-        
+
         monitor?.request(self, didIntercept: initialRequest, to: request)
     }
 
@@ -445,7 +445,7 @@ open class Request: @unchecked Sendable {
 
         if state.canTransition(to: .finishing) {
             state = .finishing
-            
+
             monitor?.requestIsFinishing(self)
 
             if let error {
@@ -456,7 +456,7 @@ open class Request: @unchecked Sendable {
             monitor?.requestDidFinish(self)
         }
     }
-    
+
     /// Prepares the request for execution.
     ///
     /// This method ensures that the preparation logic is executed on the correct dispatch queue.
@@ -465,7 +465,7 @@ open class Request: @unchecked Sendable {
 
         monitor?.requestIsPreparing(self)
     }
-    
+
     /// Prepares the request for a retry attempt by resetting its state and incrementing the retry count.
     ///
     /// This method is called when a request is scheduled for a retry. It performs the following actions:
@@ -481,7 +481,7 @@ open class Request: @unchecked Sendable {
 
         retryCount += 1
         reset()
-    
+
         monitor?.requestIsRetrying(self)
     }
 
@@ -500,10 +500,11 @@ open class Request: @unchecked Sendable {
 
             /// The underlying error that triggered the retry decision.
             let error,
-            
+
             /// Ensure the request is not already cancelled.
-            state != .cancelled else {
-            
+            state != .cancelled
+        else {
+
             finish(error: error)
             return
         }
@@ -516,13 +517,15 @@ open class Request: @unchecked Sendable {
                 queue.async {
                     self.finish(error: error)
                 }
-                
+
             case .doNotRetryWithError(let error):
-                let error = error as? NetworkingError ?? NetworkingError(
-                    kind: .requestRetryFailed,
-                    underlyingError: error
-                )
-                
+                let error =
+                    error as? NetworkingError
+                    ?? NetworkingError(
+                        kind: .requestRetryFailed,
+                        underlyingError: error
+                    )
+
                 queue.async {
                     self.finish(error: error)
                 }
@@ -532,9 +535,9 @@ open class Request: @unchecked Sendable {
             }
         }
     }
-    
+
     // MARK: - Instance methods
-    
+
     /// Resets the request's state to its initial configuration.
     ///
     /// This method clears the internal state of the request by performing the following actions:
@@ -548,9 +551,9 @@ open class Request: @unchecked Sendable {
         error = nil
         hasProcessedSerializers = false
     }
-    
+
     // MARK: - Public methods
-    
+
     /// Cancels the request, if allowed.
     ///
     /// - Returns: The current `Request` instance.
@@ -562,7 +565,7 @@ open class Request: @unchecked Sendable {
                 self.didCancel()
             }
         }
-        
+
         return self
     }
 
@@ -577,10 +580,10 @@ open class Request: @unchecked Sendable {
             queue.async {
                 self.didResume()
             }
-            
+
             if let task = tasks.last, task.state != .completed {
                 task.resume()
-                
+
                 queue.async {
                     self.didResume(task: task)
                 }
@@ -589,7 +592,7 @@ open class Request: @unchecked Sendable {
 
         return self
     }
-    
+
     /// Suspends the request, if allowed.
     ///
     /// - Returns: The current `Request` instance.
@@ -597,26 +600,26 @@ open class Request: @unchecked Sendable {
     public func suspend() -> Self {
         if state.canTransition(to: .suspended) {
             state = .suspended
-            
+
             queue.async {
                 self.didSuspend()
             }
-            
+
             guard let task = tasks.last, task.state != .completed else {
                 return self
             }
-            
+
             task.suspend()
             queue.async {
                 self.didSuspend(task: task)
             }
         }
-        
+
         return self
     }
-    
+
     // MARK: - Serializer methods
-    
+
     /// Appends a response serializer to the request and processes it if applicable.
     ///
     /// This method adds a response serializer to the `responseSerializers` queue, ensuring that the response data
@@ -630,24 +633,24 @@ open class Request: @unchecked Sendable {
     /// - Parameter serializer: A closure responsible for serializing the response data.
     func appendResponseSerializer(_ serializer: @escaping ResponseSerializer) {
         responseSerializers.append(serializer)
-        
+
         if state == .finished {
             state = .resumed
         }
-        
+
         if hasProcessedSerializers {
             queue.async {
                 self.processSerializers()
             }
         }
-        
+
         if state.canTransition(to: .resumed) {
             resume()
         }
     }
-    
+
     // MARK: - Validation methods
-    
+
     /// Validates whether the response's status code is within an acceptable range.
     ///
     /// This method checks if the provided `HTTPURLResponse` contains a status code that is considered valid.
@@ -655,34 +658,34 @@ open class Request: @unchecked Sendable {
     ///
     /// - Parameters:
     ///   - acceptableStatusCodes: A sequence of acceptable HTTP status codes.
-    ///   - response: The `HTTPURLResponse` object to validate.    
+    ///   - response: The `HTTPURLResponse` object to validate.
     /// - Throws: A `NetworkingError.responseValidationFailed` if the status code is not within the acceptable range.
     func validate<S: Sequence>(
         acceptableStatusCodes: S,
         response: HTTPURLResponse
     ) throws where S.Iterator.Element == Int {
-        
+
         guard !acceptableStatusCodes.contains(response.statusCode) else {
             return
         }
-            
+
         throw NetworkingError(
             kind: .responseValidationFailed,
             failureReason: "Unacceptable status code: \(response.statusCode)"
         )
     }
-    
+
     // MARK: - Private methods
-    
+
     private func processSerializers() {
         let serializers = responseSerializers
-        
+
         hasProcessedSerializers = true
         serializers.forEach { $0() }
-        
+
         responseSerializers.removeAll()
         delegate?.requestDidComplete(self)
-        
+
         if state.canTransition(to: .finished) {
             state = .finished
         }
@@ -716,13 +719,14 @@ extension Request: CustomDebugStringConvertible {
         guard
             /// The last request sent.
             let request = requests.last,
-            
+
             /// The url of the rquest.
             let url = request.url,
-            
+
             /// The HTTPMethod of the request.
-            let method = request.httpMethod else {
-            
+            let method = request.httpMethod
+        else {
+
             return "$ curl command could not be created"
         }
 
@@ -747,13 +751,13 @@ extension Request: CustomDebugStringConvertible {
             components.append("-H \"\(header.name): \(escapedValue)\"")
         }
 
-        if
-            /// The body data.
-            let httpBodyData = request.httpBody,
-            
+        if /// The body data.
+        let httpBodyData = request.httpBody,
+
             /// The string representation of the body.
-            let httpBody = String(data: httpBodyData, encoding: .utf8) {
-            
+            let httpBody = String(data: httpBodyData, encoding: .utf8)
+        {
+
             var escapedBody = httpBody.replacingOccurrences(of: "\\\"", with: "\\\\\"")
             escapedBody = escapedBody.replacingOccurrences(of: "\"", with: "\\\"")
 

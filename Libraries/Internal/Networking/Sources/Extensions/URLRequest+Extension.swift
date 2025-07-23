@@ -15,18 +15,18 @@ extension URLRequest {
             allHTTPHeaderFields = newValue.dictionary
         }
     }
-    
+
     /// The HTTP method associated with the request, represented as an `HTTPMethod` enum.
     public var method: HTTPMethod {
         guard let httpMethod, !httpMethod.isEmpty else {
             return .get
         }
-        
+
         return HTTPMethod(rawValue: httpMethod)
     }
-    
+
     // MARK: - Public methods
-    
+
     /// Creates an instance with the specified `url`, `method`, and `headers`.
     ///
     /// - Parameters:

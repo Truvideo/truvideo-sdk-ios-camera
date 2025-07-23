@@ -16,7 +16,7 @@ public protocol URLCache: Sendable {
     /// - Parameter request: The `DataRequest` instance for which the cached response is being requested.
     /// - Returns: A `URLCachedResponse` instance if a cached response exists, otherwise `nil`.
     func cachedResponse(for request: DataRequest) -> URLCachedResponse?
-    
+
     /// Called when a request is about to cache a response.
     ///
     /// This method allows the cache to decide whether to store the response and how it should be stored.
@@ -25,7 +25,7 @@ public protocol URLCache: Sendable {
     ///   - response: The `URLCachedResponse` representing the response to be cached.
     ///   - request: The `DataRequest` for which the response is being cached.
     func cache(_ response: URLCachedResponse, for request: DataRequest)
-    
+
     /// Removes the cached response for a specific `Request`, if it exists.
     ///
     /// This method clears any previously stored response for the given request,
@@ -41,9 +41,9 @@ extension URLCache where Self == InMemoryURLCache {
     public static var inMemory: InMemoryURLCache {
         InMemoryURLCache()
     }
-    
+
     // MARK: - Static methods
-    
+
     /// Creates a new `InMemoryURLCache` instance with a specified memory capacity.
     ///
     /// - Parameter capacity: The maximum amount of memory (in bytes) allocated for caching.
@@ -64,40 +64,40 @@ extension URLCache where Self == InMemoryURLCache {
 /// - Implements `URLCache` to support standard caching operations.
 public struct InMemoryURLCache: URLCache, @unchecked Sendable {
     private let cache: NSCache<NSString, ValueWrapper> = .init()
-    
+
     // MARK: - Properties
-    
+
     /// The maximum amount of memory the cache can use in bytes.
     let memoryCapacity: Int
-    
+
     // MARK: - Types
-    
+
     private class ValueWrapper: NSObject {
         let request: Request
         let value: URLCachedResponse
-        
+
         // MARK: - Initializer
-        
+
         init(request: Request, value: URLCachedResponse) {
             self.request = request
             self.value = value
         }
     }
-    
+
     // MARK: - Initializer
-    
+
     /// Initializes a new in-memory cache with an optional memory capacity.
     ///
     /// - Parameter memoryCapacity: The maximum amount of memory the cache can use in bytes.
     ///   If `nil`, defaults to 20% of the device's physical memory.
     public init(memoryCapacity: Int? = nil) {
-        self.memoryCapacity = memoryCapacity ?? Int(ProcessInfo.processInfo.physicalMemory) / 5 // 20% of total RAM
+        self.memoryCapacity = memoryCapacity ?? Int(ProcessInfo.processInfo.physicalMemory) / 5  // 20% of total RAM
 
         cache.totalCostLimit = self.memoryCapacity
     }
-    
+
     // MARK: - URLCache
-    
+
     /// Retrieves a cached response for the given `Request`, if available.
     ///
     /// - Parameter request: The `DataRequest` instance for which the cached response is being requested.
@@ -106,10 +106,10 @@ public struct InMemoryURLCache: URLCache, @unchecked Sendable {
         guard let cacheKey = request.cacheKey else {
             return nil
         }
-            
+
         return cache.object(forKey: cacheKey)?.value
     }
-    
+
     /// Called when a request is about to cache a response.
     ///
     /// This method allows the cache to decide whether to store the response and how it should be stored.
@@ -124,7 +124,7 @@ public struct InMemoryURLCache: URLCache, @unchecked Sendable {
             cache.setObject(wrapped, forKey: cacheKey, cost: response.data.count)
         }
     }
-    
+
     /// Removes the cached response for a specific `Request`, if it exists.
     ///
     /// This method clears any previously stored response for the given request,
@@ -139,19 +139,20 @@ public struct InMemoryURLCache: URLCache, @unchecked Sendable {
     }
 }
 
-private extension DataRequest {
+extension DataRequest {
     /// Returns the key to use when caching the request.
-    var cacheKey: NSString? {
+    fileprivate var cacheKey: NSString? {
         guard
             /// The absolute string.
             let urlString = request?.url?.absoluteString,
-            
+
             /// The HTTP method.
-            let methodString = request?.method.rawValue else {
-            
+            let methodString = request?.method.rawValue
+        else {
+
             return nil
         }
-        
+
         return urlString.appending("-\(methodString)") as NSString
     }
 }

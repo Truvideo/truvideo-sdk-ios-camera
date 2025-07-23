@@ -41,21 +41,21 @@ public protocol ServerTrustEvaluatorProvider: Sendable {
 /// with their corresponding `ServerTrustEvaluator` instances.
 public final class DefaultServerTrustEvaluatorProvider: ServerTrustEvaluatorProvider {
     // MARK: - Private Properties
-    
+
     /// A dictionary mapping hostnames to their respective `ServerTrustEvaluator` instances.
     private let evaluators: [String: ServerTrustEvaluator]
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a new `DefaultServerTrustEvaluatorProvider` with a dictionary of evaluators.
     ///
     /// - Parameter evaluators: A dictionary mapping hostnames to `ServerTrustEvaluator` instances.
     public init(evaluators: [String: ServerTrustEvaluator]) {
         self.evaluators = evaluators
     }
-    
+
     // MARK: - ServerTrustEvaluatorProvider
-    
+
     /// Retrieves a `ServerTrustEvaluator` instance for the specified host.
     ///
     /// - Parameter host: The host for which to retrieve the evaluator.

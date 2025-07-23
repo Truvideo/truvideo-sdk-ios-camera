@@ -11,7 +11,7 @@ import Foundation
 public struct URLCachedResponse {
     /// The response body data associated with the cached request.
     public let data: Data
-    
+
     /// The `HTTPURLResponse` containing metadata, such as status code and headers.
     public let response: HTTPURLResponse
 }

@@ -20,7 +20,7 @@ struct S3UploaderTests {
         let sut = S3Uploader(bucketName: "bucket", clientProvider: clientProvider)
 
         // When
-        _ = try await sut.upload(Data(), fileName: "file.json", contentType: .json)
+        try await sut.upload(Data(), fileName: "file.json", contentType: .json)
 
         // Then
         #expect(client.uploadedObject != nil, "Expected uploaded object to be non-nil")
@@ -30,24 +30,18 @@ struct S3UploaderTests {
     func testThatUploadThrowsUploaderErrorWhenClientFails() async throws {
         // Given
         let client = MockS3Client()
-        let clientProvider = S3ClientImpl(client: client)
-        let sut = S3Uploader(bucketName: "bucket", clientProvider: clientProvider)
-        var capturedError: UtilityError?
+        let sut = S3Uploader(bucketName: "bucket", clientProvider: S3ClientImpl(client: client))
 
         // When
         client.error = NSError(domain: "com.test", code: 42)
-
-        do {
-            _ = try await sut.upload(Data(), fileName: "file.json", contentType: .json)
-        } catch {
-            capturedError = error as? UtilityError
-        }
-
+        
         // Then
-        #expect(capturedError?.underlyingError != nil, "Expected underlyingError to be non-nil")
-        #expect(
-            capturedError?.kind == ErrorReason.UploaderErrorReason.uploadFileFailed,
-            "Expected error kind to be `.uploadFileFailed`"
-        )
+        await #expect {
+            try await sut.upload(Data(), fileName: "file.json", contentType: .json)
+        } throws: { error in
+            guard let error = error as? UtilityError else { return false }
+                        
+            return error.kind == .UploaderErrorReason.uploadFileFailed && error.underlyingError != nil
+        }
     }
 }

@@ -31,6 +31,6 @@ struct S3ClientProviderTests {
         _ = try await sut.makeClient()
 
         // Then
-        #expect(client.callCount == 0, "Expected call count equal to 1")
+        #expect(client.putObjectCallCount == 0)
     }
 }

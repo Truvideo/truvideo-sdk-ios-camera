@@ -20,25 +20,25 @@ public class DataRequest: Request, @unchecked Sendable {
     /// This closure takes the original `URLRequest`, `HTTPURLResponse`, and optional response `Data`,
     /// and throws an error if validation fails.
     public typealias Validation = @Sendable (URLRequest?, HTTPURLResponse, Data?) throws -> Void
-    
+
     // MARK: - Private Properties
-        
+
     private let cache: URLCache?
     private let cachePolicy: URLCachePolicy
     private var responseType: ResponseType = .networkLoad
-    
+
     // MARK: - Properties
-    
+
     /// The builder used to construct the request.
     let requestBuilder: RequestBuilder
-    
+
     // MARK: - Public Properties
-    
+
     /// The raw response data received from the server.
     @Protected public private(set) var data: Data?
-    
+
     // MARK: - Initializer
-    
+
     /// Initializes a new request.
     ///
     /// - Parameters:
@@ -60,16 +60,16 @@ public class DataRequest: Request, @unchecked Sendable {
         monitor: Monitor?,
         queue: DispatchQueue
     ) {
-        
+
         self.cache = cache
         self.cachePolicy = cachePolicy
         self.requestBuilder = requestBuilder
-        
+
         super.init(id: id, delegate: delegate, middleware: middleware, monitor: monitor, queue: queue)
     }
-    
+
     // MARK: - Instance methods
-    
+
     /// Handles incoming data by appending it to the existing stored state.
     ///
     /// This function ensures that received data is safely written into the `state`
@@ -80,9 +80,9 @@ public class DataRequest: Request, @unchecked Sendable {
     func didReceive(data: Data) {
         self.data = (self.data ?? Data()) + data
     }
-    
+
     // MARK: - Overriden methods
-    
+
     /// Handles the completion of a request task.
     ///
     /// This method is triggered when a `URLSessionTask` finishes execution.
@@ -94,57 +94,57 @@ public class DataRequest: Request, @unchecked Sendable {
     override func didComplete(task: URLSessionTask, error: NetworkingError?) {
         dispatchPrecondition(condition: .onQueue(queue))
 
-        if
-            /// The cache for providing cached responses to requests within the session.
-            let cache,
-            
+        if /// The cache for providing cached responses to requests within the session.
+        let cache,
+
             /// The received data from the server.
             let data,
-            
+
             /// The metadata associated with the response to an HTTP protocol URL load request.
-            let response = task.response as? HTTPURLResponse, [.head, .get].contains(request?.method) {
-            
+            let response = task.response as? HTTPURLResponse, [.head, .get].contains(request?.method)
+        {
+
             let response = URLCachedResponse(data: data, response: response)
             cache.cache(response, for: self)
         }
-        
+
         super.didComplete(task: task, error: error)
     }
-    
+
     /// Prepares the request for execution.
     ///
     /// This method ensures that the preparation logic is executed on the correct dispatch queue.
     override func prepare() {
         super.prepare()
-        
+
         if let cache {
             func didReceiveCachedResponse(_ cachedResponse: URLCachedResponse) {
                 didReceive(data: cachedResponse.data)
                 response = cachedResponse.response
                 responseType = .localCache
             }
-            
+
             switch cachePolicy {
             case .returnCacheDataDontLoad where [.head, .get].contains(request?.method):
                 if let cachedResponse = cache.cachedResponse(for: self) {
                     didReceiveCachedResponse(cachedResponse)
                 }
-                
+
                 responseType = .localCache
                 finish()
-                
+
             case .returnCacheDataElseLoad where [.head, .get].contains(request?.method):
                 if let cachedResponse = cache.cachedResponse(for: self) {
                     didReceiveCachedResponse(cachedResponse)
                     finish()
                 }
-             
+
             default:
                 break
             }
         }
     }
-    
+
     /// Resets the request's state to its initial configuration.
     ///
     /// This method clears the internal state of the request by performing the following actions:
@@ -156,12 +156,12 @@ public class DataRequest: Request, @unchecked Sendable {
     /// particularly in scenarios where you want to retry a request from a clean state or reuse the same instance.
     override func reset() {
         super.reset()
-        
+
         data = nil
     }
 
     // MARK: - Serializing methods
-    
+
     /// Serializes the response into a `Decodable` type asynchronously.
     ///
     /// This method allows decoding the response data into a `Decodable` object of type `Value`.
@@ -183,7 +183,7 @@ public class DataRequest: Request, @unchecked Sendable {
         decoder: JSONDecoder = JSONDecoder(),
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) async -> Response<Value, NetworkingError> where Value: Sendable {
-        
+
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 self.response(
@@ -199,7 +199,7 @@ public class DataRequest: Request, @unchecked Sendable {
             cancel()
         }
     }
-    
+
     /// Serializes the response as raw `Data` asynchronously.
     ///
     /// This method allows retrieving the response body as raw `Data`, handling empty responses
@@ -216,7 +216,7 @@ public class DataRequest: Request, @unchecked Sendable {
     public func serializingData(
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) async -> Response<Data, NetworkingError> {
-        
+
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 self.response(serializer: DataResponseSerializer(emptyResponseCodes: emptyResponseCodes)) { response in
@@ -227,7 +227,7 @@ public class DataRequest: Request, @unchecked Sendable {
             cancel()
         }
     }
-    
+
     /// Serializes the response as a `String` asynchronously.
     ///
     /// This method retrieves the response body as a `String`, using the specified encoding.
@@ -249,7 +249,7 @@ public class DataRequest: Request, @unchecked Sendable {
         encoding: String.Encoding = .utf8,
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) async -> Response<String, NetworkingError> {
-        
+
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 self.response(
@@ -262,9 +262,9 @@ public class DataRequest: Request, @unchecked Sendable {
             cancel()
         }
     }
-    
+
     // MARK: - Validation methods
-    
+
     /// Validates whether the response's status code is within an acceptable range.
     ///
     /// This method checks if the provided `HTTPURLResponse` contains a status code that is considered valid.
@@ -275,11 +275,11 @@ public class DataRequest: Request, @unchecked Sendable {
     public func validate() -> Self {
         validate { [weak self] _, response, _ in
             guard let self else { return }
-            
+
             try validate(acceptableStatusCodes: self.acceptableStatusCodes, response: response)
         }
     }
-    
+
     /// Adds a custom validation step to the request.
     ///
     /// This method allows defining a custom validation logic for the response,
@@ -301,31 +301,33 @@ public class DataRequest: Request, @unchecked Sendable {
     @discardableResult
     public func validate(_ validator: @escaping Validation) -> Self {
         let validator: RequestValidator = { [weak self] in
-            if
-                /// Strong self.
-                let self,
-                
+            if /// Strong self.
+            let self,
+
                 /// The received response if any.
-                let response, error == nil {
-                
+                let response, error == nil
+            {
+
                 do {
                     try validator(request, response, data)
                 } catch {
-                    self.error = error as? NetworkingError ?? NetworkingError(
-                        kind: .responseValidationFailed,
-                        underlyingError: error
-                    )
+                    self.error =
+                        error as? NetworkingError
+                        ?? NetworkingError(
+                            kind: .responseValidationFailed,
+                            underlyingError: error
+                        )
                 }
-                
+
                 monitor?.request(self, didValidate: request, data: data, error: self.error)
             }
         }
-        
+
         validators.append(validator)
-        
+
         return self
     }
-    
+
     /// Validates whether the response's status code is within an acceptable range.
     ///
     /// This method checks if the provided `HTTPURLResponse` contains a status code that is considered valid.
@@ -342,22 +344,22 @@ public class DataRequest: Request, @unchecked Sendable {
     public func validate<S: Sequence>(acceptableStatusCodes: S) -> Self where S: Sendable, S.Iterator.Element == Int {
         validate { [weak self] _, response, _ in
             guard let self else { return }
-            
+
             try validate(acceptableStatusCodes: acceptableStatusCodes, response: response)
         }
     }
-    
+
     // MARK: - Private methods
-        
+
     @discardableResult
     private func response<S: Serializer>(
         serializer: S,
         completionHandler: @escaping @Sendable (Response<S.SerializedObject, NetworkingError>) -> Void
     ) -> Self {
-        
+
         appendResponseSerializer { [weak self] in
             guard let self else { return }
-            
+
             let result = Result {
                 try serializer.serialize(
                     request: self.request,
@@ -366,13 +368,14 @@ public class DataRequest: Request, @unchecked Sendable {
                     error: self.error
                 )
             }
-                .mapError { error in
-                    error as? NetworkingError ?? NetworkingError(
+            .mapError { error in
+                error as? NetworkingError
+                    ?? NetworkingError(
                         kind: .responseSerializationFailed,
                         underlyingError: error
                     )
-                }
-            
+            }
+
             self.queue.async {
                 let response = Response(
                     data: self.data,
@@ -382,12 +385,12 @@ public class DataRequest: Request, @unchecked Sendable {
                     result: result,
                     type: self.responseType
                 )
-                
+
                 self.monitor?.request(self, didParseResponse: response)
                 completionHandler(response)
             }
         }
-        
+
         return self
     }
 }

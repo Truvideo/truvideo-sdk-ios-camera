@@ -17,49 +17,49 @@ import Foundation
 public protocol Monitor: Sendable {
     /// The working queue.
     var queue: DispatchQueue { get }
-    
+
     /// Called when a request is canceled.
     ///
     /// - Parameter request: The `Request` instance that was canceled.
     func requestDidCancel(_ request: Request)
-    
+
     /// Called when a request finishes successfully.
     ///
     /// - Parameter request: The `Request` instance that completed.
     func requestDidFinish(_ request: Request)
-    
+
     /// Called when a request is resumed after being suspended.
     ///
     /// - Parameter request: The `Request` instance that resumed execution.
     func requestDidResume(_ request: Request)
-    
+
     /// Called when a request is suspended.
     ///
     /// - Parameter request: The `Request` instance that was suspended.
     func requestDidSuspend(_ request: Request)
-    
+
     /// Called when a request is transitioning to a finished state.
     ///
     /// - Parameter request: The `Request` instance preparing to finish.
     func requestIsFinishing(_ request: Request)
-    
+
     /// Called when a request is being prepared.
     ///
     /// - Parameter request: The `Request` instance that is being prepared.
     func requestIsPreparing(_ request: Request)
-    
+
     /// Called when a request is being retried.
     ///
     /// - Parameter request: The `Request` instance that is being retried.
     func requestIsRetrying(_ request: Request)
-    
+
     /// Called when a URLSession task tied to the request is canceled.
     ///
     /// - Parameters:
     ///   - request: The `Request` associated with the canceled task.
     ///   - task: The `URLSessionTask` that was canceled.
     func request(_ request: Request, didCancelTask task: URLSessionTask)
-    
+
     /// Called when a URLSession task completes with or without an error.
     ///
     /// - Parameters:
@@ -67,28 +67,28 @@ public protocol Monitor: Sendable {
     ///   - task: The `URLSessionTask` that completed.
     ///   - error: The `NetworkingError` encountered, if any.
     func request(_ request: Request, didCompleteTask task: URLSessionTask, with error: NetworkingError?)
-    
+
     /// Called when a `URLRequest` is successfully created.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance that created the URL request.
     ///   - urlRequest: The created `URLRequest` object.
     func request(_ request: Request, didCreateURLRequest urlRequest: URLRequest)
-    
+
     /// Called when the initial `URLRequest` for a request is created.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance associated with the initial URL request.
     ///   - urlRequest: The initial `URLRequest` that was created.
     func request(_ request: Request, didCreateInitialURLRequest urlRequest: URLRequest)
-    
+
     /// Called when a new `URLSessionTask` is created for the request.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance for which the task was created.
     ///   - task: The `URLSessionTask` that was created.
     func request(_ request: Request, didCreateTask task: URLSessionTask)
-    
+
     /// Called when a task fails with a specific error.
     ///
     /// - Parameters:
@@ -96,7 +96,7 @@ public protocol Monitor: Sendable {
     ///   - task: The `URLSessionTask` that failed.
     ///   - error: The `NetworkingError` that caused the failure.
     func request(_ request: Request, didFailTask task: URLSessionTask, with error: NetworkingError)
-    
+
     /// Called when request interception fails.
     ///
     /// - Parameters:
@@ -104,21 +104,21 @@ public protocol Monitor: Sendable {
     ///   - urlRequest: The `URLRequest` that failed interception.
     ///   - error: The `NetworkingError` describing the reason for failure.
     func request(_ request: Request, didFailToIntercept urlRequest: URLRequest, with error: NetworkingError)
-    
+
     /// Called when URL request creation fails with an error.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance that failed during URL request creation.
     ///   - error: The `NetworkingError` describing the failure.
     func request(_ request: Request, didFailToCreateURLRequestWithError error: NetworkingError)
-    
+
     /// Called when performance metrics for a request are gathered.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance for which metrics were gathered.
     ///   - metrics: The `URLSessionTaskMetrics` containing timing and network metrics.
     func request(_ request: Request, didGatherMetrics metrics: URLSessionTaskMetrics)
-    
+
     /// Called when a request is successfully intercepted.
     ///
     /// - Parameters:
@@ -126,21 +126,21 @@ public protocol Monitor: Sendable {
     ///   - initialRequest: The original `URLRequest` before interception.
     ///   - request: The modified `URLRequest` after interception.
     func request(_ request: Request, didIntercept initialRequest: URLRequest, to urlRequest: URLRequest)
-    
+
     /// Called when a task is resumed.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance whose task was resumed.
     ///   - task: The resumed `URLSessionTask`.
     func request(_ request: Request, didResumeTask task: URLSessionTask)
-    
+
     /// Called when a task is suspended.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance whose task was suspended.
     ///   - task: The suspended `URLSessionTask`.
     func request(_ request: Request, didSuspendTask task: URLSessionTask)
-    
+
     /// Called when a request's response is validated.
     ///
     /// - Parameters:
@@ -149,18 +149,18 @@ public protocol Monitor: Sendable {
     ///   - data: The response `Data`, if any.
     ///   - error: The `NetworkingError` if validation failed.
     func request(_ request: Request, didValidate urlRequest: URLRequest?, data: Data?, error: NetworkingError?)
-    
+
     // MARK: - DataRequest Monitoring
-    
+
     /// Called when a `DataRequest` parses a response with a specified value type.
     ///
     /// - Parameters:
     ///   - request: The `DataRequest` instance being parsed.
     ///   - response: The `Response` containing the parsed value or an error.
     func request<Value: Sendable>(_ request: DataRequest, didParseResponse response: Response<Value, NetworkingError>)
-    
+
     // MARK: - URLSession Delegate Methods
-    
+
     /// Called when data is received from the server.
     ///
     /// - Parameters:
@@ -168,7 +168,7 @@ public protocol Monitor: Sendable {
     ///   - dataTask: The `URLSessionDataTask` that received the data.
     ///   - data: The received `Data`.
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data)
-    
+
     /// Called when a response is received from the server.
     ///
     /// - Parameters:
@@ -176,14 +176,14 @@ public protocol Monitor: Sendable {
     ///   - dataTask: The `URLSessionDataTask` that received the response.
     ///   - response: The `URLResponse` from the server.
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse)
-    
+
     /// Called when the URLSession becomes invalid due to an error.
     ///
     /// - Parameters:
     ///   - session: The invalidated `URLSession`.
     ///   - error: The `Error` that caused the session to become invalid.
     func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?)
-    
+
     /// Called when a task completes, either successfully or with an error.
     ///
     /// - Parameters:
@@ -191,7 +191,7 @@ public protocol Monitor: Sendable {
     ///   - task: The `URLSessionTask` that completed.
     ///   - error: The `Error` that caused failure, if any.
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?)
-    
+
     /// Called when performance metrics for a task are collected.
     ///
     /// - Parameters:
@@ -206,49 +206,49 @@ extension Monitor {
     public var queue: DispatchQueue {
         .main
     }
-    
+
     /// Called when a request is canceled.
     ///
     /// - Parameter request: The `Request` instance that was canceled.
     public func requestDidCancel(_ request: Request) {}
-    
+
     /// Called when a request finishes successfully.
     ///
     /// - Parameter request: The `Request` instance that completed.
     public func requestDidFinish(_ request: Request) {}
-    
+
     /// Called when a request is resumed after being suspended.
     ///
     /// - Parameter request: The `Request` instance that resumed execution.
     public func requestDidResume(_ request: Request) {}
-    
+
     /// Called when a request is suspended.
     ///
     /// - Parameter request: The `Request` instance that was suspended.
     public func requestDidSuspend(_ request: Request) {}
-    
+
     /// Called when a request is transitioning to a finished state.
     ///
     /// - Parameter request: The `Request` instance preparing to finish.
     public func requestIsFinishing(_ request: Request) {}
-    
+
     /// Called when a request is being prepared.
     ///
     /// - Parameter request: The `Request` instance that is being prepared.
     public func requestIsPreparing(_ request: Request) {}
-    
+
     /// Called when a request is being retried.
     ///
     /// - Parameter request: The `Request` instance that is being retried.
     public func requestIsRetrying(_ request: Request) {}
-    
+
     /// Called when a URLSession task tied to the request is canceled.
     ///
     /// - Parameters:
     ///   - request: The `Request` associated with the canceled task.
     ///   - task: The `URLSessionTask` that was canceled.
     public func request(_ request: Request, didCancelTask task: URLSessionTask) {}
-    
+
     /// Called when a URLSession task completes with or without an error.
     ///
     /// - Parameters:
@@ -256,28 +256,28 @@ extension Monitor {
     ///   - task: The `URLSessionTask` that completed.
     ///   - error: The `NetworkingError` encountered, if any.
     public func request(_ request: Request, didCompleteTask task: URLSessionTask, with error: NetworkingError?) {}
-    
+
     /// Called when a `URLRequest` is successfully created.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance that created the URL request.
     ///   - urlRequest: The created `URLRequest` object.
     public func request(_ request: Request, didCreateURLRequest urlRequest: URLRequest) {}
-    
+
     /// Called when the initial `URLRequest` for a request is created.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance associated with the initial URL request.
     ///   - urlRequest: The initial `URLRequest` that was created.
     public func request(_ request: Request, didCreateInitialURLRequest urlRequest: URLRequest) {}
-    
+
     /// Called when a new `URLSessionTask` is created for the request.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance for which the task was created.
     ///   - task: The `URLSessionTask` that was created.
     public func request(_ request: Request, didCreateTask task: URLSessionTask) {}
-    
+
     /// Called when a task fails with a specific error.
     ///
     /// - Parameters:
@@ -285,7 +285,7 @@ extension Monitor {
     ///   - task: The `URLSessionTask` that failed.
     ///   - error: The `NetworkingError` that caused the failure.
     public func request(_ request: Request, didFailTask task: URLSessionTask, with error: NetworkingError) {}
-    
+
     /// Called when request interception fails.
     ///
     /// - Parameters:
@@ -293,21 +293,21 @@ extension Monitor {
     ///   - urlRequest: The `URLRequest` that failed interception.
     ///   - error: The `NetworkingError` describing the reason for failure.
     public func request(_ request: Request, didFailToIntercept urlRequest: URLRequest, with error: NetworkingError) {}
-    
+
     /// Called when URL request creation fails with an error.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance that failed during URL request creation.
     ///   - error: The `NetworkingError` describing the failure.
     public func request(_ request: Request, didFailToCreateURLRequestWithError error: NetworkingError) {}
-    
+
     /// Called when performance metrics for a request are gathered.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance for which metrics were gathered.
     ///   - metrics: The `URLSessionTaskMetrics` containing timing and network metrics.
     public func request(_ request: Request, didGatherMetrics metrics: URLSessionTaskMetrics) {}
-    
+
     /// Called when a request is successfully intercepted.
     ///
     /// - Parameters:
@@ -315,21 +315,21 @@ extension Monitor {
     ///   - initialRequest: The original `URLRequest` before interception.
     ///   - request: The modified `URLRequest` after interception.
     public func request(_ request: Request, didIntercept initialRequest: URLRequest, to urlRequest: URLRequest) {}
-    
+
     /// Called when a task is resumed.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance whose task was resumed.
     ///   - task: The resumed `URLSessionTask`.
     public func request(_ request: Request, didResumeTask task: URLSessionTask) {}
-    
+
     /// Called when a task is suspended.
     ///
     /// - Parameters:
     ///   - request: The `Request` instance whose task was suspended.
     ///   - task: The suspended `URLSessionTask`.
     public func request(_ request: Request, didSuspendTask task: URLSessionTask) {}
-    
+
     /// Called when a request's response is validated.
     ///
     /// - Parameters:
@@ -343,7 +343,7 @@ extension Monitor {
         data: Data?,
         error: NetworkingError?
     ) {}
-    
+
     /// Called when a `DataRequest` parses a response with a specified value type.
     ///
     /// - Parameters:
@@ -353,7 +353,7 @@ extension Monitor {
         _ request: DataRequest,
         didParseResponse response: Response<Value, NetworkingError>
     ) {}
-    
+
     /// Called when data is received from the server.
     ///
     /// - Parameters:
@@ -361,7 +361,7 @@ extension Monitor {
     ///   - dataTask: The `URLSessionDataTask` that received the data.
     ///   - data: The received `Data`.
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {}
-    
+
     /// Called when a response is received from the server.
     ///
     /// - Parameters:
@@ -369,14 +369,14 @@ extension Monitor {
     ///   - dataTask: The `URLSessionDataTask` that received the response.
     ///   - response: The `URLResponse` from the server.
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse) {}
-    
+
     /// Called when the URLSession becomes invalid due to an error.
     ///
     /// - Parameters:
     ///   - session: The invalidated `URLSession`.
     ///   - error: The `Error` that caused the session to become invalid.
     public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {}
-    
+
     /// Called when a task completes, either successfully or with an error.
     ///
     /// - Parameters:
@@ -384,7 +384,7 @@ extension Monitor {
     ///   - task: The `URLSessionTask` that completed.
     ///   - error: The `Error` that caused failure, if any.
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {}
-    
+
     /// Called when performance metrics for a task are collected.
     ///
     /// - Parameters:

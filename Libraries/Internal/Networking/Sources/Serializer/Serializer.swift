@@ -13,12 +13,12 @@ import Foundation
 public protocol Serializer: Sendable {
     /// The type of object produced by the serializer.
     associatedtype SerializedObject: Sendable
-    
+
     /// HTTP response status codes that indicate an empty response body is valid.
     ///
     /// - Default: `[204, 205]` (No Content & Reset Content)
     var emptyResponseCodes: Set<Int> { get }
-    
+
     /// Serializes the provided response data into the expected type.
     ///
     /// - Parameters:
@@ -49,21 +49,21 @@ extension Serializer {
 /// response is handled correctly based on predefined empty response codes.
 public struct DataResponseSerializer: Serializer {
     // MARK: - Public Properties
-    
+
     /// HTTP response codes for which empty response bodies are considered appropriate.
     public let emptyResponseCodes: Set<Int>
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a `DataResponseSerializer` with customizable empty response codes.
     ///
     /// - Parameter emptyResponseCodes: HTTP status codes that indicate a valid empty response.
     public init(emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes) {
         self.emptyResponseCodes = emptyResponseCodes
     }
-    
+
     // MARK: - Serializer
-    
+
     /// Serializes the provided response data into the expected type.
     ///
     /// - Parameters:
@@ -82,7 +82,7 @@ public struct DataResponseSerializer: Serializer {
         if let error {
             throw error
         }
-            
+
         guard let data, !data.isEmpty else {
             guard let response, emptyResponseCodes.contains(response.statusCode) else {
                 throw NetworkingError(
@@ -90,10 +90,10 @@ public struct DataResponseSerializer: Serializer {
                     failureReason: "Input data nil or zero length"
                 )
             }
-            
+
             return Data()
         }
-        
+
         return data
     }
 }
@@ -112,15 +112,15 @@ public struct Empty: Codable, Equatable, Sendable {
 /// using the provided `JSONDecoder`.
 public struct DecodableResponseSerializer<T: Decodable>: Serializer where T: Sendable {
     // MARK: - Public Properties
-    
+
     /// The `JSONDecoder` used for decoding response data.
     public let decoder: JSONDecoder
-    
+
     /// HTTP response codes for which empty response bodies are considered appropriate.
     public let emptyResponseCodes: Set<Int>
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a `DecodableResponseSerializer` with a custom JSON decoder and empty response codes.
     ///
     /// - Parameters:
@@ -130,13 +130,13 @@ public struct DecodableResponseSerializer<T: Decodable>: Serializer where T: Sen
         decoder: JSONDecoder = JSONDecoder(),
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) {
-        
+
         self.decoder = decoder
         self.emptyResponseCodes = emptyResponseCodes
     }
-    
+
     // MARK: - Serializer
-    
+
     /// Serializes the provided response data into the expected type.
     ///
     /// - Parameters:
@@ -155,7 +155,7 @@ public struct DecodableResponseSerializer<T: Decodable>: Serializer where T: Sen
         if let error {
             throw error
         }
-            
+
         guard let data, !data.isEmpty else {
             guard let response, emptyResponseCodes.contains(response.statusCode) else {
                 throw NetworkingError(
@@ -163,20 +163,21 @@ public struct DecodableResponseSerializer<T: Decodable>: Serializer where T: Sen
                     failureReason: "Input data nil or zero length"
                 )
             }
-            
+
             guard
                 /// T should be an empty type.
                 T.self is Empty.Type,
-                
+
                 /// Empty instance.
-                let empty = Empty() as? T else {
-                
+                let empty = Empty() as? T
+            else {
+
                 throw NetworkingError(kind: .responseSerializationFailed, failureReason: "Invalid empty response type")
             }
-            
+
             return empty
         }
-        
+
         do {
             return try decoder.decode(T.self, from: data)
         } catch {
@@ -191,15 +192,15 @@ public struct DecodableResponseSerializer<T: Decodable>: Serializer where T: Sen
 /// using the specified character encoding.
 public struct StringResponseSerializer: Serializer {
     // MARK: - Public Properties
-    
+
     /// HTTP response codes for which empty response bodies are considered appropriate.
     public let emptyResponseCodes: Set<Int>
-    
+
     /// The string encoding used to decode the response.
     public let encoding: String.Encoding
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a `StringResponseSerializer` with a specific encoding and empty response codes.
     ///
     /// - Parameters:
@@ -209,13 +210,13 @@ public struct StringResponseSerializer: Serializer {
         encoding: String.Encoding = .utf8,
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) {
-        
+
         self.emptyResponseCodes = emptyResponseCodes
         self.encoding = encoding
     }
-    
+
     // MARK: - Serializer
-    
+
     /// Serializes the provided response data into the expected type.
     ///
     /// - Parameters:
@@ -234,7 +235,7 @@ public struct StringResponseSerializer: Serializer {
         if let error {
             throw error
         }
-            
+
         guard let data, !data.isEmpty else {
             guard let response, emptyResponseCodes.contains(response.statusCode) else {
                 throw NetworkingError(
@@ -242,17 +243,17 @@ public struct StringResponseSerializer: Serializer {
                     failureReason: "Input data nil or zero length"
                 )
             }
-            
+
             return ""
         }
-        
+
         guard let string = String(data: data, encoding: encoding) else {
             throw NetworkingError(
                 kind: .responseSerializationFailed,
                 failureReason: "Could not convert data to string using specified encoding \(encoding)"
             )
         }
-        
+
         return string
     }
 }

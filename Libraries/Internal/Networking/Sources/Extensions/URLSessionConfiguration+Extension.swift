@@ -15,7 +15,7 @@ extension URLSessionConfiguration {
             httpAdditionalHeaders = newValue.dictionary
         }
     }
-    
+
     // MARK: - Public methods
 
     /// Returns the default implementation of the session configuration
@@ -31,7 +31,7 @@ extension URLSessionConfiguration {
         #if os(iOS)
         configuration.multipathServiceType = .handover
         #endif
-        
+
         return configuration
     }
 }

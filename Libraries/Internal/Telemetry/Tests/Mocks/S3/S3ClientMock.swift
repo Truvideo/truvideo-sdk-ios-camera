@@ -2,17 +2,18 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-internal import AWSS3
 import Foundation
+internal import AWSS3
 
 @testable import Telemetry
 
+/// A mock implementation of the `S3ClientProtocol` protocol for use in unit tests.
 final class MockS3Client: S3ClientProtocol {
     // MARK: - Properties
 
-    var callCount = 0
-    var uploadedObject: PutObjectInput?
     var error: Error?
+    fileprivate(set) var putObjectCallCount = 0
+    fileprivate(set) var uploadedObject: PutObjectInput?
 
     // MARK: - S3ClientProtocol
 
@@ -22,7 +23,7 @@ final class MockS3Client: S3ClientProtocol {
     /// - Returns: A `PutObjectOutput` containing metadata about the uploaded object.
     /// - Throws: An error if the upload fails (e.g., due to network issues or authentication failure).
     func putObject(input: PutObjectInput) async throws -> PutObjectOutput {
-        self.callCount += 1
+        self.putObjectCallCount += 1
 
         if let error {
             throw error

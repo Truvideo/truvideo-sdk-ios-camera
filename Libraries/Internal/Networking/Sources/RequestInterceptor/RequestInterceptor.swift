@@ -10,10 +10,10 @@ import Foundation
 public enum RetryPolicy: Sendable {
     /// Indicates that no retry should be attempted.
     case doNotRetry
-    
+
     /// Do not retry due to the associated `Error`.
     case doNotRetryWithError(Error)
-    
+
     /// Indicates that the operation should be retried after a specified delay.
     case retry(TimeInterval)
 }
@@ -105,10 +105,10 @@ extension RequestRetrier {
 /// ```
 public struct Middleware: RequestMiddleware {
     // MARK: - Public Properties
-    
+
     /// All `RequestInterceptor`s associated with the instance.
     public let interceptors: [RequestInterceptor]
-    
+
     /// All `RequestRetrier`s associated with the instance.
     public let retriers: [RequestRetrier]
 
@@ -179,7 +179,7 @@ public struct Middleware: RequestMiddleware {
         for session: Session,
         failedWith error: Error
     ) async -> RetryPolicy {
-        
+
         var retriers = retriers
 
         guard !retriers.isEmpty else {

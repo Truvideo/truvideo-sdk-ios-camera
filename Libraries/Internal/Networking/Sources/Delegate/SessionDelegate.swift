@@ -17,7 +17,7 @@ protocol SessionDelegateProvider: AnyObject, Sendable {
     /// - Parameter task: The `URLSessionTask` for which to retrieve the request.
     /// - Returns: The corresponding `Request` instance, if available.
     func request(for task: URLSessionTask) -> Request?
-    
+
     /// Called when the session becomes invalid due to an error.
     ///
     /// - Parameter error: An optional `Error` indicating why the session became invalid.
@@ -39,73 +39,73 @@ protocol SessionDelegateProvider: AnyObject, Sendable {
 /// ```
 open class SessionDelegate: NSObject, @unchecked Sendable {
     // MARK: - Properties
-    
+
     /// An optional `RequestMonitor` instance responsible for observing request events.
     var monitor: Monitor?
-    
+
     /// The delegate provider responsible for handling session-related events.
     weak var provider: SessionDelegateProvider?
 }
 
 extension SessionDelegate: URLSessionDelegate {
-    
+
     // MARK: - URLSessionDelegate
-    
+
     public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: (any Error)?) {
         monitor?.urlSession(session, didBecomeInvalidWithError: error)
-        
+
         provider?.sessionDidBecomeInvalid(with: error)
     }
 }
 
 extension SessionDelegate: URLSessionDataDelegate {
-    
+
     // MARK: - URLSessionDataDelegate
-    
+
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
         monitor?.urlSession(session, dataTask: dataTask, didReceive: data)
-                
+
         if let dataRequest = provider?.request(for: dataTask) as? DataRequest {
             dataRequest.didReceive(data: data)
         }
     }
-    
+
     public func urlSession(
         _ session: URLSession,
         dataTask: URLSessionDataTask,
         didReceive response: URLResponse,
         completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
     ) {
-        
+
         monitor?.urlSession(session, dataTask: dataTask, didReceive: response)
-        
+
         completionHandler(.allow)
     }
 }
 
 extension SessionDelegate: URLSessionTaskDelegate {
-    
+
     // MARK: - URLSessionTaskDelegate
-    
+
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
         monitor?.urlSession(session, task: task, didCompleteWithError: error)
-        
+
         let request = provider?.request(for: task)
         let error = error.map { NetworkingError(kind: .sessionTaskFailed, underlyingError: $0) }
-        
+
         request?.didComplete(task: task, error: error)
     }
-    
+
     public func urlSession(
         _ session: URLSession,
         task: URLSessionTask,
         didFinishCollecting metrics: URLSessionTaskMetrics
     ) {
-        
+
         monitor?.urlSession(session, task: task, didFinishCollecting: metrics)
-        
+
         let request = provider?.request(for: task)
-        
+
         request?.didGatherMetrics(metrics)
     }
 }

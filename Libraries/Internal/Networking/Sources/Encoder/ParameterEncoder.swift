@@ -40,7 +40,7 @@ public typealias Parameters = [String: any Any & Sendable]
 /// request = try encoder.encode(parameters, into: request)
 /// ```
 public protocol ParameterEncoder: Sendable {
-    
+
     /// Encodes the given parameters into a `URLRequest`.
     ///
     /// Implementations of this method should handle how the parameters are encoded
@@ -71,23 +71,23 @@ public protocol ParameterEncoder: Sendable {
 /// ```
 public struct JSONParameterEncoder: ParameterEncoder {
     // MARK: - Private Properties
-    
+
     private let options: JSONSerialization.WritingOptions
-    
+
     // MARK: - Static Properties
-    
+
     /// Returns an encoder with `JSONSerialization.WritingOptions` set to `.prettyPrinted`.
     public static var prettyPrinted: JSONParameterEncoder {
         JSONParameterEncoder(options: [.prettyPrinted])
     }
-    
+
     /// Returns an encoder with `JSONSerialization.WritingOptions` set to `.sortedKeys`.
     public static var sortedKeys: JSONParameterEncoder {
         JSONParameterEncoder(options: [.sortedKeys])
     }
-    
+
     // MARK: - Initializer
-    
+
     /// Initializes a new instance with the specified JSON serialization options.
     ///
     /// This initializer allows the configuration of `JSONSerialization.WritingOptions`
@@ -98,9 +98,9 @@ public struct JSONParameterEncoder: ParameterEncoder {
     public init(options: JSONSerialization.WritingOptions = []) {
         self.options = options
     }
-    
+
     // MARK: - ParameterEncoder
-    
+
     /// Encodes the given parameters into a `URLRequest`.
     ///
     /// - Parameters:
@@ -112,23 +112,23 @@ public struct JSONParameterEncoder: ParameterEncoder {
         guard let parameters else {
             return request
         }
-        
+
         guard JSONSerialization.isValidJSONObject(parameters) else {
             throw NetworkingError(
                 kind: .parameterEncodingFailed,
                 failureReason: "The provided parameters \(parameters) cannot be converted to a valid JSON object."
             )
         }
-        
+
         var request = request
-        
+
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: parameters, options: options)
-            
+
             if !request.allHTTPHeaders.contains(.contentType("application/json")) {
                 request.allHTTPHeaders.append(.contentType("application/json"))
             }
-            
+
             return request
         } catch {
             throw NetworkingError(kind: .parameterEncodingFailed, underlyingError: error)
@@ -145,9 +145,9 @@ extension ParameterEncoder where Self == JSONParameterEncoder {
     public static var json: JSONParameterEncoder {
         JSONParameterEncoder()
     }
-    
+
     // MARK: - Static methods
-    
+
     /// Creates a new instance of `JSONParameterEncoder` using a custom `JSONSerialization.WritingOptions`.
     ///
     /// This method allows configuring a custom `JSONEncoder` to handle specialized encoding behavior,
@@ -169,25 +169,25 @@ extension ParameterEncoder where Self == JSONParameterEncoder {
 /// This encoder conforms to the `ParameterEncoder` protocol and is designed to work seamlessly with network request configurations.
 public struct URLParameterEncoder: ParameterEncoder {
     // MARK: - Private methods
-    
+
     private let destination: ParameterDestination
 
     // MARK: - Types
-    
+
     /// Defines where the parameters should be encoded within the `URLRequest`.
     public enum ParameterDestination: Sendable {
         /// Automatically determines the destination based on the HTTP method.
         /// Parameters will be encoded in the URL for `GET`, `HEAD`, and `DELETE` methods.
         case auto
-        
+
         /// Forces parameters to be encoded in the HTTP body.
         case body
-        
+
         /// Forces parameters to be encoded in the URL query string.
         case query
-        
+
         // MARK: - Instance Methods
-        
+
         /// Determines whether parameters should be encoded in the URL based on the HTTP method.
         ///
         /// - Parameter method: The HTTP method used in the request.
@@ -196,16 +196,16 @@ public struct URLParameterEncoder: ParameterEncoder {
             switch self {
             case .auto:
                 return [HTTPMethod.get, .head, .delete].contains(method)
-                
+
             case .body:
                 return false
-                
+
             case .query:
                 return true
             }
         }
     }
-    
+
     // MARK: - Initializer
 
     /// Initializes a new instance of `URLParameterEncoder` with the default destination behavior.
@@ -214,9 +214,9 @@ public struct URLParameterEncoder: ParameterEncoder {
     public init(destination: ParameterDestination = .auto) {
         self.destination = destination
     }
-    
+
     // MARK: - ParameterEncoder
-    
+
     /// Encodes the given parameters into a `URLRequest`.
     ///
     /// - Parameters:
@@ -228,20 +228,19 @@ public struct URLParameterEncoder: ParameterEncoder {
         guard let parameters else {
             return request
         }
-        
+
         var request = request
-        
-        if
-            /// The raw string http method.
-            let method = request.httpMethod, destination.encodeParametersInURL(for: .init(rawValue: method)) {
-         
-            if
-                /// The url of the request.
-                let url = request.url,
-                
+
+        if /// The raw string http method.
+        let method = request.httpMethod, destination.encodeParametersInURL(for: .init(rawValue: method)) {
+
+            if /// The url of the request.
+            let url = request.url,
+
                 /// The components of the url.
-                var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false) {
-                
+                var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            {
+
                 urlComponents.queryItems = parameters.queryItems
                 request.url = urlComponents.url
             }
@@ -249,10 +248,10 @@ public struct URLParameterEncoder: ParameterEncoder {
             if !request.allHTTPHeaders.contains(.contentType("application/x-www-form-urlencoded")) {
                 request.allHTTPHeaders.append(.contentType("application/x-www-form-urlencoded"))
             }
-            
+
             request.httpBody = Data(parameters.queryString.utf8)
         }
-        
+
         return request
     }
 }
@@ -290,10 +289,10 @@ extension Parameters {
                 components.append(contentsOf: queryItems(for: key, value: value))
             }
         }
-        
+
         return components
     }
-    
+
     /// Generates a URL query string from the dictionary's key-value pairs using `URLQueryItem`.
     ///
     /// This method converts all key-value pairs from the dictionary into a valid URL query string.
@@ -304,42 +303,42 @@ extension Parameters {
     var queryString: String {
         queryItems.map { "\($0.name)=\($0.value ?? "")" }.joined(separator: "&")
     }
-    
+
     // MARK: - Private methods
-    
+
     private func queryItems(for key: String, value: Any) -> [URLQueryItem] {
         var items: [URLQueryItem] = []
-        
+
         switch value {
         case let array as [Any]:
             for (index, element) in array.enumerated() {
                 let arrayKey = "\(key)[\(index)]"
- 
+
                 items.append(contentsOf: queryItems(for: arrayKey, value: element))
             }
-            
+
         case let bool as Bool:
             items.append(URLQueryItem(name: key, value: bool ? "true" : "false"))
-            
+
         case let dictionary as [String: Any]:
             for (nestedKey, nestedValue) in dictionary {
                 let fullKey = "\(key)[\(nestedKey)]"
-                
+
                 items.append(contentsOf: queryItems(for: fullKey, value: nestedValue))
             }
-            
+
         case let number as NSNumber:
             let valueString = number.isBool ? (number.boolValue ? "true" : "false") : "\(number)"
-            
+
             items.append(URLQueryItem(name: key, value: valueString))
-            
+
         case let string as String:
             items.append(URLQueryItem(name: key, value: string))
 
         default:
             break
         }
-        
+
         return items
     }
 }

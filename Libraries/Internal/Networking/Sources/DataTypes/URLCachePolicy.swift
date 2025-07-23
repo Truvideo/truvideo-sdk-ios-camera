@@ -11,10 +11,10 @@ import Foundation
 public enum URLCachePolicy: Sendable {
     /// Always fetches new data from the network, ignoring any locally cached data.
     case reloadIgnoringLocalCacheData
-    
+
     /// Uses cached data if available; otherwise, does not fetch new data from the network.
     case returnCacheDataDontLoad
-    
+
     /// Uses cached data if available; otherwise, fetches new data from the network.
     case returnCacheDataElseLoad
 }

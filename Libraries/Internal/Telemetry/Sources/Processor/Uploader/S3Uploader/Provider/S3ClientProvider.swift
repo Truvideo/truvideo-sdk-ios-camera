@@ -38,7 +38,7 @@ final class S3ClientImpl: S3ClientProvider {
     ///
     /// - Parameter client: An optional instance of `S3Client` used to perform S3 operations.
     ///   If `nil`, S3 interactions will require initialization elsewhere.
-    init(client: S3ClientProtocol?) {
+    init(client: S3ClientProtocol) {
         self.client = client
         self.credential = AWSCredentialIdentity(accessKey: "", secret: "")
         self.region = ""

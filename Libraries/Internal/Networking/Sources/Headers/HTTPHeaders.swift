@@ -17,9 +17,9 @@ import Foundation
 /// ```
 public struct HTTPHeaders: Hashable, Sendable {
     // MARK: - Private Properties
-    
+
     private var headers: [HTTPHeader] = []
-    
+
     // MARK: - Public Properties
 
     /// The dictionary representation of all headers.
@@ -31,9 +31,9 @@ public struct HTTPHeaders: Hashable, Sendable {
     public static var `default`: HTTPHeaders {
         [.defaultAcceptLanguage]
     }
-    
+
     // MARK: - Subscript
-    
+
     /// Case-insensitively access the header with the given name.
     public subscript(_ name: String) -> String? {
         get {
@@ -55,7 +55,7 @@ public struct HTTPHeaders: Hashable, Sendable {
     }
 
     // MARK: - Initializers
-    
+
     /// Creates a new `HTTPHeaders` instance from an array of `HTTPHeader` values.
     ///
     /// - Parameter array: An array of `HTTPHeader` values to initialize the collection.
@@ -64,7 +64,7 @@ public struct HTTPHeaders: Hashable, Sendable {
             insertOrReplace($0)
         }
     }
-    
+
     /// Creates a new `HTTPHeaders` instance from a dictionary of key-value pairs.
     ///
     /// - Parameter dictionary: A dictionary where keys represent header names and values represent their corresponding values.
@@ -107,7 +107,7 @@ public struct HTTPHeaders: Hashable, Sendable {
             return
         }
 
-        headers.replaceSubrange(index...index, with: [header])
+        headers.replaceSubrange(index ... index, with: [header])
     }
 }
 
@@ -135,9 +135,9 @@ extension HTTPHeaders: ExpressibleByDictionaryLiteral {
 }
 
 extension HTTPHeaders: Collection {
-    
+
     // MARK: - Collection
-    
+
     /// The collection's "past the end" position---that is, the position one
     /// greater than the last valid subscript argument.
     public var endIndex: Int {
@@ -206,9 +206,9 @@ public func + (lhs: HTTPHeaders, rhs: HTTPHeaders) -> HTTPHeaders {
     return httpHeaders
 }
 
-private extension Array where Element == HTTPHeader {
+extension Array where Element == HTTPHeader {
     /// Case-insensitively finds the index of an `HTTPHeader` with the provided name, if it exists.
-    func index(of name: String) -> Index? {
+    fileprivate func index(of name: String) -> Index? {
         let lowercasedName = name.lowercased()
         return firstIndex(where: { $0.name.lowercased() == lowercasedName })
     }

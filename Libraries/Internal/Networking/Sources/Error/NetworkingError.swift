@@ -18,10 +18,10 @@ import Foundation
 public struct NetworkingError: LocalizedError, Sendable {
     /// The affected column line in the source code.
     public let column: Int
-    
+
     /// A localized message describing the reason for the failure.
     public let failureReason: String?
-    
+
     /// The underliying kind of error.
     public let kind: ErrorKind
 
@@ -35,7 +35,7 @@ public struct NetworkingError: LocalizedError, Sendable {
     public var errorDescription: String? {
         failureReason ?? underlyingError?.localizedDescription
     }
-    
+
     // MARK: - Types
 
     /// The underliying kind of error.
@@ -48,10 +48,10 @@ public struct NetworkingError: LocalizedError, Sendable {
 
         /// `ParameterEncoding` threw an error during the encoding process.
         case parameterEncodingFailed
-        
+
         /// The request creation threw an error in.
         case requestCreationFailed
-        
+
         /// `RequestIntercetor` threw an error during the request retry process.
         case requestInterceptationFailed
 
@@ -93,7 +93,7 @@ public struct NetworkingError: LocalizedError, Sendable {
         self.line = line
         self.underlyingError = underlyingError
     }
-    
+
     /// Creates a new instance of the `NetworkingError` with the failure reason.
     ///
     /// - Parameters:
