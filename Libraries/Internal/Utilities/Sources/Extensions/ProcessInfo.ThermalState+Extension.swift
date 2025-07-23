@@ -11,13 +11,13 @@ extension ProcessInfo.ThermalState: @retroactive CustomDebugStringConvertible {
         switch self {
         case .critical:
             return "critical"
-            
+
         case .fair:
             return "fair"
-            
+
         case .nominal:
             return "nominal"
-            
+
         case .serious:
             return "serious"
 

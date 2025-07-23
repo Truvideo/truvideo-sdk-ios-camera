@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import NetworkingInterop
 
 /// A delegate protocol that defines methods for handling request retries.
 ///
@@ -61,7 +62,7 @@ public protocol RequestDelegate: AnyObject, Sendable {
 /// let request = Request(monitor: nil, queue: DispatchQueue(label: "network.queue"))
 /// request.resume()
 /// ```
-open class Request: @unchecked Sendable {
+open class Request: @unchecked Sendable, NetworkingInterop.Request {
     /// A typealias for request validation.
     typealias RequestValidator = @Sendable () -> Void
 

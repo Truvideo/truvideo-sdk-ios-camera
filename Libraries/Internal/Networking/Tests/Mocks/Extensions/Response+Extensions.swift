@@ -3,11 +3,10 @@
 //
 
 import Foundation
-
-@testable import Networking
+import NetworkingInterop
 
 extension Response {
-    public static func mock(result: Result<String, NetworkingError>) -> Response<String, NetworkingError> {
+    static func mock(result: Result<String, NetworkingError>) -> Response<String, NetworkingError> {
         Response<String, NetworkingError>(
             data: Data(),
             metrics: nil,

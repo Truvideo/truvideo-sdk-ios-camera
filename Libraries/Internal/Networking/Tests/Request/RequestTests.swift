@@ -3,7 +3,8 @@
 //
 
 import Foundation
-import NetworkingTesting
+import NetworkingInterop
+import NetworkingInteropTesting
 import Testing
 
 @testable import Networking
@@ -16,7 +17,8 @@ struct RequestTests {
     
     // MARK: - Tests
     
-    @Test func testThatCancelShouldCallMonitor() async {
+    @Test
+    func testThatCancelShouldCallMonitor() async {
         // Given
         let monitor = MonitorMock()
         let sut = Request(delegate: nil, middleware: nil, monitor: monitor, queue: queue)
@@ -36,8 +38,9 @@ struct RequestTests {
         #expect(monitor.requestDidCancelCallCount == 1, "Expected requestDidCancelCallCount to be equals to 1")
     }
     
-    @Test func testThatDidCancelTaskShouldCallMonitor() async {
-        // Given        
+    @Test
+    func testThatDidCancelTaskShouldCallMonitor() async {
+        // Given
         let monitor = MonitorMock()
         let task = URLSession.shared.dataTask(with: request)
         let sut = Request(delegate: nil, middleware: nil, monitor: monitor, queue: queue)
@@ -57,7 +60,8 @@ struct RequestTests {
         #expect(monitor.requestDidCancelTaskCallCount == 1, "Expected requestDidCancelTaskCallCount to be equals to 1")
     }
     
-    @Test func testThatDidCompleteShouldRunValidatorsAndSetError() async {
+    @Test
+    func testThatDidCompleteShouldRunValidatorsAndSetError() async {
         // Given
         let error = NetworkingError(kind: .explicitlyCancelled)
         let task = URLSession.shared.dataTask(with: request)        
@@ -78,7 +82,8 @@ struct RequestTests {
         #expect(sut.error?.kind == .explicitlyCancelled, "Expected error to be equals to explicitlyCancelled")
     }
     
-    @Test func testThatDidCreateInitialRequestShouldCallMonitorAndAppendRequest() async {
+    @Test
+    func testThatDidCreateInitialRequestShouldCallMonitorAndAppendRequest() async {
         // Given
         let monitor = MonitorMock()
         let sut = Request(delegate: nil, middleware: nil, monitor: monitor, queue: queue)
@@ -102,7 +107,8 @@ struct RequestTests {
         )
     }
     
-    @Test func testThatDidCreateTaskShouldCallMonitorAndAppendTask() async {
+    @Test
+    func testThatDidCreateTaskShouldCallMonitorAndAppendTask() async {
         // Given
         let monitor = MonitorMock()
         let task = URLSession.shared.dataTask(with: request)
@@ -124,7 +130,8 @@ struct RequestTests {
         #expect(monitor.requestDidCreateTaskCallCount == 1, "Expected requestDidCreateTaskCallCount to be equals to 1")
     }
     
-    @Test func testThatDidCreateTaskWhenRequestIsCancelledShouldResumeAndCancelTheTask() async {
+    @Test
+    func testThatDidCreateTaskWhenRequestIsCancelledShouldResumeAndCancelTheTask() async {
         // Given
         let monitor = MonitorMock()
         let task = URLSession.shared.dataTask(with: request)
@@ -148,7 +155,8 @@ struct RequestTests {
         #expect(monitor.requestDidCancelTaskCallCount == 1, "Expected requestDidCancelTaskCallCount to be equals to 1")
     }
     
-    @Test func testThatDidCreateTaskWhenRequestIsResumedShouldResumeTheTask() async {
+    @Test
+    func testThatDidCreateTaskWhenRequestIsResumedShouldResumeTheTask() async {
         // Given
         let monitor = MonitorMock()
         let task = URLSession.shared.dataTask(with: request)
@@ -172,7 +180,8 @@ struct RequestTests {
         #expect(monitor.requestDidResumeTaskCallCount == 1, "Expected requestDidResumeTaskCallCount to be equals to 1")
     }
     
-    @Test func testThatDidCreateTaskWhenRequestIsSuspendedShouldSuspendTheTask() async {
+    @Test
+    func testThatDidCreateTaskWhenRequestIsSuspendedShouldSuspendTheTask() async {
         // Given
         let monitor = MonitorMock()
         let task = URLSession.shared.dataTask(with: request)
@@ -196,7 +205,8 @@ struct RequestTests {
         #expect(monitor.requestDidSuspendTaskCallCount == 1, "Expected requestDidResumeTaskCallCount to be equals to 1")
     }
     
-    @Test func testThatDidFailTaskShouldCallMonitorAndSetError() async {
+    @Test
+    func testThatDidFailTaskShouldCallMonitorAndSetError() async {
         // Given
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
@@ -220,7 +230,8 @@ struct RequestTests {
         #expect(monitor.requestDidFailTaskCallCount == 1, "Expected requestDidFailTaskCallCount to be equals to 1")
     }
     
-    @Test func testThatDidCreateURLRequestShouldCallMonitor() async {
+    @Test
+    func testThatDidCreateURLRequestShouldCallMonitor() async {
         // Given
         let monitor = MonitorMock()
         let sut = Request(delegate: nil, middleware: nil, monitor: monitor, queue: queue)
@@ -243,7 +254,8 @@ struct RequestTests {
         )
     }
     
-    @Test func testThatDidFailToCreateURLRequestShouldCallMonitorAndFinishTheRequest() async {
+    @Test
+    func testThatDidFailToCreateURLRequestShouldCallMonitorAndFinishTheRequest() async {
         // Given
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
@@ -269,7 +281,8 @@ struct RequestTests {
         )
     }
     
-    @Test func testThatDidFailToCreateURLRequestShouldCallMonitor() async {
+    @Test
+    func testThatDidFailToCreateURLRequestShouldCallMonitor() async {
         // Given
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
@@ -297,7 +310,8 @@ struct RequestTests {
         )
     }
     
-    @Test func testThatResetShouldClearTheRequest() async throws {
+    @Test
+    func testThatResetShouldClearTheRequest() async throws {
         // Given
         let monitor = MonitorMock()
         let sut = Request(delegate: nil, middleware: nil, monitor: monitor, queue: queue)
@@ -313,7 +327,8 @@ struct RequestTests {
         #expect(sut.error == nil, "Expected error to be nil")
     }
     
-    @Test func testThatCancelShouldCallMonitorAndSetTheStateToCancelled() async {
+    @Test
+    func testThatCancelShouldCallMonitorAndSetTheStateToCancelled() async {
         // Given
         let monitor = MonitorMock()
         let sut = Request(delegate: nil, middleware: nil, monitor: monitor, queue: queue)
@@ -332,7 +347,8 @@ struct RequestTests {
         #expect(monitor.requestDidCancelCallCount == 1, "Expected requestDidCancelCallCount to be equals to 1")
     }
     
-    @Test func testThatResumeShouldCallMonitorAndSetTheStateToResumed() async {
+    @Test
+    func testThatResumeShouldCallMonitorAndSetTheStateToResumed() async {
         // Given
         let monitor = MonitorMock()
         let sut = Request(delegate: nil, middleware: nil, monitor: monitor, queue: queue)
@@ -351,7 +367,8 @@ struct RequestTests {
         #expect(monitor.requestDidResumeCallCount == 1, "Expected requestDidResumeCallCount to be equals to 1")
     }
     
-    @Test func testThatResumeShouldCallMonitorAndResumeTheTask() async {
+    @Test
+    func testThatResumeShouldCallMonitorAndResumeTheTask() async {
         // Given
         let monitor = MonitorMock()
         let task = URLSession.shared.dataTask(with: request)
@@ -376,7 +393,8 @@ struct RequestTests {
         #expect(monitor.requestDidResumeTaskCallCount == 1, "Expected requestDidResumeTaskCallCount to be equals to 1")
     }
     
-    @Test func testThatSuspendShouldCallMonitorAndSetTheStateToSuspended() async {
+    @Test
+    func testThatSuspendShouldCallMonitorAndSetTheStateToSuspended() async {
         // Given
         let monitor = MonitorMock()
         let sut = Request(delegate: nil, middleware: nil, monitor: monitor, queue: queue)
@@ -395,7 +413,8 @@ struct RequestTests {
         #expect(monitor.requestDidSuspendCallCount == 1, "Expected requestDidSuspendCallCount to be equals to 1")
     }
     
-    @Test func testThatSuspendShouldCallMonitorAndSuspendTheTask() async {
+    @Test
+    func testThatSuspendShouldCallMonitorAndSuspendTheTask() async {
         // Given
         let monitor = MonitorMock()
         let task = URLSession.shared.dataTask(with: request)
@@ -422,7 +441,8 @@ struct RequestTests {
         )
     }
     
-    @Test func testThatAppendResponseSerializerShouldResumeTheRequest() async {
+    @Test
+    func testThatAppendResponseSerializerShouldResumeTheRequest() async {
         // Given
         let monitor = MonitorMock()
         let task = URLSession.shared.dataTask(with: request)
@@ -449,12 +469,13 @@ struct RequestTests {
         #expect(sut.state == .resumed, "Expected state to be equals to resumed")
     }
     
-    @Test func testThatDebugDescriptionShouldReturnCURLRepresentation() async {
+    @Test
+    func testThatDebugDescriptionShouldReturnCURLRepresentation() async {
         // Given
-        let configurarion = URLSessionConfiguration.ephemeral
-        configurarion.httpAdditionalHeaders = ["foo1": "bar"]
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.httpAdditionalHeaders = ["foo1": "bar"]
                 
-        let session = Session(configuration: configurarion)
+        let session = HTTPURLSession(configuration: configuration)
         let sut = session.request(request.url!, headers: ["foo": "bar"])
 
         // When
@@ -464,15 +485,13 @@ struct RequestTests {
         #expect(sut.debugDescription != "", "Expected debugDescription to not be empty.")
     }
     
-    @Test func testThatDebugDescriptionShouldNotBeAbleToCreateCURLDescription() async {
+    @Test
+    func testThatDebugDescriptionShouldNotBeAbleToCreateCURLDescription() async {
         // Given
         let expectedDescription = "$ curl command could not be created"
         let sut = Request(delegate: nil, middleware: nil, monitor: nil, queue: queue)
 
         // When, Then
-        #expect(
-            sut.debugDescription == expectedDescription,
-            "Expected debugDescription to be equals to \(expectedDescription)."
-        )
+        #expect(sut.debugDescription == expectedDescription)
     }
 }

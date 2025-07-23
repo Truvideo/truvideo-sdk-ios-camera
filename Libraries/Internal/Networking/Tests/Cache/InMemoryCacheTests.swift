@@ -10,12 +10,13 @@ import Testing
 struct InMemoryURLCacheTests {
     // MARK: - Private Properties
     
-    private let session = Session(queue: .global())
+    private let session = HTTPURLSession(queue: .global())
     private let url = "https://httpbin.org/"
     
     // MARK: - Tests
 
-    @Test func testThatCacheResponseForRequestShouldNotReturnAResponseIfDoesNotExists() {
+    @Test
+    func testThatCacheResponseForRequestShouldNotReturnAResponseIfDoesNotExists() {
         // Given
         let request = session.request(url)
         let sut = InMemoryURLCache()
@@ -24,7 +25,8 @@ struct InMemoryURLCacheTests {
         #expect(sut.cachedResponse(for: request) == nil, "Expected response to be nil")
     }
     
-    @Test func testThatCacheResponseForRequestShouldNotReturnAResponseIfRequestIsInvalid() {
+    @Test
+    func testThatCacheResponseForRequestShouldNotReturnAResponseIfRequestIsInvalid() {
         // Given
         let request = session.request(url)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
@@ -37,7 +39,8 @@ struct InMemoryURLCacheTests {
         #expect(sut.cachedResponse(for: request) == nil, "Expected response to be nil")
     }
     
-    @Test func testThatCacheResponseForRequestShouldReturnAResponseIfExists() throws {
+    @Test
+    func testThatCacheResponseForRequestShouldReturnAResponseIfExists() throws {
         // Given
         let request = session.request(url)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
@@ -55,7 +58,8 @@ struct InMemoryURLCacheTests {
         #expect(sut.cachedResponse(for: request) != nil, "Expected response to not be nil")
     }
     
-    @Test func testThatStaticVarInitialization() {
+    @Test
+    func testThatStaticVarInitialization() {
         // Given
         let sut: InMemoryURLCache = .inMemory
         
@@ -66,7 +70,8 @@ struct InMemoryURLCacheTests {
         )
     }
     
-    @Test func testThatStaticFunctionInitialization() {
+    @Test
+    func testThatStaticFunctionInitialization() {
         // Given
         let sut: InMemoryURLCache = .inMemory(capacity: 1)
         
@@ -74,7 +79,8 @@ struct InMemoryURLCacheTests {
         #expect(sut.memoryCapacity == 1, "Expected memoryCapacity to be the equals to 1")
     }
     
-    @Test func testThatRemoveCacheResponseForRequest() throws {
+    @Test
+    func testThatRemoveCacheResponseForRequest() throws {
         // Given
         let request = session.request(url)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())

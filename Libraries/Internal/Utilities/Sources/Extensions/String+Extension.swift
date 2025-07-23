@@ -18,7 +18,7 @@ extension String {
 
         dateFormatter.dateFormat = format
         dateFormatter.timeZone = TimeZone(identifier: "UTC")
-        
+
         return dateFormatter.date(from: self)
     }
 }

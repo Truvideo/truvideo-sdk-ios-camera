@@ -52,7 +52,8 @@ extension NSPersistentContainer {
             let modelURL = bundle.url(forResource: name, withExtension: "momd"),
 
             /// The `NSManagedObjectModel` description.
-            let managedObjectModel = cache[modelURL] ?? NSManagedObjectModel(contentsOf: modelURL) else {
+            let managedObjectModel = cache[modelURL] ?? NSManagedObjectModel(contentsOf: modelURL)
+        else {
 
             throw UtilityError(kind: .CoreDataKitErrorReason.failedModelInitialization)
         }

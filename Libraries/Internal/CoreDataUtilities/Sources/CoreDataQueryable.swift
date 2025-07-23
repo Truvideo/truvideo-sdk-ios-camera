@@ -37,5 +37,5 @@ extension CoreDataQueryable {
             .first()
 
         return existing ?? Self(context: context)
-    }    
+    }
 }

@@ -3,9 +3,8 @@
 //
 
 import Foundation
-
-@testable import Networking
+import NetworkingInterop
 
 extension NetworkingError {
-    public static let errorMock = NetworkingError(kind: .sessionInvalidated, failureReason: "failureReason")
+    static let errorMock = NetworkingError(kind: .sessionInvalidated, failureReason: "failureReason")
 }

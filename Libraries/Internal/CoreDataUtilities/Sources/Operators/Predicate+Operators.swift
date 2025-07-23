@@ -94,10 +94,10 @@ public func << <Element, Value>(left: KeyPath<Element, Value>, right: [Value]) -
 ///  - right: The range of values to check the key path's value against.
 /// - Returns: A `Predicate` that tests for membership in the range.
 public func << <Element, Value>(
-  left: KeyPath<Element, Value>,
-  right: Range<Value>
+    left: KeyPath<Element, Value>,
+    right: Range<Value>
 ) -> QueryPredicate<Element> where Value: Strideable, Value.Stride: SignedInteger {
-  QueryPredicate(predicate: left << right)
+    QueryPredicate(predicate: left << right)
 }
 
 // MARK: - Predicate Combinators

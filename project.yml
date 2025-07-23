@@ -1,6 +1,10 @@
 name: TruVideoSDK
 options:
   createIntermediateGroups: true
+  fileHeaderTemplate: |
+    //
+    // Copyright © {{year}} TruVideo. All rights reserved.
+    //  
 
 packages:
   AWSS3:
@@ -157,8 +161,70 @@ targets:
       - Libraries/Internal/Networking/Tests
     dependencies:
       - target: Networking
+      - target: NetworkingInteropTesting
     settings:
       GENERATE_INFOPLIST_FILE: YES
+  
+  NetworkingInterop:
+    type: framework
+    platform: iOS
+    sources:
+      - Libraries/Internal/Networking/Interop/Sources
+    info:
+      path: Libraries/Internal/Networking/Interop/Sources/Info.plist
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Networking/Interop/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+        
+  NetworkingInteropTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Libraries/Internal/Networking/Interop/Tests
+    dependencies:
+      - target: NetworkingInterop
+      - target: NetworkingInteropTesting
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+
+  NetworkingInteropTesting:
+    type: framework
+    platform: iOS
+    sources:
+      - Libraries/Internal/Networking/Interop/Testing
+    info:
+      path: Libraries/Internal/Networking/Interop/Testing/Info.plist
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Networking/Interop/Testing" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
 
   Telemetry:
     type: framework
@@ -262,7 +328,17 @@ schemes:
       targets:
         Networking: all
     test:
-      targets: [NetworkingTests]
+      targets: all
+  NetworkingInterop:
+    build:
+      targets:
+        NetworkingInterop: all
+    test:
+      targets: [NetworkingInteropTests]
+  NetworkingInteropTesting:
+    build:
+      targets:
+        NetworkingInterop: all
   Telemetry:
     build:
       targets:

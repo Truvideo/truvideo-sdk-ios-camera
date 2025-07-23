@@ -18,21 +18,21 @@ extension NWPath {
     /// This property is useful for telemetry, diagnostics, or adapting functionality based on the network type.
     public var connectivityType: String {
         if usesInterfaceType(.cellular) {
-           return "cellular"
+            return "cellular"
         }
-        
+
         if usesInterfaceType(.wifi) {
             return "wifi"
         }
-        
+
         if usesInterfaceType(.loopback) {
             return "loopback"
         }
-        
+
         if usesInterfaceType(.wiredEthernet) {
             return "wiredEthernet"
         }
-        
+
         return "other"
     }
 }
@@ -43,13 +43,13 @@ extension NWPath.Status: @retroactive CustomDebugStringConvertible {
         switch self {
         case .requiresConnection:
             return "requiresConnection"
-            
+
         case .satisfied:
             return "satisfied"
-            
+
         case .unsatisfied:
             return "unsatisfied"
-            
+
         @unknown default:
             return "unknown"
         }

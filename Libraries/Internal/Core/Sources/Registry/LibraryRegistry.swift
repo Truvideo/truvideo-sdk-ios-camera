@@ -27,7 +27,7 @@ public protocol Library {
     /// hyphens (`-`), underscores (`_`), or dots (`.`). It is used to register and
     /// reference the library in runtime systems.
     var name: String { get }
-    
+
     /// The current semantic version of the library.
     ///
     /// Follows standard versioning schemes such as `"1.0.0"` or `"75.2.1-RC.3"`.
@@ -52,12 +52,12 @@ public protocol Library {
 /// ```
 public class LibraryRegistry: @unchecked Sendable {
     // MARK: - Private Properties
-    
+
     /// A static dictionary holding the names and versions of registered libraries.
     private static var libraries: [String: String] = [:]
-    
+
     // MARK: - Public Static Methods
-    
+
     /// Registers a library and its version to the application registry.
     ///
     /// The library name must contain only alphanumeric characters and optionally `-`, `_`, or `.`.
@@ -67,16 +67,17 @@ public class LibraryRegistry: @unchecked Sendable {
     public static func register(_ library: Library) {
         var allowedSet = CharacterSet.alphanumerics
         allowedSet.insert(charactersIn: "-_.")
-        
+
         guard library.name.rangeOfCharacter(from: allowedSet) != nil,
-              library.name.rangeOfCharacter(from: allowedSet.inverted) == nil else {
-            
+            library.name.rangeOfCharacter(from: allowedSet.inverted) == nil
+        else {
+
             return
         }
-        
+
         libraries[library.name] = library.version
     }
-    
+
     /// Returns a dictionary of all registered libraries and their versions.
     ///
     /// - Returns: A mapping of library names to version strings.

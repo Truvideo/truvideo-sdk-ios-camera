@@ -11,7 +11,8 @@ struct ProtectedTests {
     
     // MARK: - Tests
     
-    @Test func testThatValuesAreAccessedSafely() {
+    @Test
+    func testThatValuesAreAccessedSafely() {
         // Given
         let initialValue = "value"
         let protected = Protected<String>(initialValue)

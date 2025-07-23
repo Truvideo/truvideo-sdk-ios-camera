@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import NetworkingInterop
 
 /// A protocol that provides session-related events to manage URL session tasks.
 ///

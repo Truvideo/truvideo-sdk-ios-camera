@@ -17,14 +17,14 @@ extension UIDevice {
     /// - Returns: A string representing the CPU architecture.
     public var cpuArchitecture: String {
         #if arch(arm64)
-            return "arm64"
+        return "arm64"
         #elseif arch(x86_64)
-            return "x86_64"
+        return "x86_64"
         #else
-            return "unknown"
+        return "unknown"
         #endif
     }
-        
+
     /// Returns the estimated amount of free memory available on the device, in bytes.
     ///
     /// This includes both **free** and **inactive** memory pages, which are considered
@@ -37,20 +37,20 @@ extension UIDevice {
     public var freeMemory: UInt64? {
         var pageSize: vm_size_t = 0
         host_page_size(mach_host_self(), &pageSize)
-        
+
         var stats = vm_statistics64()
         var count = mach_msg_type_number_t(MemoryLayout<vm_statistics64_data_t>.size / MemoryLayout<integer_t>.size)
-        
+
         let result = withUnsafeMutablePointer(to: &stats) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
                 host_statistics64(mach_host_self(), HOST_VM_INFO64, $0, &count)
             }
         }
-        
+
         guard result == KERN_SUCCESS else {
             return nil
         }
-        
+
         let freePages = stats.free_count + stats.inactive_count
         return UInt64(freePages) * UInt64(pageSize)
     }
@@ -64,7 +64,7 @@ extension UIDevice {
     public var totalDiskSpace: Int {
         let attributtes = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory())
         let total = attributtes?[.systemSize] as? NSNumber
-                
+
         return total?.intValue ?? 0
     }
 }
@@ -75,13 +75,13 @@ extension UIDevice.BatteryState: @retroactive CustomDebugStringConvertible {
         switch self {
         case .charging:
             return "charging"
-            
+
         case .full:
             return "full"
-            
+
         case .unplugged:
             return "unplugged"
-            
+
         default:
             return "unknown"
         }

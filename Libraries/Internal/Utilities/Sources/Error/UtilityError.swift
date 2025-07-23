@@ -10,9 +10,9 @@ public struct ErrorReason: Equatable, RawRepresentable {
 
     /// The corresponding value of the raw type.
     public let rawValue: String
-    
+
     // MARK: - Static Properties
-    
+
     /// Unknown error.
     public static let unknown = ErrorReason(rawValue: "com.truvideo.commonUtility.unknownError")
 

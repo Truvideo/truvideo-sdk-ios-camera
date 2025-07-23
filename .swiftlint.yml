@@ -143,7 +143,10 @@ included:
   - Libraries/**
 
 excluded:  
+  - Libraries/*/*/Testing/*
   - Libraries/*/*/Tests/*
+  - Libraries/*/*/Interop/Testing/*
+  - Libraries/*/*/Interop/Tests/*
 
 analyzer_rules:
   - explicit_self

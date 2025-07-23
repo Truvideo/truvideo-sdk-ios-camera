@@ -3,7 +3,8 @@
 //
 
 import Foundation
-import NetworkingTesting
+import NetworkingInterop
+import NetworkingInteropTesting
 import Testing
 
 @testable import Networking
@@ -16,21 +17,23 @@ struct DataRequestTests {
     
     // MARK: - Tests
     
-    @Test func testThatDidReceiveDataShouldAppendData() {
+    @Test
+    func testThatDidReceiveDataShouldAppendData() {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
         sut.didReceive(data: Data())
         
         // Then
-        #expect(sut.data != nil, "Expected data should not be nil")
+        #expect(sut.data != nil)
     }
     
-    @Test func testThatResetShouldResetTheData() {
+    @Test
+    func testThatResetShouldResetTheData() {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
@@ -38,54 +41,55 @@ struct DataRequestTests {
         sut.reset()
         
         // Then
-        #expect(sut.data == nil, "Expected data should to be nil")
+        #expect(sut.data == nil)
     }
     
-    @Test func testThatSerializingShouldSucceed() async {
+    @Test
+    func testThatSerializingShouldSucceed() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url.appending("get"))
 
         // When
         let response = await sut.serializing(TestResponse.self)
         
         // Then
-        #expect(response.data != nil, "Expected data should not be nil")
-        #expect(response.value != nil, "Expected value should not be nil")
+        #expect(response.data != nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatSerializingWithCustomEmptyStatusCodesShouldSucceed() async {
+    @Test
+    func testThatSerializingWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url.appending("status/200"))
 
         // When
         let response = await sut.serializing(Empty.self, emptyResponseCodes: [200])
         
         // Then
-        #expect(response.data == nil, "Expected data should to be nil")
-        #expect(response.value != nil, "Expected value should not be nil")
+        #expect(response.data == nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatSerializingWithCustomEmptyStatusCodesShouldFail() async {
+    @Test
+    func testThatSerializingWithCustomEmptyStatusCodesShouldFail() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url.appending("status/200"))
 
         // When
         let response = await sut.serializing(TestResponse.self, emptyResponseCodes: [305])
         
         // Then
-        #expect(response.value == nil, "Expected value should to be nil")
-        #expect(
-            response.error?.kind == .responseSerializationFailed,
-            "Expected error to be responseSerializationFailed"
-        )
+        #expect(response.value == nil)
+        #expect(response.error?.kind == .responseSerializationFailed)
     }
     
-    @Test func testThatSerializingReturnsTheResponseAfterFinished() async {
+    @Test
+    func testThatSerializingReturnsTheResponseAfterFinished() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
@@ -93,56 +97,57 @@ struct DataRequestTests {
         let response = await sut.serializingData()
         
         // Then
-        #expect(response.data != nil, "Expected data count not be nil")
-        #expect(response.result.failure == nil, "Expected failure to be nil")
-        #expect(response.value != nil, "Expected value not be nil")
+        #expect(response.data != nil)
+        #expect(response.result.failure == nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatSerializingDataShouldSucceed() async {
+    @Test
+    func testThatSerializingDataShouldSucceed() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
         let response = await sut.serializingData()
         
         // Then
-        #expect(response.data != nil, "Expected data should not be nil")
-        #expect(response.value != nil, "Expected value should not be nil")
+        #expect(response.data != nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatSerializingDataWithCustomEmptyStatusCodesShouldSucceed() async {
+    @Test
+    func testThatSerializingDataWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url.appending("status/200"))
 
         // When
         let response = await sut.serializingData(emptyResponseCodes: [200])
         
         // Then
-        #expect(response.data == nil, "Expected data to be nil")
-        #expect(response.value != nil, "Expected value should not be nil")
+        #expect(response.data == nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatSerializingDataWithCustomEmptyStatusCodesShouldFail() async {
+    @Test
+    func testThatSerializingDataWithCustomEmptyStatusCodesShouldFail() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url.appending("status/200"))
 
         // When
         let response = await sut.serializingData(emptyResponseCodes: [305])
         
         // Then
-        #expect(response.value == nil, "Expected value should to be nil")
-        #expect(
-            response.error?.kind == .responseSerializationFailed,
-            "Expected error to be responseSerializationFailed"
-        )
+        #expect(response.value == nil)
+        #expect(response.error?.kind == .responseSerializationFailed)
     }
     
-    @Test func testThatSerializingDataReturnsTheResponseAfterFinished() async {
+    @Test
+    func testThatSerializingDataReturnsTheResponseAfterFinished() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
@@ -150,56 +155,57 @@ struct DataRequestTests {
         let response = await sut.serializingData()
         
         // Then
-        #expect(response.data != nil, "Expected data count not be nil")
-        #expect(response.result.failure == nil, "Expected failure to be nil")
-        #expect(response.value != nil, "Expected value not be nil")
+        #expect(response.data != nil)
+        #expect(response.result.failure == nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatSerializingStringShouldSucceed() async {
+    @Test
+    func testThatSerializingStringShouldSucceed() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
         let response = await sut.serializingString()
         
         // Then
-        #expect(response.data != nil, "Expected data should not be nil")
-        #expect(response.value != nil, "Expected value should not be nil")
+        #expect(response.data != nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatSerializingStringWithCustomEmptyStatusCodesShouldSucceed() async {
+    @Test
+    func testThatSerializingStringWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url.appending("status/200"))
 
         // When
         let response = await sut.serializingString(emptyResponseCodes: [200])
         
         // Then
-        #expect(response.data == nil, "Expected data should to be nil")
-        #expect(response.value != nil, "Expected value should not be nil")
+        #expect(response.data == nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatSerializingStringWithCustomEmptyStatusCodesShouldFail() async {
+    @Test
+    func testThatSerializingStringWithCustomEmptyStatusCodesShouldFail() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url.appending("status/200"))
 
         // When
         let response = await sut.serializingString(emptyResponseCodes: [305])
         
         // Then
-        #expect(response.value == nil, "Expected value should to be nil")
-        #expect(
-            response.error?.kind == .responseSerializationFailed,
-            "Expected error to be responseSerializationFailed"
-        )
+        #expect(response.value == nil)
+        #expect(response.error?.kind == .responseSerializationFailed)
     }
     
-    @Test func testThatSerializingStringReturnsTheResponseAfterFinished() async {
+    @Test
+    func testThatSerializingStringReturnsTheResponseAfterFinished() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
@@ -207,18 +213,19 @@ struct DataRequestTests {
         let response = await sut.serializingString()
         
         // Then
-        #expect(response.data != nil, "Expected data count not be nil")
-        #expect(response.result.failure == nil, "Expected failure to be nil")
-        #expect(response.value != nil, "Expected value not be nil")
+        #expect(response.data != nil)
+        #expect(response.result.failure == nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatDidFailToCreateURLRequestShouldRetryTheRequestOnRetryPolicy() async {
+    @Test
+    func testThatDidFailToCreateURLRequestShouldRetryTheRequestOnRetryPolicy() async {
         // Given
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = Session(middleware: middleware, monitors: [monitor], queue: queue)
+        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
         let sut = session.request(url)
 
         // When
@@ -236,22 +243,20 @@ struct DataRequestTests {
         }
         
         // Then
-        #expect(sut.retryCount == 1, "Expected retryCount to be equals to 1")
-        #expect(monitor.requestDidFinishCallCount == 1, "Expected requestDidFinishCallCount to be equals to 1")
-        #expect(monitor.requestIsRetryingCallCount == 1, "Expected requestIsRetryingCallCount to be equals to 1")
-        #expect(
-            monitor.didFailToCreateURLRequestWithErrorCallCount == 1,
-            "Expected didFailToCreateURLRequestWithErrorCallCount to be equals to 1"
-        )
+        #expect(sut.retryCount == 1)
+        #expect(monitor.requestDidFinishCallCount == 1)
+        #expect(monitor.requestIsRetryingCallCount == 1)
+        #expect(monitor.didFailToCreateURLRequestWithErrorCallCount == 1)
     }
     
-    @Test func testThatDidFailToCreateURLRequestShouldNotRetryTheRequestOnRetryPolicy() async {
+    @Test
+    func testThatDidFailToCreateURLRequestShouldNotRetryTheRequestOnRetryPolicy() async {
         // Given
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = Session(middleware: middleware, monitors: [monitor], queue: queue)
+        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
         let sut = session.request(url)
 
         // When
@@ -269,13 +274,14 @@ struct DataRequestTests {
         }
         
         // Then
-        #expect(sut.error?.kind == .requestRetryFailed, "Expected error to be equals to requestRetryFailed")
-        #expect(sut.error?.underlyingError is Session.RetryError, "Expected underlyingError to be a RetryError")
+        #expect(sut.error?.kind == .requestRetryFailed)
+        #expect(sut.error?.underlyingError is HTTPURLSession.RetryError)
     }
     
-    @Test func testThatValidateShouldSucceed() async {
+    @Test
+    func testThatValidateShouldSucceed() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
@@ -284,14 +290,15 @@ struct DataRequestTests {
             .serializingData()
         
         // Then
-        #expect(response.data != nil, "Expected data should not be nil")
-        #expect(response.error == nil, "Expected error to be nil")
-        #expect(response.value != nil, "Expected value should not be nil")
+        #expect(response.data != nil)
+        #expect(response.error == nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatValidateWithCustomValidatorShouldFailTheRequest() async {
+    @Test
+    func testThatValidateWithCustomValidatorShouldFailTheRequest() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
@@ -302,15 +309,16 @@ struct DataRequestTests {
             .serializingData()
         
         // Then
-        #expect(response.data != nil, "Expected data should not be nil")
-        #expect(response.error?.kind == .responseValidationFailed, "Expected error to be responseValidationFailed")
-        #expect(response.error?.underlyingError == nil, "Expected underlyingError to be nil")
-        #expect(response.value == nil, "Expected value should be nil")
+        #expect(response.data != nil)
+        #expect(response.error?.kind == .responseValidationFailed)
+        #expect(response.error?.underlyingError == nil)
+        #expect(response.value == nil)
     }
     
-    @Test func testThatValidateWithCustomValidatorAndCustomErrorShouldFailTheRequest() async {
+    @Test
+    func testThatValidateWithCustomValidatorAndCustomErrorShouldFailTheRequest() async {
         // Given
-        let session = Session()
+        let session = HTTPURLSession()
         let sut = session.request(url)
 
         // When
@@ -321,19 +329,20 @@ struct DataRequestTests {
             .serializingData()
         
         // Then
-        #expect(response.data != nil, "Expected data should not be nil")
-        #expect(response.error?.kind == .responseValidationFailed, "Expected error to be responseValidationFailed")
-        #expect(response.error?.underlyingError is NSError, "Expected underlyingError to be NSError")
-        #expect(response.value == nil, "Expected value should be nil")
+        #expect(response.data != nil)
+        #expect(response.error?.kind == .responseValidationFailed)
+        #expect(response.error?.underlyingError is NSError)
+        #expect(response.value == nil)
     }
     
-    @Test func testThatDidFailToCreateURLRequestShouldNotRetryTheRequestOnRetryPolicyWithCustomError() async {
+    @Test
+    func testThatDidFailToCreateURLRequestShouldNotRetryTheRequestOnRetryPolicyWithCustomError() async {
         // Given
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = Session(middleware: middleware, monitors: [monitor], queue: queue)
+        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
         let sut = session.request(url)
 
         // When
@@ -351,14 +360,15 @@ struct DataRequestTests {
         }
         
         // Then
-        #expect(sut.error?.kind == .requestRetryFailed, "Expected error to be equals to requestRetryFailed")
-        #expect(sut.error?.underlyingError is NSError, "Expected underlyingError to be a NSError")
+        #expect(sut.error?.kind == .requestRetryFailed)
+        #expect(sut.error?.underlyingError is NSError)
     }
     
-    @Test func testThatDataRequestShouldReturnCachedDataOnReturnCacheDataDontLoadPolicy() async throws {
+    @Test
+    func testThatDataRequestShouldReturnCachedDataOnReturnCacheDataDontLoadPolicy() async throws {
         // Given
         let cache = InMemoryURLCache()
-        let session = Session(cache: cache)
+        let session = HTTPURLSession(cache: cache)
         let urlRequest = try URLRequest(url: url, method: .get)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
         let request = session.request(url, cachePolicy: .returnCacheDataDontLoad)
@@ -374,33 +384,35 @@ struct DataRequestTests {
         let result = await sut.serializingData()
         
         // Then
-        #expect(sut.state == .finished, "Expected state to be equals to finished")
-        #expect(sut.tasks.isEmpty, "Expected tasks to be empty when response is from cache")
-        #expect(result.data != nil, "Expected data to not be nil")
-        #expect(result.response != nil, "Expected response to not be nil")
-        #expect(result.type == .localCache, "Expected type to be equals to localCache")
+        #expect(sut.state == .finished)
+        #expect(sut.tasks.isEmpty)
+        #expect(result.data != nil)
+        #expect(result.response != nil)
+        #expect(result.type == .localCache)
     }
     
-    @Test func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataDontLoadPolicy() async {
+    @Test
+    func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataDontLoadPolicy() async {
         // Given
-        let session = Session(cache: InMemoryURLCache())
+        let session = HTTPURLSession(cache: InMemoryURLCache())
         let sut = session.request(url, cachePolicy: .returnCacheDataDontLoad)
 
         // When
         let result = await sut.serializingData()
         
         // Then
-        #expect(sut.state == .finished, "Expected state to be equals to finished")
-        #expect(sut.tasks.isEmpty, "Expected tasks to be empty when response is from cache")
-        #expect(result.data == nil, "Expected data to be nil")
-        #expect(result.response == nil, "Expected response to be nil")
-        #expect(result.type == .localCache, "Expected type to be equals to localCache")
+        #expect(sut.state == .finished)
+        #expect(sut.tasks.isEmpty)
+        #expect(result.data == nil)
+        #expect(result.response == nil)
+        #expect(result.type == .localCache)
     }
     
-    @Test func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataElseLoadPolicy() async throws {
+    @Test
+    func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataElseLoadPolicy() async throws {
         // Given
         let cache = InMemoryURLCache()
-        let session = Session(cache: cache)
+        let session = HTTPURLSession(cache: cache)
         let urlRequest = try URLRequest(url: url, method: .get)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
         let request = session.request(url)
@@ -416,17 +428,18 @@ struct DataRequestTests {
         let result = await sut.serializingData()
         
         // Then
-        #expect(sut.state == .finished, "Expected state to be equals to finished")
-        #expect(sut.tasks.isEmpty, "Expected tasks to be empty when response is from cache")
-        #expect(result.data != nil, "Expected data to not be nil")
-        #expect(result.response != nil, "Expected response to not be nil")
-        #expect(result.type == .localCache, "Expected type to be equals to localCache")
+        #expect(sut.state == .finished)
+        #expect(sut.tasks.isEmpty)
+        #expect(result.data != nil)
+        #expect(result.response != nil)
+        #expect(result.type == .localCache)
     }
     
-    @Test func testThatDataRequestShouldLoadDataOnReloadIgnoringLocalCacheDataPolicy() async throws {
+    @Test
+    func testThatDataRequestShouldLoadDataOnReloadIgnoringLocalCacheDataPolicy() async throws {
         // Given
         let cache = InMemoryURLCache()
-        let session = Session(cache: cache)
+        let session = HTTPURLSession(cache: cache)
         let urlRequest = try URLRequest(url: url, method: .get)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
         let request = session.request(url, cachePolicy: .reloadIgnoringLocalCacheData)
@@ -442,34 +455,36 @@ struct DataRequestTests {
         let result = await sut.serializingData()
         
         // Then
-        #expect(sut.state == .finished, "Expected state to be equals to finished")
-        #expect(!sut.tasks.isEmpty, "Expected tasks to not be empty")
-        #expect(result.data != nil, "Expected data to not be nil")
-        #expect(result.response != nil, "Expected response to not be nil")
-        #expect(result.type == .networkLoad, "Expected type to be equals to localCache")
+        #expect(sut.state == .finished)
+        #expect(!sut.tasks.isEmpty)
+        #expect(result.data != nil)
+        #expect(result.response != nil)
+        #expect(result.type == .networkLoad)
     }
     
-    @Test func testThatDataRequestShouldLoadDataOnReturnCacheDataElseLoadPolicy() async throws {
+    @Test
+    func testThatDataRequestShouldLoadDataOnReturnCacheDataElseLoadPolicy() async throws {
         // Given
-        let session = Session(cache: InMemoryURLCache())
+        let session = HTTPURLSession(cache: InMemoryURLCache())
         let sut = session.request(url, cachePolicy: .returnCacheDataElseLoad)
 
         // When
         let result = await sut.serializingData()
         
         // Then
-        #expect(sut.state == .finished, "Expected state to be equals to finished")
-        #expect(!sut.tasks.isEmpty, "Expected tasks to not be empty when response is from cache")
-        #expect(result.data != nil, "Expected data to not be nil")
-        #expect(result.response != nil, "Expected response to not be nil")
-        #expect(result.type == .networkLoad, "Expected type to be equals to networkLoad")
+        #expect(sut.state == .finished)
+        #expect(!sut.tasks.isEmpty)
+        #expect(result.data != nil)
+        #expect(result.response != nil)
+        #expect(result.type == .networkLoad)
     }
     
-    @Test func testThatDataRequestShoulDoNotRetryRequest() async {
+    @Test
+    func testThatDataRequestShoulDoNotRetryRequest() async {
         // Given
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = Session(middleware: middleware, queue: queue)
+        let session = HTTPURLSession(middleware: middleware, queue: queue)
         let sut = session.request(url.appending("/status/500"))
 
         // When
@@ -477,15 +492,16 @@ struct DataRequestTests {
         _ = await sut.serializingData()
         
         // Then
-        #expect(sut.state == .finished, "Expected state to be equals to finished")
-        #expect(sut.retryCount == 0, "Expected retryCount to be equals to 0")
+        #expect(sut.state == .finished)
+        #expect(sut.retryCount == 0)
     }
     
-    @Test func testThatDataRequestShoulDoNotRetryAndReturnFailedResponseOnDoNotRetryWithError() async {
+    @Test
+    func testThatDataRequestShoulDoNotRetryAndReturnFailedResponseOnDoNotRetryWithError() async {
         // Given
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = Session(middleware: middleware, queue: queue)
+        let session = HTTPURLSession(middleware: middleware, queue: queue)
         let sut = session.request(url.appending("/status/500"))
 
         // When
@@ -494,41 +510,36 @@ struct DataRequestTests {
         let response = await sut.validate().serializingData()
         
         // Then
-        #expect(response.error?.kind == .requestRetryFailed, "Expected error to be equals to requestRetryFailed")
-        #expect(response.error?.underlyingError != nil, "Expected underlyingError to not be nil")
-        #expect(sut.retryCount == 0, "Expected retryCount to be equals to 0")
+        #expect(response.error?.kind == .requestRetryFailed)
+        #expect(response.error?.underlyingError != nil)
+        #expect(sut.retryCount == 0)
     }
     
-    @Test func testThatDataRequestShouldRetryRequest() async {
+    @Test
+    func testThatDataRequestShouldRetryRequest() async {
         // Given
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = Session(middleware: middleware, monitors: [monitor], queue: queue)
+        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
         let sut = session.request(url.appending("/status/500"))
 
         // When
         let response = await sut.validate().serializingData()
         
         // Then
-        #expect(response.error?.underlyingError == nil, "Expected underlyingError to be nil")
-        #expect(
-            response.error?.kind == .responseValidationFailed,
-            "Expected error to be equals to responseValidationFailed"
-        )
-        
-        #expect(
-            sut.retryCount == requestRetrier.maxNumberOfRetries,
-            "Expected retryCount to be equals to \(requestRetrier.maxNumberOfRetries)"
-        )
+        #expect(response.error?.underlyingError == nil)
+        #expect(response.error?.kind == .responseValidationFailed)
+        #expect(sut.retryCount == requestRetrier.maxNumberOfRetries)
     }
     
-    @Test func testThatValidationWithCustomStatusCodesShouldSucceed() async {
+    @Test
+    func testThatValidationWithCustomStatusCodesShouldSucceed() async {
         // Given
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = Session(middleware: middleware, monitors: [monitor], queue: queue)
+        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
         let sut = session.request(url.appending("status/400"))
 
         // When
@@ -537,16 +548,17 @@ struct DataRequestTests {
             .serializingData(emptyResponseCodes: [400])
         
         // Then
-        #expect(response.error == nil, "Expected error to be nil")
-        #expect(response.value != nil, "Expected value to not be nil")
+        #expect(response.error == nil)
+        #expect(response.value != nil)
     }
     
-    @Test func testThatValidationWithCustomStatusCodesShouldFail() async {
+    @Test
+    func testThatValidationWithCustomStatusCodesShouldFail() async {
         // Given
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = Session(middleware: middleware, monitors: [monitor], queue: queue)
+        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
         let sut = session.request(url)
 
         // When
@@ -555,8 +567,8 @@ struct DataRequestTests {
             .serializingData()
         
         // Then
-        #expect(response.error != nil, "Expected error to not be nil")
-        #expect(response.value == nil, "Expected value to be nil")
+        #expect(response.error != nil)
+        #expect(response.value == nil)
     }
 }
 

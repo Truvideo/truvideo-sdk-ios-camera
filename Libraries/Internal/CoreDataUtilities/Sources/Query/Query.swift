@@ -36,15 +36,15 @@ public struct Query<Model: NSManagedObject>: Equatable {
         request.sortDescriptors = sortDescriptors
 
         if let range {
-          request.fetchOffset = range.lowerBound
-          request.fetchLimit = range.upperBound - range.lowerBound
+            request.fetchOffset = range.lowerBound
+            request.fetchLimit = range.upperBound - range.lowerBound
         }
 
         return request
     }
 
     // MARK: - Subscripting
-    
+
     /// Enables subscripting with a closed integer range to apply pagination or result slicing to a query.
     ///
     /// - Parameter range: A closed range specifying the lower and upper bounds of the result subset (inclusive).
@@ -73,12 +73,9 @@ public struct Query<Model: NSManagedObject>: Equatable {
     // MARK: - Hashable
 
     public static func == (lhs: Query<Model>, rhs: Query<Model>) -> Bool {
-        lhs.context == rhs.context &&
-        lhs.entityName == rhs.entityName &&
-        lhs.predicate == rhs.predicate &&
-        lhs.range?.lowerBound == rhs.range?.lowerBound &&
-        lhs.range?.upperBound == rhs.range?.upperBound &&
-        lhs.sortDescriptors == rhs.sortDescriptors
+        lhs.context == rhs.context && lhs.entityName == rhs.entityName && lhs.predicate == rhs.predicate
+            && lhs.range?.lowerBound == rhs.range?.lowerBound && lhs.range?.upperBound == rhs.range?.upperBound
+            && lhs.sortDescriptors == rhs.sortDescriptors
     }
 
     // MARK: - Initializers
@@ -92,10 +89,10 @@ public struct Query<Model: NSManagedObject>: Equatable {
     ///   - predicate: Optional predicate to use. If `nil`, the existing predicate is used.
     ///   - range: Optional range to use. If `nil`, the existing range is used.
     init(
-      query: Query<Model>,
-      sortDescriptors: [NSSortDescriptor]?,
-      predicate: NSPredicate?,
-      range: Range<Int>?
+        query: Query<Model>,
+        sortDescriptors: [NSSortDescriptor]?,
+        predicate: NSPredicate?,
+        range: Range<Int>?
     ) {
 
         self.context = query.context
@@ -154,7 +151,7 @@ public struct Query<Model: NSManagedObject>: Equatable {
         var futurePredicate = predicate
 
         if let existingPredicate = self.predicate {
-          futurePredicate = NSCompoundPredicate(type: .and, subpredicates: [existingPredicate, predicate])
+            futurePredicate = NSCompoundPredicate(type: .and, subpredicates: [existingPredicate, predicate])
         }
 
         return Query(query: self, sortDescriptors: sortDescriptors, predicate: futurePredicate, range: range)
@@ -315,7 +312,7 @@ public struct Query<Model: NSManagedObject>: Equatable {
     /// - Returns: A new `Query` ordered by the specified key path.
     public func orderBy<T>(_ keyPath: KeyPath<Model, T>, ascending: Bool) -> Query<Model> {
         let keyPathString = NSExpression(forKeyPath: keyPath).keyPath
-        
+
         return orderBy(NSSortDescriptor(key: keyPathString, ascending: ascending))
     }
 

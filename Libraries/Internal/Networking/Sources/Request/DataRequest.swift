@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import NetworkingInterop
 
 /// A concrete class that represents a data request in a network operation.
 ///
@@ -14,7 +15,7 @@ import Foundation
 ///
 /// - Note: This class is marked as `@unchecked Sendable` due to its use of shared mutable state.
 /// - Inherits from: `Request`
-public class DataRequest: Request, @unchecked Sendable {
+public class DataRequest: Request, NetworkingInterop.DataRequest, @unchecked Sendable {
     /// A typealias for a validation closure.
     ///
     /// This closure takes the original `URLRequest`, `HTTPURLResponse`, and optional response `Data`,
@@ -171,7 +172,7 @@ public class DataRequest: Request, @unchecked Sendable {
     ///   - type: The `Decodable` type to which the response should be serialized.
     ///   - decoder: The `JSONDecoder` used for decoding (default: `.init()`).
     ///   - emptyResponseCodes: HTTP status codes that indicate an empty response body (default: `[204, 205]`).
-    /// - Returns: An `AsyncDataTask<Value>` that provides the serialized response asynchronously.
+    /// - Returns: An `Response<Value, NetworkingError>` that provides the serialized response asynchronously.
     ///
     /// ### Example Usage:
     /// ```swift
@@ -206,7 +207,7 @@ public class DataRequest: Request, @unchecked Sendable {
     /// based on predefined HTTP status codes.
     ///
     /// - Parameter emptyResponseCodes: HTTP status codes that indicate an empty response body (default: `[204, 205]`).
-    /// - Returns: An `AsyncDataTask<Data>` that provides the raw response asynchronously.
+    /// - Returns: An `Response<Value, NetworkingError>` that provides the raw response asynchronously.
     ///
     /// ### Example Usage:
     /// ```swift
@@ -237,7 +238,7 @@ public class DataRequest: Request, @unchecked Sendable {
     ///   - queue: The `DispatchQueue` on which serialization occurs (default: `.main`).
     ///   - encoding: The `String.Encoding` used for decoding the response (default: `.utf8`).
     ///   - emptyResponseCodes: HTTP status codes that indicate an empty response body (default: `[204, 205]`).
-    /// - Returns: An `AsyncDataTask<String>` that provides the response as a `String` asynchronously.
+    /// - Returns: An `Response<Value, NetworkingError>` that provides the response as a `String` asynchronously.
     ///
     /// ### Example Usage:
     /// ```swift
@@ -274,9 +275,9 @@ public class DataRequest: Request, @unchecked Sendable {
     /// - Throws: A `NetworkingError` if the status code is not within the acceptable range.
     public func validate() -> Self {
         validate { [weak self] _, response, _ in
-            guard let self else { return }
-
-            try validate(acceptableStatusCodes: self.acceptableStatusCodes, response: response)
+            if let self {
+                try validate(acceptableStatusCodes: self.acceptableStatusCodes, response: response)
+            }
         }
     }
 

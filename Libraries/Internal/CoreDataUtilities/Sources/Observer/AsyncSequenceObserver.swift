@@ -123,7 +123,8 @@ public struct AsyncSequenceObserver<Model: NSFetchRequestResult>: AsyncSequence 
                     let newIndexPath,
 
                     /// The Affected object.
-                    let object = controller.object(at: newIndexPath) as? Model else { return }
+                    let object = controller.object(at: newIndexPath) as? Model
+                else { return }
 
                 inserted.append(object)
 
@@ -133,7 +134,8 @@ public struct AsyncSequenceObserver<Model: NSFetchRequestResult>: AsyncSequence 
                     let indexPath,
 
                     /// The Affected object.
-                    let object = controller.object(at: indexPath) as? Model else { return }
+                    let object = controller.object(at: indexPath) as? Model
+                else { return }
 
                 updated.append(object)
 
