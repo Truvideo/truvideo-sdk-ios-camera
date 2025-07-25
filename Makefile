@@ -12,44 +12,35 @@ help:
 	@echo "  make lint      - Run SwiftLint"
 	@echo "  make all       - Generate, build, and test"
 	@echo "  make dev       - Clean, generate, and build"
-	@echo ""
-	@echo "Individual framework commands:"
-	@echo "  make build-utilities       - Build Utilities framework"
-	@echo "  make build-core            - Build Core framework"
-	@echo "  make build-coredatautilities - Build CoreDataUtilities framework"
-	@echo "  make build-di              - Build DI framework"
-	@echo "  make build-networking      - Build Networking framework"
-	@echo "  make build-telemetry       - Build Telemetry framework"
-	@echo "  make build-framework NAME=<framework> - Build specific framework"
-	@echo ""
+
 	@echo "Flexible framework commands:"
-	@echo "  make framework ACTION=build SCHEME=Core"
-	@echo "  make framework ACTION=test SCHEME=Utilities"
-	@echo "  make framework ACTION=build SCHEME=Networking"
-	@echo "  Available actions: build, test"
-	@echo "  Available schemes: Core, CoreDataUtilities, DI, Networking, Telemetry, Utilities"
+	@echo "  make framework SCHEME=DI"
+	@echo "  Available schemes: DI, Registry, Storage, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, TruVideoSdk"
 
 # Generate Xcode project using XcodeGen
 generate:
 	xcodegen
 
 # Build all frameworks in dependency order
-# Utilities first (no dependencies), then others that depend on it
+# Foundation Core first (no dependencies), then others that depend on them
 build:
 	@echo "Building frameworks in dependency order..."
-	xcodebuild -project TruvideoSDK.xcodeproj -scheme Utilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
-	xcodebuild -project TruvideoSDK.xcodeproj -scheme Core -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
-	xcodebuild -project TruvideoSDK.xcodeproj -scheme CoreDataUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme DI -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
-	xcodebuild -project TruvideoSDK.xcodeproj -scheme Networking -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme Registry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme Storage -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme Utilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme CoreDataUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Telemetry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme Networking -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruVideoApi -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruVideoSdk -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	@echo "All frameworks built successfully!"
 
 # Build specific framework by scheme
 framework:
 	@if [ -z "$(SCHEME)" ]; then \
 		echo "Error: Please specify scheme name. Usage: make framework SCHEME=<scheme>"; \
-		echo "Available schemes: Core, CoreDataUtilities, DI, Networking, Telemetry, Utilities"; \
+		echo "Available schemes: DI, Registry, Storage, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, TruVideoSdk"; \
 		exit 1; \
 	fi
 	@echo "Building $(SCHEME) framework for device and simulator..."
@@ -81,12 +72,15 @@ genbuild: generate build open
 # Run all tests
 test:
 	@echo "Running all unit tests..."
-	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Core -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
-	xcodebuild test -project TruvideoSDK.xcodeproj -scheme CoreDataUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 	xcodebuild test -project TruvideoSDK.xcodeproj -scheme DI -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
-	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Networking -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
-	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Telemetry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Registry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Storage -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Utilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+	xcodebuild test -project TruvideoSDK.xcodeproj -scheme CoreDataUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Telemetry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Networking -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+	xcodebuild test -project TruvideoSDK.xcodeproj -scheme TruVideoApi -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+	xcodebuild test -project TruvideoSDK.xcodeproj -scheme TruVideoSdk -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 	@echo "All tests completed!"
 
 # Clean generated files

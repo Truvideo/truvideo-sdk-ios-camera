@@ -64,3 +64,6 @@ fastlane/test_output
 Libraries/**/.DS_Store
 *.xcodeproj
 Info.plist
+**/Info.plist
+*.h
+**/*.h

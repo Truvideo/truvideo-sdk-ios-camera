@@ -1,12 +1,12 @@
-# TruvideoSDK
+# TruVideoSDK
 
-A modular iOS SDK built with Swift, featuring multiple internal frameworks for different functionalities.
+A modular iOS SDK built with Swift, featuring a layered architecture with Foundation, Internal, and App layers for different functionalities.
 
 ## Table of Contents
 
-- [Project Structure](#project-structure)
 - [Prerequisites](#prerequisites)
 - [Quick Start](#quick-start)
+- [Project Structure](#project-structure)
 - [Documentation](#documentation)
 - [Coding Style](#coding-style)
 - [Code Formatting](#code-formatting)
@@ -15,25 +15,6 @@ A modular iOS SDK built with Swift, featuring multiple internal frameworks for d
 - [XCFramework Creation](#xcframework-creation)
 - [Running Unit Tests](#running-unit-tests)
 - [Contributing](#contributing)
-
-## Project Structure
-
-```
-truvideo-ios-sdk/
-├── Libraries/
-│   └── Internal/
-│       ├── Core/                 # Core functionality and utilities
-│       ├── CoreDataUtilities/    # Core Data helper utilities
-│       ├── DI/                   # Dependency injection system
-│       ├── Networking/           # Network layer and HTTP client
-│       ├── Telemetry/            # Analytics and telemetry system
-│       └── Utilities/            # Common utilities and extensions
-├── docs/                         # Project documentation
-│   └── swift-style-guide.md      # Swift coding standards and guidelines
-├── project.yml                   # XcodeGen configuration
-├── Makefile                      # Build automation
-└── README.md                     # This file
-```
 
 ## Prerequisites
 
@@ -58,17 +39,77 @@ make genbuild
 
 That's it! The project will be generated, all frameworks built, and Xcode will open automatically.
 
+## Project Structure
+
+```
+truvideo-ios-sdk/
+├── Libraries/
+│   ├── Foundation/
+│   │   ├── Core/
+│   │   │   ├── DI/
+│   │   │   ├── Registry/
+│   │   │   ├── Storage/
+│   │   │   └── Utilities/
+│   │   └── Extended/
+│   │       ├── CoreDataUtilities/
+│   │       └── Telemetry/
+│   ├── Internal/
+│   │   ├── Core/
+│   │   │   └── Networking/
+│   │   └── Extended/
+│   │       └── TruVideoApi/
+│   └── App/
+│       └── Sources/
+│           ├── App/
+│           ├── DI/
+│           ├── Library/
+│           ├── Options/
+│           ├── Signer/
+│           └── TruVideoSdk.swift
+├── docs/
+│   └── swift-style-guide.md
+├── project.yml
+├── Makefile
+└── README.md
+```
+
+### Architecture Layers
+
+The SDK is organized into three distinct layers:
+
+#### 🏗️ Foundation Layer
+**Purpose**: Low-level infrastructure and utilities
+- **Core**: Basic infrastructure (DI, Registry, Storage, Utilities)
+- **Extended**: Higher-level utilities built on Core (CoreDataUtilities, Telemetry)
+
+#### 🔧 Internal Layer  
+**Purpose**: Business logic infrastructure
+- **Core**: Core business logic (Networking)
+- **Extended**: Business-specific implementations (TruVideoApi)
+
+#### 📱 App Layer
+**Purpose**: Main SDK interface and public API
+- **Sources**: Main SDK components and entry points
+
 ## Documentation
 
 ### 📚 Framework Documentation
 Each framework includes comprehensive documentation for its specific functionality:
 
-- **[Core Framework](Libraries/Internal/Core/Sources/Core.docc/Core.md)** - Core functionality and utilities
-- **[CoreDataUtilities](Libraries/Internal/CoreDataUtilities/Sources/CoreDataUtilities.docc/CoreDataUtilities.md)** - Core Data helper utilities
-- **[DI Framework](Libraries/Internal/DI/Sources/DI.docc/DI.md)** - Dependency injection system
-- **[Networking](Libraries/Internal/Networking/Sources/Networking.docc/Networking.md)** - Network layer and HTTP client
-- **[Telemetry](Libraries/Internal/Telemetry/Sources/Telemetry.docc/README.md)** - Analytics and telemetry system
-- **[Utilities](Libraries/Internal/Utilities/Sources/Utilities.docc/Utilities.md)** - Common utilities and extensions
+#### Foundation Layer
+- **[DI Framework](Libraries/Foundation/Core/DI/Sources/DI.docc/DI.md)** - Dependency injection system
+- **[Registry](Libraries/Foundation/Core/Registry/Sources/Core.docc/Core.md)** - Library registry system
+- **[Storage](Libraries/Foundation/Core/Storage/Sources/Storage.h)** - Storage abstractions and implementations
+- **[Utilities](Libraries/Foundation/Core/Utilities/Sources/Utilities.h)** - Common utilities and extensions
+- **[CoreDataUtilities](Libraries/Foundation/Extended/CoreDataUtilities/Sources/CoreDataUtilities.docc/CoreDataUtilities.md)** - Core Data helper utilities
+- **[Telemetry](Libraries/Foundation/Extended/Telemetry/Sources/Telemetry.docc/README.md)** - Analytics and telemetry system
+
+#### Internal Layer
+- **[Networking](Libraries/Internal/Core/Networking/Sources/Networking.h)** - Network layer and HTTP client
+- **[TruVideoApi](Libraries/Internal/Extended/TruVideoApi/Sources/TruVideoApi.h)** - TruVideo API client and authentication
+
+#### App Layer
+- **[TruVideoSDK](Libraries/App/Sources/TruVideoSdk.swift)** - Main SDK entry point and public API
 
 ## Coding Style
 
@@ -81,7 +122,7 @@ To ensure code consistency across the project, we use the official [swift-format
 **All code is automatically formatted on build**, but you can also run it manually before creating a pull request (PR):
 
 ```bash
-swift-format format -r Libraries/Internal -i
+swift-format format -r Libraries -i
 ```
 
 > **Tip:** You can also format the entire project by running the above command from the project root.
@@ -106,7 +147,7 @@ make open              # Open Xcode project (after generation)
 ```bash
 make build             # Build all frameworks in dependency order
 make framework SCHEME=<name>  # Build specific framework as XCFramework
-# Available schemes: Core, CoreDataUtilities, DI, Networking, Telemetry, Utilities
+# Available schemes: DI, Registry, Storage, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, TruVideoSdk
 ```
 
 ### 🧪 Testing & Quality
@@ -133,30 +174,79 @@ make help              # Show all available commands with descriptions
 
 ```mermaid
 graph TD
-    Utilities["Utilities"]
-    Core["Core"]
-    CoreDataUtilities["CoreDataUtilities"]
-    DI["DI"]
-    Networking["Networking"]
-    Telemetry["Telemetry"]
+    %% Styling
+    classDef foundationCore fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef foundationExtended fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef internalCore fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef internalExtended fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef appLayer fill:#fce4ec,stroke:#880e4f,stroke-width:3px,color:#000
 
-    Core --> Utilities
-    CoreDataUtilities --> Utilities
-    Networking --> Utilities
-    Telemetry --> Utilities
-    
-    %% Explicitly show DI as independent
-    DI
+    %% Foundation Core Layer
+    subgraph FoundationCore ["🏗️ Foundation Core"]
+        DI["DI"]
+        Registry["Registry"]
+        Storage["Storage"]
+        Utilities["Utilities"]
+    end
+
+    %% Foundation Extended Layer
+    subgraph FoundationExtended ["🔧 Foundation Extended"]
+        CoreDataUtilities["CoreDataUtilities"]
+        Telemetry["Telemetry"]
+    end
+
+    %% Internal Core Layer
+    subgraph InternalCore ["⚙️ Internal Core"]
+        Networking["Networking"]
+    end
+
+    %% Internal Extended Layer
+    subgraph InternalExtended ["🚀 Internal Extended"]
+        TruVideoApi["TruVideoApi"]
+    end
+
+    %% App Layer
+    subgraph AppLayer ["📱 App Layer"]
+        TruVideoSdk["TruVideoSdk"]
+    end
+
+    %% Layer dependencies
+    FoundationExtended --> FoundationCore
+    InternalCore --> FoundationCore
+    InternalExtended --> InternalCore
+    InternalExtended --> FoundationExtended
+    AppLayer --> InternalExtended
+
+    %% Apply styling
+    class DI,Registry,Storage,Utilities foundationCore
+    class CoreDataUtilities,Telemetry foundationExtended
+    class Networking internalCore
+    class TruVideoApi internalExtended
+    class TruVideoSdk appLayer
 ```
 
-The diagram above shows the dependency relationships between frameworks. **Utilities** is the foundational module, while **DI** is completely independent.
+### Architecture Flow
+
+The diagram above illustrates the **unidirectional data flow** and dependency relationships:
+
+1. **🏗️ Foundation Core** - Base infrastructure layer with no external dependencies
+2. **🔧 Foundation Extended** - Higher-level utilities that depend on Foundation Core
+3. **⚙️ Internal Core** - Business logic infrastructure that depends on Foundation layers
+4. **🚀 Internal Extended** - Business-specific implementations that depend on Internal Core
+5. **📱 App Layer** - Main SDK interface that orchestrates all layers
+
+**Key Principles:**
+- **Unidirectional Flow**: Dependencies flow from higher layers to lower layers
+- **Separation of Concerns**: Each layer has a specific responsibility
+- **Modularity**: Frameworks can be developed and tested independently
+- **Scalability**: New features can be added without affecting existing layers
 
 ## XCFramework Creation
 
 The `make framework SCHEME=<name>` command creates XCFrameworks that work on both device and simulator:
 
 ```bash
-make framework SCHEME=Core
+make framework SCHEME=TruVideoSdk
 ```
 
 This will:
