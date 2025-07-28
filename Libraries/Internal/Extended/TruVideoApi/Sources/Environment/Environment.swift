@@ -42,22 +42,6 @@ public struct Environment: Hashable, RawRepresentable, Sendable {
     /// The string value that identifies this environment.
     public let rawValue: String
 
-    // MARK: - Static Properties
-
-    /// Beta environment for beta testing and pre-release validation.
-    public static let beta = Environment(rawValue: "BETA")
-
-    /// Development environment for local development and testing.
-    public static let dev = Environment(rawValue: "DEV")
-
-    /// Production environment for live applications.
-    public static let prod = Environment(rawValue: "PROD")
-
-    // swiftlint:disable identifier_name
-    /// Release candidate environment for final testing before production.
-    public static let rc = Environment(rawValue: "RC")
-    // swiftlint:enable identifier_name
-
     // MARK: - Computed Properties
 
     /// The base URL for all API requests to the TruVideo backend.
@@ -66,7 +50,7 @@ public struct Environment: Hashable, RawRepresentable, Sendable {
     /// It serves as the foundation for constructing full API endpoints throughout the SDK.
     /// The URL is automatically determined by the environment type, ensuring that requests
     /// are directed to the correct backend instance.
-    public var baseURL: String {
+    var baseURL: String {
         switch self {
         case .beta:
             "https://sdk-mobile-api-beta.truvideo.com"
@@ -84,6 +68,22 @@ public struct Environment: Hashable, RawRepresentable, Sendable {
             "https://sdk-mobile-api.truvideo.com"
         }
     }
+
+    // MARK: - Static Properties
+
+    /// Beta environment for beta testing and pre-release validation.
+    public static let beta = Environment(rawValue: "BETA")
+
+    /// Development environment for local development and testing.
+    public static let dev = Environment(rawValue: "DEV")
+
+    /// Production environment for live applications.
+    public static let prod = Environment(rawValue: "PROD")
+
+    // swiftlint:disable identifier_name
+    /// Release candidate environment for final testing before production.
+    public static let rc = Environment(rawValue: "RC")
+    // swiftlint:enable identifier_name
 
     // MARK: - Initializer
 

@@ -14,13 +14,26 @@ public struct EnvironmentDependencyKey: DependencyKey {
     public static let defaultValue = Environment.prod
 }
 
+/// Provides a `DependencyKey` for injecting a `Session` dependency.
+///
+/// `SessionDependencyKey` allows consumers to override the default storage
+/// mechanism used in the system. By default, this uses `HTTPURLSession`.
+struct SessionDependencyKey: DependencyKey {
+    /// The default file-based storage used if none is explicitly provided.
+    static let defaultValue: any Session = HTTPURLSession(
+        cache: InMemoryURLCache(),
+        middleware: Middleware(interceptors: [AuthTokenInterceptor()], retriers: [TokenRefresher()]),
+        monitors: [SessionMonitor()]
+    )
+}
+
 /// Provides a `DependencyKey` for injecting a `Storage` dependency.
 ///
 /// `StorageDependencyKey` allows consumers to override the default storage
 /// mechanism used in the system. By default, this uses `KeychainStorage`.
-struct StorageDependencyKey: DependencyKey {
+struct SessionManagerDependencyKey: DependencyKey {
     /// The default file-based storage used if none is explicitly provided.
-    static let defaultValue: any Storage = KeychainStorage()
+    static let defaultValue: any SessionManager = SessionManagerImpl()
 }
 
 extension DependencyValues {
@@ -30,9 +43,14 @@ extension DependencyValues {
         set { self[EnvironmentDependencyKey.self] = newValue }
     }
 
-    /// Accessor for resolving or overriding the current `Storage` implementation.
-    var storage: any Storage {
-        get { self[StorageDependencyKey.self] }
-        set { self[StorageDependencyKey.self] = newValue }
+    /// Accessor for resolving or overriding the current `Session` implementation.
+    var session: any Session {
+        get { self[SessionDependencyKey.self] }
+        set { self[SessionDependencyKey.self] = newValue }
+    }
+    /// Accessor for resolving or overriding the current `SessionManager` implementation.
+    var sessionManager: any SessionManager {
+        get { self[SessionManagerDependencyKey.self] }
+        set { self[SessionManagerDependencyKey.self] = newValue }
     }
 }

@@ -1,0 +1,15 @@
+{
+    "cameraModule" : true,
+    "noiseCancelling" : true,
+    "credentials" : {
+        "identityID" : "us-west-2:4a3e7d6d-dc4a-c961-3105-1251df6dd873",
+        "identityPoolID" : "us-west-2:183c7187-1d3b-445b-b1d3-f348406a0499",
+        "region" : "us-west-2",
+        "bucketName" : "sdkmobileapi-517ab75d-9ebd-4c41-a6e0-35a643789d03",
+        "bucketFolderMedia" : "media",
+        "bucketFolderLogs" : "logs",
+        "newBucketFolderMedia" : "/4d3c51f1-89b5-4b94-8f12-a79fcbaac351/Kenility Development/media",
+        "newBucketFolderLogs" : "/4d3c51f1-89b5-4b94-8f12-a79fcbaac351/Kenility Development/logs"
+    },
+    "enabledAutoPlay" : true
+}

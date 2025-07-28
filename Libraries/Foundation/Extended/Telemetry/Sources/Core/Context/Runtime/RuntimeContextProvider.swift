@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import Core
 import Foundation
+import Registry
 import UIKit
 import Utilities
 
@@ -48,7 +48,7 @@ struct RuntimeContextProvider: ContextProvider {
                     free: currentDevice.freeMemory,
                     total: processInfo.physicalMemory
                 ),
-                model: currentDevice.model,
+                model: currentDevice.modelIdentifier,
                 processorCount: processInfo.processorCount,
                 thermalState: processInfo.thermalState.debugDescription,
                 uptimeSeconds: processInfo.systemUptime

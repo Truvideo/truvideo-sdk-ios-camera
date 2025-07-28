@@ -9,7 +9,16 @@ import Foundation
 /// Types conforming to `Request` must support cancellation and resumption of the operation. This
 /// abstraction is commonly used to manage the lifecycle of an in-flight task, such as a network
 /// request or file transfer.
-public protocol Request: Equatable {
+public protocol Request: Equatable, CustomDebugStringConvertible {
+    /// Current `URLRequest` created on behalf of the `Request`.
+    var request: URLRequest? { get }
+
+    /// `HTTPURLResponse` received from the server, if any. If the `Request` was retried, this is the response of the last `URLSessionTask`.
+    var response: HTTPURLResponse? { get }
+
+    /// The current retry count for this request.
+    var retryCount: Int { get }
+
     /// Cancels the request, if allowed.
     ///
     /// - Returns: The current `Request` instance.
@@ -89,6 +98,15 @@ public protocol DataRequest: Request {
         emptyResponseCodes: Set<Int>
     ) async -> Response<String, NetworkingError>
 
+    /// Validates whether the response's status code is within an acceptable range.
+    ///
+    /// This method checks if the provided `HTTPURLResponse` contains a status code that is considered valid.
+    /// If the status code is not within the allowed range, a `NetworkingError.responseValidationFailed` is thrown.
+    ///
+    /// - Parameter acceptableStatusCodes: A sequence of acceptable HTTP status codes.
+    /// - Throws: A `NetworkingError` if the status code is not within the acceptable range.
+    func validate() -> Self
+
     /// Adds a custom validation step to the request.
     ///
     /// This method allows defining a custom validation logic for the response,
@@ -109,6 +127,22 @@ public protocol DataRequest: Request {
     /// ```
     @discardableResult
     func validate(_ validator: @escaping Validation) -> Self
+
+    /// Validates whether the response's status code is within an acceptable range.
+    ///
+    /// This method checks if the provided `HTTPURLResponse` contains a status code that is considered valid.
+    /// If the status code is not within the allowed range, a `NetworkingError.responseValidationFailed` is thrown.
+    ///
+    /// - Parameter acceptableStatusCodes: A sequence of acceptable HTTP status codes.
+    /// - Throws: A `NetworkingError` if the status code is not within the acceptable range.
+    /// - Returns: The current `DataRequest` instance.
+    ///
+    /// ### Example Usage:
+    /// ```swift
+    /// request.validate(acceptableStatusCodes: [200])
+    /// ```
+    @discardableResult
+    func validate<S: Sequence>(acceptableStatusCodes: S) -> Self where S: Sendable, S.Iterator.Element == Int
 }
 
 extension DataRequest {
@@ -131,7 +165,7 @@ extension DataRequest {
     public func serializing<Value: Decodable>(
         _ type: Value.Type,
         decoder: JSONDecoder = JSONDecoder(),
-        emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
+        emptyResponseCodes: Set<Int> = DecodableResponseSerializer<Value>.emptyResponseCodes
     ) async -> Response<Value, NetworkingError> where Value: Sendable {
         await serializing(Value.self, decoder: JSONDecoder(), emptyResponseCodes: emptyResponseCodes)
     }

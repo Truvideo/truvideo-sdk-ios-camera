@@ -341,6 +341,7 @@ public final class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked S
     /// ```swift
     /// request.validate(acceptableStatusCodes: [200])
     /// ```
+    @discardableResult
     public func validate<S: Sequence>(acceptableStatusCodes: S) -> Self where S: Sendable, S.Iterator.Element == Int {
         validate { [weak self] _, response, _ in
             guard let self else { return }

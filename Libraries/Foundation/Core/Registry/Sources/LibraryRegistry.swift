@@ -70,6 +70,11 @@ public class LibraryRegistry: @unchecked Sendable {
     /// A static array holding registered libraries.
     private static var libraries: [Library] = []
 
+    // MARK: - Public Static Properties
+
+    /// Indicates whether all registered libraries have been configured
+    public private(set) static var isConfigured = false
+
     // MARK: - Public static methods
 
     /// Configures all registered libraries with the provided configuration.
@@ -87,6 +92,8 @@ public class LibraryRegistry: @unchecked Sendable {
         for library in libraries {
             library.configure()
         }
+
+        isConfigured = true
     }
 
     /// Registers a library to the application registry.
@@ -111,7 +118,9 @@ public class LibraryRegistry: @unchecked Sendable {
     /// Returns all registered libraries.
     ///
     /// - Returns: An array of registered `Library` instances.
-    public static func registeredLibraries() -> [Library] {
-        libraries
+    public static func registeredLibraries() -> [String: String] {
+        libraries.reduce(into: [:]) { partialResult, library in
+            partialResult[library.name] = library.version
+        }
     }
 }

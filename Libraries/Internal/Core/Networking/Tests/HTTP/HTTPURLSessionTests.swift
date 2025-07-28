@@ -67,7 +67,7 @@ struct SessionTests {
         weak var weakSession = sut
                 
         // When
-        let request = sut?.request(url)
+        let request = sut?.request(url) as! HTTPURLDataRequest
         
         await withCheckedContinuation { continuation in
             monitor.requestDidCreateTaskCallback = { _ in
@@ -80,7 +80,7 @@ struct SessionTests {
         }
         
         // Then
-        #expect([.canceling, .completed].contains(request?.tasks.last?.state))
+        #expect([.canceling, .completed].contains(request.tasks.last?.state))
         #expect(sut == nil, "Expect session should be nil")
         #expect(weakSession == nil, "Expect weak session should be nil")
     }
@@ -91,13 +91,13 @@ struct SessionTests {
         var sut: HTTPURLSession? = HTTPURLSession()
         
         // When
-        let request = sut?.request(url)
+        let request = sut?.request(url) as! HTTPURLDataRequest
         
-        request?.cancel()
+        request.cancel()
         sut = nil
         
         // Then
-        #expect(request?.state == .cancelled, "Expect state should be .cancelled")
+        #expect(request.state == .cancelled, "Expect state should be .cancelled")
         #expect(sut == nil, "Expect session should be nil")
     }
     
@@ -123,7 +123,7 @@ struct SessionTests {
         let sut = HTTPURLSession()
         
         // When
-        let request = sut.request(url, middleware: middleware)
+        let request = sut.request(url, middleware: middleware) as! HTTPURLDataRequest
         
         // Then
         #expect(request.middleware != nil, "Expect middleware to not be nil")
@@ -291,7 +291,7 @@ struct SessionTests {
         let originalError = NetworkingError(kind: .invalidURL)
         let error = NSError(domain: "", code: 0)
         let sut = HTTPURLSession(middleware: middleware)
-        let request = sut.request(url, middleware: middleware)
+        let request = sut.request(url, middleware: middleware) as! HTTPURLDataRequest
         let expectedLocalizedDescription = """
                                     Request retry failed with retry error: \(error.localizedDescription), \
                                     original error: \(originalError.localizedDescription)
@@ -320,7 +320,7 @@ struct SessionTests {
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
         let error = NetworkingError(kind: .invalidURL)
         let sut = HTTPURLSession(middleware: middleware)
-        let request = sut.request(url, middleware: middleware)
+        let request = sut.request(url, middleware: middleware) as! HTTPURLDataRequest
                                     
         // When
         requestRetrier.retry = .retry(1)
@@ -342,7 +342,7 @@ struct SessionTests {
         let error = NetworkingError(kind: .sessionInvalidated)
         let monitor = MonitorMock()
         let sut = HTTPURLSession(monitors: [monitor])
-        let request = sut.request(url)
+        let request = sut.request(url) as! HTTPURLDataRequest
         
         // When
         Task {

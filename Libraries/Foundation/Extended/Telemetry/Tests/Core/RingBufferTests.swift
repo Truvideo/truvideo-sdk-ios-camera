@@ -11,10 +11,10 @@ struct RingBufferTests {
 
     @Test
     func testThatInitAndIsEmpty() {
-        // Given, When
+        // Given
         var buffer = RingBuffer<Int>(maxCapacity: 3)
 
-        // Then
+        // When, Then
         #expect(buffer.count == 0)
         #expect(buffer.snapshot().isEmpty)
     }
@@ -129,4 +129,3 @@ struct RingBufferTests {
         #expect(collected == ["A", "B", "C"])
     }
 }
-

@@ -234,13 +234,13 @@ open class HTTPURLSession: @unchecked Sendable, Session {
     /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
     open func request(
         _ url: URLConvertible,
-        method: HTTPMethod = .get,
-        parameters: Parameters? = nil,
-        encoder: ParameterEncoder = .url,
-        headers: HTTPHeaders? = nil,
-        middleware: RequestMiddleware? = nil,
-        cachePolicy: URLCachePolicy = .reloadIgnoringLocalCacheData
-    ) -> HTTPURLDataRequest {
+        method: HTTPMethod,
+        parameters: Parameters?,
+        encoder: ParameterEncoder,
+        headers: HTTPHeaders?,
+        middleware: RequestMiddleware?,
+        cachePolicy: URLCachePolicy
+    ) -> any DataRequest {
 
         let requestBuilder = URLRequestBuilder(
             url: url,
@@ -266,9 +266,9 @@ open class HTTPURLSession: @unchecked Sendable, Session {
     /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled, or validated.
     open func request(
         _ requestBuilder: RequestBuilder,
-        middleware: RequestMiddleware? = nil,
-        cachePolicy: URLCachePolicy = .reloadIgnoringLocalCacheData
-    ) -> HTTPURLDataRequest {
+        middleware: RequestMiddleware?,
+        cachePolicy: URLCachePolicy
+    ) -> any DataRequest {
 
         let dataRequest = HTTPURLDataRequest(
             requestBuilder: requestBuilder,
@@ -323,7 +323,7 @@ open class HTTPURLSession: @unchecked Sendable, Session {
 
                 queue.async {
                     request.didIntercept(urlRequest, to: interceptedRequest)
-                    self.didCreate(urlRequest: urlRequest, for: request)
+                    self.didCreate(urlRequest: interceptedRequest, for: request)
                 }
             } catch {
                 queue.async {

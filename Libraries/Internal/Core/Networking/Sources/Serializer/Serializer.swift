@@ -128,7 +128,7 @@ public struct DecodableResponseSerializer<T: Decodable>: Serializer where T: Sen
     ///   - emptyResponseCodes: HTTP status codes that indicate a valid empty response.
     public init(
         decoder: JSONDecoder = JSONDecoder(),
-        emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
+        emptyResponseCodes: Set<Int> = DecodableResponseSerializer<T>.emptyResponseCodes
     ) {
 
         self.decoder = decoder

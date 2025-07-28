@@ -15,7 +15,7 @@ help:
 
 	@echo "Flexible framework commands:"
 	@echo "  make framework SCHEME=DI"
-	@echo "  Available schemes: DI, Registry, Storage, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, TruVideoSdk"
+	@echo "  Available schemes: DI, Registry, Storage, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, ExternalUtilities, TruVideoSdk"
 
 # Generate Xcode project using XcodeGen
 generate:
@@ -32,8 +32,10 @@ build:
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme CoreDataUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Telemetry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Networking -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme NetworkingTesting -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruVideoApi -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
-	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruVideoSdk -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme ExternalUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruvideoSdk -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	@echo "All frameworks built successfully!"
 
 # Build specific framework by scheme

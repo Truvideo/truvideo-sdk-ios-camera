@@ -97,7 +97,7 @@ public protocol Signer: Sendable {
 public struct HMACSHA256Signer: Signer {
     // MARK: - Private Properties
 
-    let encoder = JSONEncoder()
+    let encoder: JSONEncoder
 
     // MARK: - Types
 
@@ -157,7 +157,10 @@ public struct HMACSHA256Signer: Signer {
     // MARK: - Initializer
 
     /// Creates a new instance of the `HMACSHA256Signer`.
-    public init() {}
+    public init() {
+        encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+    }
 
     // MARK: - Signer
 

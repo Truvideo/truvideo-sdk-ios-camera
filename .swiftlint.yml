@@ -144,6 +144,7 @@ included:
 
 excluded:  
   # Test directories
+  - Libraries/App/Tests/*
   - Libraries/*/*/Testing/*
   - Libraries/*/*/Tests/*
   - Libraries/*/*/*/Testing/*

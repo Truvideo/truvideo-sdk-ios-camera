@@ -47,7 +47,7 @@ public protocol RequestBuilder {
 ///
 /// Conforming types should support flexible request creation using either raw URL parameters
 /// or prebuilt request builders, as well as support for request-level middleware and caching policies.
-public protocol Session {
+public protocol Session: Sendable {
     /// Cancels all active network requests.
     ///
     /// This method asynchronously iterates through all currently active requests and cancels them.

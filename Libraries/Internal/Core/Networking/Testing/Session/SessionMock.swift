@@ -6,8 +6,11 @@ import Foundation
 import Networking
 
 /// A mock implementation of the `Session` protocol for testing.
-public final class SessionMock: Session {
+public final class SessionMock: Session, @unchecked Sendable {
     // MARK: - Public Properties
+
+    /// A mock request to be returned.
+    public var dataRequest: (any DataRequest)?
 
     /// The number of times `cancelAllRequests()` has been called.
     public private(set) var cancelAllRequestsCallCount = 0
@@ -81,7 +84,7 @@ public final class SessionMock: Session {
         headers: HTTPHeaders?,
         middleware: RequestMiddleware?,
         cachePolicy: URLCachePolicy
-    ) -> DataRequestMock {
+    ) -> any DataRequest {
         requestURLCallCount += 1
         lastRequestURL = url
         lastRequestMethod = method
@@ -91,7 +94,7 @@ public final class SessionMock: Session {
         lastRequestMiddleware = middleware
         lastRequestCachePolicy = cachePolicy
 
-        return DataRequestMock()
+        return dataRequest ?? DataRequestMock()
     }
 
     /// Creates and initiates a `DataRequest` using the provided request builder and optional middleware.
@@ -109,12 +112,12 @@ public final class SessionMock: Session {
         _ requestBuilder: RequestBuilder,
         middleware: RequestMiddleware?,
         cachePolicy: URLCachePolicy
-    ) -> DataRequestMock {
+    ) -> any DataRequest {
         requestBuilderCallCount += 1
         lastRequestBuilder = requestBuilder
         lastBuilderMiddleware = middleware
         lastBuilderCachePolicy = cachePolicy
 
-        return DataRequestMock()
+        return dataRequest ?? DataRequestMock()
     }
 }

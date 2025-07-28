@@ -55,6 +55,24 @@ extension UIDevice {
         return UInt64(freePages) * UInt64(pageSize)
     }
 
+    /// Returns the device model identifier string that uniquely identifies the hardware model.
+    ///
+    /// This property provides access to the device's machine identifier, which is a string
+    /// that uniquely identifies the specific hardware model of the device. Unlike `model`
+    /// which returns a generic type (e.g., "iPhone"), this identifier provides the exact
+    /// model specification (e.g., "iPhone16,2" for iPhone 15 Pro).
+    public var modelIdentifier: String {
+        var systemInfo = utsname()
+        uname(&systemInfo)
+
+        let machineMirror = Mirror(reflecting: systemInfo.machine)
+        return machineMirror.children.reduce(into: "") { identifier, element in
+            if let value = element.value as? Int8, value != 0 {
+                identifier += String(UnicodeScalar(UInt8(value)))
+            }
+        }
+    }
+
     /// Retrieves the total disk capacity of the device in bytes.
     ///
     /// This includes all system, user, and reserved space. It is useful for determining

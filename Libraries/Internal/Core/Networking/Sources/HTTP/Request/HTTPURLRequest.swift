@@ -713,7 +713,7 @@ extension HTTPURLRequest: Hashable {
     }
 }
 
-extension HTTPURLRequest: CustomDebugStringConvertible {
+extension HTTPURLRequest {
     /// A textual representation of this instance, suitable for debugging.
     public var debugDescription: String {
         guard

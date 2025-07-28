@@ -20,7 +20,7 @@ struct TruVideoSDKLibrary: Library {
     ///
     /// Follows standard versioning schemes such as `"1.0.0"` or `"75.2.1-RC.3"`.
     /// Used for compatibility checks, debugging, and diagnostics.
-    let version = TruVideoSDKVersion.version
+    let version = Bundle(for: TruVideoApp.self).infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown"
 
     /// Configures the library with the provided SDK configuration.
     ///

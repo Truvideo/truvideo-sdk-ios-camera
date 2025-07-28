@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import NetworkingTesting
 import Testing
 
 @testable import Networking
@@ -10,52 +11,75 @@ import Testing
 struct InMemoryURLCacheTests {
     // MARK: - Private Properties
     
-    private let session = HTTPURLSession(queue: .global())
-    private let url = "https://httpbin.org/"
+    private let queue = DispatchQueue.global()
     
     // MARK: - Tests
 
     @Test
     func testThatCacheResponseForRequestShouldNotReturnAResponseIfDoesNotExists() {
         // Given
-        let request = session.request(url)
         let sut = InMemoryURLCache()
+        let request = HTTPURLDataRequest(
+            requestBuilder: RequestBuilderMock(),
+            cache: nil,
+            cachePolicy: .reloadIgnoringLocalCacheData,
+            delegate: nil,
+            middleware: nil,
+            monitor: nil,
+            queue: queue
+        )
 
         // When, Then
-        #expect(sut.cachedResponse(for: request) == nil, "Expected response to be nil")
+        #expect(sut.cachedResponse(for: request) == nil)
     }
     
     @Test
     func testThatCacheResponseForRequestShouldNotReturnAResponseIfRequestIsInvalid() {
         // Given
-        let request = session.request(url)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
         let sut = InMemoryURLCache()
+        let request = HTTPURLDataRequest(
+            requestBuilder: RequestBuilderMock(),
+            cache: nil,
+            cachePolicy: .reloadIgnoringLocalCacheData,
+            delegate: nil,
+            middleware: nil,
+            monitor: nil,
+            queue: queue
+        )
 
         // When
         sut.cache(response, for: request)
         
         // Then
-        #expect(sut.cachedResponse(for: request) == nil, "Expected response to be nil")
+        #expect(sut.cachedResponse(for: request) == nil)
     }
     
     @Test
     func testThatCacheResponseForRequestShouldReturnAResponseIfExists() throws {
         // Given
-        let request = session.request(url)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
         let urlRequest = try URLRequest(url: "https://httpbin.org/", method: .get)
         let sut = InMemoryURLCache()
+        let request = HTTPURLDataRequest(
+            requestBuilder: RequestBuilderMock(),
+            cache: nil,
+            cachePolicy: .reloadIgnoringLocalCacheData,
+            delegate: nil,
+            middleware: nil,
+            monitor: nil,
+            queue: queue
+        )
 
         // When
-        session.queue.sync {
+        queue.sync {
             request.didCreateInitial(request: urlRequest)
         }
         
         sut.cache(response, for: request)
         
         // Then
-        #expect(sut.cachedResponse(for: request) != nil, "Expected response to not be nil")
+        #expect(sut.cachedResponse(for: request) != nil)
     }
     
     @Test
@@ -76,20 +100,28 @@ struct InMemoryURLCacheTests {
         let sut: InMemoryURLCache = .inMemory(capacity: 1)
         
         // When, Then
-        #expect(sut.memoryCapacity == 1, "Expected memoryCapacity to be the equals to 1")
+        #expect(sut.memoryCapacity == 1)
     }
     
     @Test
     func testThatRemoveCacheResponseForRequest() throws {
-        // Given
-        let request = session.request(url)
+        // Given        
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
         var results: [Bool] = []
         let urlRequest = try URLRequest(url: "https://httpbin.org/", method: .get)
         let sut = InMemoryURLCache()
+        let request = HTTPURLDataRequest(
+            requestBuilder: RequestBuilderMock(),
+            cache: nil,
+            cachePolicy: .reloadIgnoringLocalCacheData,
+            delegate: nil,
+            middleware: nil,
+            monitor: nil,
+            queue: queue
+        )
 
         // When
-        session.queue.sync {
+        queue.sync {
             request.didCreateInitial(request: urlRequest)
         }
         
@@ -100,6 +132,6 @@ struct InMemoryURLCacheTests {
         results.append(sut.cachedResponse(for: request) != nil)
         
         // Then
-        #expect(results == [true, false], "Expected results to be equals to [true, false]")
+        #expect(results == [true, false])
     }
 }

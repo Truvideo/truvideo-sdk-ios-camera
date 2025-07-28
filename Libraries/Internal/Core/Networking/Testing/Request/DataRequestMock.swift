@@ -5,20 +5,65 @@
 import Foundation
 import Networking
 
-/// A mock implementation of the `Request` protocol for testing.
+/// A mock implementation of the `DataRequest` protocol for testing network requests.
 public final class DataRequestMock: DataRequest {
     // MARK: - Private Properties
 
-    let id = UUID()
+    private let id = UUID()
 
     // MARK: - Public Properties
 
+    /// The current `URLRequest` created on behalf of the `Request`.
+    public var request: URLRequest?
+
+    /// `HTTPURLResponse` received from the server, if any.
+    public var response: HTTPURLResponse?
+
+    /// The current retry count for this request.
+    public var retryCount: Int = 0
+
+    /// A human-readable description for debugging purposes.
+    public var debugDescription: String {
+        "DataRequestMock(id: \(id), retryCount: \(retryCount))"
+    }
+
+    // MARK: - Mock Configuration Properties
+
+    /// The mock response object to return for data serialization.
+    public var mockDataResponse: Response<Data, NetworkingError>?
+
+    /// The mock response object to return for generic serialization.
+    public var mockResponse: Any?
+
+    /// The mock response object to return for string serialization.
+    public var mockStringResponse: Response<String, NetworkingError>?
+
+    // MARK: - Call Count Properties
+
+    /// The number of times `cancel()` has been called.
     public private(set) var cancelCallCount = 0
+
+    /// The number of times `resume()` has been called.
     public private(set) var resumeCallCount = 0
+
+    /// The number of times `validate()` has been called.
+    public private(set) var validateCallCount = 0
+
+    /// The number of times `validate(acceptableStatusCodes:)` has been called.
+    public private(set) var validateStatusCodesCallCount = 0
+
+    /// The number of times `serializing(_:)` has been called.
+    public private(set) var serializingCallCount = 0
+
+    /// The number of times `serializingData()` has been called.
+    public private(set) var serializingDataCallCount = 0
+
+    /// The number of times `serializingString()` has been called.
+    public private(set) var serializingStringCallCount = 0
 
     // MARK: - Initializer
 
-    /// Creates a new instance of the `RequestMock`.
+    /// Creates a new instance of the `DataRequestMock`.
     public init() {}
 
     // MARK: - DataRequest
@@ -41,18 +86,12 @@ public final class DataRequestMock: DataRequest {
     /// ```
     public func serializing<Value: Decodable>(
         _ type: Value.Type,
-        decoder: JSONDecoder,
-        emptyResponseCodes: Set<Int>
+        decoder: JSONDecoder = JSONDecoder(),
+        emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) async -> Response<Value, NetworkingError> where Value: Sendable {
+        serializingCallCount += 1
 
-        Response(
-            data: nil,
-            metrics: nil,
-            request: nil,
-            response: nil,
-            result: .failure(NetworkingError(kind: .explicitlyCancelled, failureReason: "")),
-            type: .networkLoad
-        )
+        return mockResponse as! Response<Value, NetworkingError>
     }
 
     /// Serializes the response as raw `Data` asynchronously.
@@ -61,22 +100,13 @@ public final class DataRequestMock: DataRequest {
     /// based on predefined HTTP status codes.
     ///
     /// - Parameter emptyResponseCodes: HTTP status codes that indicate an empty response body.
-    /// - Returns: An `Response<Value, NetworkingError>` that provides the raw response asynchronously.
-    ///
-    /// ### Example Usage:
-    /// ```swift
-    /// let task = request.serializingData()
-    /// let data = try await task.value
-    /// ```
-    public func serializingData(emptyResponseCodes: Set<Int>) async -> Response<Data, NetworkingError> {
-        Response(
-            data: nil,
-            metrics: nil,
-            request: nil,
-            response: nil,
-            result: .success(Data()),
-            type: .networkLoad
-        )
+    /// - Returns: An `Response<Data, NetworkingError>` that provides the raw response asynchronously.
+    public func serializingData(
+        emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
+    ) async -> Response<Data, NetworkingError> {
+        serializingDataCallCount += 1
+
+        return mockDataResponse!
     }
 
     /// Serializes the response as a `String` asynchronously.
@@ -88,27 +118,27 @@ public final class DataRequestMock: DataRequest {
     ///   - queue: The `DispatchQueue` on which serialization occurs.
     ///   - encoding: The `String.Encoding` used for decoding the response.
     ///   - emptyResponseCodes: HTTP status codes that indicate an empty response body.
-    /// - Returns: An `Response<Value, NetworkingError>` that provides the response as a `String` asynchronously.
-    ///
-    /// ### Example Usage:
-    /// ```swift
-    /// let task = request.serializingString()
-    /// let text = try await task.value
-    /// ```
+    /// - Returns: An `Response<String, NetworkingError>` that provides the response as a `String` asynchronously.
     public func serializingString(
-        queue: DispatchQueue,
-        encoding: String.Encoding,
-        emptyResponseCodes: Set<Int>
+        queue: DispatchQueue = .main,
+        encoding: String.Encoding = .utf8,
+        emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) async -> Response<String, NetworkingError> {
+        serializingStringCallCount += 1
 
-        Response(
-            data: nil,
-            metrics: nil,
-            request: nil,
-            response: nil,
-            result: .success(""),
-            type: .networkLoad
-        )
+        return mockStringResponse!
+    }
+
+    /// Validates the request without any custom validation logic.
+    ///
+    /// This method provides a parameterless validation option that simply tracks
+    /// the call and returns the current instance for method chaining.
+    ///
+    /// - Returns: The current `DataRequest` instance.
+    @discardableResult
+    public func validate() -> Self {
+        validateCallCount += 1
+        return self
     }
 
     /// Adds a custom validation step to the request.
@@ -120,18 +150,24 @@ public final class DataRequestMock: DataRequest {
     /// - Returns: The current instance of `Self` to allow method chaining.
     /// - Throws: A `NetworkingError.responseValidationFailed` if the validation fails.
     /// - Returns: The current `DataRequest` instance.
-    ///
-    /// ### Example Usage:
-    /// ```swift
-    /// request.validate { request, response, data in
-    ///     guard response.statusCode == 200 else {
-    ///         throw NetworkingError(kind: .responseValidationFailed, failureReason: "Unexpected status code")
-    ///     }
-    /// }
-    /// ```
     @discardableResult
     public func validate(_ validator: @escaping Validation) -> Self {
-        self
+        validateCallCount += 1
+        return self
+    }
+
+    /// Validates whether the response's status code is within an acceptable range.
+    ///
+    /// This method checks if the provided `HTTPURLResponse` contains a status code that is considered valid.
+    /// If the status code is not within the allowed range, a `NetworkingError.responseValidationFailed` is thrown.
+    ///
+    /// - Parameter acceptableStatusCodes: A sequence of acceptable HTTP status codes.
+    /// - Throws: A `NetworkingError` if the status code is not within the acceptable range.
+    /// - Returns: The current `DataRequest` instance.
+    @discardableResult
+    public func validate<S: Sequence>(acceptableStatusCodes: S) -> Self where S: Sendable, S.Iterator.Element == Int {
+        validateStatusCodesCallCount += 1
+        return self
     }
 
     // MARK: - Request
@@ -148,6 +184,7 @@ public final class DataRequestMock: DataRequest {
     /// Resumes the request, if allowed.
     ///
     /// - Returns: The current `Request` instance.
+    @discardableResult
     public func resume() -> Self {
         resumeCallCount += 1
         return self

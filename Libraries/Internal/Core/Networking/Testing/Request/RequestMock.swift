@@ -13,7 +13,26 @@ public final class RequestMock: Request {
 
     // MARK: - Public Properties
 
+    /// The current `URLRequest` created on behalf of the `Request`.
+    public var request: URLRequest?
+
+    /// `HTTPURLResponse` received from the server, if any.
+    public var response: HTTPURLResponse?
+
+    /// The current retry count for this request.
+    public var retryCount: Int = 0
+
+    /// A human-readable description for debugging purposes.
+    public var debugDescription: String {
+        "DataRequestMock(id: \(id), retryCount: \(retryCount))"
+    }
+
+    // MARK: - Call Count Properties
+
+    /// The number of times `cancel` has been called.
     public private(set) var cancelCallCount = 0
+
+    /// The number of times `resume` has been called.
     public private(set) var resumeCallCount = 0
 
     // MARK: - Initializer

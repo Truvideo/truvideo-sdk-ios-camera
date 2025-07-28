@@ -8,7 +8,7 @@ import Testing
 
 @testable import Networking
 
-struct DataRequestTests {
+struct HTTPURLDataRequestTests {
     // MARK: - Private Properties
     
     private let queue = DispatchQueue.global()
@@ -20,7 +20,7 @@ struct DataRequestTests {
     func testThatDidReceiveDataShouldAppendData() {
         // Given
         let session = HTTPURLSession()
-        let sut = session.request(url)
+        let sut = session.request(url.appending("get")) as! HTTPURLDataRequest
 
         // When
         sut.didReceive(data: Data())
@@ -33,7 +33,7 @@ struct DataRequestTests {
     func testThatResetShouldResetTheData() {
         // Given
         let session = HTTPURLSession()
-        let sut = session.request(url)
+        let sut = session.request(url.appending("get")) as! HTTPURLDataRequest
 
         // When
         sut.didReceive(data: Data())
@@ -223,9 +223,8 @@ struct DataRequestTests {
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
-        let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
-        let sut = session.request(url)
+        let session = HTTPURLSession()
+        let sut = session.request(url) as! HTTPURLDataRequest
 
         // When
         sut.state = .resumed
@@ -236,7 +235,7 @@ struct DataRequestTests {
                 continuation.resume()
             }
            
-            session.queue.async {
+            queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
@@ -254,9 +253,8 @@ struct DataRequestTests {
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
-        let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
-        let sut = session.request(url)
+        let session = HTTPURLSession(middleware: Middleware(interceptors: [], retriers: [requestRetrier]))
+        let sut = session.request(url) as! HTTPURLDataRequest
 
         // When
         sut.state = .resumed
@@ -267,7 +265,7 @@ struct DataRequestTests {
                 continuation.resume()
             }
            
-            session.queue.async {
+            queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
@@ -340,9 +338,8 @@ struct DataRequestTests {
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
-        let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
-        let sut = session.request(url)
+        let session = HTTPURLSession(middleware: Middleware(interceptors: [], retriers: [requestRetrier]))
+        let sut = session.request(url) as! HTTPURLDataRequest
 
         // When
         sut.state = .resumed
@@ -353,7 +350,7 @@ struct DataRequestTests {
                 continuation.resume()
             }
            
-            session.queue.async {
+            queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
@@ -370,7 +367,7 @@ struct DataRequestTests {
         let session = HTTPURLSession(cache: cache)
         let urlRequest = try URLRequest(url: url, method: .get)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
-        let request = session.request(url, cachePolicy: .returnCacheDataDontLoad)
+        let request = session.request(url, cachePolicy: .returnCacheDataDontLoad) as! HTTPURLDataRequest
 
         // When
         session.queue.sync {
@@ -379,12 +376,12 @@ struct DataRequestTests {
         
         cache.cache(response, for: request)
                 
-        let sut = session.request(url, cachePolicy: .returnCacheDataDontLoad)
+        let sut = session.request(url, cachePolicy: .returnCacheDataDontLoad) as! HTTPURLDataRequest
         let result = await sut.serializingData()
         
         // Then
         #expect(sut.state == .finished)
-        #expect(sut.tasks.isEmpty)
+        #expect(sut.request == nil)
         #expect(result.data != nil)
         #expect(result.response != nil)
         #expect(result.type == .localCache)
@@ -393,15 +390,15 @@ struct DataRequestTests {
     @Test
     func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataDontLoadPolicy() async {
         // Given
-        let session = HTTPURLSession(cache: InMemoryURLCache())
-        let sut = session.request(url, cachePolicy: .returnCacheDataDontLoad)
+        let session = HTTPURLSession()
+        let sut = session.request(url.appending("/get")) as! HTTPURLDataRequest
 
         // When
         let result = await sut.serializingData()
         
         // Then
         #expect(sut.state == .finished)
-        #expect(sut.tasks.isEmpty)
+        #expect(sut.request == nil)
         #expect(result.data == nil)
         #expect(result.response == nil)
         #expect(result.type == .localCache)
@@ -411,10 +408,13 @@ struct DataRequestTests {
     func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataElseLoadPolicy() async throws {
         // Given
         let cache = InMemoryURLCache()
-        let session = HTTPURLSession(cache: cache)
         let urlRequest = try URLRequest(url: url, method: .get)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
-        let request = session.request(url)
+        let session = HTTPURLSession(cache: cache)
+        let request = session.request(
+            url.appending("/200"),
+            cachePolicy: .returnCacheDataDontLoad
+        ) as! HTTPURLDataRequest
 
         // When
         session.queue.sync {
@@ -423,12 +423,16 @@ struct DataRequestTests {
         
         cache.cache(response, for: request)
                 
-        let sut = session.request(url, cachePolicy: .returnCacheDataElseLoad)
+        let sut = session.request(
+            url.appending("/200"),
+            cachePolicy: .returnCacheDataDontLoad
+        ) as! HTTPURLDataRequest
+        
         let result = await sut.serializingData()
         
         // Then
         #expect(sut.state == .finished)
-        #expect(sut.tasks.isEmpty)
+        #expect(sut.request == nil)
         #expect(result.data != nil)
         #expect(result.response != nil)
         #expect(result.type == .localCache)
@@ -441,7 +445,7 @@ struct DataRequestTests {
         let session = HTTPURLSession(cache: cache)
         let urlRequest = try URLRequest(url: url, method: .get)
         let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
-        let request = session.request(url, cachePolicy: .reloadIgnoringLocalCacheData)
+        let request = session.request(url, cachePolicy: .reloadIgnoringLocalCacheData) as! HTTPURLDataRequest
 
         // When
         session.queue.sync {
@@ -450,7 +454,7 @@ struct DataRequestTests {
         
         cache.cache(response, for: request)
                 
-        let sut = session.request(url)
+        let sut = session.request(url) as! HTTPURLDataRequest
         let result = await sut.serializingData()
         
         // Then
@@ -465,14 +469,17 @@ struct DataRequestTests {
     func testThatDataRequestShouldLoadDataOnReturnCacheDataElseLoadPolicy() async throws {
         // Given
         let session = HTTPURLSession(cache: InMemoryURLCache())
-        let sut = session.request(url, cachePolicy: .returnCacheDataElseLoad)
+        let cache = InMemoryURLCache()
+        let urlRequest = try URLRequest(url: url, method: .get)
+        let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
+        let sut = session.request(url.appending("/200"), cachePolicy: .returnCacheDataElseLoad) as! HTTPURLDataRequest
 
         // When
         let result = await sut.serializingData()
         
         // Then
         #expect(sut.state == .finished)
-        #expect(!sut.tasks.isEmpty)
+        #expect(sut.request != nil)
         #expect(result.data != nil)
         #expect(result.response != nil)
         #expect(result.type == .networkLoad)
@@ -484,7 +491,10 @@ struct DataRequestTests {
         let requestRetrier = RequestRetrierMock()
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
         let session = HTTPURLSession(middleware: middleware, queue: queue)
-        let sut = session.request(url.appending("/status/500"))
+        let sut = session.request(
+            url.appending("/status/500"),
+            cachePolicy: .returnCacheDataElseLoad
+        ) as! HTTPURLDataRequest
 
         // When
         requestRetrier.retry = .doNotRetry

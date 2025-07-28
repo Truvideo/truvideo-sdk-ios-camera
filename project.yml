@@ -390,11 +390,42 @@ targets:
     sources:
       - Libraries/Internal/Extended/TruVideoApi/Tests
     dependencies:
+      - target: NetworkingTesting
       - target: TruVideoApi
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
-  TruVideoSdk:
+  # External Core (Shared Dependencies)
+  ExternalUtilities:
+    type: framework
+    platform: iOS
+    sources:
+      - Libraries/External/Core/Utilities/Sources
+    info:
+      path: Libraries/External/Core/Utilities/Sources/Info.plist
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: ExternalUtilities
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/External/Core/Utilities/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+
+  # App
+  TruvideoSdk:
     type: framework
     platform: iOS
     sources:
@@ -403,13 +434,14 @@ targets:
       path: Libraries/App/Sources/Info.plist
     settings:
       DEFINES_MODULE: YES
-      PRODUCT_MODULE_NAME: TruVideoSdk
+      PRODUCT_MODULE_NAME: TruvideoSdk
     dependencies:
+      - target: ExternalUtilities
       - target: Registry
       - target: TruVideoApi
     scheme:
       testTargets:
-        - TruVideoSdkTests
+        - TruvideoSdkTests
     postCompileScripts:
       - script: |
           if which swift-format > /dev/null; then
@@ -428,13 +460,13 @@ targets:
         name: SwiftLint
         basedOnDependencyAnalysis: false
 
-  TruVideoSdkTests:
+  TruvideoSdkTests:
     type: bundle.unit-test
     platform: iOS
     sources:
       - Libraries/App/Tests
     dependencies:
-      - target: TruVideoSdk
+      - target: TruvideoSdk
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
@@ -516,11 +548,20 @@ schemes:
     test:
       targets: [TruVideoApiTests] 
 
-  TruVideoSdk:
+  # External Core (Shared Dependencies)
+  ExternalUtilities:
     build:
       targets:
+        ExternalUtilities: all
+        Utilities: all
+
+  # App
+  TruvideoSdk:
+    build:
+      targets:
+        ExternalUtilities: all
         Registry: all
         TruVideoApi: all
-        TruVideoSdk: all
+        TruvideoSdk: all
     test:
-      targets: [TruVideoSdkTests] 
+      targets: [TruvideoSdkTests] 
