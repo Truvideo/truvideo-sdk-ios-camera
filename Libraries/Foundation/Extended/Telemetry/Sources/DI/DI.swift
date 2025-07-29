@@ -14,6 +14,17 @@ struct ContextProviderKey: DependencyKey {
     static let defaultValue: any ContextProvider = RuntimeContextProvider()
 }
 
+/// A dependency key used to inject a concrete implementation of the `FileWriter` protocol.
+///
+/// This key enables access to a shared `FileWriter` instance via Swift's dependency injection system.
+/// If no custom implementation is provided, the default is `SystemFileWriter`, which writes directly to the file system.
+struct FileWriterDependencyKey: DependencyKey {
+    typealias Value = any FileWriter
+
+    /// The default file writer used if none is explicitly injected.
+    static let defaultValue: any FileWriter = SystemFileWriter()
+}
+
 /// Provides a `DependencyKey` for injecting a `Storage` dependency.
 ///
 /// `StorageDependencyKey` allows consumers to override the default storage
@@ -32,11 +43,29 @@ struct TelemetryInstallationDependencyKey: DependencyKey {
     static let defaultValue: any TelemetryInstallation = InstallationProvider()
 }
 
+/// A dependency key used to provide a default implementation of the `Uploader` protocol.
+///
+/// This key enables dependency injection of a concrete `Uploader` implementation into systems
+/// that rely on abstract upload behavior.
+struct UploaderDependencyKey: DependencyKey {
+    /// The default uploader provider used if none is explicitly injected.
+    static let defaultValue: any Uploader = S3Uploader(
+        bucketName: "",
+        clientProvider: S3ClientImpl(accessKey: "", secretKey: "", region: "")
+    )
+}
+
 extension DependencyValues {
     /// Accessor for resolving or overriding the current `ContextProvider`.
     var contextProvider: any ContextProvider {
         get { self[ContextProviderKey.self] }
         set { self[ContextProviderKey.self] = newValue }
+    }
+
+    /// Accessor for resolving or overriding the current `FileWriter`.
+    var fileWriter: any FileWriter {
+        get { self[FileWriterDependencyKey.self] }
+        set { self[FileWriterDependencyKey.self] = newValue }
     }
 
     /// Accessor for resolving or overriding the current `TelemetryInstallation` instance.
@@ -49,5 +78,11 @@ extension DependencyValues {
     var storage: any Storage {
         get { self[StorageDependencyKey.self] }
         set { self[StorageDependencyKey.self] = newValue }
+    }
+
+    /// Accessor for resolving or overriding the current `Uploader` implementation.
+    var uploader: any Uploader {
+        get { self[UploaderDependencyKey.self] }
+        set { self[UploaderDependencyKey.self] = newValue }
     }
 }

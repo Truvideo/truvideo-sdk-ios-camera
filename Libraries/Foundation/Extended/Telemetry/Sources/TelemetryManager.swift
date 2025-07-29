@@ -341,8 +341,12 @@ final class EventDiskBuffer {
 
     private var buffer = RingBuffer<TelemetryReport.Event>(maxCapacity: 100)
     private let decoder = JSONDecoder()
-    private let encoder = JSONEncoder()
     private let storageURL: URL
+
+    // MARK: - Dependencies
+
+    @Dependency(\.fileWriter)
+    var fileWriter: FileWriter
 
     // MARK: - Computed Properties
 
@@ -356,8 +360,8 @@ final class EventDiskBuffer {
     /// Creates a new disk-backed telemetry buffer.
     ///
     /// - Parameter storageURL: The root directory for storing events. Defaults to the app's telemetry directory.
-    init(storageURL: URL = FileManager.default.telemetryDirectory.appendingPathComponent("events.json")) {
-        self.storageURL = storageURL
+    init(storageURL: URL = FileManager.default.telemetryDirectory) {
+        self.storageURL = storageURL.appendingPathComponent("events.json")
 
         rehydrate()
     }
@@ -370,21 +374,8 @@ final class EventDiskBuffer {
     func add(_ event: TelemetryReport.Event) {
         buffer.add(event)
 
-        if !FileManager.default.fileExists(atPath: storageURL.path) {
-            FileManager.default.createFile(atPath: storageURL.path, contents: nil)
-        }
-
         do {
-            let fileHandle = try FileHandle(forWritingTo: storageURL)
-            let data = try encoder.encode(event)
-
-            try fileHandle.seekToEnd()
-            try fileHandle.write(contentsOf: data)
-
-            let breakLine = Data("\n".utf8)
-            try fileHandle.write(contentsOf: breakLine)
-
-            try fileHandle.close()
+            try fileWriter.write(event, to: storageURL)
         } catch {
             // Logging could be added here to capture the failure reason.
         }
