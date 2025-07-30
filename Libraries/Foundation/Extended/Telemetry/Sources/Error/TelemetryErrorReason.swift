@@ -23,6 +23,9 @@ extension ErrorReason {
         /// Error indicating that uploading a file has failed.
         public static let uploadFileFailed = ErrorReason(rawValue: "UPLOADING_A_FILE_FAILED")
 
+        /// Error indicating that writing to a file has failed.
+        public static let writeToFileFailed = ErrorReason(rawValue: "WRITE_TO_FILE_FAILED")
+
         /// Error indicating that writing a value to the storage has failed.
         public static let writeToStorageFailed = ErrorReason(rawValue: "WRITE_TO_STORAGE_FAILED")
     }

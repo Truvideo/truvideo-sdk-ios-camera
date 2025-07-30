@@ -424,6 +424,45 @@ targets:
         name: SwiftLint
         basedOnDependencyAnalysis: false
 
+  # External Extended 
+  TruvideoSdkCamera:
+    type: framework
+    platform: iOS
+    sources:
+      - Libraries/External/Extended/Camera/Sources
+    info:
+      path: Libraries/External/Extended/Camera/Sources/Info.plist
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: TruvideoSdkCamera
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/External/Extended/Camera/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+
+  TruvideoSdkCameraTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Libraries/External/Extended/Camera/Tests
+    dependencies:      
+      - target: TruvideoSdkCamera
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+
   # App
   TruvideoSdk:
     type: framework
@@ -554,6 +593,14 @@ schemes:
       targets:
         ExternalUtilities: all
         Utilities: all
+
+  # External Extended Schemes
+  TruvideoSdkCamera:
+    build:
+      targets:
+        TruvideoSdkCamera: all
+    test:
+      targets: [TruvideoSdkCameraTests]
 
   # App
   TruvideoSdk:

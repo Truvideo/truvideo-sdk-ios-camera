@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import DI
 import Foundation
+import DI
 import Storage
 
 /// Represents an authenticated session with API credentials and authentication token.
@@ -49,31 +49,86 @@ protocol SessionManager: Sendable {
     func set(_ session: AuthSession) throws
 }
 
+/// A concrete implementation of the SessionManager protocol that manages authentication sessions.
+///
+/// `SessionManagerImpl` provides a complete implementation for storing, retrieving, and managing
+/// authentication sessions using secure storage. It integrates with the dependency injection system
+/// to access environment configuration and uses KeychainStorage for secure session persistence.
+///
+/// ## Features
+///
+/// - Secure session storage using KeychainStorage
+/// - Environment-based configuration
+/// - Type-safe session management
+/// - Dependency injection integration
+///
+/// ## Example Usage
+///
+/// ```swift
+/// // Store a new authentication session
+/// let session = AuthSession(authToken: token, externalId: "user123")
+/// try sessionManager.set(session)
+///
+/// // Retrieve the current session
+/// if let currentSession = sessionManager.currentSession {
+///     // Use the session for authenticated requests
+/// }
+/// ```
+///
+/// ## Storage Security
+///
+/// Sessions are stored securely using KeychainStorage, which provides encryption
+/// and protection against unauthorized access. The storage is tied to the API
+/// environment's base URL for proper isolation.
 final class SessionManagerImpl: SessionManager, @unchecked Sendable {
     // MARK: - Dependencies
 
+    /// The API environment configuration used for storage initialization.
+    ///
+    /// This dependency provides access to the base URL and other environment-specific
+    /// configuration needed for proper storage setup and session management.
     @Dependency(\.apiEnvironment)
     private var environment: Environment
 
     // MARK: - Properties
 
+    /// The secure storage instance used for persisting authentication sessions.
+    ///
+    /// This lazy property initializes a KeychainStorage instance using the environment's
+    /// base URL. The storage provides encrypted persistence for authentication sessions,
+    /// ensuring sensitive data is protected from unauthorized access.
+    ///
+    /// The storage is initialized lazily to ensure the environment dependency is properly
+    /// resolved before storage creation.
     lazy var storage: any Storage = {
         KeychainStorage(url: environment.baseURL)
     }()
 
     // MARK: - Computed Properties
 
+    /// The currently stored authentication session, if any.
+    ///
+    /// This computed property attempts to read the current authentication session from
+    /// secure storage. If no session exists or if reading fails, it returns `nil`.
+    /// This provides a safe way to access the current session without throwing errors.
+    ///
+    /// - Returns: The current authentication session, or `nil` if none exists
     var currentSession: AuthSession? {
         try? storage.readValue(for: AuthSessionStorageKey.self)
     }
 
     // MARK: - Types
 
-    /// A storage key for managing `Session` dependencies in the dependency injection system.
+    /// A storage key for managing `AuthSession` dependencies in the dependency injection system.
     ///
     /// `AuthSessionStorageKey` provides a type-safe way to store and retrieve `AuthSession`
     /// instances within the dependency injection container. This key is used to manage authentication
-    /// tokens across the application lifecycle, ensuring consistent access to authentication state
+    /// tokens across the application lifecycle, ensuring consistent access to authentication state.
+    ///
+    /// ## Type Safety
+    ///
+    /// The storage key uses Swift's type system to ensure that only `AuthSession` instances
+    /// can be stored and retrieved using this key, preventing type mismatches and runtime errors.
     struct AuthSessionStorageKey: StorageKey {
         /// The associated value type that will be stored and retrieved using this key.
         ///
@@ -85,6 +140,14 @@ final class SessionManagerImpl: SessionManager, @unchecked Sendable {
 
     // MARK: - SessionManager
 
+    /// Stores an authentication session in secure storage.
+    ///
+    /// This method persists the provided authentication session to secure storage,
+    /// making it available for future retrieval. The session is stored using the
+    /// `AuthSessionStorageKey` for type-safe access.
+    ///
+    /// - Parameter session: The authentication session to store
+    /// - Throws: A storage error if the session cannot be written to storage
     func set(_ session: AuthSession) throws {
         try storage.write(session, forKey: AuthSessionStorageKey.self)
     }
