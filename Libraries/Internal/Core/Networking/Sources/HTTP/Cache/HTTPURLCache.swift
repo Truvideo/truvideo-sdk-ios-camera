@@ -63,7 +63,7 @@ extension HTTPURLCache where Self == InMemoryURLCache {
 /// - The default memory capacity is set to 20% of the device's physical memory.
 /// - Implements `URLCache` to support standard caching operations.
 public struct InMemoryURLCache: HTTPURLCache, @unchecked Sendable {
-    private let cache: NSCache<NSString, ValueWrapper> = .init()
+    private let cache = NSCache<NSString, ValueWrapper>()
 
     // MARK: - Properties
 

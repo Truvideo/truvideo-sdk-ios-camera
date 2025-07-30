@@ -12,7 +12,7 @@ import Utilities
 /// Each value is stored as an individual `.dat` file under a specified directory.
 ///
 /// This is particularly useful for caching or persisting lightweight state across app launches.
-public struct FileSystemStorage: Storage {
+public struct FileSystemStorage: Storage, @unchecked Sendable {
     // MARK: - Private Properties
 
     private let decoder = JSONDecoder()

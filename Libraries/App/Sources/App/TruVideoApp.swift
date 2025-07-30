@@ -212,7 +212,7 @@ public final class TruVideoApp: TruVideoSDK {
                 externalId: options.externalId
             )
 
-            _ = try await deviceSettingResource.retrieve()
+            retrieveDeviceSettings()
         } catch let error as UtilityError {
             throw TruVideoSdkError(
                 kind: .TruVideoSdkErrorReason.from(error.kind.rawValue),
@@ -252,6 +252,22 @@ public final class TruVideoApp: TruVideoSDK {
 
         DependencyValues.current.options = options
         LibraryRegistry.configureAll()
+        retrieveDeviceSettings()
         hasBeenConfigured = true
+    }
+    
+    // MARK: - Private methods
+    
+    private func retrieveDeviceSettings() {
+        guard !isAuthenticated else { return }
+        
+        Task {
+            do {
+                let deviceSetting = try await deviceSettingResource.retrieve()
+                /// Create s3 uploader for telemetry
+            } catch {
+                // log could be added here
+            }
+        }
     }
 }
