@@ -137,6 +137,36 @@ targets:
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
+  StorageTesting:
+    type: framework
+    platform: iOS
+    sources:
+      - Libraries/Foundation/Core/Storage/Testing
+    info:
+      path: Libraries/Foundation/Core/Storage/Testing/Info.plist
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: StorageTesting
+    dependencies:
+      - target: Storage
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/Storage/Testing" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+
   Utilities:
     type: framework
     platform: iOS
@@ -266,6 +296,7 @@ targets:
     sources:
       - Libraries/Foundation/Extended/Telemetry/Tests
     dependencies:
+      - target: StorageTesting
       - target: Telemetry
     settings:
       GENERATE_INFOPLIST_FILE: YES

@@ -16,7 +16,7 @@ import Utilities
 final class SystemEventTrackerIntegration: TelemetryIntegration {
     // MARK: - Private Properties
 
-    private let pathMonitor: NWPathMonitor
+    private let pathMonitor: any NetworkPathMonitor
     private let queue = DispatchQueue(label: "com.truvideo.telemetry.systemEventTracker.queue")
 
     private weak var telemetryManager: TelemetryManager?
@@ -33,7 +33,7 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
     /// Initializes a new instance of the system event tracker.
     ///
     /// - Parameter pathMonitor: Optional dependency injection for the network monitor.
-    init(pathMonitor: NWPathMonitor = NWPathMonitor()) {
+    init(pathMonitor: some NetworkPathMonitor = NWPathMonitor()) {
         self.pathMonitor = pathMonitor
 
         startMonitoringAppLifecycleChanges()

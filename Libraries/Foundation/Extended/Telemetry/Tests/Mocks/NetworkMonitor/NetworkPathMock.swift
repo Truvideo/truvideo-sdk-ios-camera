@@ -8,9 +8,15 @@ import Network
 
 struct NetworkPathMock: NetworkPath {
     // MARK: - Properties
-    
+
+    /// The simulated network status. Defaults to `.satisfied`.
     var status: NWPath.Status = .satisfied
+
+    /// The simulated network interface type, such as `.wifi` or `.cellular`. Defaults to `.cellular`.
     var type: NWInterface.InterfaceType = .cellular
+
+    /// A string description of the connectivity type (e.g., "WiFi", "Cellular").
+    var connectivityType: String = "Cellular"
     
     // MARK: - NetworkPath
 

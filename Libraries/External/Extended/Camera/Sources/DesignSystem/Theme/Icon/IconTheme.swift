@@ -56,22 +56,22 @@ public struct IconTheme: Sendable {
     /// the default foreground color or inherit from its parent view. This allows for
     /// flexible theming where icons can adapt to different color schemes.
     public let color: Color?
-    
+
     /// The opacity of the icon.
     ///
     /// This value controls the transparency of the icon, ranging from 0.0 (completely
     /// transparent) to 1.0 (fully opaque). The default value is 1.0 for full visibility.
     public let opacity: Double
-    
+
     /// The size of the icon.
     ///
     /// This property defines the size of the icon in points. If `nil`, the icon will use
     /// the system default size or inherit from its parent view. This follows SwiftUI's
     /// pattern where size is optional and can be determined by the system or parent context.
     public let size: Double?
-    
+
     // MARK: - Static Properties
-    
+
     /// The default icon theme with standard iOS-style icon appearance.
     ///
     /// This provides a complete set of icon styling properties following iOS design guidelines.
@@ -79,9 +79,9 @@ public struct IconTheme: Sendable {
     /// Size is intentionally set to `nil` to follow SwiftUI's pattern where size is optional
     /// and can be inherited from the system or parent views.
     public static let `default` = IconTheme(color: nil, opacity: 1, size: nil)
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a new icon theme with the specified styling properties.
     ///
     /// This initializer allows you to create a custom icon theme that matches your
@@ -97,7 +97,7 @@ public struct IconTheme: Sendable {
         self.opacity = opacity
         self.size = size
     }
-    
+
     // MARK: - Public methods
 
     /// Returns a copy of this `IconTheme` with the specified fields replaced with new values.

@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+import Storage
 import Testing
 
 @testable import Telemetry
@@ -45,7 +46,7 @@ private final class TelemetryManagerTests {
             dependencies.installation = installation
             dependencies.storage = InMemoryStorage()
             
-            try! dependencies.storage.write(session, forKey: SessionStorageKey.self)
+            try! dependencies.storage.write(session, forKey: TelemetryManager.SessionStorageKey.self)
             
             sut.add(subscriber)
             sut.flushPreviousSession(endedAt: endDate)
@@ -95,7 +96,7 @@ private final class TelemetryManagerTests {
             #expect(event?.severity == .info)
             #expect(event?.source == "Telemetry")
             #expect(report?.session.endedAt == endDate)            
-            #expect(try! dependencies.storage.readValue(for: SessionStorageKey.self) == nil)
+            #expect(try! dependencies.storage.readValue(for: TelemetryManager.SessionStorageKey.self) == nil)
         }
     }
     
@@ -281,7 +282,7 @@ private final class TelemetryManagerTests {
             event = eventsBuffer.snapshot().first(where: { $0.name == "session_started" })
 
             // Then
-            #expect(try! dependencies.storage.readValue(for: SessionStorageKey.self) != nil)
+            #expect(try! dependencies.storage.readValue(for: TelemetryManager.SessionStorageKey.self) != nil)
             #expect(event?.severity == .info)
             #expect(event?.source == "Telemetry")
         }
@@ -300,13 +301,13 @@ private final class TelemetryManagerTests {
             dependencies.installation = TelemetryInstallationMock()
             dependencies.contextProvider = contextProvider
 
-            try! dependencies.storage.write(session, forKey: SessionStorageKey.self)
+            try! dependencies.storage.write(session, forKey: TelemetryManager.SessionStorageKey.self)
 
             sut.add(subscriber)
             sut.startSession()
 
             // Then
-            #expect(try! dependencies.storage.readValue(for: SessionStorageKey.self) != session)
+            #expect(try! dependencies.storage.readValue(for: TelemetryManager.SessionStorageKey.self) != session)
             #expect(eventsBuffer.snapshot().count(where: { $0.name == "session_started" }) == 1)
         }
     }
@@ -326,10 +327,10 @@ private final class TelemetryManagerTests {
             sut.add(subscriber)
             sut.startSession()
             
-            let firstSession = try! dependencies.storage.readValue(for: SessionStorageKey.self)
+            let firstSession = try! dependencies.storage.readValue(for: TelemetryManager.SessionStorageKey.self)
 
             sut.startSession()
-            let secondSession = try! dependencies.storage.readValue(for: SessionStorageKey.self)
+            let secondSession = try! dependencies.storage.readValue(for: TelemetryManager.SessionStorageKey.self)
 
             // Then
             #expect(firstSession == secondSession)

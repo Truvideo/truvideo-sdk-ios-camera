@@ -59,7 +59,7 @@ public struct Theme: Sendable {
 
     /// The color scheme defining the application's color palette and semantic colors.
     public let colorScheme: DSColorScheme
-    
+
     /// The icon theme defining icon styling including color, size, and opacity.
     public let iconTheme: IconTheme
 
@@ -107,7 +107,7 @@ public struct Theme: Sendable {
         spacingTheme: SpacingTheme,
         textTheme: TextTheme
     ) {
-        
+
         self.buttonTheme = buttonTheme
         self.colorScheme = colorScheme
         self.iconTheme = iconTheme

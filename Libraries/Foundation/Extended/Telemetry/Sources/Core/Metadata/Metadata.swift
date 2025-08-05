@@ -17,7 +17,7 @@ extension Metadata {
     func prettify() -> String? {
         guard !isEmpty else { return nil }
 
-        guard let data = try? JSONSerialization.data(withJSONObject: self) else {
+        guard let data = try? JSONEncoder().encode(self) else {
             return nil
         }
 
@@ -93,15 +93,15 @@ extension MetadataValue: Decodable {
             self = .bool(value)
         } else if let value = try? container.decode([String: MetadataValue].self) {
             self = .dictionary(value)
-        } else if let value = try? container.decode(Double.self) {
-            self = .double(value)
         } else if let value = try? container.decode(Int.self) {
             self = .int(value)
+        } else if let value = try? container.decode(Double.self) {
+            self = .double(value)
         } else if let value = try? container.decode(String.self) {
             self = .string(value)
+        } else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid MetadataValue")
         }
-
-        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid MetadataValue")
     }
 }
 
