@@ -198,14 +198,34 @@ struct DeviceSettingResourceTests {
     func testThatRetrieveShouldValidateResponse() async throws {
         try await withDependencyValues { dependencyValues in
             // Given
+            let authSession = AuthSession.mock
             let dataRequest = DataRequestMock()
             let sessionManager = SessionManagerMock()
             let sut = DeviceSettingsResourceImpl()
+            let response = HTTPURLResponse(
+                url: URL(string: "https://beta.truvideo.com/api/device/\(authSession.authToken.id)/settings")!,
+                statusCode: 200,
+                httpVersion: nil,
+                headerFields: ["Content-Type": "application/json"]
+            )!
+
+            let data = """
+            {
+                "isAutoPlayEnabled": true,
+                "isNoseCancellingEnabled": false,
+                "s3Configuration": {
+                    "bucket": "truvideo-device-uploads",
+                    "region": "us-east-1"
+                }
+            }
+            """.data(using: .utf8)!
             
             // When
             session.dataRequest = dataRequest
             dependencyValues.session = session
             dependencyValues.sessionManager = sessionManager
+            dataRequest.response = response
+            dataRequest.data = data
             dataRequest.mockResponse = Response<DeviceSetting, NetworkingError>(
                 data: Data(),
                 metrics: nil,
@@ -221,6 +241,57 @@ struct DeviceSettingResourceTests {
             
             // Then
             #expect(dataRequest.validateCallCount == 2)
+        }
+    }
+    
+    @Test
+    func testThatRetrieveShouldThrowResponseValidationFailedWhenValidationFails() async throws {
+        try await withDependencyValues { dependencies in
+            // Given
+            let authSession = AuthSession.mock
+            let dataRequest = DataRequestMock()
+            let sessionManager = SessionManagerMock()
+            let sut = DeviceSettingsResourceImpl()
+            let response = HTTPURLResponse(
+                url: URL(string: "https://beta.truvideo.com/api/device/\(authSession.authToken.id)/settings")!,
+                statusCode: 415,
+                httpVersion: nil,
+                headerFields: nil
+            )!
+            let data = """
+            {
+                "type": "about:blank",
+                "title": "Unsupported Media Type",
+                "message": "error.invalidApiKey",
+                "status": 415,
+                "detail": "Content-Type is not supported.",
+                "instance": "/api/device/36BBA8E7-A9C6-4F00-B4E1-F6BA888FF093/setting"
+            }
+            """.data(using: .utf8)!
+            
+            // When
+            session.dataRequest = dataRequest
+            dependencies.session = session
+            dependencies.sessionManager = sessionManager
+            dataRequest.response = response
+            dataRequest.data = data
+            dataRequest.mockResponse = Response<DeviceSetting, NetworkingError>(
+                data: Data(),
+                metrics: nil,
+                request: nil,
+                response: nil,
+                result: .success(DeviceSetting.mock),
+                type: .networkLoad
+            )
+            
+            try sessionManager.set(AuthSession.mock)
+            
+            _ = try await sut.retrieve()
+            
+            // Then
+            #expect(dataRequest.validateCallCount == 2)
+            #expect(dataRequest.lastValidationError != nil)
+            #expect((dataRequest.lastValidationError as? NetworkingError)?.kind == .responseValidationFailed)
         }
     }
 }

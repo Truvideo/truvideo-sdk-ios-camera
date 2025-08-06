@@ -22,7 +22,7 @@ struct SessionDependencyKey: DependencyKey {
     /// The default file-based storage used if none is explicitly provided.
     static let defaultValue: any Session = HTTPURLSession(
         cache: InMemoryURLCache(),
-        middleware: Middleware(interceptors: [AuthTokenInterceptor()], retriers: [TokenRefresher()]),
+        middleware: Middleware(interceptors: [AuthTokenInterceptor()], retriers: [SessionRequestRetrier()]),
         monitors: [SessionMonitor()]
     )
 }

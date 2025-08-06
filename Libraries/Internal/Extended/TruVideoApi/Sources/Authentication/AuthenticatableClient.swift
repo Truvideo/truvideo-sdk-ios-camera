@@ -97,10 +97,6 @@ extension AuthenticatableClient {
 }
 
 public final class AuthenticationClient: AuthenticatableClient {
-    // MARK: - Private Properties
-
-    private let session: Session
-
     // MARK: - Dependencies
 
     @Dependency(\.apiEnvironment)
@@ -108,6 +104,10 @@ public final class AuthenticationClient: AuthenticatableClient {
 
     @Dependency(\.sessionManager)
     private var sessionManager: any SessionManager
+
+    // MARK: - Properties
+
+    let session: Session
 
     // MARK: - Computed Properties
 

@@ -14,10 +14,13 @@ actor SessionRequestRetrier: RequestRetrier {
     // MARK: - Private Properties
 
     private let maxNumberOfRetries = 3
-    private let tokenRefresher: any TokenRefresher
+
+    // MARK: - Properties
+
+    let tokenRefresher: any TokenRefresher
 
     // MARK: - Initializer
-    
+
     /// Creates a new instance with the specified token refresher.
     ///
     /// This initializer allows you to configure the component with a custom token refresher

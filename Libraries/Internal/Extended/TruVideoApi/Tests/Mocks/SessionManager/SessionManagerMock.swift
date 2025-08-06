@@ -8,6 +8,11 @@ import Foundation
 
 /// A mock implementation of the `SessionManager` protocol for testing network requests.
 final class SessionManagerMock: SessionManager, @unchecked Sendable {
+    // MARK: - Public Properties
+    
+    /// An optional error to simulate a failure during session storage.
+    public var error: Error?
+    
     /// The currently stored authentication session, if any.
     ///
     /// This property provides access to the authentication session that was most recently
@@ -25,6 +30,10 @@ final class SessionManagerMock: SessionManager, @unchecked Sendable {
     /// - Parameter session: The authentication session to store
     /// - Throws: An error if the session cannot be stored
     func set(_ session: AuthSession) throws {
+        if let error = error {
+            throw error
+        }
+        
         currentSession = session
     }
 }

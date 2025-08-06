@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import Foundation
 import DI
+import Foundation
 import Networking
 import Utilities
 
@@ -46,7 +46,7 @@ import Utilities
 /// }
 /// ```
 public protocol TokenRefresher: Sendable {
-    
+
     /// Refreshes the current authentication token using the stored refresh token.
     ///
     /// This method exchanges the current refresh token for a new access token and
@@ -64,10 +64,6 @@ public protocol TokenRefresher: Sendable {
 /// environment configuration and session management, and uses an actor to ensure thread-safe
 /// token refresh operations.
 actor SessionTokenRefresher: TokenRefresher {
-    // MARK: - Private Properties
-    
-    private let session: any Session
-    
     // MARK: - Dependencies
 
     @Dependency(\.apiEnvironment)
@@ -75,7 +71,13 @@ actor SessionTokenRefresher: TokenRefresher {
 
     @Dependency(\.sessionManager)
     private var sessionManager: any SessionManager
-    
+
+    // MARK: - Properties
+
+    let session: any Session
+
+    // MARK: - Initializer
+
     /// Creates a new token refresher with the specified session.
     ///
     /// This initializer allows you to configure the token refresher with a custom network session.
@@ -86,9 +88,9 @@ actor SessionTokenRefresher: TokenRefresher {
     init(session: any Session = HTTPURLSession(monitors: [SessionMonitor()])) {
         self.session = session
     }
-    
+
     // MARK: - TokenRefresher
-    
+
     /// Refreshes the current authentication token using the stored refresh token.
     ///
     /// This method exchanges the current refresh token for a new access token and
