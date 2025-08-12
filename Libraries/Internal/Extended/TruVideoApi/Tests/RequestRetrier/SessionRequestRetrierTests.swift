@@ -15,7 +15,7 @@ struct SessionRequestRetrierTests {
     // MARK: - Tests
     
     @Test
-    func testThatSessionRequestRetrierShouldInitializes() async throws {
+    func testThatSessionRequestRetrierShouldInitialize() async throws {
         // Given
         let sut = SessionRequestRetrier()
         
@@ -37,7 +37,6 @@ struct SessionRequestRetrierTests {
             httpVersion: nil,
             headerFields: nil
         )!
-        
         
         // When
         dataRequest.request = nil
