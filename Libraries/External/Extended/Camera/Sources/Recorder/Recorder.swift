@@ -23,16 +23,6 @@ extension ErrorReason {
         /// Check the underlying error for specific failure details.
         static let beginRecordingFailed = ErrorReason(rawValue: "BEGIN_RECORDING_FAILED")
 
-        /// The capture session could not apply the requested preset.
-        ///
-        /// Occurs when the preset is incompatible with current inputs/outputs or device capabilities.
-        ///
-        /// Typical causes:
-        /// - `canSetSessionPreset(_:)` is false for the chosen preset
-        /// - Active device `activeFormat` or multi‑camera constraints block the resolution
-        /// - Conflicting outputs or session state (not in a configuration block)
-        static let cannotSetPreset = ErrorReason(rawValue: "CANNOT_SET_PRESET")
-
         /// A recording session is already active and cannot be started.
         ///
         /// This error occurs when attempting to start recording while another
@@ -206,9 +196,6 @@ final class Recorder {
     /// The video preview layer that displays the camera feed in the UI.
     let previewLayer = AVCaptureVideoPreviewLayer()
 
-    /// The current capture session preset that determines video quality and resolution.
-    private(set) var preset = AVCaptureSession.Preset.inputPriority
-
     /// The current lifecycle state of the recorder.
     private(set) var state = RecordingState.initialized
 
@@ -262,12 +249,12 @@ final class Recorder {
 
         if state.canTransition(to: .running) {
             let captureSession = AVCaptureSession()
+            
+            if captureSession.canSetSessionPreset(.hd4K3840x2160) {
+                captureSession.sessionPreset = .hd4K3840x2160
+            }
 
             do {
-                if captureSession.sessionPreset != preset {
-                    try captureSession.setPreset(preset)
-                }
-
                 try await startCapturing(in: captureSession)
 
                 captureSession.startRunning()
@@ -316,27 +303,6 @@ final class Recorder {
         devices.removeValue(forKey: ObjectIdentifier(device))
     }
 
-    /// Applies a new capture preset to the recorder, updating the active session when present.
-    ///
-    /// If no session is active, caches the preset for use when a session is created. If a session
-    /// exists and its preset differs, attempts to apply the new preset to the session and, on success,
-    /// updates the recorder’s stored `preset`.
-    ///
-    /// - Parameter preset: The desired `AVCaptureSession.Preset` to apply.
-    /// - Throws: An error if the active session cannot accept the preset.
-    @RecorderActor
-    func setPreset(_ preset: AVCaptureSession.Preset) throws {
-        guard let captureSession else {
-            self.preset = preset
-            return
-        }
-
-        if captureSession.sessionPreset != preset {
-            try captureSession.setPreset(preset)
-            self.preset = preset
-        }
-    }
-
     // MARK: - Notification methods
 
     @objc
@@ -345,6 +311,19 @@ final class Recorder {
             if sessionWasRunning {
                 await resumeSession()
             }
+        }
+    }
+
+    @objc
+    func didReceiveDeviceOrientationDidChangeNotification(_ notification: Notification) {
+        if
+            /// The new device orientation.
+            let videoOrientation = AVCaptureVideoOrientation(rawValue: UIDevice.current.orientation.rawValue),
+            
+            /// The allowable device orientations.
+            [.landscapeLeft, .landscapeRight, .portrait].contains(videoOrientation) {
+            
+            previewLayer.connection?.videoOrientation = videoOrientation
         }
     }
 
@@ -397,6 +376,13 @@ final class Recorder {
             self,
             selector: #selector(didReceiveBecomeActiveNotification(_:)),
             name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didReceiveDeviceOrientationDidChangeNotification(_:)),
+            name: UIDevice.orientationDidChangeNotification,
             object: nil
         )
 
@@ -528,30 +514,6 @@ final class Recorder {
 
         for device in devices {
             try await device.startCapturing(in: session)
-        }
-    }
-}
-
-extension AVCaptureSession {
-    /// Attempts to apply the specified session preset inside a configuration block.
-    ///
-    /// Wraps `beginConfiguration()` / `commitConfiguration()` to atomically change the session’s
-    /// preset. If the preset is supported (`canSetSessionPreset(_:)` returns `true`), it is applied;
-    /// otherwise the change is rolled back and an error is thrown.
-    ///
-    /// - Parameter preset: The desired capture preset to apply (e.g., `.hd1280x720`, `.vga640x480`).
-    /// - Throws: An error if the preset is not supported by the current session configuration or device capabilities.
-    fileprivate func setPreset(_ preset: Preset) throws {
-        if canSetSessionPreset(preset) {
-            beginConfiguration()
-            defer { commitConfiguration() }
-
-            sessionPreset = preset
-        } else {
-            throw UtilityError(
-                kind: .RecorderErrorReason.cannotSetPreset,
-                failureReason: "The preset \(preset) is not supported by the device."
-            )
         }
     }
 }

@@ -255,12 +255,12 @@ public final class TruVideoApp: TruVideoSDK {
         retrieveDeviceSettings()
         hasBeenConfigured = true
     }
-    
+
     // MARK: - Private methods
-    
+
     private func retrieveDeviceSettings() {
         guard !isAuthenticated else { return }
-        
+
         Task {
             do {
                 let deviceSetting = try await deviceSettingResource.retrieve()

@@ -40,6 +40,25 @@ extension ErrorReason {
         /// The app is not authorized to use the video device.
         static let notAuthorized = ErrorReason(rawValue: "VIDEO_DEVICE_NOT_AUTHORIZED")
 
+        /// Represents a failure that occurred while attempting to set the camera focus point.
+        ///
+        /// This error reason indicates that the camera device failed to configure its focus
+        /// and exposure settings to the requested point. This can happen due to various
+        /// device configuration issues, hardware limitations, or system-level constraints.
+        static let setFocusPointFailed = ErrorReason(rawValue: "SET_FOCUS_POINT_FAILED")
+
+        /// Indicates that setting the video device format failed.
+        ///
+        /// This error reason is thrown when attempting to set a new `AVCaptureDevice.Format`
+        /// on the video capture device fails.
+        static let setFormatFailed = ErrorReason(rawValue: "SET_FORMAT_FAILED")
+
+        /// Indicates that setting the video device zoom factor failed.
+        ///
+        /// This error reason is thrown when attempting to set a new zoom factor on the
+        /// video capture device fails.
+        static let setZoomFactorFailed = ErrorReason(rawValue: "SET_ZOOM_FACTOR_FAILED")
+
         /// Setting the torch mode failed.
         ///
         /// Typical causes:
@@ -296,7 +315,7 @@ struct VideoDeviceConfiguration: Sendable {
             config[AVVideoHeightKey] = dimensions.height
             config[AVVideoWidthKey] = dimensions.width
         } else if /// The sample buffer
-        let sampleBuffer = sampleBuffer,
+        let sampleBuffer,
 
             /// The format description for the `sampleBuffer`
             let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
@@ -326,7 +345,7 @@ struct VideoDeviceConfiguration: Sendable {
                 config[AVVideoHeightKey] = Int(videoDimensions.height)
                 config[AVVideoWidthKey] = Int(videoDimensions.width)
             }
-        } else if let pixelBuffer = pixelBuffer {
+        } else if let pixelBuffer {
             config[AVVideoWidthKey] = CVPixelBufferGetWidth(pixelBuffer)
             config[AVVideoHeightKey] = CVPixelBufferGetHeight(pixelBuffer)
         }
@@ -353,13 +372,20 @@ struct VideoDeviceConfiguration: Sendable {
 final class VideoDevice: NSObject, Device {
     // MARK: - Private Properties
 
-    private var captureDevice = AVCaptureDevice.defaultVideoDevice(for: .back)
+    private var captureDevice: AVCaptureDevice?
     private var captureDeviceInput: AVCaptureDeviceInput?
     private var captureSession: AVCaptureSession?
     private var captureVideoDataOutput: AVCaptureVideoDataOutput?
     private var lastVideoTimestamp = CMTime.invalid
     private var processors: [ObjectIdentifier: any VideoOutputProcessor] = [:]
+    private var supportedFormats: [AVCaptureDevice.Position: [Format]] = [:]
     private let queue = DispatchQueue(label: "com.video.device.queue")
+    private lazy var availableDevices: [AVCaptureDevice.Position: [AVCaptureDevice]] = {
+        [
+            .back: AVCaptureDevice.availableVideoDevices(for: .back),
+            .front: AVCaptureDevice.availableVideoDevices(for: .front),
+        ]
+    }()
 
     // MARK: - Properties
 
@@ -370,6 +396,14 @@ final class VideoDevice: NSObject, Device {
     /// is created with sensible defaults and may be updated by higher-level APIs before
     /// applying changes to the underlying `AVCaptureDevice`/session.
     let configuration = VideoDeviceConfiguration()
+
+    /// The currently active video format for this device.
+    ///
+    /// This property stores the `VideoDevice.Format` instance that is currently
+    /// configured and active on the video capture device. It represents the
+    /// resolution, frame rate capabilities, HDR support, and other format-specific
+    /// properties that are currently in use.
+    private(set) var format: VideoDevice.Format?
 
     /// The preferred video stabilization mode applied to the active video connection.
     ///
@@ -387,6 +421,32 @@ final class VideoDevice: NSObject, Device {
     private(set) var state = RecordingState.initialized
 
     // MARK: - Computed Properties
+
+    /// Returns the first available camera device for the current position.
+    ///
+    /// This computed property provides quick access to the primary camera device
+    /// at the specified position (front or back).
+    private var preferredDevice: AVCaptureDevice? {
+        availableDevices[position]?.first
+    }
+
+    /// Returns an array of supported video formats for the current device position.
+    ///
+    /// This computed property provides access to all available video formats that
+    /// the capture device supports at the specified position (front or back camera).
+    var formats: [Format] {
+        guard let captureDevice else {
+            return []
+        }
+
+        let formats = supportedFormats[position] ?? captureDevice.formats.map(Format.from)
+
+        if supportedFormats[position] == nil {
+            supportedFormats[position] = formats
+        }
+
+        return formats
+    }
 
     /// Indicates whether the app is authorized to access the video capture.
     ///
@@ -429,6 +489,96 @@ final class VideoDevice: NSObject, Device {
         captureDevice?.torchMode ?? .off
     }
 
+    // MARK: - Static Properties
+
+    /// The maximum supported zoom factor for video capture devices.
+    ///
+    /// This constant defines the upper limit of zoom magnification that can be
+    /// applied to video capture devices. A zoom factor of 15.0 represents a
+    /// 15x magnification, which provides significant telephoto capabilities
+    /// for capturing distant subjects or detailed close-ups.
+    static let maxZoomFactor: Double = 15
+
+    /// The minimum supported zoom factor for video capture devices.
+    ///
+    /// This constant defines the lower limit of zoom magnification that can be
+    /// applied to video capture devices. A zoom factor of 0.5 represents a
+    /// 0.5x magnification, which provides an ultra-wide field of view that
+    /// captures more of the scene in a single frame.
+    static let minZoomFactor: Double = 0.5
+
+    // MARK: - Types
+
+    /// Represents a camera format with its capabilities and supported features.
+    ///
+    /// This struct encapsulates all the important properties of an `AVCaptureDevice.Format`
+    /// in a more accessible and type-safe manner. It provides easy access to resolution,
+    /// frame rates, HDR support, and various camera capabilities.
+    struct Format: Equatable {
+        /// The underlying `AVCaptureDevice.Format` that this struct represents.
+        ///
+        /// This is the original format object from AVFoundation that contains all the
+        /// low-level configuration details.
+        let format: AVCaptureDevice.Format
+
+        /// Indicates whether this format supports High Dynamic Range (HDR) recording.
+        ///
+        /// HDR formats provide better color reproduction and dynamic range compared to
+        /// standard formats. This is especially beneficial in high-contrast scenes.
+        let isVideoHDRSupported: Bool
+
+        /// The maximum frame rate supported by this format.
+        ///
+        /// This represents the highest number of frames per second that can be captured
+        /// using this format. Higher frame rates provide smoother motion but require
+        /// more processing power.
+        let maxFrameRate: Double
+
+        /// The minimum frame rate supported by this format.
+        ///
+        /// This represents the lowest number of frames per second that can be captured
+        /// using this format. Lower frame rates can help save battery and reduce
+        /// processing load.
+        let minFrameRate: Double
+
+        /// The maximum zoom factor supported by this format.
+        ///
+        /// This represents how much the camera can zoom in while maintaining quality.
+        /// Higher zoom factors allow for closer shots but may reduce image quality.
+        let maxZoomFactor: Double
+
+        /// The dimensions of this format in points.
+        ///
+        /// This represents the width and height of the video frames that will be
+        /// captured using this format. Larger sizes provide higher resolution but
+        /// require more storage and processing power.
+        let size: CGSize
+
+        // MARK: - Static methods
+
+        /// Creates a `Format` instance from an `AVCaptureDevice.Format`.
+        ///
+        /// This factory method extracts all the relevant properties from an AVFoundation
+        /// format and creates a `Format` instance with the extracted values. It provides
+        /// a convenient way to convert AVFoundation formats into the custom `Format` type
+        /// without needing to manually extract each property.
+        ///
+        /// - Parameter format: The `AVCaptureDevice.Format` to convert.
+        /// - Returns: A new `Format` instance containing the extracted properties.
+        static func from(_ format: AVCaptureDevice.Format) -> Format {
+            let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
+
+            return Format(
+                format: format,
+                isVideoHDRSupported: format.isVideoHDRSupported,
+                maxFrameRate: format.videoSupportedFrameRateRanges.map(\.maxFrameRate).max() ?? 30,
+                minFrameRate: format.videoSupportedFrameRateRanges.map(\.minFrameRate).min() ?? 1,
+                maxZoomFactor: format.videoMaxZoomFactor,
+                size: CGSize(width: Int(dimensions.width), height: Int(dimensions.height))
+            )
+        }
+    }
+
     // MARK: - Initializer
 
     /// Creates a new instance of the `VideoDevice`.
@@ -448,7 +598,6 @@ final class VideoDevice: NSObject, Device {
         defer { session.commitConfiguration() }
 
         if state.canTransition(to: .finished) {
-            // TODO: Revert to previous preset
             destroySession()
             state = .finished
         }
@@ -491,7 +640,7 @@ final class VideoDevice: NSObject, Device {
     /// - Handle any state changes that occurred during the pause
     @DeviceActor
     func resume() {
-        if state.canTransition(to: .paused) {
+        if state.canTransition(to: .running) {
             state = .running
         }
     }
@@ -505,23 +654,23 @@ final class VideoDevice: NSObject, Device {
     /// - Parameter session: The `AVCaptureSession` to which inputs/outputs will be added.
     /// - Throws: An error if authorization is missing, if no suitable device is found, or if inputs/outputs cannot be added to the session due to incompatibility.
     @DeviceActor
-    func startCapturing(in session: AVCaptureSession) throws {
+    func startCapturing(in session: AVCaptureSession) throws(UtilityError) {
         if state.canTransition(to: .running) {
+            guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
+                throw UtilityError(
+                    kind: .VideoDeviceErrorReason.notAuthorized,
+                    failureReason: "This app doesn’t have permission to use the video device."
+                )
+            }
+
+            guard let captureDevice = captureDevice ?? availableDevices[position]?.first else {
+                throw UtilityError(
+                    kind: .VideoDeviceErrorReason.captureDeviceNotFound,
+                    failureReason: "No video capture device was found. Ensure this device has a camera available."
+                )
+            }
+
             do {
-                guard AVCaptureDevice.authorizationStatus(for: .video) == .authorized else {
-                    throw UtilityError(
-                        kind: .VideoDeviceErrorReason.notAuthorized,
-                        failureReason: "This app doesn’t have permission to use the video device."
-                    )
-                }
-
-                guard let captureDevice = captureDevice ?? AVCaptureDevice.defaultVideoDevice(for: position) else {
-                    throw UtilityError(
-                        kind: .VideoDeviceErrorReason.captureDeviceNotFound,
-                        failureReason: "No video capture device was found. Ensure this device has a camera available."
-                    )
-                }
-
                 session.beginConfiguration()
 
                 defer { session.commitConfiguration() }
@@ -530,9 +679,12 @@ final class VideoDevice: NSObject, Device {
                     captureSession = session
 
                     try captureDevice.configure()
-                    try configureDeviceInput(for: captureDevice, in: session)
+
+                    captureDeviceInput = try session.addDeviceInput(for: captureDevice)
+
                     try configureDeviceOutput(in: session)
 
+                    self.captureDevice = captureDevice
                     state = .running
                 }
             } catch {
@@ -577,6 +729,84 @@ final class VideoDevice: NSObject, Device {
         await AVCaptureDevice.requestAccess(for: .video)
     }
 
+    /// Sets the focus and exposure point to the specified location on the camera view.
+    ///
+    /// This method configures both focus and exposure settings to use the same point,
+    /// ensuring that the camera focuses on and meters exposure for the same area of the scene.
+    /// The method automatically handles device locking and unlocking to prevent configuration
+    /// conflicts during the focus and exposure adjustment process.
+    ///
+    /// - Parameter point: The normalized point (0.0 to 1.0) where focus and exposure should be set.
+    /// - Throws: `UtilityError` with `.VideoDeviceErrorReason.setFocusPointFailed` if the
+    ///   device configuration fails, including the underlying error for debugging purposes.
+    @DeviceActor
+    func setFocusPoint(at point: CGPoint) throws(UtilityError) {
+        if let captureDevice {
+            do {
+                try captureDevice.lockForConfiguration()
+
+                defer { captureDevice.unlockForConfiguration() }
+
+                if captureDevice.isFocusPointOfInterestSupported, captureDevice.isFocusModeSupported(.autoFocus) {
+                    captureDevice.focusPointOfInterest = point
+                    captureDevice.focusMode = .autoFocus
+                }
+
+                if captureDevice.isExposurePointOfInterestSupported {
+                    captureDevice.exposurePointOfInterest = point
+                    captureDevice.exposureMode = .autoExpose
+                }
+            } catch {
+                throw UtilityError(kind: .VideoDeviceErrorReason.setFocusPointFailed, underlyingError: error)
+            }
+        }
+    }
+
+    /// Sets the active format and frame rate for the video capture device.
+    ///
+    /// This method configures the device to use a specific video format with a consistent
+    /// frame rate. It validates that the format is supported by the device before applying
+    /// the configuration, ensuring compatibility and preventing runtime errors.
+    ///
+    /// - Parameter format: The `Format` instance containing the desired video format and frame rate capabilities.
+    /// - Throws: `UtilityError` with `.VideoDeviceErrorReason.setFormatFailed` if the
+    ///   format is not supported by the device or if the configuration fails.
+    ///
+    /// - Note: This method automatically sets both the minimum and maximum frame duration
+    ///   to the same value, ensuring a consistent frame rate throughout the recording
+    ///   session. The frame rate is set to the maximum supported by the format for
+    ///   optimal video quality.
+    ///
+    /// - Precondition: The `captureDevice` must be available and not nil.
+    /// - Postcondition: The device's active format and frame rate are updated if successful.
+    @DeviceActor
+    func setFormat(_ format: Format) throws(UtilityError) {
+        if let captureDevice {
+            guard captureDevice.formats.contains(format.format) else {
+                throw UtilityError(
+                    kind: .VideoDeviceErrorReason.setFormatFailed,
+                    failureReason: "Format not supported by device."
+                )
+            }
+
+            do {
+                try captureDevice.lockForConfiguration()
+
+                defer { captureDevice.unlockForConfiguration() }
+
+                let frameDuration = CMTime(value: 1, timescale: Int32(format.maxFrameRate))
+
+                captureDevice.activeFormat = format.format
+                captureDevice.activeVideoMinFrameDuration = frameDuration
+                captureDevice.activeVideoMaxFrameDuration = frameDuration
+
+                self.format = format
+            } catch {
+                throw UtilityError(kind: .VideoDeviceErrorReason.setFormatFailed, underlyingError: error)
+            }
+        }
+    }
+
     /// Switches the active camera to the specified physical position.
     ///
     /// If the position changes and a session/device are available, the current video input
@@ -586,11 +816,9 @@ final class VideoDevice: NSObject, Device {
     /// - Parameter newPosition: The desired camera position (e.g., `.front`, `.back`).
     /// - Throws: An error  if the new input cannot be added.
     @DeviceActor
-    func setPosition(_ newPosition: AVCaptureDevice.Position) throws {
+    func setPosition(_ newPosition: AVCaptureDevice.Position) throws(UtilityError) {
         if position != newPosition {
-            let currentDeviceInput = captureDeviceInput
-
-            captureDevice = AVCaptureDevice.defaultVideoDevice(for: newPosition)
+            captureDevice = availableDevices[newPosition]?.first
 
             if /// The active session.
             let captureSession,
@@ -600,13 +828,10 @@ final class VideoDevice: NSObject, Device {
             {
 
                 captureSession.beginConfiguration()
+
                 defer { captureSession.commitConfiguration() }
 
-                if let currentDeviceInput {
-                    captureSession.removeInput(currentDeviceInput)
-                }
-
-                try configureDeviceInput(for: captureDevice, in: captureSession)
+                captureDeviceInput = try captureSession.addDeviceInput(for: captureDevice)
                 updateVideoOutputSettings()
             }
         }
@@ -634,7 +859,7 @@ final class VideoDevice: NSObject, Device {
     ///   - `UtilityError(kind: .VideoDeviceErrorReason.torchNotSupported)` if the mode is unsupported.
     ///   - `UtilityError(kind: .VideoDeviceErrorReason.torchModeFailed, underlyingError:)` on failure.
     @DeviceActor
-    func setTorchMode(_ mode: AVCaptureDevice.TorchMode) throws {
+    func setTorchMode(_ mode: AVCaptureDevice.TorchMode) throws(UtilityError) {
         if let captureDevice, torchMode != mode {
             guard captureDevice.isTorchModeSupported(mode) else {
                 throw UtilityError(
@@ -654,34 +879,45 @@ final class VideoDevice: NSObject, Device {
         }
     }
 
-    // MARK: - Private methods
+    /// Sets the zoom factor for the video capture device.
+    ///
+    /// This method configures the zoom level of the video capture device by setting
+    /// the `videoZoomFactor` property. The zoom factor determines how much the
+    /// captured video is magnified, allowing users to zoom in on distant subjects
+    /// or zoom out for wider shots.
+    ///
+    /// - Parameters:
+    ///    - zoomFactor: The desired zoom factor to apply to the video capture.
+    ///    - rate: The rate at which to transition to the new magnification factor, specified in powers of two per second.
+    @DeviceActor
+    func setZoomFactor(_ zoomFactor: CGFloat, rate: Float = 200) throws(UtilityError) {
+        if let captureDevice {
+            let minAvailableVideoZoomFactor = captureDevice.minAvailableVideoZoomFactor
+            let maxAvailableVideoZoomFactor = captureDevice.maxAvailableVideoZoomFactor
 
-    private func configureDeviceInput(for captureDevice: AVCaptureDevice, in session: AVCaptureSession) throws {
-        if let currentCaptureDeviceInput = session.captureDeviceInput(for: .video) {
-            session.removeInput(currentCaptureDeviceInput)
-        }
-
-        do {
-            let captureDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
-
-            guard session.canAddInput(captureDeviceInput) else {
+            guard (minAvailableVideoZoomFactor ... maxAvailableVideoZoomFactor).contains(zoomFactor) else {
                 throw UtilityError(
-                    kind: .VideoDeviceErrorReason.cannotAddInput,
-                    failureReason: "Unable to add \(captureDeviceInput.debugDescription) to the session"
+                    kind: .VideoDeviceErrorReason.setZoomFactorFailed,
+                    failureReason: "Zoom factor \(zoomFactor) is out of supported range"
                 )
             }
 
-            session.addInput(captureDeviceInput)
+            do {
+                try captureDevice.lockForConfiguration()
+                defer { captureDevice.unlockForConfiguration() }
 
-            self.captureDeviceInput = captureDeviceInput
-        } catch let error as UtilityError {
-            throw error
-        } catch {
-            throw UtilityError(kind: .VideoDeviceErrorReason.cannotAddInput, underlyingError: error)
+                let clampedZoomFactor = min(max(zoomFactor, minAvailableVideoZoomFactor), maxAvailableVideoZoomFactor)
+
+                captureDevice.ramp(toVideoZoomFactor: clampedZoomFactor, withRate: rate)
+            } catch {
+                throw UtilityError(kind: .VideoDeviceErrorReason.setZoomFactorFailed, underlyingError: error)
+            }
         }
     }
 
-    private func configureDeviceOutput(in session: AVCaptureSession) throws {
+    // MARK: - Private methods
+
+    private func configureDeviceOutput(in session: AVCaptureSession) throws(UtilityError) {
         let captureVideoDataOutput = AVCaptureVideoDataOutput.createDefault()
 
         guard session.canAddOutput(captureVideoDataOutput) else {
@@ -767,7 +1003,7 @@ extension AVCaptureDevice {
     ///
     /// - Important: Prefer invoking this while the associated `AVCaptureSession` is wrapped in
     ///   `beginConfiguration()` / `commitConfiguration()` to avoid intermediate reconfigurations.
-    fileprivate func configure() throws {
+    fileprivate func configure() throws(UtilityError) {
         do {
             try lockForConfiguration()
             defer { unlockForConfiguration() }
@@ -793,6 +1029,7 @@ extension AVCaptureDevice {
             }
 
             isSubjectAreaChangeMonitoringEnabled = true
+            videoZoomFactor = neutralZoomFactor
 
             let fps = 24.0
             let videoSupportedFrameRatesRanges = activeFormat.videoSupportedFrameRateRanges
@@ -809,34 +1046,45 @@ extension AVCaptureDevice {
     }
 }
 
-extension AVCaptureVideoDataOutput {
-    /// Creates a preconfigured `AVCaptureVideoDataOutput` optimized for real-time camera capture.
+extension AVCaptureSession {
+    /// Adds a new video capture device input to the session, replacing any existing video input.
     ///
-    /// This method selects the best available pixel format supported by the current device:
-    /// it prefers 4:2:0 bi-planar full-range (`kCVPixelFormatType_420YpCbCr8BiPlanarFullRange`),
-    /// then falls back to 4:2:0 bi-planar video-range (`kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange`),
-    /// and finally to 32-bit BGRA (`kCVPixelFormatType_32BGRA`) if neither YUV format is available.
-    /// It also sets `alwaysDiscardsLateVideoFrames` to `false` to preserve frame continuity under load.
-    /// Callers must set a sample buffer delegate and provide an appropriate serial dispatch queue.
-    fileprivate static func createDefault() -> AVCaptureVideoDataOutput {
-        let captureVideoDataOutput = AVCaptureVideoDataOutput()
-        let pixelFormatKey = String(kCVPixelBufferPixelFormatTypeKey)
-        var settings = [String(kCVPixelBufferPixelFormatTypeKey): Int(kCVPixelFormatType_32BGRA)]
-
-        for formatType in captureVideoDataOutput.availableVideoPixelFormatTypes {
-            if formatType == Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange) {
-                settings[pixelFormatKey] = Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)
-            }
-
-            if formatType == Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) && settings[pixelFormatKey] == nil {
-                settings[pixelFormatKey] = Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)
-            }
+    /// This method safely switches between different camera devices by first removing the current
+    /// video input (if any) and then adding the new device input. It ensures proper cleanup
+    /// and prevents conflicts when switching between cameras during zoom operations.
+    ///
+    /// The method performs the following steps:
+    /// 1. Removes any existing video input to prevent conflicts
+    /// 2. Creates a new device input for the specified capture device
+    /// 3. Validates that the input can be added to the session
+    /// 4. Adds the new input and returns it for further configuration
+    ///
+    /// - Parameter captureDevice: The AVCaptureDevice to create an input for.
+    /// - Returns: The newly created and configured AVCaptureDeviceInput.
+    /// - Throws: An Error if the device input cannot be created or added to the session.
+    fileprivate func addDeviceInput(for captureDevice: AVCaptureDevice) throws(UtilityError) -> AVCaptureDeviceInput {
+        if let currentCaptureDeviceInput = captureDeviceInput(for: .video) {
+            removeInput(currentCaptureDeviceInput)
         }
 
-        captureVideoDataOutput.alwaysDiscardsLateVideoFrames = false
-        captureVideoDataOutput.videoSettings = settings
+        do {
+            let captureDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
 
-        return captureVideoDataOutput
+            guard canAddInput(captureDeviceInput) else {
+                throw UtilityError(
+                    kind: .VideoDeviceErrorReason.cannotAddInput,
+                    failureReason: "Unable to add \(captureDeviceInput.debugDescription) to the session"
+                )
+            }
+
+            addInput(captureDeviceInput)
+
+            return captureDeviceInput
+        } catch let error as UtilityError {
+            throw error
+        } catch {
+            throw UtilityError(kind: .VideoDeviceErrorReason.cannotAddInput, underlyingError: error)
+        }
     }
 }
 

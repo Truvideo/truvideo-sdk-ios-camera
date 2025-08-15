@@ -1,6 +1,8 @@
 name: TruVideoSDK
 options:
   createIntermediateGroups: true
+  deploymentTarget:
+    iOS: "15.0" 
 
 packages:
   AWSS3:
@@ -461,6 +463,8 @@ targets:
     platform: iOS
     sources:
       - Libraries/External/Extended/Camera/Sources
+    dependencies:      
+      - target: Utilities
     info:
       path: Libraries/External/Extended/Camera/Sources/Info.plist
     settings:
