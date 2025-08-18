@@ -202,7 +202,7 @@ final class AudioDevice: NSObject, Device {
     @DeviceActor
     func endCapturing(in session: AVCaptureSession) {
         if state.canTransition(to: .finished) {
-            destroySession()
+            destroyDevice()
             state = .finished
         }
     }
@@ -215,7 +215,6 @@ final class AudioDevice: NSObject, Device {
     @DeviceActor
     func pause() {
         if state.canTransition(to: .paused) {
-            destroySession()
             state = .paused
         }
     }
@@ -229,7 +228,7 @@ final class AudioDevice: NSObject, Device {
     @DeviceActor
     func reset() {
         if state.canTransition(to: .initialized) {
-            destroySession()
+            destroyDevice()
             state = .initialized
         }
     }
@@ -274,12 +273,10 @@ final class AudioDevice: NSObject, Device {
 
                 defer { session.commitConfiguration() }
 
-                if let captureDeviceInput {
-                    session.removeInput(captureDeviceInput)
-                }
-
-                try configureDeviceInput(in: session)
-                try configureDeviceOutput(in: session)
+                captureDeviceInput = try session.addDeviceInput()
+                captureAudioDataOutput = try session.addDeviceOutput()
+                
+                captureAudioDataOutput?.setSampleBufferDelegate(self, queue: queue)
 
                 captureSession = session
                 state = .running
@@ -306,51 +303,7 @@ final class AudioDevice: NSObject, Device {
 
     // MARK: - Private methods
 
-    private func configureDeviceInput(in session: AVCaptureSession) throws {
-        guard let captureDevice = AVCaptureDevice.default(for: .audio) else {
-            throw UtilityError(
-                kind: .AudioDeviceErrorReason.captureDeviceNotFound,
-                failureReason: "No audio capture device was found. Ensure this device has a microphone available."
-            )
-        }
-
-        do {
-            let captureDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
-
-            guard session.canAddInput(captureDeviceInput) else {
-                throw UtilityError(
-                    kind: .AudioDeviceErrorReason.cannotAddInput,
-                    failureReason: "Unable to add \(captureDeviceInput.debugDescription) to the session"
-                )
-            }
-
-            session.addInput(captureDeviceInput)
-
-            self.captureDeviceInput = captureDeviceInput
-        } catch let error as UtilityError {
-            throw error
-        } catch {
-            throw UtilityError(kind: .AudioDeviceErrorReason.cannotAddInput, underlyingError: error)
-        }
-    }
-
-    private func configureDeviceOutput(in session: AVCaptureSession) throws {
-        let captureAudioDataOutput = AVCaptureAudioDataOutput()
-
-        guard session.canAddOutput(captureAudioDataOutput) else {
-            throw UtilityError(
-                kind: .AudioDeviceErrorReason.cannotAddOutput,
-                failureReason: "Unable to add \(captureAudioDataOutput.debugDescription) to the session"
-            )
-        }
-
-        session.addOutput(captureAudioDataOutput)
-        captureAudioDataOutput.setSampleBufferDelegate(self, queue: queue)
-
-        self.captureAudioDataOutput = captureAudioDataOutput
-    }
-
-    private func destroySession() {
+    private func destroyDevice() {
         if let captureSession {
             captureSession.beginConfiguration()
 
@@ -382,5 +335,88 @@ extension AudioDevice: AVCaptureAudioDataOutputSampleBufferDelegate {
         from connection: AVCaptureConnection
     ) {
 
+    }
+}
+
+extension AVCaptureSession {
+    /// Creates and adds an audio device input to the capture session.
+    ///
+    /// This function sets up audio capture by discovering the default audio device (microphone),
+    /// removing any existing audio input to prevent configuration conflicts, and adding the
+    /// new audio device input to the capture session. The function performs comprehensive
+    /// validation and error handling to ensure reliable audio input setup, including
+    /// device availability checks and session compatibility validation.
+    ///
+    /// - Returns: An `AVCaptureDeviceInput` instance that has been successfully created and added to the
+    ///            capture session for audio capture.
+    ///
+    /// - Throws: A `UtilityError` with specific audio device error reasons:
+    ///           - `.AudioDeviceErrorReason.captureDeviceNotFound` if no audio capture
+    ///             device is available on the current device, typically indicating
+    ///             the device lacks a microphone or audio capture capability
+    ///           - `.AudioDeviceErrorReason.cannotAddInput` if the audio device input
+    ///             cannot be added to the session, including underlying system errors
+    ///             that prevented input creation or session integration
+    fileprivate func addDeviceInput() throws(UtilityError) -> AVCaptureDeviceInput {
+        guard let captureDevice = AVCaptureDevice.default(for: .audio) else {
+            throw UtilityError(
+                kind: .AudioDeviceErrorReason.captureDeviceNotFound,
+                failureReason: "No audio capture device was found. Ensure this device has a microphone available."
+            )
+        }
+
+        if let currentCaptureDeviceInput = captureDeviceInput(for: .audio) {
+            removeInput(currentCaptureDeviceInput)
+        }
+
+        let captureDeviceInput: AVCaptureDeviceInput
+
+        do {
+            captureDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
+        } catch {
+            throw UtilityError(kind: .AudioDeviceErrorReason.cannotAddInput, underlyingError: error)
+        }
+        
+        guard canAddInput(captureDeviceInput) else {
+            throw UtilityError(
+                kind: .AudioDeviceErrorReason.cannotAddInput,
+                failureReason: "Unable to add \(captureDeviceInput.debugDescription) to the session"
+            )
+        }
+
+        addInput(captureDeviceInput)
+
+        return captureDeviceInput
+    }
+    
+    /// Creates and adds an audio data output to the capture session.
+    ///
+    /// This function sets up audio data output by creating a new `AVCaptureAudioDataOutput`
+    /// instance and adding it to the current capture session. The function performs
+    /// validation to ensure the audio output can be successfully added to the session
+    /// before attempting the addition. If the output cannot be added, the function
+    /// throws an appropriate error with detailed failure information for debugging
+    /// and error handling purposes.
+    ///
+    /// - Returns: An `AVCaptureAudioDataOutput` instance that has been successfully
+    ///            added to the capture session and is ready for audio data processing.
+    ///
+    /// - Throws: A `UtilityError` with `.AudioDeviceErrorReason.cannotAddOutput` kind
+    ///           if the audio data output cannot be added to the session, including
+    ///           a detailed failure reason that provides debugging information about
+    ///           why the output addition failed.
+    fileprivate func addDeviceOutput() throws(UtilityError) -> AVCaptureAudioDataOutput {
+        let captureAudioDataOutput = AVCaptureAudioDataOutput()
+
+        guard canAddOutput(captureAudioDataOutput) else {
+            throw UtilityError(
+                kind: .AudioDeviceErrorReason.cannotAddOutput,
+                failureReason: "Unable to add \(captureAudioDataOutput.debugDescription) to the session"
+            )
+        }
+
+        addOutput(captureAudioDataOutput)
+        
+        return captureAudioDataOutput
     }
 }

@@ -80,7 +80,7 @@ extension ErrorReason {
         /// - Another client holds the configuration lock
         /// - The device is busy (e.g., starting/stopping session)
         /// - System interruptions (backgrounding, media services reset)
-        static let unableToLockDeviceForConfiguration = ErrorReason(rawValue: "UNABLE_TO_LOCK_DEVICE_FOR_CONFIGURATION")
+        static let unableToLockDevice = ErrorReason(rawValue: "UNABLE_TO_LOCK_DEVICE_FOR_CONFIGURATION")
     }
 }
 
@@ -90,18 +90,18 @@ extension ErrorReason {
 /// timestamp, avoiding repeated queries to the buffer’s timing info. The underlying buffer
 /// is not copied; this struct only stores a reference.
 struct VideoSampleBuffer {
-    /// The underlying captured/decoded media sample.
-    ///
-    /// Contains the pixel data and timing/format metadata for this frame.
-    /// The buffer is not owned or retained beyond normal ARC semantics.
-    let buffer: CMSampleBuffer
-
     /// The nominal frame duration for the capture source.
     ///
     /// Typically the inverse of the target FPS (e.g., 1/24, 1/30). Used to pace processing,
     /// compute scaled frame durations, and maintain continuous timestamps. For variable‑frame‑rate
     /// streams this is a baseline reference and individual samples may deviate.
     let minFrameDuration: CMTime
+
+    /// The underlying captured/decoded media sample.
+    ///
+    /// Contains the pixel data and timing/format metadata for this frame.
+    /// The buffer is not owned or retained beyond normal ARC semantics.
+    let sampleBuffer: CMSampleBuffer
 
     /// The sample’s presentation timestamp.
     ///
@@ -364,6 +364,12 @@ struct VideoDeviceConfiguration: Sendable {
     }
 }
 
+// TODO:
+// 1. We should be setting session presset instead
+// 2. Reset focus on move
+// 3. Add blur view for better animation
+// 4. check logic for neutral zoom
+
 /// A concrete video capture device that configures inputs/outputs and manages lifecycle.
 ///
 /// This class owns the active `AVCaptureDevice`, its corresponding input, and a video data output.
@@ -598,7 +604,7 @@ final class VideoDevice: NSObject, Device {
         defer { session.commitConfiguration() }
 
         if state.canTransition(to: .finished) {
-            destroySession()
+            destroyDevice()
             state = .finished
         }
     }
@@ -624,7 +630,7 @@ final class VideoDevice: NSObject, Device {
     @DeviceActor
     func reset() {
         if state.canTransition(to: .initialized) {
-            destroySession()
+            destroyDevice()
         }
     }
 
@@ -663,34 +669,38 @@ final class VideoDevice: NSObject, Device {
                 )
             }
 
-            guard let captureDevice = captureDevice ?? availableDevices[position]?.first else {
+            guard let videoCaptureDevice = captureDevice ?? availableDevices[position]?.first else {
                 throw UtilityError(
                     kind: .VideoDeviceErrorReason.captureDeviceNotFound,
                     failureReason: "No video capture device was found. Ensure this device has a camera available."
                 )
             }
 
-            do {
+            if videoCaptureDevice.uniqueID != preferredDevice?.uniqueID {
                 session.beginConfiguration()
 
                 defer { session.commitConfiguration() }
-
-                if captureDevice.uniqueID != session.captureDeviceInput(for: .video)?.device.uniqueID {
-                    captureSession = session
-
-                    try captureDevice.configure()
-
-                    captureDeviceInput = try session.addDeviceInput(for: captureDevice)
-
-                    try configureDeviceOutput(in: session)
-
-                    self.captureDevice = captureDevice
-                    state = .running
+                
+                do {
+                    try videoCaptureDevice.configure()
+                } catch {
+                    throw UtilityError(kind: .VideoDeviceErrorReason.unableToLockDevice, underlyingError: error)
                 }
-            } catch {
-                destroySession()
-                state = .failed
-                throw error
+                
+                do {
+                    captureDeviceInput = try session.addDeviceInput(for: videoCaptureDevice)
+                    captureVideoDataOutput = try session.addDeviceOutput()
+
+                    captureVideoDataOutput?.setSampleBufferDelegate(self, queue: queue)
+
+                    captureDevice = videoCaptureDevice
+                    captureSession = session
+                    state = .running
+                } catch {
+                    destroyDevice()
+                    state = .failed
+                    throw error
+                }
             }
         }
     }
@@ -743,19 +753,7 @@ final class VideoDevice: NSObject, Device {
     func setFocusPoint(at point: CGPoint) throws(UtilityError) {
         if let captureDevice {
             do {
-                try captureDevice.lockForConfiguration()
-
-                defer { captureDevice.unlockForConfiguration() }
-
-                if captureDevice.isFocusPointOfInterestSupported, captureDevice.isFocusModeSupported(.autoFocus) {
-                    captureDevice.focusPointOfInterest = point
-                    captureDevice.focusMode = .autoFocus
-                }
-
-                if captureDevice.isExposurePointOfInterestSupported {
-                    captureDevice.exposurePointOfInterest = point
-                    captureDevice.exposureMode = .autoExpose
-                }
+                try captureDevice.setFocusPoint(at: point)
             } catch {
                 throw UtilityError(kind: .VideoDeviceErrorReason.setFocusPointFailed, underlyingError: error)
             }
@@ -770,17 +768,10 @@ final class VideoDevice: NSObject, Device {
     ///
     /// - Parameter format: The `Format` instance containing the desired video format and frame rate capabilities.
     /// - Throws: `UtilityError` with `.VideoDeviceErrorReason.setFormatFailed` if the
-    ///   format is not supported by the device or if the configuration fails.
-    ///
-    /// - Note: This method automatically sets both the minimum and maximum frame duration
-    ///   to the same value, ensuring a consistent frame rate throughout the recording
-    ///   session. The frame rate is set to the maximum supported by the format for
-    ///   optimal video quality.
-    ///
-    /// - Precondition: The `captureDevice` must be available and not nil.
-    /// - Postcondition: The device's active format and frame rate are updated if successful.
+    ///           format is not supported by the device or if the configuration fails.
     @DeviceActor
     func setFormat(_ format: Format) throws(UtilityError) {
+        // TODO: We should be setting session presset instead
         if let captureDevice {
             guard captureDevice.formats.contains(format.format) else {
                 throw UtilityError(
@@ -917,23 +908,7 @@ final class VideoDevice: NSObject, Device {
 
     // MARK: - Private methods
 
-    private func configureDeviceOutput(in session: AVCaptureSession) throws(UtilityError) {
-        let captureVideoDataOutput = AVCaptureVideoDataOutput.createDefault()
-
-        guard session.canAddOutput(captureVideoDataOutput) else {
-            throw UtilityError(
-                kind: .VideoDeviceErrorReason.cannotAddOutput,
-                failureReason: "Unable to add \(captureVideoDataOutput.debugDescription) to the session"
-            )
-        }
-
-        captureVideoDataOutput.setSampleBufferDelegate(self, queue: queue)
-        session.addOutput(captureVideoDataOutput)
-
-        self.captureVideoDataOutput = captureVideoDataOutput
-    }
-
-    private func destroySession() {
+    private func destroyDevice() {
         if let captureSession {
             if let captureVideoDataOutput {
                 captureVideoDataOutput.setSampleBufferDelegate(nil, queue: nil)
@@ -977,71 +952,17 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
         from connection: AVCaptureConnection
     ) {
 
-        if let captureDevice = captureDevice, state == .running {
+        if let captureDevice, state == .running {
             let sampleBuffer = VideoSampleBuffer(
-                buffer: sampleBuffer,
                 minFrameDuration: captureDevice.activeVideoMinFrameDuration,
+                sampleBuffer: sampleBuffer,
                 timestamp: CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
             )
 
-            Task { @DeviceActor in
+            Task {
                 let processors = Array(processors.values)
                 processors.forEach { $0.process(sampleBuffer, with: configuration) }
             }
-        }
-    }
-}
-
-extension AVCaptureDevice {
-    /// Configures the capture device with recommended real‑time defaults for video capture.
-    ///
-    /// Applies continuous autofocus (enabling smooth autofocus when supported), continuous auto exposure,
-    /// continuous auto white balance, automatic low‑light boost (when available), and subject‑area change
-    /// monitoring. It also sets a fixed frame rate of 24 fps by assigning both `activeVideoMinFrameDuration`
-    /// and `activeVideoMaxFrameDuration` to 1/24. The device is locked for configuration at the start and
-    /// is always unlocked before returning, regardless of success.
-    ///
-    /// - Important: Prefer invoking this while the associated `AVCaptureSession` is wrapped in
-    ///   `beginConfiguration()` / `commitConfiguration()` to avoid intermediate reconfigurations.
-    fileprivate func configure() throws(UtilityError) {
-        do {
-            try lockForConfiguration()
-            defer { unlockForConfiguration() }
-
-            if isFocusModeSupported(.continuousAutoFocus) {
-                focusMode = .continuousAutoFocus
-
-                if isSmoothAutoFocusSupported {
-                    isSmoothAutoFocusEnabled = true
-                }
-            }
-
-            if isExposureModeSupported(.continuousAutoExposure) {
-                exposureMode = .continuousAutoExposure
-            }
-
-            if isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
-                whiteBalanceMode = .continuousAutoWhiteBalance
-            }
-
-            if isLowLightBoostSupported {
-                automaticallyEnablesLowLightBoostWhenAvailable = true
-            }
-
-            isSubjectAreaChangeMonitoringEnabled = true
-            videoZoomFactor = neutralZoomFactor
-
-            let fps = 24.0
-            let videoSupportedFrameRatesRanges = activeFormat.videoSupportedFrameRateRanges
-
-            if videoSupportedFrameRatesRanges.contains(where: { ($0.minFrameRate ... $0.maxFrameRate).contains(fps) }) {
-                let frameDuration = CMTimeMake(value: 1, timescale: Int32(fps))
-
-                activeVideoMinFrameDuration = frameDuration
-                activeVideoMaxFrameDuration = frameDuration
-            }
-        } catch {
-            throw UtilityError(kind: .VideoDeviceErrorReason.unableToLockDeviceForConfiguration, underlyingError: error)
         }
     }
 }
@@ -1067,24 +988,55 @@ extension AVCaptureSession {
             removeInput(currentCaptureDeviceInput)
         }
 
+        let captureDeviceInput: AVCaptureDeviceInput
+        
         do {
-            let captureDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
-
-            guard canAddInput(captureDeviceInput) else {
-                throw UtilityError(
-                    kind: .VideoDeviceErrorReason.cannotAddInput,
-                    failureReason: "Unable to add \(captureDeviceInput.debugDescription) to the session"
-                )
-            }
-
-            addInput(captureDeviceInput)
-
-            return captureDeviceInput
-        } catch let error as UtilityError {
-            throw error
+            captureDeviceInput = try AVCaptureDeviceInput(device: captureDevice)
         } catch {
             throw UtilityError(kind: .VideoDeviceErrorReason.cannotAddInput, underlyingError: error)
         }
+        
+        guard canAddInput(captureDeviceInput) else {
+            throw UtilityError(
+                kind: .VideoDeviceErrorReason.cannotAddInput,
+                failureReason: "Unable to add \(captureDeviceInput.debugDescription) to the session"
+            )
+        }
+
+        addInput(captureDeviceInput)
+
+        return captureDeviceInput
+    }
+
+    /// Creates and adds a video data output to the capture session.
+    ///
+    /// This function creates a default video data output using the system's recommended
+    /// configuration and adds it to the current capture session. The function performs
+    /// validation to ensure the output can be successfully added to the session before
+    /// attempting the addition. If the output cannot be added, the function throws an
+    /// appropriate error with detailed failure information for debugging purposes.
+    ///
+    /// - Returns: An `AVCaptureVideoDataOutput` instance that has been successfully
+    ///            added to the capture session and is ready for video data processing.
+    ///            The returned output is configured with default settings and can be
+    ///            further customized for specific video processing requirements.
+    ///
+    /// - Throws: A `UtilityError` with `.VideoDeviceErrorReason.cannotAddOutput` kind
+    ///           if the video data output cannot be added to the session, including
+    ///           a detailed failure reason for debugging and error handling.
+    fileprivate func addDeviceOutput() throws(UtilityError) -> AVCaptureVideoDataOutput {
+        let captureVideoDataOutput = AVCaptureVideoDataOutput.createDefault()
+
+        guard canAddOutput(captureVideoDataOutput) else {
+            throw UtilityError(
+                kind: .VideoDeviceErrorReason.cannotAddOutput,
+                failureReason: "Unable to add \(captureVideoDataOutput.debugDescription) to the session"
+            )
+        }
+
+        addOutput(captureVideoDataOutput)
+
+        return captureVideoDataOutput
     }
 }
 

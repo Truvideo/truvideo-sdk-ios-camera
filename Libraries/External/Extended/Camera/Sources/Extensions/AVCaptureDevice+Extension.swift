@@ -14,22 +14,23 @@ extension AVCaptureDevice {
     ///
     /// - Returns: A `CGFloat` representing the neutral zoom factor that provides the natural, unzoomed field of view for the current device type.
     var neutralZoomFactor: CGFloat {
-        let lensCompensation = switch deviceType {
-        case .builtInTripleCamera:
-            0.5
-            
-        case .builtInDualWideCamera,
-             .builtInDualCamera:
-            
-            0.3
-            
-        default:
-            0.0
-        }
-        
+        let lensCompensation =
+            switch deviceType {
+            case .builtInTripleCamera:
+                0.5
+
+            case .builtInDualWideCamera,
+                .builtInDualCamera:
+
+                0.3
+
+            default:
+                0.0
+            }
+
         return dualCameraSwitchOverVideoZoomFactor + lensCompensation
     }
-    
+
     /// Returns the preferred device types for camera selection in priority order.
     ///
     /// This static property defines the priority hierarchy for selecting camera devices,
@@ -80,5 +81,77 @@ extension AVCaptureDevice {
         )
 
         return discoverySession.devices
+    }
+    
+    // MARK: - Instance methods
+    
+    /// Sets the focus and exposure point to the specified location on the camera view.
+    ///
+    /// This method configures both focus and exposure settings to use the same point,
+    /// ensuring that the camera focuses on and meters exposure for the same area of the scene.
+    /// The method automatically handles device locking and unlocking to prevent configuration
+    /// conflicts during the focus and exposure adjustment process.
+    ///
+    /// - Parameter point: The normalized point (0.0 to 1.0) where focus and exposure should be set.
+    /// - Throws: An error if the device cannot be locked for configuration.
+    func setFocusPoint(at point: CGPoint) throws {
+        try lockForConfiguration()
+
+        defer { unlockForConfiguration() }
+
+        if isFocusPointOfInterestSupported, isFocusModeSupported(.autoFocus) {
+            focusPointOfInterest = point
+            focusMode = .autoFocus
+        }
+
+        if isExposurePointOfInterestSupported {
+            exposurePointOfInterest = point
+            exposureMode = .autoExpose
+        }
+    }
+    
+    /// Configures the capture device with recommended real‑time defaults for video capture.
+    ///
+    /// Applies continuous autofocus (enabling smooth autofocus when supported), continuous auto exposure,
+    /// continuous auto white balance, automatic low‑light boost (when available), and subject‑area change
+    /// monitoring. It also sets a fixed frame rate of 24 fps by assigning both `activeVideoMinFrameDuration`
+    /// and `activeVideoMaxFrameDuration` to 1/24. The device is locked for configuration at the start and
+    /// is always unlocked before returning, regardless of success.
+    func configure() throws {
+        try lockForConfiguration()
+        defer { unlockForConfiguration() }
+
+        if isFocusModeSupported(.continuousAutoFocus) {
+            focusMode = .continuousAutoFocus
+
+            if isSmoothAutoFocusSupported {
+                isSmoothAutoFocusEnabled = true
+            }
+        }
+
+        if isExposureModeSupported(.continuousAutoExposure) {
+            exposureMode = .continuousAutoExposure
+        }
+
+        if isWhiteBalanceModeSupported(.continuousAutoWhiteBalance) {
+            whiteBalanceMode = .continuousAutoWhiteBalance
+        }
+
+        if isLowLightBoostSupported {
+            automaticallyEnablesLowLightBoostWhenAvailable = true
+        }
+
+        isSubjectAreaChangeMonitoringEnabled = true
+        videoZoomFactor = neutralZoomFactor
+
+        let fps = 30.0
+        let videoSupportedFrameRatesRanges = activeFormat.videoSupportedFrameRateRanges
+
+        if videoSupportedFrameRatesRanges.contains(where: { ($0.minFrameRate ... $0.maxFrameRate).contains(fps) }) {
+            let frameDuration = CMTimeMake(value: 1, timescale: Int32(fps))
+
+            activeVideoMinFrameDuration = frameDuration
+            activeVideoMaxFrameDuration = frameDuration
+        }
     }
 }

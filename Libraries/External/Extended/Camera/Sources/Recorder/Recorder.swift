@@ -164,6 +164,152 @@ actor RecorderActor {
     static let shared = RecorderActor()
 }
 
+/// A delegate protocol that receives notifications about recorder state changes and lifecycle events.
+///
+/// The `RecorderDelegate` provides a comprehensive set of callbacks for monitoring the recorder's
+/// recording state, pause/resume operations, and lifecycle transitions. All methods are optional
+/// with default empty implementations, allowing implementers to only override the specific
+/// callbacks they need.
+///
+/// ## Usage
+/// ```swift
+/// class CameraViewController: UIViewController, RecorderDelegate {
+///     func recorderDidBeginRecording(_ recorder: Recorder) {
+///         // Update UI to show recording state
+///         updateRecordingUI(isRecording: true)
+///     }
+///
+///     func recorderDidPause(_ recorder: Recorder) {
+///         // Handle pause state
+///         showPauseIndicator()
+///     }
+/// }
+/// ```
+///
+/// ## Lifecycle Flow
+/// The typical recording lifecycle follows this pattern:
+/// 1. `recorderWillBeginRecording` → `recorderDidBeginRecording`
+/// 2. `recorderWillPause` → `recorderDidPause` (optional)
+/// 3. `recorderWillResume` → `recorderDidResume` (optional)
+/// 4. `recorderDidEndRecording`
+protocol RecorderDelegate: AnyObject {
+    /// Called when the recorder has successfully started recording.
+    ///
+    /// This method is invoked after the recording session has been initialized and
+    /// the first frame has been captured. Use this callback to update UI elements
+    /// that indicate recording status, such as changing button states or showing
+    /// recording indicators.
+    ///
+    /// - Parameter recorder: The recorder instance that began recording.
+    func recorderDidBeginRecording(_ recorder: Recorder)
+
+    /// Called when the recorder has finished recording and the session has ended.
+    ///
+    /// This method is invoked after the recording session has been finalized and
+    /// all media data has been written to disk. Use this callback to update UI
+    /// elements, save metadata, or transition to a review/playback state.
+    ///
+    /// - Parameter recorder: The recorder instance that ended recording.
+    func recorderDidEndRecording(_ recorder: Recorder)
+
+    // MARK: - Pause/Resume Operations
+
+    /// Called when the recorder has successfully paused recording.
+    ///
+    /// This method is invoked after the recording session has been paused and
+    /// the current frame has been saved. Use this callback to update UI elements
+    /// that indicate pause status or to prepare for potential resume operations.
+    ///
+    /// - Parameter recorder: The recorder instance that was paused.
+    func recorderDidPause(_ recorder: Recorder)
+
+    /// Called when the recorder has successfully resumed recording after being paused.
+    ///
+    /// This method is invoked after the recording session has been resumed and
+    /// new frames are being captured. Use this callback to update UI elements
+    /// that indicate active recording status.
+    ///
+    /// - Parameter recorder: The recorder instance that was resumed.
+    func recorderDidResume(_ recorder: Recorder)
+
+    // MARK: - Pre-Operation Notifications
+
+    /// Called immediately before the recorder begins pausing recording.
+    ///
+    /// This method is invoked before the pause operation starts, allowing you to
+    /// prepare UI elements or perform any necessary setup before the pause occurs.
+    /// Use this callback for immediate UI feedback or to cancel the pause if needed.
+    ///
+    /// - Parameter recorder: The recorder instance that will be paused.
+    func recorderWillPause(_ recorder: Recorder)
+
+    /// Called immediately before the recorder resumes recording after being paused.
+    ///
+    /// This method is invoked before the resume operation starts, allowing you to
+    /// prepare UI elements or perform any necessary setup before recording continues.
+    /// Use this callback for immediate UI feedback or to cancel the resume if needed.
+    ///
+    /// - Parameter recorder: The recorder instance that will be resumed.
+    func recorderWillResume(_ recorder: Recorder)
+}
+
+extension RecorderDelegate {
+    /// Called when the recorder has successfully started recording.
+    ///
+    /// This method is invoked after the recording session has been initialized and
+    /// the first frame has been captured. Use this callback to update UI elements
+    /// that indicate recording status, such as changing button states or showing
+    /// recording indicators.
+    ///
+    /// - Parameter recorder: The recorder instance that began recording.
+    func recorderDidBeginRecording(_ recorder: Recorder) {}
+
+    /// Called when the recorder has finished recording and the session has ended.
+    ///
+    /// This method is invoked after the recording session has been finalized and
+    /// all media data has been written to disk. Use this callback to update UI
+    /// elements, save metadata, or transition to a review/playback state.
+    ///
+    /// - Parameter recorder: The recorder instance that ended recording.
+    func recorderDidEndRecording(_ recorder: Recorder) {}
+
+    /// Called when the recorder has successfully paused recording.
+    ///
+    /// This method is invoked after the recording session has been paused and
+    /// the current frame has been saved. Use this callback to update UI elements
+    /// that indicate pause status or to prepare for potential resume operations.
+    ///
+    /// - Parameter recorder: The recorder instance that was paused.
+    func recorderDidPause(_ recorder: Recorder) {}
+
+    /// Called when the recorder has successfully resumed recording after being paused.
+    ///
+    /// This method is invoked after the recording session has been resumed and
+    /// new frames are being captured. Use this callback to update UI elements
+    /// that indicate active recording status.
+    ///
+    /// - Parameter recorder: The recorder instance that was resumed.
+    func recorderDidResume(_ recorder: Recorder) {}
+
+    /// Called immediately before the recorder begins pausing recording.
+    ///
+    /// This method is invoked before the pause operation starts, allowing you to
+    /// prepare UI elements or perform any necessary setup before the pause occurs.
+    /// Use this callback for immediate UI feedback or to cancel the pause if needed.
+    ///
+    /// - Parameter recorder: The recorder instance that will be paused.
+    func recorderWillPause(_ recorder: Recorder) {}
+
+    /// Called immediately before the recorder resumes recording after being paused.
+    ///
+    /// This method is invoked before the resume operation starts, allowing you to
+    /// prepare UI elements or perform any necessary setup before recording continues.
+    /// Use this callback for immediate UI feedback or to cancel the resume if needed.
+    ///
+    /// - Parameter recorder: The recorder instance that will be resumed.
+    func recorderWillResume(_ recorder: Recorder) {}
+}
+
 /// A recorder that manages capture devices and coordinates recording sessions.
 ///
 /// The `Recorder` class provides a high-level interface for managing multiple capture devices
@@ -199,6 +345,13 @@ final class Recorder {
     /// The current lifecycle state of the recorder.
     private(set) var state = RecordingState.initialized
 
+    /// A weak reference to the delegate that receives recorder state change notifications.
+    ///
+    /// The delegate is responsible for handling recorder lifecycle events such as recording start/stop,
+    /// pause/resume operations, and state transitions. Using a weak reference prevents retain cycles
+    /// between the recorder and its delegate, ensuring proper memory management.
+    weak var delegate: RecorderDelegate?
+
     // MARK: - Initializer
 
     /// Creates a new recorder instance with default configuration.
@@ -206,6 +359,7 @@ final class Recorder {
         self.previewLayer.videoGravity = .resizeAspectFill
 
         configureObservers()
+        configureSessionObservers()
     }
 
     deinit {
@@ -249,7 +403,7 @@ final class Recorder {
 
         if state.canTransition(to: .running) {
             let captureSession = AVCaptureSession()
-            
+
             if captureSession.canSetSessionPreset(.hd4K3840x2160) {
                 captureSession.sessionPreset = .hd4K3840x2160
             }
@@ -316,13 +470,13 @@ final class Recorder {
 
     @objc
     func didReceiveDeviceOrientationDidChangeNotification(_ notification: Notification) {
-        if
-            /// The new device orientation.
-            let videoOrientation = AVCaptureVideoOrientation(rawValue: UIDevice.current.orientation.rawValue),
-            
+        if /// The new device orientation.
+        let videoOrientation = AVCaptureVideoOrientation(rawValue: UIDevice.current.orientation.rawValue),
+
             /// The allowable device orientations.
-            [.landscapeLeft, .landscapeRight, .portrait].contains(videoOrientation) {
-            
+            [.landscapeLeft, .landscapeRight, .portrait].contains(videoOrientation)
+        {
+
             previewLayer.connection?.videoOrientation = videoOrientation
         }
     }
@@ -388,6 +542,15 @@ final class Recorder {
 
         NotificationCenter.default.addObserver(
             self,
+            selector: #selector(didReceiveWillResignActiveNotification(_:)),
+            name: UIApplication.willResignActiveNotification,
+            object: nil
+        )
+    }
+
+    private func configureSessionObservers() {
+        NotificationCenter.default.addObserver(
+            self,
             selector: #selector(didReceiveMediaServicesWereResetNotification(_:)),
             name: AVAudioSession.mediaServicesWereResetNotification,
             object: nil
@@ -411,13 +574,6 @@ final class Recorder {
             self,
             selector: #selector(didReceiveSessionWasInterruptedNotification(_:)),
             name: AVCaptureSession.wasInterruptedNotification,
-            object: nil
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveWillResignActiveNotification(_:)),
-            name: UIApplication.willResignActiveNotification,
             object: nil
         )
     }
