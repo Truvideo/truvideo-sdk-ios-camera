@@ -13,8 +13,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "TruvideoSdkCamera",
-            url: "https://github.com/Truvideo/truvideo-sdk-ios-camera/releases/download/76.7.6/TruvideoSdkCamera.xcframework.zip",
-            checksum: "c4db3cc94f0052105097e746b749aceccfbba204c883aafe82367df894dbf038"
+            url: "https://github.com/Truvideo/truvideo-sdk-ios-camera/releases/download/76.7.7/TruvideoSdkCamera.xcframework.zip",
+            checksum: "935d95e8f57fc6b6b8046237e3b48206f7c28bfa1f4ed7af46e0b430d67f3267"
         ),
         .target(
             name: "TruvideoSdkCameraTargets",
