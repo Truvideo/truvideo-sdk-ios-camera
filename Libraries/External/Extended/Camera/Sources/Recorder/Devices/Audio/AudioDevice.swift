@@ -119,13 +119,9 @@ struct AudioDeviceConfiguration: Sendable {
         let sampleBuffer,
 
             /// Sample format description.
-            let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
-        {
-
+            let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
             if let streamBasicDescription = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription),
-                sampleRate == nil, channelsCount == nil
-            {
-
+                sampleRate == nil, channelsCount == nil {
                 sampleRate = streamBasicDescription.pointee.mSampleRate
                 channelsCount = Int(streamBasicDescription.pointee.mChannelsPerFrame)
             }
@@ -333,9 +329,7 @@ extension AudioDevice: AVCaptureAudioDataOutputSampleBufferDelegate {
         _ output: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
-    ) {
-
-    }
+    ) {}
 }
 
 extension AVCaptureSession {

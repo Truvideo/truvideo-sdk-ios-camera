@@ -59,7 +59,7 @@ final class S3Uploader: Uploader {
             key: fileName
         )
 
-        do {
+        do {            
             let s3Client = try await clientProvider.makeClient()
             _ = try await s3Client.putObject(input: input)
         } catch {

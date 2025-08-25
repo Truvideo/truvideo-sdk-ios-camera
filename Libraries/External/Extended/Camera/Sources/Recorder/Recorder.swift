@@ -474,9 +474,7 @@ final class Recorder {
         let videoOrientation = AVCaptureVideoOrientation(rawValue: UIDevice.current.orientation.rawValue),
 
             /// The allowable device orientations.
-            [.landscapeLeft, .landscapeRight, .portrait].contains(videoOrientation)
-        {
-
+            [.landscapeLeft, .landscapeRight, .portrait].contains(videoOrientation) {
             previewLayer.connection?.videoOrientation = videoOrientation
         }
     }

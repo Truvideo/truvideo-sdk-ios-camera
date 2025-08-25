@@ -238,9 +238,7 @@ public struct URLParameterEncoder: ParameterEncoder {
             let url = request.url,
 
                 /// The components of the url.
-                var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            {
-
+                var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false) {
                 urlComponents.queryItems = parameters.queryItems
                 request.url = urlComponents.url
             }

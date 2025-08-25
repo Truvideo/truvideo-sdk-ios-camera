@@ -15,7 +15,7 @@ help:
 
 	@echo "Flexible framework commands:"
 	@echo "  make framework SCHEME=DI"
-	@echo "  Available schemes: DI, Registry, Storage, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, ExternalUtilities, TruvideoSdkCamera, TruVideoSdk"
+	@echo "  Available schemes: DI, Registry, CloudStorage, Storage, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, ExternalUtilities, TruvideoSdkCamera, TruVideoSdk"
 
 # Generate Xcode project using XcodeGen
 generate:
@@ -27,6 +27,7 @@ build:
 	@echo "Building frameworks in dependency order..."
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme DI -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Registry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme CloudStorage -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Storage -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Utilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme CoreDataUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
@@ -77,6 +78,7 @@ test:
 	@echo "Running all unit tests..."
 	xcodebuild test -project TruvideoSDK.xcodeproj -scheme DI -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Registry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+	xcodebuild test -project TruvideoSDK.xcodeproj -scheme CloudStorage -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Storage -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 	xcodebuild test -project TruvideoSDK.xcodeproj -scheme Utilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
 	xcodebuild test -project TruvideoSDK.xcodeproj -scheme CoreDataUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro'

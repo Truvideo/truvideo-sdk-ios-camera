@@ -318,9 +318,7 @@ struct VideoDeviceConfiguration: Sendable {
         let sampleBuffer,
 
             /// The format description for the `sampleBuffer`
-            let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
-        {
-
+            let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
             let videoDimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
 
             switch aspectRatio {
@@ -815,9 +813,7 @@ final class VideoDevice: NSObject, Device {
             let captureSession,
 
                 /// The active device.
-                let captureDevice
-            {
-
+                let captureDevice {
                 captureSession.beginConfiguration()
 
                 defer { captureSession.commitConfiguration() }

@@ -130,9 +130,7 @@ extension Response: CustomStringConvertible, CustomDebugStringConvertible {
         let data = urlRequest.httpBody,
 
             /// String representation of the body.
-            let body = String(data: data, encoding: .utf8)
-        {
-
+            let body = String(data: data, encoding: .utf8) {
             bodyDescription = """
                 [Body]: \(body.trimmingCharacters(in: .whitespacesAndNewlines))
                 """
@@ -148,9 +146,7 @@ extension Response: CustomStringConvertible, CustomDebugStringConvertible {
             let data,
 
                 /// The string representation of the response.
-                let responseString = String(data: data, encoding: .utf8)
-            {
-
+                let responseString = String(data: data, encoding: .utf8) {
                 body =
                     responseString
                     .trimmingCharacters(in: .whitespacesAndNewlines)
