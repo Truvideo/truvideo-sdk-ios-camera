@@ -14,7 +14,7 @@ import Foundation
 ///
 /// - Note: This class is marked as `@unchecked Sendable` due to its use of shared mutable state.
 /// - Inherits from: `Request`
-public final class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendable {
+public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendable {
     /// A typealias for a validation closure.
     ///
     /// This closure takes the original `URLRequest`, `HTTPURLResponse`, and optional response `Data`,
@@ -157,6 +157,20 @@ public final class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked S
 
         data = nil
     }
+    
+    /// Called when creating a `URLSessionTask` for this `Request`. Subclasses must override.
+    ///
+    /// - Parameters:
+    ///   - urlRequest: `URLRequest` to use to create the `URLSessionTask`.
+    ///   - session: `URLSession` which creates the `URLSessionTask`.
+    ///
+    /// - Returns:   The `URLSessionTask` created.
+    override func task(
+        for urlRequest: URLRequest,
+        using session: URLSession
+    ) throws(NetworkingError) -> URLSessionTask {
+        session.dataTask(with: urlRequest)
+    }
 
     // MARK: - Serializing methods
 
@@ -217,7 +231,11 @@ public final class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked S
 
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
-                self.response(serializer: DataResponseSerializer(emptyResponseCodes: emptyResponseCodes)) { response in
+                self.response(
+                    serializer: DataResponseSerializer(
+                        emptyResponseCodes: emptyResponseCodes
+                    )
+                ) { response in
                     continuation.resume(returning: response)
                 }
             }

@@ -346,6 +346,7 @@ targets:
       - Libraries/Internal/Core/Networking/Tests
     dependencies:
       - target: Networking
+      - target: NetworkingTesting
     settings:
       GENERATE_INFOPLIST_FILE: YES
 

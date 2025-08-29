@@ -145,6 +145,9 @@ public protocol DataRequest: Request {
     func validate<S: Sequence>(acceptableStatusCodes: S) -> Self where S: Sendable, S.Iterator.Element == Int
 }
 
+/// A specialized type of `DataRequest` that represents an upload operation.
+public protocol UploadRequest: DataRequest {}
+
 extension DataRequest {
     /// Serializes the response into a `Decodable` type asynchronously.
     ///

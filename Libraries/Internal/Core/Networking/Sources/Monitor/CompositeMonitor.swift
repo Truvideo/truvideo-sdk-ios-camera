@@ -30,7 +30,7 @@ public struct CompositeMonitor: Monitor {
         self.monitors = monitors
     }
 
-    // MARK: - RequestMonitor
+    // MARK: - Request Monitoring
 
     /// Called when a request is canceled.
     ///
@@ -191,6 +191,17 @@ public struct CompositeMonitor: Monitor {
         }
     }
 
+    /// Called when URL request creation fails with an error.
+    ///
+    /// - Parameters:
+    ///   - request: The `Request` instance that failed during URL request creation.
+    ///   - error: The `NetworkingError` describing the failure.
+    public func request(_ request: any Request, didFailToCreateTaskWithError error: NetworkingError) {
+        queue.async {
+            monitors.forEach { $0.request(request, didFailToCreateTaskWithError: error) }
+        }
+    }
+
     /// Called when performance metrics for a request are gathered.
     ///
     /// - Parameters:
@@ -254,6 +265,8 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didValidate: urlRequest, data: data, error: error) }
         }
     }
+    
+    // MARK: - DataRequest Monitoring
 
     /// Called when a `DataRequest` parses a response containing raw data.
     ///
@@ -265,6 +278,8 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didParseResponse: response) }
         }
     }
+    
+    // MARK: - UploadRequest Monitoring
 
     /// Called when a `DataRequest` parses a response with a specified value type.
     ///
@@ -280,6 +295,36 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didParseResponse: response) }
         }
     }
+    
+    /// Notifies monitors that an `UploadRequest` successfully created an `Uploadable`.
+    ///
+    /// - Parameters:
+    ///   - request: The `UploadRequest` that initiated the creation.
+    ///   - uploadable: The successfully created `Uploadable` instance associated with the request.
+    public func request(
+        _ request: any UploadRequest,
+        didCreateUploadable uploadable: HTTPURLUploadRequest.Uploadable
+    ) {
+        queue.async {
+            monitors.forEach { $0.request(request, didCreateUploadable: uploadable) }
+        }
+    }
+
+    /// Notifies monitors that an `UploadRequest` failed to create an `Uploadable`.
+    ///
+    /// - Parameters:
+    ///   - request: The `UploadRequest` that attempted the creation.
+    ///   - error: The `NetworkingError` describing why the uploadable could not be created.
+    public func request(
+        _ request: any UploadRequest,
+        didFailToCreateUploadableWithError error: NetworkingError
+    ) {
+        queue.async {
+            monitors.forEach { $0.request(request, didFailToCreateUploadableWithError: error) }
+        }
+    }
+    
+    // MARK: - URLSession Delegate Methods
 
     /// Called when data is received from the server.
     ///

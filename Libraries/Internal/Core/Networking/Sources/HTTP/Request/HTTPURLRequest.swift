@@ -370,6 +370,17 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
         monitor?.request(self, didFailTask: task, with: error)
     }
 
+    /// Handles the failure to create a URLSession task for this request.
+    ///
+    ///
+    /// - Parameter error: The `NetworkingError` describing why the task creation failed.
+    func didFailToCreateTask(with error: NetworkingError) {
+        dispatchPrecondition(condition: .onQueue(queue))
+
+        self.error = error
+        monitor?.request(self, didFailToCreateTaskWithError: error)
+    }
+
     /// Gathers performance metrics for the request.
     ///
     /// This method is called when `URLSessionTaskMetrics` become available,
@@ -534,6 +545,17 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
                 delegate.retry(request: self, after: delay)
             }
         }
+    }
+    
+    /// Called when creating a `URLSessionTask` for this `Request`. Subclasses must override.
+    ///
+    /// - Parameters:
+    ///   - urlRequest: `URLRequest` to use to create the `URLSessionTask`.
+    ///   - session: `URLSession` which creates the `URLSessionTask`.
+    ///
+    /// - Returns:   The `URLSessionTask` created.
+    func task(for urlRequest: URLRequest, using session: URLSession) throws(NetworkingError) -> URLSessionTask {
+        fatalError("Subclasses must override.")
     }
 
     // MARK: - Instance methods

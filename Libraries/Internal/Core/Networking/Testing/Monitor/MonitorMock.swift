@@ -50,6 +50,9 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
     /// Closure called when a `URLRequest` creation fails.
     public var requestDidFailToCreateURLRequestCallback: ((NetworkingError) -> Void)?
 
+    /// Closure called when a `URLRequest` creation fails.
+    public var requestDidFailToCreateTaskWithErrorCallback: ((NetworkingError) -> Void)?
+
     /// Closure called when URL interception fails.
     public var requestDidFailToInterceptURLRequestCallback: ((NetworkingError) -> Void)?
 
@@ -98,6 +101,12 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
     /// Closure called when a the underlying url session task finish collecting metrics.
     public var urlSessionTaskDidFinishCollectingMetricsCallback: (() -> Void)?
 
+    /// Callback closure invoked when `request(_:didCreateUploadable:)` is called.
+    public var uploadRequestDidCreateUploadableCallback: ((HTTPURLUploadRequest.Uploadable) -> Void)?
+
+    /// Callback closure invoked when `request(_:didFailToCreateUploadableWithError:)` is called.
+    public var uploadRequestDidFailToCreateUploadableCallback: ((NetworkingError) -> Void)?
+
     /// Tracks the number of times the request has been cancelled.
     public private(set) var requestDidCancelCallCount = 0
 
@@ -131,6 +140,9 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
     /// Tracks the number of times a `Request` has failed to create the `URLRequest`.
     public private(set) var didFailToCreateURLRequestWithErrorCallCount = 0
 
+    /// Tracks the number of times a `Request` has failed to create the `URLRequest`.
+    public private(set) var didFailToCreateTaskWithErrorCallCount = 0
+
     /// Tracks the number of times a `URLRequest` was intercepted by a `RequestInterceptor`.
     public private(set) var requestDidInterceptURLRequestCallCount = 0
 
@@ -160,6 +172,12 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
 
     /// Tracks the number of times a `Request` is retrying.
     public private(set) var requestIsRetryingCallCount = 0
+
+    /// Tracks the number of times `didCreateUploadable` was called on an `UploadRequest`.
+    public private(set) var uploadRequestDidCreateUploadableCallCount = 0
+
+    /// Tracks the number of times `didFailToCreateUploadableWithError` was called on an `UploadRequest`.
+    public private(set) var uploadRequestDidFailToCreateUploadableCallCount = 0
 
     // MARK: - Initializer
 
@@ -231,6 +249,8 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
         requestDidSuspendCallback?()
     }
 
+    // MARK: - DataRequest Monitoring
+
     /// Event called when a `DataRequest` calls a `ResponseSerializer` and creates a generic `Response<Value>`.
     public func request<Value>(
         _ request: any DataRequest,
@@ -241,6 +261,34 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
         requestDidParseResponseCallback?()
     }
 
+    // MARK: - UploadRequest Monitoring
+
+    /// Called when an `UploadRequest` successfully creates an `Uploadable` object.
+    ///
+    /// - Parameters:
+    ///   - request: The upload request that triggered this callback.
+    ///   - uploadable: The uploadable object that was created.
+    public func request(
+        _ request: any UploadRequest,
+        didCreateUploadable uploadable: HTTPURLUploadRequest.Uploadable
+    ) {
+        uploadRequestDidCreateUploadableCallCount += 1
+        uploadRequestDidCreateUploadableCallback?(uploadable)
+    }
+
+    /// Called when an `UploadRequest` fails to create an `Uploadable` object.
+    ///
+    /// - Parameters:
+    ///   - request: The upload request that triggered this callback.
+    ///   - error: The error that occurred while attempting to create the uploadable.
+    public func request(
+        _ request: any UploadRequest,
+        didFailToCreateUploadableWithError error: NetworkingError
+    ) {
+        uploadRequestDidFailToCreateUploadableCallCount += 1
+        uploadRequestDidFailToCreateUploadableCallback?(error)
+    }
+
     /// Called when URL request creation fails with an error.
     ///
     /// - Parameters:
@@ -249,6 +297,16 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
     public func request(_ request: any Request, didFailToCreateURLRequestWithError error: NetworkingError) {
         didFailToCreateURLRequestWithErrorCallCount += 1
         requestDidFailToCreateURLRequestCallback?(error)
+    }
+
+    /// <#Description#>
+    ///
+    /// - Parameters:
+    ///   - request: <#request description#>
+    ///   - error: <#error description#>
+    public func request(_ request: any Request, didFailToCreateTaskWithError error: NetworkingError) {
+        didFailToCreateTaskWithErrorCallCount += 1
+        requestDidFailToCreateTaskWithErrorCallback?(error)
     }
 
     /// Called when request interception fails.

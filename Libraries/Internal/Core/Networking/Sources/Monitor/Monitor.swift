@@ -17,6 +17,8 @@ import Foundation
 public protocol Monitor: Sendable {
     /// The working queue.
     var queue: DispatchQueue { get }
+    
+    // MARK: - Request Monitoring
 
     /// Called when a request is canceled.
     ///
@@ -161,6 +163,29 @@ public protocol Monitor: Sendable {
         _ request: any DataRequest,
         didParseResponse response: Response<Value, NetworkingError>
     )
+    
+    // MARK: - UploadRequest Monitoring
+    
+    /// Event called when an `UploadRequest` creates its `Uploadable` value, indicating the type of upload it represents.
+    ///
+    /// - Parameters:
+    ///   - request: The `UploadRequest` instance that created the uploadable.
+    ///   - uploadable: The `UploadRequest.Uploadable` value that was successfully created, representing the content to be uploaded.
+    func request(_ request: any UploadRequest, didCreateUploadable uploadable: HTTPURLUploadRequest.Uploadable)
+
+    /// Event called when an `UploadRequest` failed to create its `Uploadable` value due to an error.
+    /// 
+    /// - Parameters:
+    ///   - request: The `UploadRequest` instance that attempted to create the uploadable.
+    ///   - error: The `NetworkingError` describing the reason for the failure.
+    func request(_ request: any UploadRequest, didFailToCreateUploadableWithError error: NetworkingError)
+
+    /// Notifies that the given request failed to create a URLSession task.
+    ///
+    /// - Parameters:
+    ///   - request: The request that failed to create a task.
+    ///   - error: The error describing why the task could not be created.
+    func request(_ request: any Request, didFailToCreateTaskWithError error: NetworkingError)
 
     // MARK: - URLSession Delegate Methods
 
@@ -201,7 +226,11 @@ public protocol Monitor: Sendable {
     ///   - session: The `URLSession` collecting the metrics.
     ///   - task: The `URLSessionTask` for which metrics were collected.
     ///   - metrics: The `URLSessionTaskMetrics` containing performance metrics.
-    func urlSession(_ session: URLSession, task: URLSessionTask, didFinishCollecting metrics: URLSessionTaskMetrics)
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        didFinishCollecting metrics: URLSessionTaskMetrics
+    )
 }
 
 extension Monitor {
@@ -209,6 +238,8 @@ extension Monitor {
     public var queue: DispatchQueue {
         .main
     }
+
+    // MARK: - Request Monitoring
 
     /// Called when a request is canceled.
     ///
@@ -258,7 +289,11 @@ extension Monitor {
     ///   - request: The `Request` associated with the completed task.
     ///   - task: The `URLSessionTask` that completed.
     ///   - error: The `NetworkingError` encountered, if any.
-    public func request(_ request: any Request, didCompleteTask task: URLSessionTask, with error: NetworkingError?) {}
+    public func request(
+        _ request: any Request,
+        didCompleteTask task: URLSessionTask,
+        with error: NetworkingError?
+    ) {}
 
     /// Called when a `URLRequest` is successfully created.
     ///
@@ -321,7 +356,11 @@ extension Monitor {
     ///   - request: The `Request` instance that was intercepted.
     ///   - initialRequest: The original `URLRequest` before interception.
     ///   - request: The modified `URLRequest` after interception.
-    public func request(_ request: any Request, didIntercept initialRequest: URLRequest, to urlRequest: URLRequest) {}
+    public func request(
+        _ request: any Request,
+        didIntercept initialRequest: URLRequest,
+        to urlRequest: URLRequest
+    ) {}
 
     /// Called when a task is resumed.
     ///
@@ -351,6 +390,8 @@ extension Monitor {
         error: NetworkingError?
     ) {}
 
+    // MARK: - DataRequest Monitoring
+
     /// Called when a `DataRequest` parses a response with a specified value type.
     ///
     /// - Parameters:
@@ -360,6 +401,37 @@ extension Monitor {
         _ request: any DataRequest,
         didParseResponse response: Response<Value, NetworkingError>
     ) {}
+
+    // MARK: - UploadRequest Monitoring
+
+    /// Event called when an `UploadRequest` creates its `Uploadable` value, indicating the type of upload it represents.
+    ///
+    /// - Parameters:
+    ///   - request: The `UploadRequest` instance that created the uploadable.
+    ///   - uploadable: The `UploadRequest.Uploadable` value that was successfully created, representing the content to be uploaded.
+    public func request(
+        _ request: any UploadRequest,
+        didCreateUploadable uploadable: HTTPURLUploadRequest.Uploadable
+    ) {}
+
+    /// Event called when an `UploadRequest` failed to create its `Uploadable` value due to an error.
+    ///
+    /// - Parameters:
+    ///   - request: The `UploadRequest` instance that attempted to create the uploadable.
+    ///   - error: The `NetworkingError` describing the reason for the failure.
+    public func request(
+        _ request: any UploadRequest,
+        didFailToCreateUploadableWithError error: NetworkingError
+    ) {}
+
+    /// Notifies that the given request failed to create a URLSession task.
+    ///
+    /// - Parameters:
+    ///   - request: The request that failed to create a task.
+    ///   - error: The error describing why the task could not be created.
+    func request(_ request: any Request, didFailToCreateTaskWithError error: NetworkingError) {}
+
+    // MARK: - URLSession Delegate Methods
 
     /// Called when data is received from the server.
     ///
@@ -375,7 +447,11 @@ extension Monitor {
     ///   - session: The `URLSession` receiving the response.
     ///   - dataTask: The `URLSessionDataTask` that received the response.
     ///   - response: The `URLResponse` from the server.
-    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse) {}
+    public func urlSession(
+        _ session: URLSession,
+        dataTask: URLSessionDataTask,
+        didReceive response: URLResponse
+    ) {}
 
     /// Called when the URLSession becomes invalid due to an error.
     ///

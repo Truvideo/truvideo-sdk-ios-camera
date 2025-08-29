@@ -39,6 +39,28 @@ public protocol RequestBuilder {
     func build() throws -> URLRequest
 }
 
+/// A type that can produce an `UploadRequest.Uploadable` value.
+public protocol UploadableBuilder {
+    /// Produces an `UploadRequest.Uploadable` value from the instance.
+    ///
+    /// - Returns: The `UploadRequest.Uploadable`.
+    /// - Throws:  Any `Error` produced during creation.
+    func createUploadable() throws -> HTTPURLUploadRequest.Uploadable
+}
+
+extension HTTPURLUploadRequest.Uploadable: UploadableBuilder {
+    /// Produces an `UploadRequest.Uploadable` value from the instance.
+    ///
+    /// - Returns: The `UploadRequest.Uploadable`.
+    /// - Throws:  Any `Error` produced during creation.
+    public func createUploadable() throws -> HTTPURLUploadRequest.Uploadable {
+        self
+    }
+}
+
+/// A type that can be converted to an upload, whether from an `UploadRequest.Uploadable` or `RequestBuilder`.
+public protocol UploadRequestBuilder: UploadableBuilder & RequestBuilder {}
+
 /// A protocol that defines a network session capable of creating and managing HTTP requests.
 ///
 /// Types conforming to `Session` provide functionality for initiating, managing,
@@ -52,6 +74,8 @@ public protocol Session: Sendable {
     ///
     /// This method asynchronously iterates through all currently active requests and cancels them.
     func cancelAllRequests()
+    
+    // MARK: - DataRequest
 
     /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
     ///
@@ -90,6 +114,51 @@ public protocol Session: Sendable {
         middleware: RequestMiddleware?,
         cachePolicy: URLCachePolicy
     ) -> any DataRequest
+    
+    // MARK: - UploadRequest
+    
+    /// Creates and initiates an `UploadRequest` for uploading `Data` to the specified endpoint.
+    ///
+    /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
+    /// request modifications. The upload is then managed by the returned `UploadRequest`, which supports
+    /// additional features like interceptors and custom file management.
+    ///
+    /// - Parameters:
+    ///   - data: The `Data` to upload.
+    ///   - url: A `URLConvertible` value representing the endpoint for the request.
+    ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
+    ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is executed.
+    ///
+    /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
+    func upload(
+        _ data: Data,
+        to url: URLConvertible,
+        method: HTTPMethod,
+        headers: HTTPHeaders?,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest
+
+    /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
+    ///
+    /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
+    /// with a `RequestBuilder`, which is responsible for constructing the base `URLRequest`.
+    /// Optionally, a `RequestMiddleware` can be applied to intercept or modify the request before
+    /// it is executed (e.g., to inject headers, perform logging, or apply custom pre-processing logic).
+    ///
+    /// - Parameters:
+    ///   - data: The `Data` payload to be uploaded.
+    ///   - requestBuilder: A `RequestBuilder` instance responsible for generating the `URLRequest`
+    ///     configuration (e.g., URL, HTTP method, headers).
+    ///   - middleware: An optional `RequestMiddleware` that can modify or inspect the request before
+    ///     execution. Defaults to `nil`.
+    ///
+    /// - Returns: An `UploadRequest` configured with the given `Data` and request parameters.
+    func upload(
+        _ data: Data,
+        with requestBuilder: RequestBuilder,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest
 }
 
 extension Session {
@@ -143,5 +212,47 @@ extension Session {
     ) -> any DataRequest {
 
         request(requestBuilder, middleware: middleware, cachePolicy: cachePolicy)
+    }
+    
+    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
+    ///
+    /// - Parameters:
+    ///   - url: A `URLConvertible` instance representing the endpoint for the request.
+    ///   - method: The HTTP method for the request (default is `.get`).
+    ///   - headers: Additional HTTP headers to be included in the request (default is `nil`).
+    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is executed (default is `nil`).
+    /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
+    public func upload(
+        _ data: Data,
+        to url: URLConvertible,
+        method: HTTPMethod = .post,
+        headers: HTTPHeaders? = nil,
+        middleware: RequestMiddleware? = nil
+    ) -> any UploadRequest {
+        
+        upload(data, to: url, method: method, headers: headers, middleware: middleware)
+    }
+    
+    /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
+    ///
+    /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
+    /// with a `RequestBuilder`, which is responsible for constructing the base `URLRequest`.
+    /// Optionally, a `RequestMiddleware` can be applied to intercept or modify the request before
+    /// it is executed (e.g., to inject headers, perform logging, or apply custom pre-processing logic).
+    ///
+    /// - Parameters:
+    ///   - data: The `Data` payload to be uploaded.
+    ///   - requestBuilder: A `RequestBuilder` instance responsible for generating the `URLRequest`
+    ///     configuration (e.g., URL, HTTP method, headers).
+    ///   - middleware: An optional `RequestMiddleware` that can modify or inspect the request before
+    ///     execution. Defaults to `nil`.
+    /// - Returns: An `UploadRequest` configured with the given `Data` and request parameters.
+    public func upload(
+        _ data: Data,
+        with requestBuilder: RequestBuilder,
+        middleware: RequestMiddleware? = nil
+    ) -> any UploadRequest {
+        
+        upload(data, with: requestBuilder, middleware: middleware)
     }
 }

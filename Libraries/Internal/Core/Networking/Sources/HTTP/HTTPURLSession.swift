@@ -129,6 +129,105 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             return try encoder.encode(parameters, into: request)
         }
     }
+    
+    /// A builder responsible for constructing an `UploadRequest` with configurable
+    /// parameters, method, headers, body data, and encoding.
+    ///
+    /// Unlike a `DataRequest`, an `UploadRequest` requires an uploadable body
+    /// (such as `Data`, a file `URL`, or an `InputStream`) in addition to the
+    /// request configuration.
+    ///
+    /// ### Example Usage:
+    /// ```swift
+    /// let builder = ParameterlessRequestBuilder(
+    ///     url: "https://api.example.com/upload",
+    ///     method: .post,
+    ///     parameters: ["name": "file"],
+    ///     encoder: JSONParameterEncoder(),
+    ///     headers: HTTPHeaders(["Authorization": "Bearer token"]),
+    ///     uploadable: .file(URL(fileURLWithPath: "/tmp/video.mp4"), shouldRemove: false)
+    /// )
+    /// ```
+    struct ParameterlessRequestBuilder: RequestBuilder {
+        /// The target URL for the HTTP request.
+        let url: URLConvertible
+
+        /// The HTTP method to be used for the request (usually `POST` or `PUT`).
+        let method: HTTPMethod
+
+        /// Additional HTTP headers to include in the request.
+        let headers: HTTPHeaders?
+
+        // MARK: - RequestBuilder
+
+        /// Builds and returns a configured `URLRequest` and the associated `Uploadable`.
+        ///
+        /// - Throws: An error if the request cannot be constructed.
+        /// - Returns: A tuple containing the `URLRequest` and the `Uploadable`.
+        func build() throws -> URLRequest {
+            let request = try URLRequest(url: url, method: method, headers: headers)
+
+            return request
+        }
+    }
+    
+    /// A composite builder for constructing both an `UploadRequest.Uploadable` and its associated `URLRequest`.
+    ///
+    /// `Upload` conforms to `UploadBuilder`, combining the responsibilities of
+    /// `UploadableBuilder` and `RequestBuilder`. This allows you to represent an upload
+    /// operation as a single, reusable unit that knows how to:
+    /// - Provide the data to upload.
+    /// - Generate the `URLRequest` describing the upload.
+    ///
+    /// This abstraction is useful in networking layers that handle uploads by decoupling
+    /// the request configuration from the actual uploadable content.
+    ///
+    /// ### Example Usage:
+    /// ```swift
+    /// let upload = Upload(
+    ///     request: URLRequestBuilder(
+    ///         url: "https://api.example.com/upload",
+    ///         method: .post,
+    ///         headers: ["Authorization": "Bearer token"]
+    ///     ),
+    ///     uploadable: DataUploadBuilder(data: myData)
+    /// )
+    /// ```
+    struct SimpleUploadRequestBuilder: UploadRequestBuilder {
+        /// The component responsible for constructing the underlying `URLRequest`.
+        let request: any RequestBuilder
+        
+        /// The component responsible for constructing the uploadable payload.
+        ///
+        /// Represents the origin of the content to be uploaded (e.g., raw `Data`, a file on disk,
+        /// or an input stream) and defines how it is transformed into an `UploadRequest.Uploadable`
+        /// suitable for the upload request.
+        let uploadable: any UploadableBuilder
+        
+        // MARK: - UploadableBuilder
+        
+        /// Produces an `UploadRequest.Uploadable` value from the instance.
+        ///
+        /// - Returns: The `UploadRequest.Uploadable`.
+        /// - Throws:  Any `Error` produced during creation.
+        func createUploadable() throws -> HTTPURLUploadRequest.Uploadable {
+            try uploadable.createUploadable()
+        }
+        
+        // MARK: - RequestBuilder
+        
+        /// Builds and returns a configured `URLRequest` instance.
+        ///
+        /// This method should be implemented by conforming types to provide the necessary logic for constructing
+        /// a valid HTTP request. The request should include all necessary details such as the URL, HTTP method,
+        /// headers, query parameters, and body content.
+        ///
+        /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components, serialization issues, or missing required fields.
+        /// - Returns: A fully configured `URLRequest` instance ready for execution.
+        func build() throws -> URLRequest {
+            try request.build()
+        }
+    }
 
     // MARK: - Initializer
 
@@ -220,6 +319,8 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             self.activeRequests.forEach { $0.cancel() }
         }
     }
+    
+    // MARK: - DataRequest
 
     /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
     ///
@@ -284,6 +385,57 @@ open class HTTPURLSession: @unchecked Sendable, Session {
 
         return dataRequest
     }
+    
+    // MARK: - UploadRequest
+    
+    /// Creates and initiates an `UploadRequest` for uploading `Data` to the specified endpoint.
+    ///
+    /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
+    /// request modifications. The upload is then managed by the returned `UploadRequest`, which supports
+    /// additional features like interceptors and custom file management.
+    ///
+    /// - Parameters:
+    ///   - data: The `Data` to upload.
+    ///   - url: A `URLConvertible` value representing the endpoint for the request.
+    ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
+    ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is executed.
+    /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
+    open func upload(
+        _ data: Data,
+        to url: any URLConvertible,
+        method: HTTPMethod,
+        headers: HTTPHeaders?,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest {
+        
+        let requestBuilder = ParameterlessRequestBuilder(url: url, method: method, headers: headers)
+        
+        return upload(data, with: requestBuilder, middleware: middleware)
+    }
+    
+    /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
+    ///
+    /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
+    /// with a `RequestBuilder`, which is responsible for constructing the base `URLRequest`.
+    /// Optionally, a `RequestMiddleware` can be applied to intercept or modify the request before
+    /// it is executed (e.g., to inject headers, perform logging, or apply custom pre-processing logic).
+    ///
+    /// - Parameters:
+    ///   - data: The `Data` payload to be uploaded.
+    ///   - requestBuilder: A `RequestBuilder` instance responsible for generating the `URLRequest`
+    ///     configuration (e.g., URL, HTTP method, headers).
+    ///   - middleware: An optional `RequestMiddleware` that can modify or inspect the request before
+    ///     execution. Defaults to `nil`.
+    /// - Returns: An `UploadRequest` configured with the given `Data` and request parameters.
+    open func upload(
+        _ data: Data,
+        with requestBuilder: any RequestBuilder,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest {
+    
+        upload(.data(data), with: requestBuilder, middleware: middleware)
+    }
 
     // MARK: - Private methods
 
@@ -346,9 +498,14 @@ open class HTTPURLSession: @unchecked Sendable, Session {
         request.didCreate(urlRequest: urlRequest)
 
         if request.state != .cancelled {
-            let task = session.dataTask(with: urlRequest)
-
-            request.didCreate(task: task)
+            do {
+                let task = try request.task(for: urlRequest, using: session)
+                request.didCreate(task: task)
+            } catch {
+                request.didFailToCreateTask(with: error)
+                
+                return
+            }
         }
     }
 
@@ -374,6 +531,9 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             switch request {
             case let dataRequest as HTTPURLDataRequest:
                 self.performDataRequest(dataRequest)
+                
+            case let uploadRequest as HTTPURLUploadRequest:
+                self.performUploadRequest(uploadRequest)
 
             default:
                 fatalError("Unsupported request type: \(type(of: request))")
@@ -383,6 +543,30 @@ open class HTTPURLSession: @unchecked Sendable, Session {
 
     private func performDataRequest(_ request: HTTPURLDataRequest) {
         dispatchPrecondition(condition: .onQueue(queue))
+
+        configure(request, requestBuilder: request.requestBuilder)
+    }
+    
+    private func performUploadRequest(_ request: HTTPURLUploadRequest) {
+        dispatchPrecondition(condition: .onQueue(queue))
+        
+        let uploadable: HTTPURLUploadRequest.Uploadable
+        
+        do {
+            uploadable = try request.uploadableBuilder.createUploadable()
+            request.didCreateUploadable(uploadable)
+        } catch {
+            let error =
+                error as? NetworkingError
+                ?? NetworkingError(
+                    kind: .createUploadableFailed,
+                    underlyingError: error
+                )
+            
+            request.didFailToCreateUploadable(with: error)
+            
+            return
+        }
 
         configure(request, requestBuilder: request.requestBuilder)
     }
@@ -400,6 +584,35 @@ open class HTTPURLSession: @unchecked Sendable, Session {
         }
 
         return Middleware(interceptors: [], retriers: [requestMiddleware, sessionMiddleware])
+    }
+    
+    private func upload(
+        _ uploadable: HTTPURLUploadRequest.Uploadable,
+        with requestBuilder: any RequestBuilder,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest {
+        
+        let uploadBuilder = SimpleUploadRequestBuilder(request: requestBuilder, uploadable: uploadable)
+        
+        return upload(uploadBuilder, middleware: middleware)
+    }
+    
+    private func upload(
+        _ uploadBuilder: any UploadRequestBuilder,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest {
+        
+        let uploadRequest = HTTPURLUploadRequest(
+            uploadBuilder: uploadBuilder,
+            delegate: self,
+            middleware: middleware,
+            monitor: monitor,
+            queue: queue
+        )
+        
+        perform(uploadRequest)
+        
+        return uploadRequest
     }
 }
 
