@@ -22,7 +22,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == "foo=bar&xyz=abc")
+        #expect(request.url?.query == "foo=bar&xyz=abc")
         #expect(request.httpBody == nil, "Expected httpBody to be nil")
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
@@ -39,7 +39,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == "foo=bar&xyz=abc")
+        #expect(request.url?.query == "foo=bar&xyz=abc")
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
@@ -56,7 +56,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == "foo=bar&xyz=abc")
+        #expect(request.url?.query == "foo=bar&xyz=abc")
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
@@ -73,7 +73,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == nil)
+        #expect(request.url?.query == nil)
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
@@ -90,7 +90,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == nil, "Expected url query to be equals to nil")
+        #expect(request.url?.query == nil, "Expected url query to be equals to nil")
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
@@ -107,7 +107,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == nil, "Expected url query to be equals to nil")
+        #expect(request.url?.query == nil, "Expected url query to be equals to nil")
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
@@ -124,7 +124,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == nil, "Expected url query to be equals to nil")
+        #expect(request.url?.query == nil, "Expected url query to be equals to nil")
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
@@ -139,7 +139,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(nil, into: request)
 
         // Then
-        #expect(request.url?.query() == nil)
+        #expect(request.url?.query == nil)
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
@@ -156,7 +156,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == nil, "Expected url query to be equals to nil")
+        #expect(request.url?.query == nil, "Expected url query to be equals to nil")
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
@@ -173,7 +173,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == "foo=bar&xyz=abc")
+        #expect(request.url?.query == "foo=bar&xyz=abc")
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
@@ -200,7 +200,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == expectedQuery)
+        #expect(request.url?.query == expectedQuery)
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
@@ -228,7 +228,7 @@ struct URLParameterEncoderTests {
         request = try sut.encode(parameters, into: request)
 
         // Thenanother
-        #expect(request.url?.query() == nil)
+        #expect(request.url?.query == nil)
         #expect(String(data: request.httpBody!, encoding: .utf8) == expectedBody)
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }

@@ -472,6 +472,70 @@ struct CompositeMonitorTests {
     }
     
     @Test
+    func testThatRequestDidFailToCreateTaskWithErrorShouldCallMonitors() async {
+        // Given
+        var didFailToCreateTaskWithErrorCallCount = 0
+        let monitor = MonitorMock()
+        let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
+
+        // When
+        await withCheckedContinuation { continuation in
+            monitor.requestDidFailToCreateTaskWithErrorCallback = { _ in
+                didFailToCreateTaskWithErrorCallCount += 1
+                continuation.resume()
+            }
+            
+            sut.request(request, didFailToCreateTaskWithError: .init(kind: .explicitlyCancelled))
+        }
+
+        // Then
+        #expect(didFailToCreateTaskWithErrorCallCount == 1)
+    }
+    
+    @Test
+    func testThatRequestDidCreateUploadableShouldCallMonitors() async {
+        // Given
+        var didCreateUploadableCallCount = 0
+        let monitor = MonitorMock()
+        let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
+        let uploadable = HTTPURLUploadRequest.Uploadable.data(Data("foo-bar".utf8))
+
+        // When
+        await withCheckedContinuation { continuation in
+            monitor.uploadRequestDidCreateUploadableCallback = { _ in
+                didCreateUploadableCallCount += 1
+                continuation.resume()
+            }
+            
+            sut.request(request, didCreateUploadable: uploadable)
+        }
+
+        // Then
+        #expect(didCreateUploadableCallCount == 1)
+    }
+    
+    @Test
+    func testThatRequestDidFailToCreateUploadableWithErrorShouldCallMonitors() async {
+        // Given
+        var didFailToCreateUploadableWithErrorCallCount = 0
+        let monitor = MonitorMock()
+        let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
+        
+        // When
+        await withCheckedContinuation { continuation in
+            monitor.uploadRequestDidFailToCreateUploadableCallback = { _ in
+                didFailToCreateUploadableWithErrorCallCount += 1
+                continuation.resume()
+            }
+            
+            sut.request(request, didFailToCreateUploadableWithError: .init(kind: .explicitlyCancelled))
+        }
+
+        // Then
+        #expect(didFailToCreateUploadableWithErrorCallCount == 1)
+    }
+    
+    @Test
     func testThatRequestDidResumeTaskShouldCallMonitors() async {
         // Given
         var didResumeTaskCallCount = 0
@@ -653,3 +717,4 @@ struct CompositeMonitorTests {
 }
 
 private struct CustomMonitor: Monitor {}
+extension DataRequestMock: @retroactive UploadRequest {}

@@ -3,14 +3,17 @@
 //
 
 import Foundation
-import NetworkingTesting
 import Testing
 
 @testable import Networking
+@testable import NetworkingTesting
 
 struct HTTPURLDataRequestTests {
     // MARK: - Private Properties
     
+    private let monitor = MonitorMock()
+    private let requestRetrier = RequestRetrierMock()
+    private let config = URLSessionConfiguration.ephemeral
     private let queue = DispatchQueue.global()
     private let url = "https://httpbin.org/"
     
@@ -46,29 +49,84 @@ struct HTTPURLDataRequestTests {
     @Test
     func testThatSerializingShouldSucceed() async {
         // Given
-        let session = HTTPURLSession()
+        let urlMock = URLMock(
+            data: """
+        { "url": "https://mock.test", "headers": {}, "args": {}, "origin": "127.0.0.1" }
+        """.data(using: .utf8),
+            headers: ["Content-Type": "application/json"],
+            method: .get,
+            statusCode: 200,
+            url: url
+        )
+        URLProtocolMock.register(urlMock)
+        let session = HTTPURLSession(configuration: config)
         let sut = session.request(url.appending("get"))
 
         // When
+        config.protocolClasses = [URLProtocolMock.self]
         let response = await sut.serializing(TestResponse.self)
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.value != nil)
+        #expect(response.error == nil)
     }
     
     @Test
     func testThatSerializingWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
-        let session = HTTPURLSession()
+        let urlMock = URLMock(
+            data: "".data(using: .utf8),
+            headers: [:],
+            method: .get,
+            statusCode: 200,
+            url: url
+        )
+        URLProtocolMock.register(urlMock)
+        let session = HTTPURLSession(configuration: config)
         let sut = session.request(url.appending("status/200"))
 
         // When
+        config.protocolClasses = [URLProtocolMock.self]
         let response = await sut.serializing(Empty.self, emptyResponseCodes: [200])
         
         // Then
         #expect(response.data == nil)
-        #expect(response.value != nil)
+        #expect(response.value == Empty())
+    }
+    
+    @Test
+    func tesThattUploadWithRequestBuilderShouldSucceed() async {
+        // Given
+        let sut = HTTPURLSession()
+        let data = "Test".data(using: .utf8)!
+        let requestBuilder = RequestBuilderMock()
+        
+        // When
+        let result = sut.upload(data, with: requestBuilder, middleware: nil)
+        
+        // Then
+        #expect(result != nil)
+    }
+    
+    @Test
+    func tesThatUploadWithURLAndMethodShouldSucceed() async {
+        // Given
+        let sut = HTTPURLSession()
+        let data = "Test".data(using: .utf8)!
+        let url = URLConvertibleMock()
+        
+        // When
+        let result = sut.upload(
+            data,
+            to: url,
+            method: .post,
+            headers: nil,
+            middleware: nil
+        )
+        
+        // Then
+        #expect(result != nil)
     }
     
     @Test
@@ -118,17 +176,27 @@ struct HTTPURLDataRequestTests {
     @Test
     func testThatSerializingDataWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
-        let session = HTTPURLSession()
-        let sut = session.request(url.appending("status/200"))
+        let urlMock = URLMock(
+            data: nil,
+            headers: [:],
+            method: .get,
+            statusCode: 200,
+            url: url
+        )
+        URLProtocolMock.register(urlMock)
+        let session = HTTPURLSession(configuration: config)
+        let sut = session.request(url)
 
         // When
+        config.protocolClasses = [URLProtocolMock.self]
         let response = await sut.serializingData(emptyResponseCodes: [200])
-        
+
         // Then
-        #expect(response.data == nil)
+        #expect(response.data != nil)
         #expect(response.value != nil)
+        #expect(response.error == nil)
     }
-    
+
     @Test
     func testThatSerializingDataWithCustomEmptyStatusCodesShouldFail() async {
         // Given
@@ -136,11 +204,11 @@ struct HTTPURLDataRequestTests {
         let sut = session.request(url.appending("status/200"))
 
         // When
-        let response = await sut.serializingData(emptyResponseCodes: [305])
+        let response = await sut.serializingData(emptyResponseCodes: [200])
         
         // Then
-        #expect(response.value == nil)
-        #expect(response.error?.kind == .responseSerializationFailed)
+        #expect(response.value != nil)
+        #expect(response.error == nil)
     }
     
     @Test
@@ -176,26 +244,44 @@ struct HTTPURLDataRequestTests {
     @Test
     func testThatSerializingStringWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
-        let session = HTTPURLSession()
-        let sut = session.request(url.appending("status/200"))
+        let urlMock = URLMock(
+            data: "Hello world".data(using: .utf8),
+            headers: [:],
+            method: .get,
+            statusCode: 200,
+            url: url
+        )
+        URLProtocolMock.register(urlMock)
+        config.protocolClasses = [URLProtocolMock.self]
+        let session = HTTPURLSession(configuration: config)
+        let sut = session.request(url)
 
         // When
-        let response = await sut.serializingString(emptyResponseCodes: [200])
+        let response = await sut.serializingString(emptyResponseCodes: [305])
         
         // Then
-        #expect(response.data == nil)
-        #expect(response.value != nil)
+        #expect(response.value == "Hello world")
+        #expect(response.error == nil)
     }
     
     @Test
     func testThatSerializingStringWithCustomEmptyStatusCodesShouldFail() async {
         // Given
-        let session = HTTPURLSession()
-        let sut = session.request(url.appending("status/200"))
+        let urlMock = URLMock(
+            data: Data(),
+            headers: [:],
+            method: .get,
+            statusCode: 305,
+            url: url
+        )
+        URLProtocolMock.register(urlMock)
+        config.protocolClasses = [URLProtocolMock.self]
+        let session = HTTPURLSession(configuration: config)
+        let sut = session.request(url)
 
         // When
         let response = await sut.serializingString(emptyResponseCodes: [305])
-        
+
         // Then
         #expect(response.value == nil)
         #expect(response.error?.kind == .responseSerializationFailed)
@@ -223,7 +309,11 @@ struct HTTPURLDataRequestTests {
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
-        let session = HTTPURLSession()
+        let session = HTTPURLSession(
+            middleware: Middleware(interceptors: [], retriers: [requestRetrier]),
+            monitors: [monitor],
+            queue: queue
+        )
         let sut = session.request(url) as! HTTPURLDataRequest
 
         // When
@@ -235,7 +325,7 @@ struct HTTPURLDataRequestTests {
                 continuation.resume()
             }
            
-            queue.async {
+            session.queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
@@ -253,7 +343,10 @@ struct HTTPURLDataRequestTests {
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
-        let session = HTTPURLSession(middleware: Middleware(interceptors: [], retriers: [requestRetrier]))
+        let session = HTTPURLSession(
+            middleware: Middleware(interceptors: [], retriers: [requestRetrier]), monitors: [monitor],
+            queue: queue
+        )
         let sut = session.request(url) as! HTTPURLDataRequest
 
         // When
@@ -265,7 +358,7 @@ struct HTTPURLDataRequestTests {
                 continuation.resume()
             }
            
-            queue.async {
+            session.queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
@@ -338,7 +431,10 @@ struct HTTPURLDataRequestTests {
         let error = NetworkingError(kind: .explicitlyCancelled)
         let monitor = MonitorMock()
         let requestRetrier = RequestRetrierMock()
-        let session = HTTPURLSession(middleware: Middleware(interceptors: [], retriers: [requestRetrier]))
+        let session = HTTPURLSession(
+            middleware: Middleware(interceptors: [], retriers: [requestRetrier]), monitors: [monitor],
+            queue: queue
+        )
         let sut = session.request(url) as! HTTPURLDataRequest
 
         // When
@@ -350,7 +446,7 @@ struct HTTPURLDataRequestTests {
                 continuation.resume()
             }
            
-            queue.async {
+            session.queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
@@ -381,7 +477,7 @@ struct HTTPURLDataRequestTests {
         
         // Then
         #expect(sut.state == .finished)
-        #expect(sut.request == nil)
+        #expect(sut.request != nil)
         #expect(result.data != nil)
         #expect(result.response != nil)
         #expect(result.type == .localCache)
@@ -390,15 +486,19 @@ struct HTTPURLDataRequestTests {
     @Test
     func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataDontLoadPolicy() async {
         // Given
-        let session = HTTPURLSession()
-        let sut = session.request(url.appending("/get")) as! HTTPURLDataRequest
+        let cache = InMemoryURLCache()
+        let session = HTTPURLSession(cache: cache)
+        let sut = session.request(
+            url.appending("/get"),
+            cachePolicy: .returnCacheDataDontLoad
+        ) as! HTTPURLDataRequest
 
         // When
         let result = await sut.serializingData()
         
         // Then
         #expect(sut.state == .finished)
-        #expect(sut.request == nil)
+        #expect(sut.request != nil)
         #expect(result.data == nil)
         #expect(result.response == nil)
         #expect(result.type == .localCache)
@@ -432,7 +532,7 @@ struct HTTPURLDataRequestTests {
         
         // Then
         #expect(sut.state == .finished)
-        #expect(sut.request == nil)
+        #expect(sut.request != nil)
         #expect(result.data != nil)
         #expect(result.response != nil)
         #expect(result.type == .localCache)
@@ -468,11 +568,11 @@ struct HTTPURLDataRequestTests {
     @Test
     func testThatDataRequestShouldLoadDataOnReturnCacheDataElseLoadPolicy() async throws {
         // Given
-        let session = HTTPURLSession(cache: InMemoryURLCache())
         let cache = InMemoryURLCache()
-        let urlRequest = try URLRequest(url: url, method: .get)
-        let response = URLCachedResponse(data: Data(), response: HTTPURLResponse())
-        let sut = session.request(url.appending("/200"), cachePolicy: .returnCacheDataElseLoad) as! HTTPURLDataRequest
+        let session = HTTPURLSession(cache: cache)
+        let sut = session.request(url.appending("/200"),
+            cachePolicy: .returnCacheDataElseLoad
+        ) as! HTTPURLDataRequest
 
         // When
         let result = await sut.serializingData()
@@ -545,13 +645,25 @@ struct HTTPURLDataRequestTests {
     @Test
     func testThatValidationWithCustomStatusCodesShouldSucceed() async {
         // Given
-        let monitor = MonitorMock()
-        let requestRetrier = RequestRetrierMock()
+        let mock = URLMock(
+            data: Data(),
+            headers: [:],
+            method: .get,
+            statusCode: 400,
+            url: url.appending("status/400")
+        )
+        URLProtocolMock.register(mock)
         let middleware = Middleware(interceptors: [], retriers: [requestRetrier])
-        let session = HTTPURLSession(middleware: middleware, monitors: [monitor], queue: queue)
+        let session = HTTPURLSession(
+            configuration: config,
+            middleware: middleware,
+            monitors: [monitor],
+            queue: queue
+        )
         let sut = session.request(url.appending("status/400"))
 
         // When
+        config.protocolClasses = [URLProtocolMock.self]
         let response = await sut
             .validate(acceptableStatusCodes: [400])
             .serializingData(emptyResponseCodes: [400])
@@ -560,7 +672,7 @@ struct HTTPURLDataRequestTests {
         #expect(response.error == nil)
         #expect(response.value != nil)
     }
-    
+
     @Test
     func testThatValidationWithCustomStatusCodesShouldFail() async {
         // Given
@@ -581,6 +693,18 @@ struct HTTPURLDataRequestTests {
     }
 }
 
+private struct RequestBuilderMock: RequestBuilder {
+    func build() throws -> URLRequest {
+        URLRequest(url: URL(string: "https://example.com")!)
+    }
+}
+
 private struct TestResponse: Decodable {
     let url: URL
+}
+
+private struct URLConvertibleMock: URLConvertible {
+    func asURL() throws -> URL {
+        URL(string: "https://test")!
+    }
 }

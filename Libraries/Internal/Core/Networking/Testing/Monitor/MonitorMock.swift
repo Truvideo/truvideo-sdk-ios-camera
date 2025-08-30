@@ -299,11 +299,11 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
         requestDidFailToCreateURLRequestCallback?(error)
     }
 
-    /// <#Description#>
+    /// Called when a `URLSessionTask` could not be created for the given request.
     ///
     /// - Parameters:
-    ///   - request: <#request description#>
-    ///   - error: <#error description#>
+    ///   - request: The `Request` instance for which task creation failed.
+    ///   - error: The `NetworkingError` that describes the reason for the failure.
     public func request(_ request: any Request, didFailToCreateTaskWithError error: NetworkingError) {
         didFailToCreateTaskWithErrorCallCount += 1
         requestDidFailToCreateTaskWithErrorCallback?(error)

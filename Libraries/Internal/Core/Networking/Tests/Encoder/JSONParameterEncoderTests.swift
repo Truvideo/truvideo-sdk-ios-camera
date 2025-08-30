@@ -24,7 +24,7 @@ struct JSONParameterEncoderTests {
         let request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == nil)
+        #expect(request.url?.query == nil)
         #expect(request.httpBody != nil)
         #expect(request.allHTTPHeaders["Content-Type"] == "application/json")
     }
@@ -40,7 +40,7 @@ struct JSONParameterEncoderTests {
         let request = try sut.encode(parameters, into: request)
 
         // Then
-        #expect(request.url?.query() == nil, "Expected url query to be nil")
+        #expect(request.url?.query == nil, "Expected url query to be nil")
         #expect(String(data: request.httpBody!, encoding: .utf8) == expectedJSONString)
         #expect(request.allHTTPHeaders["Content-Type"] == "application/json")
     }
@@ -54,7 +54,7 @@ struct JSONParameterEncoderTests {
         let request = try sut.encode(nil, into: request)
 
         // Then
-        #expect(request.url?.query() == nil)
+        #expect(request.url?.query == nil)
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }

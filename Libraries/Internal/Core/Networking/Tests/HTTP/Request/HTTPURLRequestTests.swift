@@ -63,7 +63,7 @@ struct HTTPURLRequestTests {
     func testThatDidCompleteShouldRunValidatorsAndSetError() async {
         // Given
         let error = NetworkingError(kind: .explicitlyCancelled)
-        let task = URLSession.shared.dataTask(with: request)        
+        let task = URLSession.shared.dataTask(with: request)
         let sut = HTTPURLRequest(delegate: nil, middleware: nil, monitor: nil, queue: queue)
 
         // When
@@ -306,7 +306,7 @@ struct HTTPURLRequestTests {
         // When
         sut.error = NetworkingError(kind: .explicitlyCancelled)
         sut.state = .cancelled
-        sut.appendResponseSerializer {}        
+        sut.appendResponseSerializer {}
         
         sut.reset()
         
@@ -458,17 +458,17 @@ struct HTTPURLRequestTests {
         // Given
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpAdditionalHeaders = ["foo1": "bar"]
-                
+        
         let session = HTTPURLSession(configuration: configuration)
         let sut = session.request(request.url!, headers: ["foo": "bar"])
-
+        
         // When
         _ = await sut.serializingData()
         
         // Then
         #expect(sut.debugDescription != "")
     }
-    
+
     @Test
     func testThatDebugDescriptionShouldNotBeAbleToCreateCURLDescription() async {
         // Given

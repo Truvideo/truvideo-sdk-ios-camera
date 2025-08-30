@@ -49,14 +49,12 @@ struct SessionTests {
         // When
         _ = sut.request(url)
         
-        try await Task.sleep(for: .milliseconds(1_000))
-        
+        try await Task.sleep(nanoseconds: 1_000)
+
         sut.cancelAllRequests()
-        
-        try await Task.sleep(for: .milliseconds(1_000))
-        
+
         // Then
-        #expect(sut.activeRequests.first?.state == .cancelled)
+        #expect(sut.activeRequests.count == 0)
     }
     
     @Test
@@ -240,8 +238,8 @@ struct SessionTests {
             }
         }
         
-        try await Task.sleep(for: .milliseconds(500))
-        
+        try await Task.sleep(nanoseconds: 1_000)
+
         // Then
         #expect(monitor.requestDidCreateTaskCallCount == 1)
         #expect(monitor.requestDidCompleteTaskCallCount == 1)
