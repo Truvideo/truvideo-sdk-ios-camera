@@ -429,7 +429,7 @@ extension Monitor {
     /// - Parameters:
     ///   - request: The request that failed to create a task.
     ///   - error: The error describing why the task could not be created.
-    func request(_ request: any Request, didFailToCreateTaskWithError error: NetworkingError) {}
+    public func request(_ request: any Request, didFailToCreateTaskWithError error: NetworkingError) {}
 
     // MARK: - URLSession Delegate Methods
 
