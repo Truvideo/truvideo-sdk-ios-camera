@@ -3,7 +3,6 @@
 //
 
 import Foundation
-import Utilities
 
 /// Errors that can occur when using the TruVideo SDK.
 ///
@@ -52,6 +51,31 @@ public struct TruVideoSdkError: LocalizedError {
         failureReason: "Unknown error type that could not be classified"
     )
 
+    // MARK: - Types
+
+    /// Protocol for establishing reasons with the domain of Errors.
+    public struct ErrorReason: Equatable, RawRepresentable {
+        // MARK: - Public Properties
+
+        /// The corresponding value of the raw type.
+        public let rawValue: String
+
+        // MARK: - Static Properties
+
+        /// Unknown error.
+        public static let unknown = ErrorReason(rawValue: "unknown")
+
+        // MARK: - Initializer
+
+        /// Creates a new instance with the specified raw value.
+        ///
+        /// If there is no value of the type that corresponds with the specified raw
+        /// value, this initializer returns `nil`.
+        public init(rawValue: String) {
+            self.rawValue = rawValue
+        }
+    }
+
     // MARK: - Initializer
 
     /// Creates a new SDK error with the specified error details.
@@ -71,9 +95,9 @@ public struct TruVideoSdkError: LocalizedError {
     }
 }
 
-extension ErrorReason {
+extension TruVideoSdkError.ErrorReason {
     // MARK: - Static Properties
 
     /// Configuration Required.
-    public static let configurationRequired = ErrorReason(rawValue: "configurationRequired")
+    public static let configurationRequired = TruVideoSdkError.ErrorReason(rawValue: "configurationRequired")
 }

@@ -65,7 +65,12 @@ public protocol AuthenticatableClient {
     ///    - signature: Cryptographic signature of the context data
     ///    - externalId: Optional identifier for multi-tenant scenarios
     /// - Throws: An error if the authentication process fails.
-    func authenticate(apiKey: String, context: Context, signature: String, externalId: String?) async throws
+    func authenticate(
+        apiKey: String,
+        context: Context,
+        signature: String,
+        externalId: String?
+    ) async throws(UtilityError)
 }
 
 /// Default implementation providing convenience methods for authentication.
@@ -91,11 +96,16 @@ extension AuthenticatableClient {
         context: Context,
         signature: String,
         externalId: String? = nil
-    ) async throws {
+    ) async throws(UtilityError) {
         try await authenticate(apiKey: apiKey, context: context, signature: signature, externalId: externalId)
     }
 }
 
+/// A client responsible for handling authentication with the TruVideo API.
+///
+/// `AuthenticationClient` provides a complete authentication solution for the TruVideo Api,
+/// managing the authentication flow, token storage, and session management. It conforms to
+/// `AuthenticatableClient` to provide a standardized interface for authentication operations.
 public final class AuthenticationClient: AuthenticatableClient {
     // MARK: - Dependencies
 
@@ -157,7 +167,12 @@ public final class AuthenticationClient: AuthenticatableClient {
     ///    - signature: Cryptographic signature of the context data
     ///    - externalId: Optional identifier for multi-tenant scenarios
     /// - Throws: An error if the authentication process fails.
-    public func authenticate(apiKey: String, context: Context, signature: String, externalId: String?) async throws {
+    public func authenticate(
+        apiKey: String,
+        context: Context,
+        signature: String,
+        externalId: String?
+    ) async throws(UtilityError) {
         do {
             var headers: HTTPHeaders = [
                 "x-authentication-api-key": apiKey,

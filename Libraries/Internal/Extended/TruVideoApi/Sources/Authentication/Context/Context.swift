@@ -12,10 +12,6 @@ import Utilities
 /// `Context` provides a standardized way to capture device and system information that is
 /// used during authentication processes and telemetry reporting. This information helps
 /// identify the client device and provides context for server-side processing.
-///
-/// - Note: The context is automatically populated with current device information.
-/// - Important: This information is used for authentication and should be accurate.
-/// - Warning: Do not modify the context values as they are used for security purposes.
 public struct Context: Codable, Sendable {
     /// The device manufacturer brand.
     ///
@@ -51,12 +47,19 @@ public struct Context: Codable, Sendable {
     ///
     /// This initializer automatically populates all properties with current
     /// device information, system details, and timestamp.
-    public init() {
-        self.brand = "Apple"
-        self.model = UIDevice.current.modelIdentifier
-        self.os = UIDevice.current.systemName
-        self.osVersion = UIDevice.current.systemVersion
-        self.timestamp = Int(Date().timeIntervalSince1970)
+    ///
+    /// - Parameters:
+    ///    - brand: The device manufacturer brand.
+    ///    - model: The specific device model identifier.
+    ///    - os: The operating system name.
+    ///    - osVersion: The operating system version.
+    ///    - timestamp The Unix timestamp when the context was created.
+    public init(brand: String, model: String, os: String, osVersion: String, timestamp: Int) {
+        self.brand = brand
+        self.model = model
+        self.os = os
+        self.osVersion = osVersion
+        self.timestamp = timestamp
     }
 }
 // swiftlint:enable identifier_name

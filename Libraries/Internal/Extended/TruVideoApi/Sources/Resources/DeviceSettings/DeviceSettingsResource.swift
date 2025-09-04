@@ -26,7 +26,7 @@ public protocol DeviceSettingsResource: Sendable {
     ///
     /// - Returns: The device settings for the authenticated device
     /// - Throws: An error if the request fails or the user is not authenticated
-    func retrieve() async throws -> DeviceSetting
+    func retrieve() async throws(UtilityError) -> DeviceSetting
 }
 
 /// A concrete implementation of the `DeviceSettingsResource` protocol.
@@ -66,7 +66,7 @@ public struct DeviceSettingsResourceImpl: DeviceSettingsResource {
     ///
     /// - Returns: The device settings for the authenticated device
     /// - Throws: An error if the request fails or the user is not authenticated
-    public func retrieve() async throws -> DeviceSetting {
+    public func retrieve() async throws(UtilityError) -> DeviceSetting {
         guard let authToken = sessionManager.currentSession?.authToken else {
             throw UtilityError(
                 kind: .TruVideoApiErrorReason.unauthenticated,
@@ -86,7 +86,7 @@ public struct DeviceSettingsResourceImpl: DeviceSettingsResource {
             .result
             .get()
         } catch {
-            throw error.asUtilityError(or: .TruVideoApiErrorReason.deviceSettingsRetrivalFailed)
+            throw UtilityError(kind: .TruVideoApiErrorReason.deviceSettingsRetrivalFailed, underlyingError: error)
         }
     }
 }

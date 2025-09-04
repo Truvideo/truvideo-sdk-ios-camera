@@ -16,7 +16,7 @@ import Utilities
 ///
 /// Read value for key.
 /// let value = storage.read(key:  "mykey")
-public final class InMemoryStorage: Storage {
+public final class InMemoryStorage: Storage, @unchecked Sendable {
     // MARK: - Private Properties
 
     private let encoder = JSONEncoder()

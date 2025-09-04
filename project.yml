@@ -1,21 +1,21 @@
-name: TruVideoSDK
+name: TruvideoSDK
 options:
   createIntermediateGroups: true
   deploymentTarget:
-    iOS: "15.0" 
+    iOS: "15.0"
 
 packages:
-  AWSS3:
-    url: https://github.com/aws-amplify/aws-sdk-ios-spm
-    from: 2.41.0
   KeychainAccess:
     url: https://github.com/kishikawakatsumi/KeychainAccess
     from: 4.2.2
+  Kingfisher:
+    url: https://github.com/onevcat/Kingfisher
+    from: 8.5.0
 
 targets:
   # Foundation Core (Low-level infrastructure)
   DI:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Foundation/Core/DI/Sources
@@ -56,7 +56,7 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
 
   Registry:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Foundation/Core/Registry/Sources
@@ -97,7 +97,7 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
 
   Storage:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Foundation/Core/Storage/Sources
@@ -140,7 +140,7 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
 
   StorageTesting:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Foundation/Core/Storage/Testing
@@ -170,7 +170,7 @@ targets:
         basedOnDependencyAnalysis: false
 
   Utilities:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Foundation/Core/Utilities/Sources
@@ -212,7 +212,7 @@ targets:
 
   # Foundation Extended (Built on Core)
   CoreDataUtilities:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Foundation/Extended/CoreDataUtilities/Sources
@@ -256,7 +256,7 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
 
   Telemetry:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Foundation/Extended/Telemetry/Sources
@@ -270,7 +270,6 @@ targets:
       - target: Registry
       - target: Storage
       - target: Utilities
-      - package: AWSS3
     scheme:
       testTargets:
         - TelemetryTests
@@ -305,7 +304,7 @@ targets:
 
   # Internal Core (Business Logic Infrastructure)
   Networking:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Internal/Core/Networking/Sources
@@ -458,7 +457,7 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
 
   TruVideoApi:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Internal/Extended/TruVideoApi/Sources
@@ -505,9 +504,39 @@ targets:
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
+  TruVideoApiTesting:
+    type: framework
+    platform: iOS
+    sources:
+      - Libraries/Internal/Extended/TruVideoApi/Testing
+    info:
+      path: Libraries/Internal/Extended/TruVideoApi/Testing/Info.plist
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: TruVideoApiTesting
+    dependencies:
+      - target: TruVideoApi
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Extended/TruVideoApi/Testing" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+
   # External Core (Shared Dependencies)
   ExternalUtilities:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/External/Core/Utilities/Sources
@@ -534,62 +563,42 @@ targets:
         name: SwiftLint
         basedOnDependencyAnalysis: false
 
-  # External Extended 
-  TruvideoSdkCamera:
-    type: framework
-    platform: iOS
-    sources:
-      - Libraries/External/Extended/Camera/Sources
-    dependencies:      
-      - target: Utilities
-    info:
-      path: Libraries/External/Extended/Camera/Sources/Info.plist
-    settings:
-      DEFINES_MODULE: YES
-      PRODUCT_MODULE_NAME: TruvideoSdkCamera
-    postCompileScripts:
-      - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/External/Extended/Camera/Sources" -i
-          else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
-          fi
-        name: SwiftFormat
-        basedOnDependencyAnalysis: false
-      - script: |
-          if which swiftlint > /dev/null; then
-            swiftlint
-          else
-            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
-          fi
-        name: SwiftLint
-        basedOnDependencyAnalysis: false
-
-  TruvideoSdkCameraTests:
-    type: bundle.unit-test
-    platform: iOS
-    sources:
-      - Libraries/External/Extended/Camera/Tests
-    dependencies:      
-      - target: TruvideoSdkCamera
-    settings:
-      GENERATE_INFOPLIST_FILE: YES
-
-  # App
+  # External Extended Schemes
   TruvideoSdk:
     type: framework
     platform: iOS
     sources:
-      - Libraries/App/Sources
-    info:
-      path: Libraries/App/Sources/Info.plist
-    settings:
-      DEFINES_MODULE: YES
-      PRODUCT_MODULE_NAME: TruvideoSdk
+      - Libraries/External/Extended/App/Sources
     dependencies:
+      - target: DI
       - target: ExternalUtilities
+      - target: Networking
       - target: Registry
+      - target: Storage
+      - target: Telemetry
       - target: TruVideoApi
+      - target: Utilities
+      - package: KeychainAccess
+        product: KeychainAccess
+    info:
+      path: Libraries/External/Extended/App/Sources/Info.plist
+    settings:
+      BUILD_LIBRARY_FOR_DISTRIBUTION: YES
+      DEFINES_MODULE: YES
+      LD_RUNPATH_SEARCH_PATHS: $(inherited) @loader_path/Frameworks @executable_path/Frameworks
+      PRODUCT_BUNDLE_IDENTIFIER: com.truvideo.sdk
+      PRODUCT_MODULE_NAME: TruvideoSdk
+      OTHER_LDFLAGS:
+        - $(inherited)
+        - -ObjC
+        - -force_load $(BUILT_PRODUCTS_DIR)/libTruVideoApi.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libExternalUtilities.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libUtilities.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libRegistry.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libTelemetry.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libNetworking.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libStorage.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libDI.a
     scheme:
       testTargets:
         - TruvideoSdkTests
@@ -611,13 +620,95 @@ targets:
         name: SwiftLint
         basedOnDependencyAnalysis: false
 
+  TruvideoSdkTesting:
+    type: framework
+    platform: iOS
+    sources:
+      - Libraries/External/Extended/App/Testing
+    info:
+      path: Libraries/External/Extended/App/Testing/Info.plist
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: TruvideoSdkTesting
+    dependencies:
+      - target: TruvideoSdk
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/External/Extended/App/Testing" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+
   TruvideoSdkTests:
     type: bundle.unit-test
     platform: iOS
     sources:
-      - Libraries/App/Tests
+      - Libraries/External/Extended/App/Tests
     dependencies:
       - target: TruvideoSdk
+      - target: TruVideoApiTesting
+      - target: TruvideoSdkTesting
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+
+  # Plugins Schemes
+  TruvideoSdkCamera:
+    type: framework
+    platform: iOS
+    sources:
+      - Libraries/Plugins/Camera/Sources
+    dependencies:
+        - target: TruvideoSdk
+        - target: ExternalUtilities
+        - target: Utilities
+        - package: Kingfisher
+    info:
+      path: Libraries/Plugins/Camera/Sources/Info.plist
+    settings:
+      BUILD_LIBRARY_FOR_DISTRIBUTION: YES
+      DEFINES_MODULE: YES
+      LD_RUNPATH_SEARCH_PATHS: $(inherited) @loader_path/Frameworks @executable_path/Frameworks
+      PRODUCT_BUNDLE_IDENTIFIER: com.truvideo.sdk.camera
+      PRODUCT_MODULE_NAME: TruvideoSdkCamera
+      OTHER_LDFLAGS:
+        - $(inherited)
+        - -ObjC
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Plugins/Camera/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+
+  TruvideoSdkCameraTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Libraries/Plugins/Camera/Tests
+    dependencies:
+      - target: TruvideoSdkCamera
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
@@ -643,6 +734,13 @@ schemes:
         Storage: all
     test:
       targets: [StorageTests]
+  StorageTesting:
+    build:
+      targets:
+        DI: all        
+        Utilities: all
+        Storage: all
+        StorageTesting: all
   Utilities:
     build:
       targets:
@@ -697,7 +795,16 @@ schemes:
         Networking: all
         TruVideoApi: all
     test:
-      targets: [TruVideoApiTests] 
+      targets: [TruVideoApiTests]
+
+  TruVideoApiTesting:
+    build:
+      targets:
+        DI: all        
+        Utilities: all
+        Networking: all
+        TruVideoApi: all
+        TruVideoApiTesting: all
 
   CloudStorage:
     build:
@@ -715,20 +822,18 @@ schemes:
         Utilities: all
 
   # External Extended Schemes
+  TruvideoSdk:
+    build:
+      targets:
+        TruvideoSdk: all
+
+    test:
+      targets: [TruvideoSdkTests]
+
+  # Plugins Schemes
   TruvideoSdkCamera:
     build:
       targets:
         TruvideoSdkCamera: all
     test:
       targets: [TruvideoSdkCameraTests]
-
-  # App
-  TruvideoSdk:
-    build:
-      targets:
-        ExternalUtilities: all
-        Registry: all
-        TruVideoApi: all
-        TruvideoSdk: all
-    test:
-      targets: [TruvideoSdkTests] 

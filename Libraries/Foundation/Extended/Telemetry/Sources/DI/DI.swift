@@ -43,18 +43,6 @@ struct TelemetryInstallationDependencyKey: DependencyKey {
     static let defaultValue: any TelemetryInstallation = InstallationProvider()
 }
 
-/// A dependency key used to provide a default implementation of the `Uploader` protocol.
-///
-/// This key enables dependency injection of a concrete `Uploader` implementation into systems
-/// that rely on abstract upload behavior.
-struct UploaderDependencyKey: DependencyKey {
-    /// The default uploader provider used if none is explicitly injected.
-    static let defaultValue: any Uploader = S3Uploader(
-        bucketName: "",
-        clientProvider: S3ClientImpl(accessKey: "", secretKey: "", region: "")
-    )
-}
-
 extension DependencyValues {
     /// Accessor for resolving or overriding the current `ContextProvider`.
     var contextProvider: any ContextProvider {
@@ -78,11 +66,5 @@ extension DependencyValues {
     var storage: any Storage {
         get { self[StorageDependencyKey.self] }
         set { self[StorageDependencyKey.self] = newValue }
-    }
-
-    /// Accessor for resolving or overriding the current `Uploader` implementation.
-    var uploader: any Uploader {
-        get { self[UploaderDependencyKey.self] }
-        set { self[UploaderDependencyKey.self] = newValue }
     }
 }

@@ -241,7 +241,7 @@ trailing_closure:
   only_single_muted_parameter: true
 
 type_body_length:
-  warning: 350
+  warning: 500
   error: 500
 
 type_contents_order:
