@@ -30,6 +30,12 @@ public protocol Request: Equatable, CustomDebugStringConvertible {
     /// - Returns: The current `Request` instance.
     @discardableResult
     func resume() -> Self
+
+    /// Resumes the request, if allowed.
+    ///
+    /// - Returns: The current `Request` instance.
+    @discardableResult
+    func suspend() -> Self
 }
 
 public protocol DataRequest: Request {

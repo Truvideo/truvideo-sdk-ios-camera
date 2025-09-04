@@ -265,7 +265,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didValidate: urlRequest, data: data, error: error) }
         }
     }
-    
+
     // MARK: - DataRequest Monitoring
 
     /// Called when a `DataRequest` parses a response containing raw data.
@@ -278,7 +278,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didParseResponse: response) }
         }
     }
-    
+
     // MARK: - UploadRequest Monitoring
 
     /// Called when a `DataRequest` parses a response with a specified value type.
@@ -295,7 +295,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didParseResponse: response) }
         }
     }
-    
+
     /// Notifies monitors that an `UploadRequest` successfully created an `Uploadable`.
     ///
     /// - Parameters:
@@ -323,7 +323,7 @@ public struct CompositeMonitor: Monitor {
             monitors.forEach { $0.request(request, didFailToCreateUploadableWithError: error) }
         }
     }
-    
+
     // MARK: - URLSession Delegate Methods
 
     /// Called when data is received from the server.

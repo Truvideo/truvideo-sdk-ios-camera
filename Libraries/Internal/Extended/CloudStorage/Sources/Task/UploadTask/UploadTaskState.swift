@@ -206,13 +206,8 @@ public enum UploadTaskState: Sendable {
     /// - Returns: `true` if the transition is allowed according to the state machine rules, `false` otherwise.
     func canTransition(to state: UploadTaskState) -> Bool {
         switch (self, state) {
-        case (.initialized, .suspended),
-            (.initialized, .cancelled),
-            (.initialized, .finished):
-
-            return true
-
-        case (.resumed, .cancelled),
+        case (.initialized, _),
+            (.resumed, .cancelled),
             (.suspended, .cancelled),
             (.resumed, .suspended),
             (.suspended, .resumed),
@@ -226,9 +221,6 @@ public enum UploadTaskState: Sendable {
             (.suspended, .suspended),
             (.resumed, .resumed):
 
-            return false
-
-        default:
             return false
         }
     }

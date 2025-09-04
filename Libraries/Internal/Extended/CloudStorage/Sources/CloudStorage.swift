@@ -466,6 +466,26 @@ public protocol CloudStorage {
     /// logs out, the app is shutting down, or network conditions change.
     func cancelAllUploads()
 
+    /// Creates a new stream-based upload task to cloud storage.
+    ///
+    /// This method initializes and returns a `StreamUploadTask`, designed for uploading
+    /// large files or continuous data streams in smaller, manageable chunks instead of
+    /// sending them as a single in-memory `Data` object.
+    ///
+    /// This approach is particularly useful for:
+    /// - Uploading videos or other large media files that may exceed memory limits.
+    /// - Handling real-time generated content (e.g., live recording).
+    /// - Ensuring resilience and efficiency in unstable network conditions.
+    ///
+    /// - Parameters:
+    ///   - id: A unique identifier for the upload task, typically associated with the file
+    ///     or resource being uploaded.
+    ///   - contentType: The MIME type of the data being uploaded (e.g., `.videoMp4`, `.imageJpeg`).
+    ///
+    /// - Returns: A `StreamUploadTask` instance that enables incremental, chunk-based
+    ///   uploading with full control over the streaming lifecycle.
+    func streamUpload(with id: String, contentType: ContentType) -> any StreamUploadTask
+
     /// Uploads data to cloud storage and returns an upload task for monitoring and control.
     ///
     /// This method initiates an upload operation to the cloud storage service and returns

@@ -101,7 +101,8 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
             let data,
 
             /// The metadata associated with the response to an HTTP protocol URL load request.
-            let response = task.response as? HTTPURLResponse, [.head, .get].contains(request?.method) {
+            let response = task.response as? HTTPURLResponse, [.head, .get].contains(request?.method)
+        {
             let response = URLCachedResponse(data: data, response: response)
             cache.cache(response, for: self)
         }
@@ -157,7 +158,7 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
 
         data = nil
     }
-    
+
     /// Called when creating a `URLSessionTask` for this `Request`. Subclasses must override.
     ///
     /// - Parameters:
@@ -321,7 +322,8 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
             let self,
 
                 /// The received response if any.
-                let response, error == nil {
+                let response, error == nil
+            {
                 do {
                     try validator(request, response, data)
                 } catch {

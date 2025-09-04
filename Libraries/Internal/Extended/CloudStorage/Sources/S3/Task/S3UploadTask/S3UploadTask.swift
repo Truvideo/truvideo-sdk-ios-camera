@@ -42,7 +42,7 @@ public class S3UploadTask: UploadTask, Identifiable {
 
     private var completions: [UploadCompletion] = []
     private var error: UtilityError?
-    private let monitor: S3UploadMonitor?
+    private let monitor: S3TaskMonitor?
     private var progresses: [UploadProgress] = []
     private var response: HTTPURLResponse?
     private weak var task: AWSS3TransferUtilityUploadTask?
@@ -81,12 +81,12 @@ public class S3UploadTask: UploadTask, Identifiable {
     ///
     /// - Parameters:
     ///   - id: The unique identifier of the request
-    ///   - payload: Represents the data package required for uploading an object to Amazon S3.
     ///   - monitor: An optional `S3UploadMonitor` for observing request events.
-    init(id: UUID = UUID(), payload: S3DataPayload, monitor: S3UploadMonitor?) {
+    ///   - payload: Represents the data package required for uploading an object to Amazon S3.
+    init(id: UUID = UUID(), monitor: S3TaskMonitor?, payload: S3DataPayload) {
         self.id = id
-        self.payload = payload
         self.monitor = monitor
+        self.payload = payload
 
         expression.progressBlock = { [weak self] _, progress in
             Task { @S3UploadTaskActor in

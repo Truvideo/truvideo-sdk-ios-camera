@@ -546,7 +546,7 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
             }
         }
     }
-    
+
     /// Called when creating a `URLSessionTask` for this `Request`. Subclasses must override.
     ///
     /// - Parameters:
@@ -777,7 +777,8 @@ extension HTTPURLRequest {
         let httpBodyData = request.httpBody,
 
             /// The string representation of the body.
-            let httpBody = String(data: httpBodyData, encoding: .utf8) {
+            let httpBody = String(data: httpBodyData, encoding: .utf8)
+        {
             var escapedBody = httpBody.replacingOccurrences(of: "\\\"", with: "\\\\\"")
             escapedBody = escapedBody.replacingOccurrences(of: "\"", with: "\\\"")
 

@@ -392,6 +392,7 @@ targets:
       PRODUCT_MODULE_NAME: CloudStorage
     dependencies:
       - target: DI
+      - target: Networking
       - target: Utilities
       - package: AWSS3
     scheme:

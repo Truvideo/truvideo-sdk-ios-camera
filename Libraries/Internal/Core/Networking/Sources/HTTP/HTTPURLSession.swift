@@ -129,7 +129,7 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             return try encoder.encode(parameters, into: request)
         }
     }
-    
+
     /// A builder responsible for constructing an `UploadRequest` with configurable
     /// parameters, method, headers, body data, and encoding.
     ///
@@ -170,7 +170,7 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             return request
         }
     }
-    
+
     /// A composite builder for constructing both an `UploadRequest.Uploadable` and its associated `URLRequest`.
     ///
     /// `Upload` conforms to `UploadBuilder`, combining the responsibilities of
@@ -196,16 +196,16 @@ open class HTTPURLSession: @unchecked Sendable, Session {
     struct SimpleUploadRequestBuilder: UploadRequestBuilder {
         /// The component responsible for constructing the underlying `URLRequest`.
         let request: any RequestBuilder
-        
+
         /// The component responsible for constructing the uploadable payload.
         ///
         /// Represents the origin of the content to be uploaded (e.g., raw `Data`, a file on disk,
         /// or an input stream) and defines how it is transformed into an `UploadRequest.Uploadable`
         /// suitable for the upload request.
         let uploadable: any UploadableBuilder
-        
+
         // MARK: - UploadableBuilder
-        
+
         /// Produces an `UploadRequest.Uploadable` value from the instance.
         ///
         /// - Returns: The `UploadRequest.Uploadable`.
@@ -213,9 +213,9 @@ open class HTTPURLSession: @unchecked Sendable, Session {
         func createUploadable() throws -> HTTPURLUploadRequest.Uploadable {
             try uploadable.createUploadable()
         }
-        
+
         // MARK: - RequestBuilder
-        
+
         /// Builds and returns a configured `URLRequest` instance.
         ///
         /// This method should be implemented by conforming types to provide the necessary logic for constructing
@@ -319,7 +319,7 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             self.activeRequests.forEach { $0.cancel() }
         }
     }
-    
+
     // MARK: - DataRequest
 
     /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
@@ -385,9 +385,9 @@ open class HTTPURLSession: @unchecked Sendable, Session {
 
         return dataRequest
     }
-    
+
     // MARK: - UploadRequest
-    
+
     /// Creates and initiates an `UploadRequest` for uploading `Data` to the specified endpoint.
     ///
     /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
@@ -408,12 +408,12 @@ open class HTTPURLSession: @unchecked Sendable, Session {
         headers: HTTPHeaders?,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
-        
+
         let requestBuilder = ParameterlessRequestBuilder(url: url, method: method, headers: headers)
-        
+
         return upload(data, with: requestBuilder, middleware: middleware)
     }
-    
+
     /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
     ///
     /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
@@ -433,7 +433,7 @@ open class HTTPURLSession: @unchecked Sendable, Session {
         with requestBuilder: any RequestBuilder,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
-    
+
         upload(.data(data), with: requestBuilder, middleware: middleware)
     }
 
@@ -503,7 +503,7 @@ open class HTTPURLSession: @unchecked Sendable, Session {
                 request.didCreate(task: task)
             } catch {
                 request.didFailToCreateTask(with: error)
-                
+
                 return
             }
         }
@@ -531,7 +531,7 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             switch request {
             case let dataRequest as HTTPURLDataRequest:
                 self.performDataRequest(dataRequest)
-                
+
             case let uploadRequest as HTTPURLUploadRequest:
                 self.performUploadRequest(uploadRequest)
 
@@ -546,12 +546,12 @@ open class HTTPURLSession: @unchecked Sendable, Session {
 
         configure(request, requestBuilder: request.requestBuilder)
     }
-    
+
     private func performUploadRequest(_ request: HTTPURLUploadRequest) {
         dispatchPrecondition(condition: .onQueue(queue))
-        
+
         let uploadable: HTTPURLUploadRequest.Uploadable
-        
+
         do {
             uploadable = try request.uploadableBuilder.createUploadable()
             request.didCreateUploadable(uploadable)
@@ -562,9 +562,9 @@ open class HTTPURLSession: @unchecked Sendable, Session {
                     kind: .createUploadableFailed,
                     underlyingError: error
                 )
-            
+
             request.didFailToCreateUploadable(with: error)
-            
+
             return
         }
 
@@ -585,23 +585,23 @@ open class HTTPURLSession: @unchecked Sendable, Session {
 
         return Middleware(interceptors: [], retriers: [requestMiddleware, sessionMiddleware])
     }
-    
+
     private func upload(
         _ uploadable: HTTPURLUploadRequest.Uploadable,
         with requestBuilder: any RequestBuilder,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
-        
+
         let uploadBuilder = SimpleUploadRequestBuilder(request: requestBuilder, uploadable: uploadable)
-        
+
         return upload(uploadBuilder, middleware: middleware)
     }
-    
+
     private func upload(
         _ uploadBuilder: any UploadRequestBuilder,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
-        
+
         let uploadRequest = HTTPURLUploadRequest(
             uploadBuilder: uploadBuilder,
             delegate: self,
@@ -609,9 +609,9 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             monitor: monitor,
             queue: queue
         )
-        
+
         perform(uploadRequest)
-        
+
         return uploadRequest
     }
 }

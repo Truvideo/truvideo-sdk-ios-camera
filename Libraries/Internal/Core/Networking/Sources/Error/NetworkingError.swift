@@ -42,7 +42,7 @@ public struct NetworkingError: LocalizedError, Sendable {
     public enum ErrorKind: Equatable, Sendable {
         ///  `UploadableBuilder` threw an error in `createUploadable()`.
         case createUploadableFailed
-        
+
         /// `Request` was explicitly cancelled.
         case explicitlyCancelled
 

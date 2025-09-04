@@ -7,31 +7,31 @@ import Foundation
 /// `DataRequest` subclass which handles `Data` upload from memory, file, or stream using `URLSessionUploadTask`.
 public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked Sendable {
     // MARK: - Private Properties
-    
+
     private var uploadable: Uploadable?
-    
+
     // MARK: - Properties
-    
+
     /// The `UploadableConvertible` value used to produce the `Uploadable` value for this instance.
     public let uploadableBuilder: any UploadableBuilder
-    
+
     // MARK: - Types
-    
+
     /// Type describing the origin of the upload, whether `Data`, file, or stream.
     public enum Uploadable: @unchecked Sendable {
         /// Upload from the provided `Data` value.
         case data(Data)
-        
+
         /// Upload from the provided file `URL`, as well as a `Bool` determining whether the source file should be
         /// automatically removed once uploaded.
         case file(URL, shouldRemove: Bool)
-        
+
         /// Upload from the provided `InputStream`.
         case stream(InputStream)
     }
-    
+
     // MARK: - Initializer
-    
+
     /// Initializes a new request.
     ///
     /// - Parameters:
@@ -50,9 +50,9 @@ public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked
         monitor: Monitor?,
         queue: DispatchQueue
     ) {
-        
+
         self.uploadableBuilder = uploadBuilder
-        
+
         super.init(
             id: id,
             requestBuilder: uploadBuilder,
@@ -64,30 +64,30 @@ public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked
             queue: queue
         )
     }
-    
+
     // MARK: - LifeCycle methods
-    
+
     /// Called when the `Uploadable` value has been created from the `UploadConvertible`.
     ///
     /// - Parameter uploadable: The `Uploadable` that was created.
     func didCreateUploadable(_ uploadable: Uploadable) {
         self.uploadable = uploadable
-        
+
         monitor?.request(self, didCreateUploadable: uploadable)
     }
-    
+
     /// Called when the `Uploadable` value could not be created.
     ///
     ///
     /// - Parameter error: `NetworkingError` produced by the failure.
     func didFailToCreateUploadable(with error: NetworkingError) {
         self.error = error
-        
+
         monitor?.request(self, didFailToCreateUploadableWithError: error)
-   }
-    
+    }
+
     // MARK: - Overriden methods
-    
+
     /// Resets the request's state to its initial configuration.
     ///
     /// This method clears the internal state of the request by performing the following actions:
@@ -102,7 +102,7 @@ public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked
 
         uploadable = nil
     }
-    
+
     /// Called when creating a `URLSessionTask` for this `Request`. Subclasses must override.
     ///
     /// - Parameters:
@@ -120,14 +120,14 @@ public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked
                 failureReason: "Attempting to create a URLSessionUploadTask when Uploadable value doesn't exist."
             )
         }
-        
+
         switch uploadable {
         case let .data(data):
             return session.uploadTask(with: urlRequest, from: data)
-            
+
         case let .file(url, _):
             return session.uploadTask(with: urlRequest, fromFile: url)
-            
+
         case .stream:
             return session.uploadTask(withStreamedRequest: urlRequest)
         }

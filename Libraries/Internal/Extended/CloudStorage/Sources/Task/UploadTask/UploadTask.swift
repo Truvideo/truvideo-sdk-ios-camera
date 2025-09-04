@@ -86,30 +86,6 @@ public protocol UploadTask {
     @discardableResult
     func cancel() -> Self
 
-    /// Sets a completion callback to be invoked when the upload operation has finished.
-    ///
-    /// This callback is triggered once the upload process completes, regardless of
-    /// whether it ended successfully or with an error. It provides the final outcome
-    /// of the operation so that you can handle post-upload actions such as updating
-    /// the UI, notifying the user, or performing cleanup tasks.
-    ///
-    /// - Parameter completion: A closure that will be called when the upload finishes.
-    /// - Returns: The upload task instance for method chaining.
-    @discardableResult
-    func onComplete(_ completion: @escaping (Result<URL, UtilityError>) -> Void) -> Self
-
-    /// Sets a progress callback for monitoring upload progress and returns the task instance.
-    ///
-    /// This method allows you to monitor the upload progress in real-time by providing
-    /// a callback that will be invoked whenever the upload progress changes. The progress
-    /// callback provides detailed information about the current upload status, including
-    /// bytes uploaded, total bytes, and completion percentage.
-    ///
-    /// - Parameter progress: A closure that receives progress updates during the upload operation
-    /// - Returns: The upload task instance for method chaining
-    @discardableResult
-    func onProgress(_ progress: @escaping (Progress) -> Void) -> Self
-
     /// Pauses the upload operation and returns the task instance.
     ///
     /// This method temporarily suspends the upload operation, allowing it to

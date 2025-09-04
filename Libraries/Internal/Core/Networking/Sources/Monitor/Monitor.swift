@@ -17,7 +17,7 @@ import Foundation
 public protocol Monitor: Sendable {
     /// The working queue.
     var queue: DispatchQueue { get }
-    
+
     // MARK: - Request Monitoring
 
     /// Called when a request is canceled.
@@ -163,9 +163,9 @@ public protocol Monitor: Sendable {
         _ request: any DataRequest,
         didParseResponse response: Response<Value, NetworkingError>
     )
-    
+
     // MARK: - UploadRequest Monitoring
-    
+
     /// Event called when an `UploadRequest` creates its `Uploadable` value, indicating the type of upload it represents.
     ///
     /// - Parameters:
@@ -174,7 +174,7 @@ public protocol Monitor: Sendable {
     func request(_ request: any UploadRequest, didCreateUploadable uploadable: HTTPURLUploadRequest.Uploadable)
 
     /// Event called when an `UploadRequest` failed to create its `Uploadable` value due to an error.
-    /// 
+    ///
     /// - Parameters:
     ///   - request: The `UploadRequest` instance that attempted to create the uploadable.
     ///   - error: The `NetworkingError` describing the reason for the failure.

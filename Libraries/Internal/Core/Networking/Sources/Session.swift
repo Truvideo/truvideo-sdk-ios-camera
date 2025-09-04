@@ -74,7 +74,7 @@ public protocol Session: Sendable {
     ///
     /// This method asynchronously iterates through all currently active requests and cancels them.
     func cancelAllRequests()
-    
+
     // MARK: - DataRequest
 
     /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
@@ -114,9 +114,9 @@ public protocol Session: Sendable {
         middleware: RequestMiddleware?,
         cachePolicy: URLCachePolicy
     ) -> any DataRequest
-    
+
     // MARK: - UploadRequest
-    
+
     /// Creates and initiates an `UploadRequest` for uploading `Data` to the specified endpoint.
     ///
     /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
@@ -213,7 +213,7 @@ extension Session {
 
         request(requestBuilder, middleware: middleware, cachePolicy: cachePolicy)
     }
-    
+
     /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
     ///
     /// - Parameters:
@@ -229,10 +229,10 @@ extension Session {
         headers: HTTPHeaders? = nil,
         middleware: RequestMiddleware? = nil
     ) -> any UploadRequest {
-        
+
         upload(data, to: url, method: method, headers: headers, middleware: middleware)
     }
-    
+
     /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
     ///
     /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
@@ -252,7 +252,7 @@ extension Session {
         with requestBuilder: RequestBuilder,
         middleware: RequestMiddleware? = nil
     ) -> any UploadRequest {
-        
+
         upload(data, with: requestBuilder, middleware: middleware)
     }
 }

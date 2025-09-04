@@ -3,7 +3,9 @@
 //
 
 import AWSS3
+import DI
 import Foundation
+import Networking
 import Utilities
 
 /// Global actor that provides thread-safe isolation for S3 cloud storage operations.
@@ -58,10 +60,16 @@ actor S3CloudStorageActor {
 /// uploadTask.cancel()  // Cancel upload
 /// ```
 public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
+
+    // MARK: - Dependencies
+
+    @Dependency(\.session)
+    private var session: Session
+
     // MARK: - Private Properties
 
     private let bucketName: String
-    private let monitor: S3UploadMonitor?
+    private let monitor: S3TaskMonitor?
 
     // MARK: - Properties
 
@@ -93,7 +101,7 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     ///   - transferUtility: A pre-configured `S3TransferUtilityProtocol` instance.
     init(
         bucketName: String,
-        monitor: S3UploadMonitor? = nil,
+        monitor: S3TaskMonitor? = nil,
         transferUtility: S3TransferUtilityProtocol
     ) {
 
@@ -113,13 +121,13 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     ///   - bucketName: The name of the S3 bucket.
     ///   - poolId: The Amazon Cognito Identity Pool ID for authentication.
     ///   - isAccelerateModeEnabled: Enables or disables S3 Transfer Acceleration.
-    ///   - monitor: An optional `S3UploadMonitor`s for observing request events.
+    ///   - monitor: An optional `S3TaskMonitor`s for observing request events.
     public convenience init(
         awsRegion: AWSRegionType,
         bucketName: String,
         poolId: String,
         isAccelerateModeEnabled: Bool,
-        monitor: S3UploadMonitor? = nil
+        monitor: S3TaskMonitor? = nil
     ) throws {
 
         var transferUtility = AWSS3TransferUtility.s3TransferUtility(forKey: Self.s3key)
@@ -157,7 +165,11 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
             )
         }
 
-        self.init(bucketName: bucketName, monitor: monitor, transferUtility: transferUtility)
+        self.init(
+            bucketName: bucketName,
+            monitor: monitor,
+            transferUtility: transferUtility
+        )
     }
 
     // MARK: - CloudStorage
@@ -176,6 +188,28 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
         }
     }
 
+    /// Creates a new stream-based upload task to cloud storage.
+    ///
+    /// This method initializes and returns a `StreamUploadTask`, designed for uploading
+    /// large files or continuous data streams in smaller, manageable chunks instead of
+    /// sending them as a single in-memory `Data` object.
+    ///
+    /// This approach is particularly useful for:
+    /// - Uploading videos or other large media files that may exceed memory limits.
+    /// - Handling real-time generated content (e.g., live recording).
+    /// - Ensuring resilience and efficiency in unstable network conditions.
+    ///
+    /// - Parameters:
+    ///   - id: A unique identifier for the upload task, typically associated with the file
+    ///     or resource being uploaded.
+    ///   - contentType: The MIME type of the data being uploaded (e.g., `.videoMp4`, `.imageJpeg`).
+    ///
+    /// - Returns: A `StreamUploadTask` instance that enables incremental, chunk-based
+    ///   uploading with full control over the streaming lifecycle.
+    public func streamUpload(with id: String, contentType: ContentType) -> any StreamUploadTask {
+        S3StreamUploadTask(id: id, contentType: contentType, monitor: monitor, session: session)
+    }
+
     /// Uploads data to cloud storage and returns an upload task for monitoring and control.
     ///
     /// This method initiates an upload operation to the cloud storage service and returns
@@ -190,7 +224,7 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     /// - Returns: An `UploadTask` that provides control and monitoring capabilities for the upload operation
     public func upload(_ data: Data, fileName: String, contentType: ContentType) -> any UploadTask {
         let payload = S3DataPayload(bucket: bucketName, contentType: contentType, data: data, path: fileName)
-        let uploadTask = S3UploadTask(payload: payload, monitor: monitor)
+        let uploadTask = S3UploadTask(monitor: monitor, payload: payload)
 
         Task { @S3CloudStorageActor in
             activeUploadTasks.insert(uploadTask)
@@ -249,7 +283,6 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
             return
         }
 
-        uploadTask.suspend()
         await task.didCreate(task: uploadTask)
     }
 }

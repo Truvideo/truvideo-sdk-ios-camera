@@ -36,6 +36,15 @@ extension ErrorReason {
         /// This error occurs when the AWS S3 Transfer Utility is unable to complete
         /// the upload operation successfully.
         public static let failedToUploadData = ErrorReason(rawValue: "FAILED_TO_UPLOAD_DATA")
+        
+        /// Error indicating that the ETag header was missing in the server response.
+        ///
+        /// This error occurs when the upload operation completes, but the expected
+        /// ETag header (used to validate data integrity of the uploaded object)
+        /// is not included in the server response. Without the ETag, the application
+        /// cannot guarantee that the uploaded data was correctly received and stored
+        /// in the cloud storage.
+        public static let missingETag = ErrorReason(rawValue: "MISSING_ETAG")
 
         /// Error indicating that the upload completed but no resource URL was provided.
         ///
