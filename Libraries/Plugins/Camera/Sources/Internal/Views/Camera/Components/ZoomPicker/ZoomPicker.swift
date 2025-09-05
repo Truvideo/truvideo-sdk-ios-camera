@@ -219,18 +219,11 @@ private struct LayoutThatFits<Content: View>: View {
     // MARK: - Body
 
     var body: some View {
-        switch viewModel.deviceOrientation.orientation {
-        case .landscapeLeft where viewModel.deviceOrientation.source == .system:
+        if viewModel.deviceOrientation.orientation.isLandscape && viewModel.deviceOrientation.source == .system {
             VStack(spacing: theme.spacingTheme.sm) {
                 content()
             }
-
-        case .landscapeRight where viewModel.deviceOrientation.source == .system:
-            VStack(spacing: theme.spacingTheme.sm) {
-                content()
-            }
-
-        default:
+        } else {
             HStack(spacing: theme.spacingTheme.sm) {
                 content()
             }

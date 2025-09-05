@@ -218,6 +218,9 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     /// - Parameter subscriber: An object conforming to `OrientationMonitorSubscriber`.
     func add(_ subscriber: any OrientationMonitorSubscriber) {
         subscribers[ObjectIdentifier(subscriber)] = subscriber
+
+        guard UIDevice.supportedOrientations.contains(deviceOrientation.value.orientation) else { return }
+
         subscriber.didReceive(deviceOrientation.value)
     }
 

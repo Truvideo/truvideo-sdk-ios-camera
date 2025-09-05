@@ -32,6 +32,10 @@ import SwiftUI
 /// }
 /// ```
 struct CircleButton<Content: View>: View {
+    // MARK: - Private Properties
+
+    private var disableAnimatations = false
+
     // MARK: - Environment Properties
 
     @Environment(\.theme)
@@ -65,14 +69,46 @@ struct CircleButton<Content: View>: View {
         .clipShape(Circle())
         .theme(theme.copyWith(buttonTheme: theme.buttonTheme.copyWith(minimunSize: CGSize(theme.sizeTheme.xl))))
         .rotationEffect(rotationAngle)
-        .onChange(of: viewModel.rotationAngle) { rotationAngle in
-            withAnimation(.spring(duration: 0.3)) {
-                self.rotationAngle = rotationAngle
-            }
-
-            if viewModel.deviceOrientation == .portrait {
-                self.rotationAngle = .degrees(0)
+        .onAppear {
+            if !disableAnimatations {
+                withAnimation(.spring(duration: 0.3)) {
+                    self.rotationAngle = viewModel.rotationAngle
+                }
             }
         }
+        .onChange(of: viewModel.rotationAngle) { rotationAngle in
+            if !disableAnimatations {
+                withAnimation(.spring(duration: 0.3)) {
+                    self.rotationAngle = rotationAngle
+                }
+
+                if viewModel.deviceOrientation == .portrait {
+                    self.rotationAngle = .degrees(0)
+                }
+            }
+        }
+    }
+
+    // MARK: - Initializer
+
+    init(label: @escaping () -> Content, action: @escaping () -> Void) {
+        self.label = label
+        self.action = action
+    }
+
+    // MARK: - Instance methods
+
+    /// Disables the automatic rotation animation for this view.
+    ///
+    /// This modifier returns a copy of the current view with its `isRotationEnabled`
+    /// property set to `false`. It can be used to explicitly turn off rotation
+    /// behavior when applying animations or transitions.
+    ///
+    /// - Returns: A modified view instance with rotation disabled.
+    func disableAnimations(_ disabled: Bool = true) -> Self {
+        var view = self
+        view.disableAnimatations = disabled
+
+        return view
     }
 }

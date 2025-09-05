@@ -484,7 +484,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                 do {
                     try await movieOutputProcessor.pause()
-                    state = .paused
+                    await MainActor.run {
+                        state = .paused
+                    }
                 } catch {
                     localizedError = ""
                     state = .failed
@@ -556,7 +558,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     try videoDevice.startCapturing()
 
                     captureSession.startRunning()
-                    state = .running
+                    await MainActor.run {
+                        state = .running
+                    }
                 } catch {
                     localizedError = ""
                     state = .failed
