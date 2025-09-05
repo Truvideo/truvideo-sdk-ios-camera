@@ -41,8 +41,7 @@ protocol OrientationMonitorSubscriber: AnyObject {
     /// If the orientation source comes from sensors while the device is physically
     /// in portrait mode, it preserves or updates the rotation angle accordingly.
     ///
-    /// - Parameter deviceOrientation: The latest orientation information, including its
-    ///   source (e.g., system or sensors) and value.
+    /// - Parameter deviceOrientation: The latest orientation information, including its source and value.
     func didReceive(_ deviceOrientation: DeviceOrientation)
 }
 

@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:Libraries/External/Extended/CameraDemoApp/CameraDemoApp.xcodeproj">
+      location = "group:Libraries/Plugins/Example/CameraExample/CameraExample.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:TruVideoSDK.xcodeproj">

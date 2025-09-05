@@ -30,7 +30,7 @@ struct ZoomPicker: View {
     // MARK: - Properties
 
     /// The available zoom factor options to choose from.
-    let options: [Double]
+    let options: [CGFloat]
 
     // MARK: - Binding Properties
 
@@ -42,7 +42,7 @@ struct ZoomPicker: View {
     let isExpandedBinding: Binding<Bool>?
 
     /// Binding to the currently selected zoom factor.
-    @Binding var selection: Double
+    @Binding var selection: CGFloat
 
     /// A computed binding that provides unified access to the expansion state.
     ///
@@ -127,7 +127,7 @@ struct ZoomPicker: View {
 
     // MARK: - Initializer
 
-    init(options: [Double], selection: Binding<Double>, isExpanded: Binding<Bool>? = nil) {
+    init(options: [CGFloat], selection: Binding<CGFloat>, isExpanded: Binding<Bool>? = nil) {
         self.isExpandedBinding = isExpanded
         self._selection = selection
         self.options = options

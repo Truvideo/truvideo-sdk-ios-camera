@@ -60,10 +60,17 @@ extension VideoClip: Hashable {
 
     // MARK: - Equatable
 
+    /// Returns a Boolean value indicating whether two type-erased hashable
+    /// instances wrap the same value.
     static func == (lhs: VideoClip, rhs: VideoClip) -> Bool {
         lhs.url == rhs.url
     }
 
+    /// Hashes the essential components of this value by feeding them into the
+    /// given hasher.
+    ///
+    /// - Parameter hasher: The hasher to use when combining the components
+    ///   of this instance.
     func hash(into hasher: inout Hasher) {
         url.hash(into: &hasher)
     }

@@ -32,7 +32,8 @@ struct AuthTokenInterceptor: RequestInterceptor {
 
         if /// The current session.
         let authSession = sessionManager.currentSession,
-            !request.allHTTPHeaders.contains(where: { $0.name.lowercased() == "authorization" }) {
+            !request.allHTTPHeaders.contains(where: { $0.name.lowercased() == "authorization" })
+        {
             request.allHTTPHeaders.append(.bearerToken(authSession.authToken.accessToken))
         }
 

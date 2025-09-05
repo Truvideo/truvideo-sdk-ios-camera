@@ -32,12 +32,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// The video preview layer that displays the camera feed in the UI.
     let previewLayer = AVCaptureVideoPreviewLayer()
 
-    /// The available zoom factor options that users can select from.
-    ///
-    /// This array defines the zoom levels that are available for selection in the camera
-    /// interface. Each value represents a magnification factor.
-    let zoomFactors = [0.5, 1, 2, 3, 4, 5, 6]
-
     // MARK: - Published Properties
 
     /// The current aspect ratio of the camera preview, expressed as height divided by width.
@@ -82,10 +76,16 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// the starting state before any validation has been performed.
     @Published private(set) var validationState = ValidationState.initial
 
+    /// The available zoom factor options that users can select from.
+    ///
+    /// This array defines the zoom levels that are available for selection in the camera
+    /// interface. Each value represents a magnification factor.
+    @Published private(set) var zoomFactors: [CGFloat] = []
+
     /// The current zoom factor applied to the camera preview.
     ///
     /// This property represents the magnification level of the camera view.
-    @Published var zoomFactor: Double = 1 {
+    @Published var zoomFactor: CGFloat = 1 {
         didSet {
             updateZoomFactor()
         }
@@ -147,10 +147,16 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         self.orientationMonitor.add(self)
         self.orientationMonitor.startMonitoring()
 
+        movieOutputProcessor.$totalDuration
+            .filter(\.isValid)
+            .map { $0.seconds.toHMS() }
+            .receive(on: RunLoop.main)
+            .assign(to: \.secondsRecorded, on: self)
+            .store(in: &cancellables)
+
         initialize()
         configureObservers()
         configureSessionObservers()
-        observeStateUpdates()
 
         if captureSession.canSetSessionPreset(.hd4K3840x2160) {
             captureSession.sessionPreset = .hd4K3840x2160
@@ -163,6 +169,15 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     // MARK: - Instance methods
 
+    /// Handles a new device orientation update and applies the corresponding rotation angle.
+    ///
+    /// This method is triggered when a new `DeviceOrientationInfo` is received.
+    /// It updates the current orientation, calculates the transition between the
+    /// previous and new orientations, and determines the appropriate rotation angle.
+    /// If the orientation source comes from sensors while the device is physically
+    /// in portrait mode, it preserves or updates the rotation angle accordingly.
+    ///
+    /// - Parameter deviceOrientation: The latest orientation information, including its source and value.
     func didReceive(_ deviceOrientation: DeviceOrientation) {
         if deviceOrientation.orientation != .portraitUpsideDown {
             orientationDidUpdate(to: deviceOrientation.orientation)
@@ -423,10 +438,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 videoDevice.add(movieOutputProcessor)
 
                 let isTorchEnabled = videoDevice.torchMode == .on
+                let zoomFactors = videoDevice.displayVideoZoomFactors
 
                 isTorchAvailable = videoDevice.isTorchAvailable
 
                 await MainActor.run {
+                    self.zoomFactors = zoomFactors
                     self.isTorchEnabled = isTorchEnabled
                 }
 
@@ -455,15 +472,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
 
         updatePreviewOrientation()
-    }
-
-    private func observeStateUpdates() {
-        movieOutputProcessor.$totalDuration
-            .filter(\.isValid)
-            .map { $0.seconds.toHMS() }
-            .receive(on: RunLoop.main)
-            .assign(to: \.secondsRecorded, on: self)
-            .store(in: &cancellables)
     }
 
     private func pauseSession() {

@@ -19,8 +19,6 @@ struct ContextProviderKey: DependencyKey {
 /// This key enables access to a shared `FileWriter` instance via Swift's dependency injection system.
 /// If no custom implementation is provided, the default is `SystemFileWriter`, which writes directly to the file system.
 struct FileWriterDependencyKey: DependencyKey {
-    typealias Value = any FileWriter
-
     /// The default file writer used if none is explicitly injected.
     static let defaultValue: any FileWriter = SystemFileWriter()
 }

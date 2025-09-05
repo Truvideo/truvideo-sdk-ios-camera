@@ -133,15 +133,17 @@ class VideoDevice: NSObject, Device {
     /// enforced by the state machine.
     private(set) var state = RecordingState.initialized
 
-    // MARK: - Computed Properties
+    // MARK: - Private Computed Properties
 
-    /// Returns the first available camera device for the current position.
-    ///
-    /// This computed property provides quick access to the primary camera device
-    /// at the specified position (front or back).
+    private var hasBuiltInUltraWideCamera: Bool {
+        availableDevices[position, default: []].contains { $0.deviceType == .builtInUltraWideCamera }
+    }
+
     private var preferredDevice: AVCaptureDevice? {
         availableDevices[position]?.first
     }
+
+    // MARK: - Computed Properties
 
     /// The current authorization status for video capture access.
     ///
@@ -150,6 +152,24 @@ class VideoDevice: NSObject, Device {
     /// to access the device's camera for video recording and preview.
     var authorizationStatus: AVAuthorizationStatus {
         AVCaptureDevice.authorizationStatus(for: .video)
+    }
+
+    /// The available zoom factor options that users can select from.
+    ///
+    /// This array defines the zoom levels that are available for selection in the camera
+    /// interface. Each value represents a magnification factor.
+    var displayVideoZoomFactors: [CGFloat] {
+        guard let captureDevice else {
+            return []
+        }
+
+        let zoomFactors = stride(
+            from: max(captureDevice.minAvailableVideoZoomFactor, Self.minZoomFactor),
+            through: min(captureDevice.maxAvailableVideoZoomFactor, Self.maxZoomFactor),
+            by: 1
+        )
+
+        return hasBuiltInUltraWideCamera ? [0.5] + Array(zoomFactors) : Array(zoomFactors)
     }
 
     /// Returns an array of supported video formats for the current device position.
@@ -206,10 +226,10 @@ class VideoDevice: NSObject, Device {
     /// The maximum supported zoom factor for video capture devices.
     ///
     /// This constant defines the upper limit of zoom magnification that can be
-    /// applied to video capture devices. A zoom factor of 15.0 represents a
-    /// 15x magnification, which provides significant telephoto capabilities
+    /// applied to video capture devices. A zoom factor of 6.0 represents a
+    /// 6x magnification, which provides significant telephoto capabilities
     /// for capturing distant subjects or detailed close-ups.
-    static let maxZoomFactor: Double = 15
+    static let maxZoomFactor: CGFloat = 6
 
     /// The minimum supported zoom factor for video capture devices.
     ///
@@ -217,7 +237,7 @@ class VideoDevice: NSObject, Device {
     /// applied to video capture devices. A zoom factor of 0.5 represents a
     /// 0.5x magnification, which provides an ultra-wide field of view that
     /// captures more of the scene in a single frame.
-    static let minZoomFactor: Double = 0.5
+    static let minZoomFactor: CGFloat = 1
 
     // MARK: - Notification Keys
 
@@ -721,21 +741,24 @@ class VideoDevice: NSObject, Device {
     @DeviceActor
     func setZoomFactor(_ zoomFactor: CGFloat, rate: Float = 200) throws(UtilityError) {
         if let captureDevice {
-            let minAvailableVideoZoomFactor = captureDevice.minAvailableVideoZoomFactor
-            let maxAvailableVideoZoomFactor = captureDevice.maxAvailableVideoZoomFactor
+            var adjustedZoomFactor = zoomFactor
+            let minAvailableVideoZoomFactor = max(captureDevice.minAvailableVideoZoomFactor, Self.minZoomFactor)
+            let maxAvailableVideoZoomFactor = min(captureDevice.maxAvailableVideoZoomFactor, Self.maxZoomFactor)
 
-            guard (minAvailableVideoZoomFactor ... maxAvailableVideoZoomFactor).contains(zoomFactor) else {
-                throw UtilityError(
-                    kind: .VideoDeviceErrorReason.setZoomFactorFailed,
-                    failureReason: "Zoom factor \(zoomFactor) is out of supported range"
-                )
+            if adjustedZoomFactor < 0 {
+                adjustedZoomFactor = minAvailableVideoZoomFactor
+            } else {
+                adjustedZoomFactor += hasBuiltInUltraWideCamera ? 1 : 0
             }
 
             do {
                 try captureDevice.lockForConfiguration()
                 defer { captureDevice.unlockForConfiguration() }
 
-                let clampedZoomFactor = min(max(zoomFactor, minAvailableVideoZoomFactor), maxAvailableVideoZoomFactor)
+                let clampedZoomFactor = min(
+                    max(adjustedZoomFactor, minAvailableVideoZoomFactor),
+                    maxAvailableVideoZoomFactor
+                )
 
                 captureDevice.ramp(toVideoZoomFactor: clampedZoomFactor, withRate: rate)
             } catch {

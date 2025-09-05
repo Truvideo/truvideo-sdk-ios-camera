@@ -32,11 +32,14 @@ extension ErrorReason {
         /// output URLs, unsupported output formats, or insufficient system resources.
         static let cannotCreateWriter = ErrorReason(rawValue: "CANNOT_CREATE_WRITER")
 
-        /// An error reason indicating that the movie processor cannot be paused in its current state.
+        /// Error reason indicating that an asset cannot be exported.
         ///
-        /// This static property defines a specific error reason for when a pause operation
-        /// is attempted on a movie processor that is not in a valid state for pausing.
-        static let cannotPauseProcessor = ErrorReason(rawValue: "CANNOT_PAUSE_MOVIE_PROCESSOR")
+        /// This error reason is used when attempting to export an AVAsset fails due to
+        /// various constraints or limitations. The failure could be caused by factors
+        /// such as unsupported media formats, corrupted asset data, insufficient
+        /// permissions, or hardware limitations that prevent the export operation
+        /// from completing successfully.
+        static let cannotExportAsset = ErrorReason(rawValue: "CANNOT_EXPORT_ASSET")
 
         /// Error indicating that ending the movie processing operation failed.
         ///
@@ -44,6 +47,12 @@ extension ErrorReason {
         /// the movie output processing. This can happen due to write failures,
         /// incomplete data, or system errors during the finalization process.
         static let endProcessingFailed = ErrorReason(rawValue: "END_PROCESSING_FAILED")
+
+        /// An error reason indicating that the movie processor cannot be paused in its current state.
+        ///
+        /// This static property defines a specific error reason for when a pause operation
+        /// is attempted on a movie processor that is not in a valid state for pausing.
+        static let pauseFailed = ErrorReason(rawValue: "CANNOT_PAUSE_MOVIE_PROCESSOR")
 
         /// Error indicating that video output configuration failed.
         ///

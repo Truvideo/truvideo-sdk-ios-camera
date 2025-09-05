@@ -34,7 +34,7 @@ final class MovieOutputProcessor {
     // MARK: - Private Properties
 
     private let identifier = UUID()
-    private var assets: [AVAsset] = []
+    private var assetsURLs: [URL] = []
     private var assetWriter: AVAssetWriter?
     private var audioInput: AVAssetWriterInput?
     private var backgroundTaskIdentifier = UIBackgroundTaskIdentifier.invalid
@@ -272,6 +272,7 @@ final class MovieOutputProcessor {
 
     // MARK: - Initializer
 
+    /// Creates a new instance of the `MovieOutputProcessor`.
     init() {
         NotificationCenter.default.addObserver(
             self,
@@ -319,19 +320,18 @@ final class MovieOutputProcessor {
                     )
                 }
 
-                let outputURL = assetWriter.outputURL
-
+                assetsURLs.append(assetWriter.outputURL)
                 destroyWriter()
 
                 do {
-                    let asset = AVAsset(url: outputURL)
                     let bitRate = videoInput?.outputSettings?[AVVideoAverageBitRateKey] as? Int
+                    let asset = try await exportAsset()
                     let clip = try await VideoClip(
                         bitRate: bitRate ?? VideoDeviceConfiguration.defaultVideoBitRate,
                         devicePosition: asset.isMirrored() ? .front : .back,
                         duration: asset.load(.duration).seconds,
-                        size: FileManager.default.attributesOfItem(atPath: outputURL.path)[.size] as? Int64 ?? 0,
-                        url: outputURL
+                        size: FileManager.default.sizeOfItem(at: asset.url.path),
+                        url: asset.url
                     )
 
                     startTimestamp = .invalid
@@ -370,16 +370,14 @@ final class MovieOutputProcessor {
 
             if assetWriter.status == .failed {
                 throw UtilityError(
-                    kind: .MovieOutputProcessorErrorReason.cannotPauseProcessor,
+                    kind: .MovieOutputProcessorErrorReason.pauseFailed,
                     underlyingError: assetWriter.error
                 )
             }
 
-            let asset = AVAsset(url: assetWriter.outputURL)
-
             destroyWriter()
 
-            assets.append(asset)
+            assetsURLs.append(assetWriter.outputURL)
         }
     }
 
@@ -533,9 +531,50 @@ final class MovieOutputProcessor {
         }
     }
 
+    private func exportAsset() async throws -> AVURLAsset {
+        guard !assetsURLs.isEmpty else {
+            throw UtilityError(
+                kind: .MovieOutputProcessorErrorReason.cannotExportAsset,
+                failureReason: "Cannot export asset: No asset URLs provided."
+            )
+        }
+
+        let outputURL = nextOutputURL()
+        let assets = assetsURLs.map(AVAsset.init)
+        let asset = try await AVMutableComposition.from(assets)
+        let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPreset1920x1080)
+
+        guard let exportSession else {
+            throw UtilityError(
+                kind: .MovieOutputProcessorErrorReason.cannotExportAsset,
+                failureReason: "Cannot export asset: Unable to create export session."
+            )
+        }
+
+        do {
+            exportSession.shouldOptimizeForNetworkUse = true
+            exportSession.outputURL = outputURL
+            exportSession.outputFileType = fileType.avFileType
+            exportSession.videoComposition = try await AVMutableVideoComposition.from(assets)
+
+            await exportSession.export()
+
+            if let error = exportSession.error {
+                throw error
+            }
+        } catch {
+            throw UtilityError(
+                kind: .MovieOutputProcessorErrorReason.cannotExportAsset,
+                underlyingError: error
+            )
+        }
+
+        return AVURLAsset(url: outputURL)
+    }
+
     private func nextOutputURL() -> URL {
         let filename = "\(identifier)-TV-clip.\(clipFilenameCount).\(fileType.rawValue)"
-        defer { clipFilenameCount += 1 }
+        clipFilenameCount += 1
 
         return outputDirectory.appendingPathComponent(filename)
     }
