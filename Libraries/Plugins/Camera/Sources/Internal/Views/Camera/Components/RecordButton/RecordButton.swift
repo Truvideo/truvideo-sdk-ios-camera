@@ -26,6 +26,14 @@ struct RecordButton: View {
 
     // MARK: - Computed Properties
 
+    var cornerRadius: CGFloat {
+        [.paused, .running].contains(viewModel.state) ? theme.radiusTheme.md : squareSize / 2
+    }
+
+    var fillColor: Color {
+        [.paused, .running].contains(viewModel.state) ? theme.colorScheme.error : theme.colorScheme.onSurface
+    }
+
     var lineWidth: Double {
         circleFactor * size / 2
     }
@@ -45,10 +53,10 @@ struct RecordButton: View {
             Circle()
                 .stroke(theme.colorScheme.onSurface, lineWidth: lineWidth)
 
-            RoundedRectangle(cornerRadius: viewModel.state == .running ? theme.radiusTheme.md : squareSize / 2)
-                .fill(viewModel.state == .running ? theme.colorScheme.error : theme.colorScheme.onSurface)
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(fillColor)
                 .frame(width: squareSize, height: squareSize)
-                .scaleEffect(viewModel.state == .running ? 0.65 : 1)
+                .scaleEffect([.paused, .running].contains(viewModel.state) ? 0.65 : 1)
                 .animation(.easeInOut(duration: 0.25).delay(0.3), value: viewModel.state)
         }
         .frame(width: size, height: size)

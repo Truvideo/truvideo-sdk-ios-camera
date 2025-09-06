@@ -39,8 +39,7 @@ final class MovieOutputProcessor {
     private var audioInput: AVAssetWriterInput?
     private var backgroundTaskIdentifier = UIBackgroundTaskIdentifier.invalid
     private var clipFilenameCount = 1
-    private var lastAudioTimestamp = CMTime.invalid
-    private var lastVideoTimestamp = CMTime.invalid
+    private var currentClipDuration = CMTime.zero
     private var mediaProcessingOptions: MediaProcessingOptions = []
     private var pixelBufferAdapter: AVAssetWriterInputPixelBufferAdaptor?
     private var skippedAudioBuffers: [AudioSampleBuffer] = []
@@ -63,13 +62,13 @@ final class MovieOutputProcessor {
 
     // MARK: - Published Properties
 
-    /// The total duration of processed media, published for UI updates.
+    /// The total recording duration of processed media, published for UI updates.
     ///
     /// This published property tracks the cumulative duration of all processed
     /// audio and video samples since the start of the current processing session.
     /// It automatically updates as new media samples are processed, providing
     /// real-time feedback on the current recording or processing progress.
-    @Published private(set) var totalDuration = CMTime.invalid
+    @Published private(set) var recordingDuration = CMTime.zero
 
     // MARK: - Computed Properties
 
@@ -83,10 +82,8 @@ final class MovieOutputProcessor {
         videoInput != nil
     }
 
-    // MARK: - Static Properties
-
     /// Returns the default metadata for an `AVAssetWriter`
-    var metadata: [AVMutableMetadataItem] {
+    private var metadata: [AVMutableMetadataItem] {
         let modelItem = AVMutableMetadataItem()
         modelItem.keySpace = AVMetadataKeySpace.common
         modelItem.key = AVMetadataKey.commonKeyModel as (NSCopying & NSObjectProtocol)
@@ -150,42 +147,6 @@ final class MovieOutputProcessor {
                 AVFileType.mp4
             }
         }
-    }
-
-    /// Option set defining media processing configuration options for audio and video streams.
-    ///
-    /// The MediaProcessingOptions struct provides a type-safe way to configure which media streams
-    /// should be processed during media operations. This option set allows developers to specify
-    /// whether to process audio, video, or both streams, enabling flexible configuration of media
-    /// processing pipelines. The options can be combined using set operations to create complex
-    /// processing configurations while maintaining clear and readable code.
-    struct MediaProcessingOptions: OptionSet {
-        // MARK: - Properties
-
-        /// The raw integer value representing the option set's bit flags.
-        ///
-        /// This property stores the underlying bit pattern that represents the combination
-        /// of selected options. Each bit position corresponds to a specific media processing
-        /// option, allowing efficient bitwise operations for option combination and checking.
-        let rawValue: Int
-
-        // MARK: - Static Properties
-
-        /// Option to process audio streams during media operations.
-        ///
-        /// When this option is selected, audio processing will be enabled for the media
-        /// operation. This includes audio capture, processing, encoding, and output
-        /// generation. Audio processing can be combined with video processing or used
-        /// independently for audio-only operations.
-        static let audio = MediaProcessingOptions(rawValue: 1 << 0)
-
-        /// Option to process video streams during media operations.
-        ///
-        /// When this option is selected, video processing will be enabled for the media
-        /// operation. This includes video capture, processing, encoding, and output
-        /// generation. Video processing can be combined with audio processing or used
-        /// independently for video-only operations.
-        static let video = MediaProcessingOptions(rawValue: 1 << 1)
     }
 
     /// Enumeration representing the lifecycle states of a processing or recording operation.
@@ -270,6 +231,42 @@ final class MovieOutputProcessor {
         }
     }
 
+    /// Option set defining media processing configuration options for audio and video streams.
+    ///
+    /// The MediaProcessingOptions struct provides a type-safe way to configure which media streams
+    /// should be processed during media operations. This option set allows developers to specify
+    /// whether to process audio, video, or both streams, enabling flexible configuration of media
+    /// processing pipelines. The options can be combined using set operations to create complex
+    /// processing configurations while maintaining clear and readable code.
+    struct MediaProcessingOptions: OptionSet {
+        // MARK: - Properties
+
+        /// The raw integer value representing the option set's bit flags.
+        ///
+        /// This property stores the underlying bit pattern that represents the combination
+        /// of selected options. Each bit position corresponds to a specific media processing
+        /// option, allowing efficient bitwise operations for option combination and checking.
+        let rawValue: Int
+
+        // MARK: - Static Properties
+
+        /// Option to process audio streams during media operations.
+        ///
+        /// When this option is selected, audio processing will be enabled for the media
+        /// operation. This includes audio capture, processing, encoding, and output
+        /// generation. Audio processing can be combined with video processing or used
+        /// independently for audio-only operations.
+        static let audio = MediaProcessingOptions(rawValue: 1 << 0)
+
+        /// Option to process video streams during media operations.
+        ///
+        /// When this option is selected, video processing will be enabled for the media
+        /// operation. This includes video capture, processing, encoding, and output
+        /// generation. Video processing can be combined with audio processing or used
+        /// independently for video-only operations.
+        static let video = MediaProcessingOptions(rawValue: 1 << 1)
+    }
+
     // MARK: - Initializer
 
     /// Creates a new instance of the `MovieOutputProcessor`.
@@ -308,20 +305,22 @@ final class MovieOutputProcessor {
     @MovieOutputProcessorActor
     func endProcessing() async throws(UtilityError) -> VideoClip {
         guard let error else {
-            if let assetWriter, state.canTransition(to: .finishing) {
+            if state.canTransition(to: .finishing) {
                 state = .finishing
 
-                await assetWriter.finishWriting()
+                if let assetWriter {
+                    await assetWriter.finishWriting()
 
-                if assetWriter.status == .failed {
-                    throw UtilityError(
-                        kind: .MovieOutputProcessorErrorReason.endProcessingFailed,
-                        underlyingError: assetWriter.error
-                    )
+                    if assetWriter.status == .failed {
+                        throw UtilityError(
+                            kind: .MovieOutputProcessorErrorReason.endProcessingFailed,
+                            underlyingError: assetWriter.error
+                        )
+                    }
+
+                    assetsURLs.append(assetWriter.outputURL)
+                    destroySession()
                 }
-
-                assetsURLs.append(assetWriter.outputURL)
-                destroyWriter()
 
                 do {
                     let bitRate = videoInput?.outputSettings?[AVVideoAverageBitRateKey] as? Int
@@ -334,8 +333,8 @@ final class MovieOutputProcessor {
                         url: asset.url
                     )
 
-                    startTimestamp = .invalid
-                    totalDuration = .zero
+                    currentClipDuration = .zero
+                    recordingDuration = .zero
                     state = .finished
 
                     return clip
@@ -348,7 +347,7 @@ final class MovieOutputProcessor {
             } else {
                 throw UtilityError(
                     kind: .MovieOutputProcessorErrorReason.endProcessingFailed,
-                    failureReason: "Cannot end processing: assetWriter is nil or state transition not allowed"
+                    failureReason: "Cannot end processing: state transition not allowed"
                 )
             }
         }
@@ -375,7 +374,9 @@ final class MovieOutputProcessor {
                 )
             }
 
-            destroyWriter()
+            currentClipDuration = CMTimeAdd(currentClipDuration, recordingDuration - currentClipDuration)
+
+            destroySession()
 
             assetsURLs.append(assetWriter.outputURL)
         }
@@ -389,6 +390,7 @@ final class MovieOutputProcessor {
     @MovieOutputProcessorActor
     func startProcessing() {
         if state.canTransition(to: .writing) {
+            recordingDuration = currentClipDuration
             state = .writing
         }
     }
@@ -416,20 +418,18 @@ final class MovieOutputProcessor {
 
         skippedAudioBuffers = []
 
-        if let audioInput, audioInput.isReadyForMoreMediaData {
-            for buffer in buffers {
-                if audioInput.append(buffer.sampleBuffer) {
-                    let currentBufferTimestamp = buffer.duration + buffer.timestamp
+        for buffer in buffers {
+            let adjustedBuffer = buffer.sampleBuffer.offset(by: buffer.timestamp, duration: buffer.duration)
+            if let audioInput, audioInput.isReadyForMoreMediaData, audioInput.append(adjustedBuffer) {
+                mediaProcessingOptions.insert(.audio)
 
-                    lastAudioTimestamp = currentBufferTimestamp
-                    mediaProcessingOptions.insert(.audio)
+                if !mediaProcessingOptions.contains(.video) {
+                    let timestamp = buffer.timestamp - startTimestamp
 
-                    if !mediaProcessingOptions.contains(.video) {
-                        totalDuration = currentBufferTimestamp - startTimestamp
-                    }
-                } else {
-                    failedBuffers.append(buffer)
+                    recordingDuration = CMTimeAdd(currentClipDuration, timestamp)
                 }
+            } else {
+                failedBuffers.append(buffer)
             }
         }
 
@@ -451,12 +451,12 @@ final class MovieOutputProcessor {
                 buffer.timestamp.isValid,
 
                 /// Whether the buffer can be appened to the adapter.
-                pixelBufferAdapter.append(bufferToProcess, withPresentationTime: buffer.timestamp)
+                pixelBufferAdapter.append(bufferToProcess, withPresentationTime: buffer.timestamp - startTimestamp)
             {
 
-                lastVideoTimestamp = buffer.timestamp
-                totalDuration = buffer.timestamp - startTimestamp
+                let timestamp = buffer.timestamp - startTimestamp
 
+                recordingDuration = CMTimeAdd(currentClipDuration, timestamp)
                 mediaProcessingOptions.insert(.video)
             }
         }
@@ -508,7 +508,7 @@ final class MovieOutputProcessor {
 
             if let videoInput {
                 videoInput.expectsMediaDataInRealTime = true
-                videoInput.transform = configuration.transform
+                videoInput.transform = .identity
 
                 pixelBufferAdapter = AVAssetWriterInputPixelBufferAdaptor(
                     assetWriterInput: videoInput,
@@ -518,7 +518,9 @@ final class MovieOutputProcessor {
         }
     }
 
-    private func destroyWriter() {
+    private func destroySession() {
+        startTimestamp = CMTime.zero
+
         assetWriter = nil
         audioInput = nil
         videoInput = nil
@@ -539,10 +541,65 @@ final class MovieOutputProcessor {
             )
         }
 
+        if assetsURLs.count == 1 {
+            return AVURLAsset(url: assetsURLs[0])
+        }
+
         let outputURL = nextOutputURL()
         let assets = assetsURLs.map(AVAsset.init)
-        let asset = try await AVMutableComposition.from(assets)
-        let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPreset1920x1080)
+
+        let comp = AVMutableComposition()
+        let videoTrack = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
+        let audioTrack = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
+
+        let timescale: Int32 = 600
+        var cursor = CMTime.zero
+
+        for asset in assets {
+            guard let v = try await asset.loadTracks(withMediaType: .video).first else { continue }
+            let a = try await asset.loadTracks(withMediaType: .audio).first
+
+            let dur = CMTimeConvertScale(try await asset.load(.duration), timescale: timescale, method: .default)
+            let range = CMTimeRange(start: .zero, duration: dur)
+
+            try videoTrack?.insertTimeRange(range, of: v, at: cursor)
+            if let a { try audioTrack?.insertTimeRange(range, of: a, at: cursor) }
+
+            cursor = cursor + dur
+        }
+
+        let instr = AVMutableVideoCompositionInstruction()
+        instr.timeRange = CMTimeRange(start: .zero, duration: cursor)
+
+        guard let videoTrack else {
+            throw UtilityError(
+                kind: .MovieOutputProcessorErrorReason.cannotExportAsset,
+                failureReason: "Cannot export asset: No asset URLs provided."
+            )
+        }
+
+        let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
+        let prefT = try await videoTrack.load(.preferredTransform)  // composition track’s transform
+        layer.setTransform(prefT, at: .zero)
+        // If you need a fade on the very end of the *whole* movie:
+        layer.setOpacityRamp(
+            fromStartOpacity: 1,
+            toEndOpacity: 0,
+            timeRange: CMTimeRange(
+                start: cursor - CMTime(seconds: 0.5, preferredTimescale: timescale),
+                duration: CMTime(seconds: 0.5, preferredTimescale: timescale)
+            )
+        )
+
+        instr.layerInstructions = [layer]
+
+        let vc = AVMutableVideoComposition()
+        vc.instructions = [instr]
+        vc.renderSize = try await videoTrack.load(.naturalSize)  // adjust for transform if needed
+        vc.frameDuration = CMTime(value: 1, timescale: 30)
+
+        // let asset = try await AVMutableComposition.from(assets)
+        let exportSession = AVAssetExportSession(asset: comp, presetName: AVAssetExportPreset1920x1080)
 
         guard let exportSession else {
             throw UtilityError(
@@ -555,7 +612,7 @@ final class MovieOutputProcessor {
             exportSession.shouldOptimizeForNetworkUse = true
             exportSession.outputURL = outputURL
             exportSession.outputFileType = fileType.avFileType
-            exportSession.videoComposition = try await AVMutableVideoComposition.from(assets)
+            exportSession.videoComposition = vc  //try await AVMutableVideoComposition.from(assets)
 
             await exportSession.export()
 
@@ -580,7 +637,7 @@ final class MovieOutputProcessor {
     }
 
     private func startSessionIfNecessary(at timestamp: CMTime) {
-        if assetWriter == nil, hasConfiguredAudio, hasConfiguredVideo {
+        if assetWriter == nil, hasConfiguredAudio, hasConfiguredVideo, timestamp.isValid {
             do {
                 assetWriter = try AVAssetWriter(url: nextOutputURL(), fileType: fileType.avFileType)
             } catch {
@@ -617,7 +674,7 @@ final class MovieOutputProcessor {
 
                 if error == nil {
                     assetWriter.startWriting()
-                    assetWriter.startSession(atSourceTime: timestamp)
+                    assetWriter.startSession(atSourceTime: .zero)
 
                     startTimestamp = timestamp
                 }
@@ -645,7 +702,6 @@ extension MovieOutputProcessor: DeviceOutputProcessor {
         if state == .writing {
             Task { @MovieOutputProcessorActor in
                 configureAudioInput(with: buffer, configuration: configuration)
-                startSessionIfNecessary(at: buffer.timestamp)
                 appendAudio(buffer: buffer)
             }
         }

@@ -29,7 +29,7 @@ extension AVCaptureVideoDataOutput {
             }
         }
 
-        captureVideoDataOutput.alwaysDiscardsLateVideoFrames = true
+        captureVideoDataOutput.alwaysDiscardsLateVideoFrames = false
         captureVideoDataOutput.videoSettings = settings
 
         return captureVideoDataOutput

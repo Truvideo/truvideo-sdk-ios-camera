@@ -54,6 +54,24 @@ extension View {
         }
     }
 
+    /// Adds a tap gesture recognizer to the view that executes the provided action.
+    ///
+    /// This modifier creates a tap gesture using a `DragGesture` with zero minimum distance,
+    /// which effectively captures tap events. When the user taps on the view, the gesture
+    /// recognizer will call the provided action closure with the tap location coordinates.
+    /// The location is provided in the view's coordinate space.
+    ///
+    /// - Parameters action: Closure to execute when a tap gesture is detected, receiving the tap location
+    /// - Returns: A view with the tap gesture recognizer attached
+    func onTapGesture(perform action: @escaping (CGPoint) -> Void) -> some View {
+        gesture(
+            DragGesture(minimumDistance: 0)
+                .onEnded { value in
+                    action(value.location)
+                }
+        )
+    }
+
     /// Applies selection state to the view and its child views.
     ///
     /// This function sets the selection state in the environment, allowing child views

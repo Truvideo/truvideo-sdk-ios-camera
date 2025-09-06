@@ -74,12 +74,6 @@ struct VideoDeviceConfiguration: Sendable {
     /// - `AVVideoScalingModeFit`
     var scalingMode = AVVideoScalingModeResizeAspectFill
 
-    /// A transform applied to the encoded video for display orientation or rotation correction.
-    ///
-    /// Defaults to identity. Use to rotate or flip the output as needed to match UI orientation
-    /// or to normalize device orientation at encode time.
-    var transform = CGAffineTransform.identity
-
     // MARK: - Static Properties
 
     /// The default average video bitrate (2 Mbps).

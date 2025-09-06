@@ -5,6 +5,7 @@
 import AVFoundation
 import CoreImage
 import Foundation
+import SwiftUICore
 import UIKit
 internal import Utilities
 
@@ -27,11 +28,6 @@ struct VideoSampleBuffer {
     /// The buffer is not owned or retained beyond normal ARC semantics.
     let sampleBuffer: CMSampleBuffer
 
-    /// The sample’s presentation timestamp.
-    ///
-    /// Use this for ordering, synchronization with audio, and writer session timing.
-    let timestamp: CMTime
-
     // MARK: - Computed Properties
 
     /// Returns the format description of the samples in a sample buffer.
@@ -42,6 +38,13 @@ struct VideoSampleBuffer {
     /// Returns an image buffer that contains the media data.
     var imageBuffer: CVImageBuffer? {
         CMSampleBufferGetImageBuffer(sampleBuffer)
+    }
+
+    /// The sample’s presentation timestamp.
+    ///
+    /// Use this for ordering, synchronization with audio, and writer session timing.
+    var timestamp: CMTime {
+        sampleBuffer.presentationTimeStamp
     }
 }
 
@@ -84,6 +87,7 @@ class VideoDevice: NSObject, Device {
     private var captureVideoDataOutput: AVCaptureVideoDataOutput?
     private let context = CIContext.createDefault()
     private var fileNameCount = 1
+    private var focusObserver = FocusObserver()
     private var lastVideoBuffer: VideoSampleBuffer?
     private var needsConfiguration = true
     private let notificationCenter: NotificationCenter
@@ -248,12 +252,29 @@ class VideoDevice: NSObject, Device {
     /// from the notification's user info using this key.
     nonisolated static let devicePosition = "com.truvideo.devicePosition"
 
+    /// Notification name for when a new focus point has been set.
+    ///
+    /// This notification is posted when a camera device has been instructed to
+    /// change its focus point to a new location. Observers can use this notification
+    /// to track focus point changes and update UI elements accordingly, such as
+    /// showing focus indicators or adjusting camera controls.
+    nonisolated static let newFocusPoint = "com.truvideo.newFocusPoint"
+
     /// Key for accessing the new device position in notification user info dictionaries.
     ///
     /// This string constant is used as a key in the user info dictionary of notifications
     /// related to device position changes. Observers can extract the target device position
     /// that the camera is switching to from the notification's user info using this key.
     nonisolated static let newPosition = "com.truvideo.newPosition"
+
+    /// Notification name for the previous focus point before a change occurred.
+    ///
+    /// This notification is posted when a camera device is about to change its
+    /// focus point, providing information about the previous focus location.
+    /// Observers can use this notification to track focus point transitions,
+    /// maintain focus history, or perform cleanup operations related to the
+    /// previous focus state.
+    nonisolated static let oldFocusPoint = "com.truvideo.oldFocusPoint"
 
     /// Key for accessing the previous device position in notification user info dictionaries.
     ///
@@ -264,6 +285,14 @@ class VideoDevice: NSObject, Device {
 
     // MARK: - Notification Names
 
+    /// Notification sent when a device has successfully changed its focus point.
+    ///
+    /// This notification is posted after a device focus point change has been completed
+    /// and the new focus point is active. Observers can use this notification to
+    /// update UI elements, refresh device state, or perform any necessary
+    /// post-focus-change operations.
+    nonisolated static let deviceDidChangeFocusPoint = Notification.Name("com.truvideo.deviceDidChangeFocusPoint")
+
     /// Notification sent when a device has successfully changed its position.
     ///
     /// This notification is posted after a device position change has been completed
@@ -271,6 +300,14 @@ class VideoDevice: NSObject, Device {
     /// update UI elements, refresh device state, or perform any necessary
     /// post-position-change operations.
     nonisolated static let deviceDidChangePosition = Notification.Name("com.truvideo.deviceDidChangePosition")
+
+    /// Notification sent when a device is about to change its focus point.
+    ///
+    /// This notification is posted before a device focus point change begins,
+    /// allowing observers to prepare for the upcoming change. This can be used
+    /// to show loading indicators, disable certain UI elements, or perform
+    /// pre-focus-change operations.
+    nonisolated static let deviceWillChangeFocusPoint = Notification.Name("com.truvideo.deviceWillChangeFocusPoint")
 
     /// Notification sent when a device is about to change its position.
     ///
@@ -587,7 +624,28 @@ class VideoDevice: NSObject, Device {
     func setFocusPoint(at point: CGPoint) throws(UtilityError) {
         if let captureDevice {
             do {
+                let oldFocusPoint = captureDevice.focusPointOfInterest
+                notificationCenter.post(
+                    Self.deviceWillChangeFocusPoint,
+                    object: self,
+                    userInfo: [Self.newFocusPoint: point]
+                )
+
                 try captureDevice.setFocusPoint(at: point)
+
+                focusObserver.startObserving(captureDevice) { [weak self] captureDevice in
+                    if let self {
+                        self.focusObserver.stopObserving()
+                        NotificationCenter.default.post(
+                            Self.deviceDidChangeFocusPoint,
+                            object: captureDevice,
+                            userInfo: [
+                                Self.oldFocusPoint: oldFocusPoint,
+                                Self.newFocusPoint: captureDevice.focusPointOfInterest,
+                            ]
+                        )
+                    }
+                }
             } catch {
                 throw UtilityError(kind: .VideoDeviceErrorReason.setFocusPointFailed, underlyingError: error)
             }
@@ -654,34 +712,24 @@ class VideoDevice: NSObject, Device {
 
                 let oldPosition = position
 
-                DispatchQueue.main.async {
-                    self.notificationCenter.post(
-                        name: Self.deviceWillChangePosition,
-                        object: self,
-                        userInfo: [
-                            Self.devicePosition: oldPosition,
-                            Self.newPosition: newPosition,
-                        ]
-                    )
-                }
+                notificationCenter.post(
+                    Self.deviceWillChangePosition,
+                    object: self,
+                    userInfo: [Self.devicePosition: oldPosition, Self.newPosition: newPosition]
+                )
 
                 captureSession.beginConfiguration()
 
                 defer { captureSession.commitConfiguration() }
 
                 captureDeviceInput = try captureSession.addDeviceInput(for: captureDevice)
-                updateVideoOutputSettings()
 
-                DispatchQueue.main.async {
-                    self.notificationCenter.post(
-                        name: Self.deviceDidChangePosition,
-                        object: self,
-                        userInfo: [
-                            Self.newPosition: newPosition,
-                            Self.oldPosition: oldPosition,
-                        ]
-                    )
-                }
+                updateVideoOutputSettings()
+                notificationCenter.post(
+                    Self.deviceDidChangePosition,
+                    object: self,
+                    userInfo: [Self.newPosition: newPosition, Self.oldPosition: oldPosition]
+                )
             }
         }
     }
@@ -725,6 +773,27 @@ class VideoDevice: NSObject, Device {
             } catch {
                 throw UtilityError(kind: .VideoDeviceErrorReason.torchModeFailed, underlyingError: error)
             }
+        }
+    }
+
+    /// Sets the video orientation for the capture session's video connection.
+    ///
+    /// This function configures the video orientation of the active video connection
+    /// to ensure that captured video frames are properly oriented. It checks if
+    /// the video connection exists and supports orientation changes before applying
+    /// the new orientation setting.
+    ///
+    /// - Parameter orientation: The desired video orientation for the capture session
+    @DeviceActor
+    func setVideoOrientation(_ orientation: AVCaptureVideoOrientation) {
+        if /// The current video connection.
+        let videoConnection = captureVideoDataOutput?.connection(with: .video),
+
+            /// Whether the connection supports orientation.
+            videoConnection.isVideoOrientationSupported
+        {
+
+            videoConnection.videoOrientation = orientation
         }
     }
 
@@ -823,8 +892,7 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
         if let captureDevice, state == .running {
             let sampleBuffer = VideoSampleBuffer(
                 minFrameDuration: captureDevice.activeVideoMinFrameDuration,
-                sampleBuffer: sampleBuffer,
-                timestamp: CMSampleBufferGetPresentationTimeStamp(sampleBuffer)
+                sampleBuffer: sampleBuffer
             )
 
             lastVideoBuffer = sampleBuffer

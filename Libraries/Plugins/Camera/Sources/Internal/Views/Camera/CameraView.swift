@@ -72,18 +72,11 @@ private struct Camera: View {
                     dismiss()
                 }
             }
-            .overlay {
-                ExitConfirmationView(isPresented: $isPresented)
-                    .hidden(!isPresented)
+            .onTapGesture { location in
+                viewModel.setFocusPoint(at: location)
             }
             .overlay(alignment: .top) {
-                ZStack {
-                    TimerView()
-                        .padding(.top, theme.spacingTheme.xxxl)
-                        .transition(.opacity)
-                        .hidden(viewModel.deviceOrientation.isPortrait)
-                }
-                .animation(.easeInOut(duration: animationDuration), value: viewModel.deviceOrientation)
+                makeTimerView()
             }
             .overlay(alignment: .topLeading) {
                 TopBar()
@@ -93,6 +86,22 @@ private struct Camera: View {
                 ToolBar()
                     .hidden(viewModel.deviceOrientation.isPortrait)
             }
+            .overlay {
+                ExitConfirmationView(isPresented: $isPresented)
+                    .hidden(!isPresented)
+            }
+    }
+
+    // MARK: - Private methods
+
+    private func makeTimerView() -> some View {
+        ZStack {
+            TimerView()
+                .padding(.top, theme.spacingTheme.xxxl)
+                .transition(.opacity)
+                .hidden(viewModel.deviceOrientation.isPortrait)
+        }
+        .animation(.easeInOut(duration: animationDuration), value: viewModel.deviceOrientation)
     }
 }
 
@@ -103,13 +112,13 @@ private struct FocusView: View {
 
     // MARK: - State
 
-    @State private var scale: CGFloat = 2.5
-    @State private var opacity = 1.0
+    @State var opacity = 1.0
+    @State var scale = 2.5
 
     // MARK: - Body
 
     var body: some View {
-        DSImages.viewFinder
+        DSIcons.viewFinder
             .scaleEffect(scale)
             .opacity(opacity)
             .onAppear {
@@ -146,6 +155,7 @@ private struct ToolBar: View {
                 HStack {
                     makeTakePhotoButton()
                     RecordButton()
+                    makePlayPauseButton()
                     makeSwitchCameraButton()
                 }
             }
@@ -155,6 +165,7 @@ private struct ToolBar: View {
                 VStack {
                     makeTakePhotoButton()
                     RecordButton()
+                    makePlayPauseButton()
                     makeSwitchCameraButton()
                 }
             }
@@ -163,6 +174,16 @@ private struct ToolBar: View {
 
     // MARK: - Private methods
 
+    private func makePlayPauseButton() -> some View {
+        CircleButton {
+            Icon(icon: viewModel.state == .paused ? DSIcons.play : DSIcons.pause, size: CGSize(theme.sizeTheme.x(3.5)))
+                .padding(theme.spacingTheme.sm)
+        } action: {
+            viewModel.togglePause()
+        }
+        .hidden([.finished, .initialized].contains(viewModel.state))
+    }
+
     private func makeSwitchCameraButton() -> some View {
         CircleButton {
             Icon(icon: DSIcons.cameraTrianglehead)
@@ -170,6 +191,7 @@ private struct ToolBar: View {
         } action: {
             viewModel.switchCamera()
         }
+        .hidden([.running, .paused].contains(viewModel.state))
     }
 
     private func makeTakePhotoButton() -> some View {

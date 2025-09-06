@@ -32,35 +32,35 @@ extension AVMutableVideoComposition {
         let mutableVideoComposition = AVMutableVideoComposition()
         var targetSize = CGSize.zero
 
-        mutableVideoComposition.frameDuration = CMTime(value: 1, timescale: 24)
+        mutableVideoComposition.frameDuration = CMTime(value: 1, timescale: 30)
 
         for (index, asset) in assets.enumerated() {
             let videoAssetTracks = try await asset.loadTracks(withMediaType: .video)
 
             for assetTrack in videoAssetTracks {
                 let instruction = AVMutableVideoCompositionLayerInstruction(assetTrack: assetTrack)
+                let preferredTransform = try await assetTrack.load(.preferredTransform)
+                let videoSize = try await assetTrack.load(.naturalSize).applying(preferredTransform)
 
                 if index == assets.count - 1 {
-                    instruction.setOpacity(0, at: CMTimeAdd(currentTime, asset.duration))
+                    instruction.setOpacity(0, at: currentTime + asset.duration)
                 }
 
-                let videoSize = try await assetTrack.load(.naturalSize)
-
-                instruction.setTransform(.identity, at: currentTime)
+                instruction.setTransform(preferredTransform, at: currentTime)
                 layerInstructions.append(instruction)
 
-                if videoSize.width * videoSize.height > targetSize.width * targetSize.height {
-                    targetSize = videoSize
-                }
+                targetSize.height = max(targetSize.height, videoSize.height)
+                targetSize.width = max(targetSize.width, videoSize.width)
             }
 
             currentTime = CMTimeAdd(currentTime, asset.duration)
         }
 
-        mutableVideoComposition.renderSize = targetSize
-        mainInstruction.timeRange = CMTimeRange(start: .zero, duration: currentTime)
         mainInstruction.layerInstructions = layerInstructions
+        mainInstruction.timeRange = CMTimeRange(start: .zero, duration: currentTime)
+
         mutableVideoComposition.instructions = [mainInstruction]
+        mutableVideoComposition.renderSize = targetSize
 
         return mutableVideoComposition
     }

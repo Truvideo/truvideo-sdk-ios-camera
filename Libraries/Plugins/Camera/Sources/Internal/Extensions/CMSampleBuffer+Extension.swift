@@ -16,7 +16,7 @@ extension CMSampleBuffer {
     ///   - time: The offset to subtract from each sample’s decode and presentation timestamps.
     ///   - duration: An optional duration to assign to each sample. When `nil`, existing durations are preserved.
     /// - Returns: A new `CMSampleBuffer` with adjusted timing, or `nil` if timing adjustment fails.
-    func offset(by time: CMTime, duration: CMTime? = nil) -> CMSampleBuffer? {
+    func offset(by time: CMTime, duration: CMTime? = nil) -> CMSampleBuffer {
         var itemCount: CMItemCount = 0
         var status = CMSampleBufferGetSampleTimingInfoArray(
             self,
@@ -25,7 +25,7 @@ extension CMSampleBuffer {
             entriesNeededOut: &itemCount
         )
 
-        guard status == 0 else { return nil }
+        guard status == 0 else { return self }
 
         var timingInfo = [CMSampleTimingInfo](
             repeating: CMSampleTimingInfo(
@@ -43,7 +43,7 @@ extension CMSampleBuffer {
             entriesNeededOut: &itemCount
         )
 
-        guard status == 0 else { return nil }
+        guard status == 0 else { return self }
 
         for index in 0 ..< itemCount {
             timingInfo[index].decodeTimeStamp = CMTimeSubtract(timingInfo[index].decodeTimeStamp, time)
@@ -63,7 +63,7 @@ extension CMSampleBuffer {
             sampleBufferOut: &sampleBufferOffset
         )
 
-        return sampleBufferOffset
+        return sampleBufferOffset ?? self
     }
 
     /// Appends the provided metadata dictionary key/value pairs.

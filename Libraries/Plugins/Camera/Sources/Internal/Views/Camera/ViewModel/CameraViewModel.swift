@@ -147,7 +147,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         self.orientationMonitor.add(self)
         self.orientationMonitor.startMonitoring()
 
-        movieOutputProcessor.$totalDuration
+        movieOutputProcessor.$recordingDuration
             .filter(\.isValid)
             .map { $0.seconds.toHMS() }
             .receive(on: RunLoop.main)
@@ -231,6 +231,26 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    /// Sets the camera focus point to the specified location asynchronously.
+    ///
+    /// This method sets the focus point of the video device to the provided coordinates
+    /// and handles any errors that may occur during the operation. The focus point
+    /// change is performed on the main actor to ensure thread safety for UI updates.
+    /// If an error occurs during the focus point setting, the localized error is
+    /// cleared to prevent displaying stale error messages.
+    ///
+    /// - Parameter point: The normalized point (0.0 to 1.0) where focus should be set
+    func setFocusPoint(at point: CGPoint) {
+        Task { @MainActor in
+            do {
+                let point = previewLayer.captureDevicePointConverted(fromLayerPoint: point)
+                try await videoDevice.setFocusPoint(at: point)
+            } catch {
+                localizedError = ""
+            }
+        }
+    }
+
     func setFormat(_ format: VideoDevice.Format) {
         Task { @MainActor in
             let currentFormat = selectedFormat
@@ -278,6 +298,32 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    /// Toggles the recording state between pause and record.
+    ///
+    /// This function manages the recording lifecycle by checking the current state
+    /// of the video device and performing the appropriate action. If the device
+    /// is currently running, it pauses the recording by pausing the movie processing.
+    func togglePause() {
+        Task { @MainActor in
+            do {
+                switch movieOutputProcessor.state {
+                case .paused:
+                    await movieOutputProcessor.startProcessing()
+                    state = .running
+
+                case .writing:
+                    try await movieOutputProcessor.pause()
+                    state = .paused
+
+                default:
+                    break
+                }
+            } catch {
+                localizedError = error.localizedDescription
+            }
+        }
+    }
+
     /// Toggles the recording state between start and stop.
     ///
     /// This function manages the recording lifecycle by checking the current state
@@ -293,21 +339,24 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     func toggleRecord() {
         Task { @MainActor in
             do {
-                switch await videoDevice.state {
-                case .running:
+                switch movieOutputProcessor.state {
+                case .initialized, .finished, .failed:
+                    try await record()
+                    await movieOutputProcessor.startProcessing()
+
+                case .paused, .writing:
+                    state = .finished
+
                     let videoClip = try await movieOutputProcessor.endProcessing()
 
                     medias.append(.clip(videoClip))
                     await endRecording()
 
-                case .initialized, .finished, .failed:
-                    await movieOutputProcessor.startProcessing()
-                    try await record()
-
                 default:
                     break
                 }
             } catch {
+                print(error)
                 localizedError = error.localizedDescription
             }
         }
@@ -407,11 +456,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         if state.canTransition(to: .finished) {
             videoDevice.endCapturing(in: captureSession)
             audioDevice.endCapturing(in: captureSession)
-            captureSession.stopRunning()
-
-            await MainActor.run {
-                state = .finished
-            }
         }
     }
 
@@ -430,8 +474,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             }
 
             do {
-                try audioDevice.configure(in: captureSession)
                 try videoDevice.configure(in: captureSession)
+                try audioDevice.configure(in: captureSession)
                 try photoDevice.configure(in: captureSession)
 
                 audioDevice.add(movieOutputProcessor)
@@ -447,6 +491,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     self.isTorchEnabled = isTorchEnabled
                 }
 
+                let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
+
+                videoDevice.setVideoOrientation(videoOrientation)
                 updatePreviewOrientation()
                 captureSession.startRunning()
             } catch {
@@ -489,7 +536,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     }
                 } catch {
                     localizedError = ""
-                    state = .failed
                 }
             }
         }
@@ -507,7 +553,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                     captureSession.startRunning()
                 } catch {
-                    state = .failed
+
                 }
             }
         }
@@ -535,8 +581,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @DeviceActor
     private func record() async throws {
         if state.canTransition(to: .running) {
-            try audioDevice.startCapturing()
             try videoDevice.startCapturing()
+            try audioDevice.startCapturing()
 
             await MainActor.run {
                 state = .running
@@ -563,7 +609,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     }
                 } catch {
                     localizedError = ""
-                    state = .failed
                 }
             }
         }
@@ -571,7 +616,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     private func updatePreviewOrientation() {
         if [.landscapeLeft, .landscapeRight, .portrait].contains(deviceOrientation) {
-            previewLayer.connection?.videoOrientation = deviceOrientation.captureVideoOrientation
+            previewLayer.connection?.videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
         }
     }
 
@@ -582,24 +627,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             } catch {
 
             }
-        }
-    }
-}
-
-extension UIDeviceOrientation {
-    /// Converts `UIDeviceOrientation` to the corresponding `AVCaptureVideoOrientation`.
-    ///
-    /// Falls back to `.portrait` when the orientation is not supported.
-    fileprivate var captureVideoOrientation: AVCaptureVideoOrientation {
-        switch self {
-        case .landscapeLeft:
-            .landscapeRight
-
-        case .landscapeRight:
-            .landscapeLeft
-
-        default:
-            .portrait
         }
     }
 }

@@ -64,6 +64,9 @@ public struct DSIcons {
     /// functionality or camera mode selection.
     static let video = Image(systemName: "video")
 
+    /// Represents a viewfinder image, typically used to indicate a camera focus or scanning interface.
+    static let viewFinder = Image("tap-to-focus", bundle: Bundle(for: BundleLocator.self))
+
     /// Represents a close or cancel action, typically used for dismissing views or canceling operations.
     static let xmark = Image(systemName: "xmark")
 }
