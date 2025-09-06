@@ -32,6 +32,12 @@ struct ZoomPicker: View {
     /// The available zoom factor options to choose from.
     let options: [CGFloat]
 
+    /// The transition to apply when collapsing the mask.
+    let transition = AnyTransition.asymmetric(
+        insertion: .opacity.animation(.easeOut(duration: 0.12)),
+        removal: .opacity.animation(.linear(duration: 0))
+    )
+
     // MARK: - Binding Properties
 
     /// Optional binding to an external expanded state that can override the local state.
@@ -68,9 +74,6 @@ struct ZoomPicker: View {
     /// Controls whether the picker is in expanded or collapsed state.
     @State var isExpanded = false
 
-    /// The transition animation used for state changes.
-    @State var transition = AnyTransition.opacity.animation(.easeInOut(duration: 0))
-
     // MARK: - StateObject Properties
 
     @StateObject var viewModel = ZoomPickerViewModel()
@@ -87,7 +90,6 @@ struct ZoomPicker: View {
                     guard binding.wrappedValue else { return }
 
                     selection = option
-                    transition = .opacity.animation(.easeInOut(duration: 1))
                     withAnimation {
                         binding.wrappedValue = false
                     }
@@ -95,43 +97,43 @@ struct ZoomPicker: View {
                 .allowsHitTesting(selection != option)
             }
         }
+        .opacity(isExpanded ? 1 : 0)
         .padding(.horizontal, theme.spacingTheme.sm)
         .mask(
             Rectangle()
-                .frame(
-                    maxWidth: maxSizeForCollapsibleMask.width,
-                    maxHeight: maxSizeForCollapsibleMask.height
-                )
+                .frame(maxWidth: maxSizeForCollapsibleMask.width, maxHeight: maxSizeForCollapsibleMask.height)
+                .animation(.spring(response: 0.25, dampingFraction: 1.0, blendDuration: 0), value: isExpanded)
         )
         .background(theme.colorScheme.surfaceContainer.opacity(0.4))
         .mask(
             RoundedRectangle(cornerRadius: theme.radiusTheme.xxl)
-                .frame(
-                    maxWidth: maxSizeForAnimatableMask.width,
-                    maxHeight: maxSizeForAnimatableMask.height
-                )
+                .frame(maxWidth: maxSizeForAnimatableMask.width, maxHeight: maxSizeForAnimatableMask.height)
+                .animation(.interpolatingSpring(mass: 1, stiffness: 200, damping: 22), value: isExpanded)
         )
         .overlay {
-            Chip(viewModel.format(selection), isSelected: true) {
-                transition = .opacity.animation(.easeInOut(duration: 0))
-                withAnimation {
-                    binding.wrappedValue = true
-                }
-            }
-            .hidden(binding.wrappedValue)
-            .transition(transition)
+            makeSelectedZoomChip()
         }
-        .animation(.interpolatingSpring(mass: 1, stiffness: 200, damping: 22), value: isExpanded)
         .environmentObject(viewModel)
     }
 
     // MARK: - Initializer
 
     init(options: [CGFloat], selection: Binding<CGFloat>, isExpanded: Binding<Bool>? = nil) {
-        self.isExpandedBinding = isExpanded
         self._selection = selection
+        self.isExpandedBinding = isExpanded
         self.options = options
-        self.transition = transition
+    }
+
+    // MARK: - Private methods
+
+    private func makeSelectedZoomChip() -> some View {
+        Chip(viewModel.format(selection), isSelected: true) {
+            withAnimation {
+                binding.wrappedValue = true
+            }
+        }
+        .hidden(binding.wrappedValue)
+        .transition(transition)
     }
 }
 

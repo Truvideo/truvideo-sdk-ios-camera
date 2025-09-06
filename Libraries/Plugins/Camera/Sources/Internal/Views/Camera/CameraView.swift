@@ -26,6 +26,7 @@ struct CameraView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.colorScheme.surfaceContainer)
+        .snackbar(viewModel.localizedError, isPresented: $viewModel.isSnackbarPresented)
         .environmentObject(viewModel)
     }
 }

@@ -5,7 +5,6 @@
 import AVFoundation
 import CoreImage
 import Foundation
-import SwiftUICore
 import UIKit
 internal import Utilities
 
@@ -86,11 +85,13 @@ class VideoDevice: NSObject, Device {
     private var captureSession: AVCaptureSession?
     private var captureVideoDataOutput: AVCaptureVideoDataOutput?
     private let context = CIContext.createDefault()
+    private var continuation: CheckedContinuation<Photo?, Error>?
     private var fileNameCount = 1
     private var focusObserver = FocusObserver()
     private var lastVideoBuffer: VideoSampleBuffer?
     private var needsConfiguration = true
     private let notificationCenter: NotificationCenter
+    private var capturePhotoOutput: AVCapturePhotoOutput?
     private var processors: [ObjectIdentifier: any VideoOutputProcessor] = [:]
     private var supportedFormats: [AVCaptureDevice.Position: [Format]] = [:]
     private let queue = DispatchQueue(label: "com.video.device.queue")
@@ -110,6 +111,13 @@ class VideoDevice: NSObject, Device {
     /// is created with sensible defaults and may be updated by higher-level APIs before
     /// applying changes to the underlying `AVCaptureDevice`/session.
     let configuration = VideoDeviceConfiguration()
+
+    /// The flash mode to use during photo capture.
+    ///
+    /// This property determines how the camera's flash behaves when taking a photo.
+    /// It can be set to different modes such as off, on, auto, or red-eye reduction
+    /// to achieve the desired lighting effect for the captured image.
+    var flashMode = AVCaptureDevice.FlashMode.off
 
     /// The currently active video format for this device.
     ///
@@ -136,6 +144,12 @@ class VideoDevice: NSObject, Device {
     /// according to the component’s workflow. See `State` for the allowed transitions
     /// enforced by the state machine.
     private(set) var state = RecordingState.initialized
+
+    /// The current torch mode of the active capture device.
+    ///
+    /// Reflects the device’s `torchMode` (e.g., `.on`, `.off`, `.auto`). If no device is
+    /// available, `.off` is returned.
+    private(set) var torchMode = AVCaptureDevice.TorchMode.off
 
     // MARK: - Private Computed Properties
 
@@ -213,16 +227,6 @@ class VideoDevice: NSObject, Device {
     /// - Returns: The current device position, or `.back` when no device is available.
     var position: AVCaptureDevice.Position {
         captureDevice?.position ?? .back
-    }
-
-    /// The current torch mode of the active capture device.
-    ///
-    /// Reflects the device’s `torchMode` (e.g., `.on`, `.off`, `.auto`). If no device is
-    /// available, `.off` is returned.
-    ///
-    /// - Returns: The current `AVCaptureDevice.TorchMode`, or `.off` when no device is available.
-    var torchMode: AVCaptureDevice.TorchMode {
-        captureDevice?.torchMode ?? .off
     }
 
     // MARK: - Static Properties
@@ -429,6 +433,7 @@ class VideoDevice: NSObject, Device {
         do {
             captureDeviceInput = try session.addDeviceInput(for: videoCaptureDevice)
             captureVideoDataOutput = try session.addDeviceOutput()
+            capturePhotoOutput = try session.addPhotoOutput()
 
             captureVideoDataOutput?.setSampleBufferDelegate(self, queue: queue)
             updateVideoOutputSettings()
@@ -441,6 +446,7 @@ class VideoDevice: NSObject, Device {
         } catch {
             destroyDevice()
             state = .failed
+
             throw error
         }
     }
@@ -470,6 +476,18 @@ class VideoDevice: NSObject, Device {
     @DeviceActor
     func pause() {
         if state.canTransition(to: .paused) {
+            do {
+                if let captureDevice, captureDevice.torchMode != .off, captureDevice.isTorchAvailable {
+                    try captureDevice.lockForConfiguration()
+                    defer { captureDevice.unlockForConfiguration() }
+
+                    captureDevice.torchMode = .off
+                }
+            } catch {
+                // Log should be added here
+                print(error)
+            }
+
             state = .paused
         }
     }
@@ -505,6 +523,7 @@ class VideoDevice: NSObject, Device {
             }
 
             state = .running
+            try setTorchMode(torchMode)
         }
     }
 
@@ -522,24 +541,15 @@ class VideoDevice: NSObject, Device {
         processors[ObjectIdentifier(processor)] = processor
     }
 
-    /// Captures a photo from the last video buffer with metadata and saves it to disk.
+    /// Captures a photo using the configured camera device.
     ///
-    /// This function extracts an image from the most recent video sample buffer and
-    /// processes it into a photo file with embedded metadata. It performs validation
-    /// checks to ensure the device is properly configured and that both the image
-    /// context and last video buffer are available. The captured image is enhanced
-    /// with TruVideo metadata including software attribution, artist information,
-    /// and timestamp before being converted to the configured image format.
+    /// This method captures a photo using the current camera configuration and settings.
+    /// It first validates that the device is properly configured and running, then either
+    /// captures a photo using the photo output delegate or falls back to a snapshot
+    /// method if the device is not in a running state.
     ///
-    /// The function handles the complete photo capture pipeline: validation,
-    /// metadata addition, image creation, format conversion, file writing,
-    /// and Photo object creation. It uses atomic file writing to ensure
-    /// data integrity during the save operation.
-    ///
-    /// - Returns: A Photo object containing the captured image URL and metadata,
-    ///           or nil if the capture process fails
-    /// - Throws: A UtilityError if the device needs configuration, if required
-    ///           resources are unavailable, or if file writing fails
+    /// - Returns: A `Photo` object containing the captured image data, or `nil` if capture fails
+    /// - Throws: `UtilityError` with `.VideoDeviceErrorReason.failedToCapturePhoto` if the device needs configuration
     func capturePhoto() async throws -> Photo? {
         guard !needsConfiguration else {
             throw UtilityError(
@@ -548,54 +558,27 @@ class VideoDevice: NSObject, Device {
             )
         }
 
-        guard
-            /// The Image context to use when capturing the photo.
-            let context,
+        guard state == .running else {
+            return try await withCheckedThrowingContinuation { continuation in
+                Task {
+                    guard let capturePhotoOutput else {
+                        return continuation.resume(returning: nil)
+                    }
 
-            /// The last captured video buffer.
-            let sampleBuffer = lastVideoBuffer?.sampleBuffer
-        else {
+                    let capturePhotoSettings = AVCapturePhotoSettings.from(configuration)
 
-            throw UtilityError(
-                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                failureReason: "Unable to get data representation of the photo."
-            )
+                    capturePhotoOutput.isHighResolutionCaptureEnabled = configuration.isHighResolutionEnabled
+                    capturePhotoSettings.flashMode = flashMode
+
+                    self.continuation = continuation
+                    await MainActor.run {
+                        capturePhotoOutput.capturePhoto(with: capturePhotoSettings, delegate: self)
+                    }
+                }
+            }
         }
 
-        let metadata = [
-            kCGImagePropertyTIFFSoftware as String: truVideoMetadataTitle,
-            kCGImagePropertyTIFFArtist as String: truVideoMetadataArtist,
-            kCGImagePropertyTIFFDateTime as String: ISO8601DateFormatter().string(from: Date()),
-        ]
-
-        sampleBuffer.append(metadataAdditions: metadata)
-
-        guard
-            /// The image extracted from the buffer.
-            let image = context.createImage(from: sampleBuffer),
-
-            /// The data representation of the image in the specified format.
-            let data = image.data(with: configuration.imageFormat)
-        else {
-
-            throw UtilityError(
-                kind: .PhotoDeviceErrorReason.failedToCapturePhoto,
-                failureReason: "Unable to get data representation of the photo."
-            )
-        }
-
-        do {
-            let outputURL = nextOutputURL()
-
-            try data.write(to: outputURL, options: .atomic)
-
-            return Photo(url: outputURL, format: configuration.imageFormat, orientation: .portrait)
-        } catch {
-            throw UtilityError(
-                kind: .PhotoDeviceErrorReason.failedToCapturePhoto,
-                underlyingError: error
-            )
-        }
+        return try snapshot()
     }
 
     /// Unregisters a processor by its reference identity.
@@ -757,7 +740,7 @@ class VideoDevice: NSObject, Device {
     ///   - `UtilityError(kind: .VideoDeviceErrorReason.torchModeFailed, underlyingError:)` on failure.
     @DeviceActor
     func setTorchMode(_ mode: AVCaptureDevice.TorchMode) throws(UtilityError) {
-        if let captureDevice, torchMode != mode {
+        if let captureDevice {
             guard captureDevice.isTorchModeSupported(mode) else {
                 throw UtilityError(
                     kind: .VideoDeviceErrorReason.torchNotSupported,
@@ -765,13 +748,21 @@ class VideoDevice: NSObject, Device {
                 )
             }
 
-            do {
-                try captureDevice.lockForConfiguration()
-                defer { captureDevice.unlockForConfiguration() }
+            guard state == .running else {
+                torchMode = mode
+                return
+            }
 
-                captureDevice.torchMode = mode
-            } catch {
-                throw UtilityError(kind: .VideoDeviceErrorReason.torchModeFailed, underlyingError: error)
+            if captureDevice.torchMode != mode {
+                do {
+                    try captureDevice.lockForConfiguration()
+                    defer { captureDevice.unlockForConfiguration() }
+
+                    captureDevice.torchMode = mode
+                    torchMode = mode
+                } catch {
+                    throw UtilityError(kind: .VideoDeviceErrorReason.torchModeFailed, underlyingError: error)
+                }
             }
         }
     }
@@ -852,6 +843,12 @@ class VideoDevice: NSObject, Device {
 
                 self.captureDeviceInput = nil
             }
+            
+            if let capturePhotoOutput {
+                captureSession.removeOutput(capturePhotoOutput)
+                
+                self.capturePhotoOutput = nil
+            }
 
             captureDevice = nil
         }
@@ -864,6 +861,57 @@ class VideoDevice: NSObject, Device {
         return outputDirectory.appendingPathComponent(filename)
     }
 
+    private func snapshot() throws(UtilityError) -> Photo? {
+        guard
+            /// The Image context to use when capturing the photo.
+            let context,
+
+            /// The last captured video buffer.
+            let sampleBuffer = lastVideoBuffer?.sampleBuffer
+        else {
+
+            throw UtilityError(
+                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
+                failureReason: "Unable to get data representation of the photo."
+            )
+        }
+
+        let metadata = [
+            kCGImagePropertyTIFFSoftware as String: truVideoMetadataTitle,
+            kCGImagePropertyTIFFArtist as String: truVideoMetadataArtist,
+            kCGImagePropertyTIFFDateTime as String: ISO8601DateFormatter().string(from: Date()),
+        ]
+
+        sampleBuffer.append(metadataAdditions: metadata)
+
+        guard
+            /// The image extracted from the buffer.
+            let image = context.createImage(from: sampleBuffer),
+
+            /// The data representation of the image in the specified format.
+            let data = image.data(with: configuration.imageFormat)
+        else {
+
+            throw UtilityError(
+                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
+                failureReason: "Unable to get data representation of the photo."
+            )
+        }
+
+        do {
+            let outputURL = nextOutputURL()
+
+            try data.write(to: outputURL, options: .atomic)
+
+            return Photo(url: outputURL, format: configuration.imageFormat, orientation: .portrait)
+        } catch {
+            throw UtilityError(
+                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
+                underlyingError: error
+            )
+        }
+    }
+
     private func updateVideoOutputSettings() {
         if let videoConnection = captureVideoDataOutput?.connection(with: .video) {
             videoConnection.automaticallyAdjustsVideoMirroring = position != .front
@@ -874,6 +922,39 @@ class VideoDevice: NSObject, Device {
 
             if videoConnection.isVideoStabilizationSupported {
                 videoConnection.preferredVideoStabilizationMode = stabilizationMode
+            }
+        }
+    }
+}
+
+extension VideoDevice: AVCapturePhotoCaptureDelegate {
+
+    // MARK: - AVCapturePhotoCaptureDelegate
+
+    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
+        defer {
+            continuation = nil
+        }
+
+        if let continuation {
+            if let error {
+                let error = UtilityError(kind: .VideoDeviceErrorReason.failedToCapturePhoto, underlyingError: error)
+
+                continuation.resume(throwing: error)
+                return
+            }
+
+            do {
+                let data = try photo.imageData(with: configuration.imageFormat)
+                let outputURL = nextOutputURL()
+                let photo = Photo(url: outputURL, format: configuration.imageFormat, orientation: .portrait)
+
+                try data.write(to: outputURL, options: .atomic)
+
+                continuation.resume(returning: photo)
+            } catch {
+                let error = UtilityError(kind: .VideoDeviceErrorReason.failedToCapturePhoto, underlyingError: error)
+                continuation.resume(throwing: error)
             }
         }
     }
@@ -902,6 +983,74 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
                 processors.forEach { $0.process(sampleBuffer, with: configuration) }
             }
         }
+    }
+}
+
+extension AVCapturePhoto {
+    /// Converts the photo to the specified file format and returns the data representation.
+    ///
+    /// This function processes the captured photo data according to the requested file format.
+    /// For HEIC and JPEG formats, it returns the original data representation directly.
+    /// For PNG format, it converts the data to a UIImage and then generates PNG data,
+    /// which may involve format conversion and re-encoding.
+    ///
+    /// The function handles format-specific processing requirements, ensuring that
+    /// the output data is properly encoded for the target format. PNG conversion
+    /// requires additional processing steps compared to the other formats.
+    ///
+    /// - Parameter fileFormat: The desired output format for the photo data
+    /// - Returns: The photo data encoded in the specified format
+    /// - Throws: A UtilityError if the data representation cannot be obtained or if PNG conversion fails
+    fileprivate func imageData(with fileFormat: FileFormat) throws(UtilityError) -> Data {
+        guard let data = fileDataRepresentation() else {
+            throw UtilityError(
+                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
+                failureReason: "Unable to get data representation of the photo."
+            )
+        }
+
+        guard fileFormat == .png else {
+            return data
+        }
+
+        guard let data = UIImage(data: data)?.pngData() else {
+            throw UtilityError(
+                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
+                failureReason: "Unable to get data representation of the photo."
+            )
+        }
+
+        return data
+    }
+}
+
+extension AVCapturePhotoSettings {
+    /// Creates an `AVCapturePhotoSettings` instance from a video device configuration.
+    ///
+    /// This method converts a `VideoDeviceConfiguration` into the corresponding
+    /// `AVCapturePhotoSettings` object used by the camera capture system. It configures
+    /// the photo settings with the specified image format, quality settings, and
+    /// resolution options from the configuration object.
+    ///
+    /// - Parameter configuration: The video device configuration containing image format and quality settings
+    /// - Returns: A configured `AVCapturePhotoSettings` instance ready for photo capture
+    fileprivate static func from(_ configuration: VideoDeviceConfiguration) -> AVCapturePhotoSettings {
+        let capturePhotoSettings = AVCapturePhotoSettings(
+            rawPixelFormatType: 0,
+            rawFileType: nil,
+            processedFormat: [
+                AVVideoCodecKey: configuration.imageFormat.codec,
+                AVVideoCompressionPropertiesKey: [
+                    AVVideoQualityKey: NSNumber(value: configuration.imageFormat.quality)
+                ],
+            ],
+            processedFileType: configuration.imageFormat.fileType
+        )
+
+        capturePhotoSettings.isHighResolutionPhotoEnabled = configuration.isHighResolutionEnabled
+        capturePhotoSettings.photoQualityPrioritization = .balanced
+
+        return capturePhotoSettings
     }
 }
 
@@ -969,6 +1118,31 @@ extension AVCaptureSession {
         addOutput(captureVideoDataOutput)
 
         return captureVideoDataOutput
+    }
+
+    /// Adds a photo output to the capture session for photo capture functionality.
+    ///
+    /// This method creates and adds an `AVCapturePhotoOutput` to the capture session,
+    /// enabling photo capture capabilities. It validates that the output can be added
+    /// to the session before attempting to add it, throwing an error if the addition
+    /// fails due to session constraints or configuration issues.
+    ///
+    /// - Returns: An `AVCapturePhotoOutput` instance that has been successfully
+    ///            added to the capture session and is ready for video data processing.
+    /// - Throws: `UtilityError` with `.PhotoDeviceErrorReason.cannotAddOutput` if the photo output cannot be added to the session
+    fileprivate func addPhotoOutput() throws(UtilityError) -> AVCapturePhotoOutput {
+        let capturePhotoOutput = AVCapturePhotoOutput()
+
+        if canAddOutput(capturePhotoOutput) {
+            addOutput(capturePhotoOutput)
+        } else {
+            throw UtilityError(
+                kind: .VideoDeviceErrorReason.cannotAddOutput,
+                failureReason: "Unable to add \(capturePhotoOutput.debugDescription) to the session."
+            )
+        }
+
+        return capturePhotoOutput
     }
 }
 

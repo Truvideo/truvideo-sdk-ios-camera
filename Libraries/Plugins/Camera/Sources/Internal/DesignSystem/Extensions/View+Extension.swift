@@ -54,6 +54,67 @@ extension View {
         }
     }
 
+    /// Displays a snackbar with a specified label, position, duration, and vertical offset.
+    ///
+    /// This method creates a snackbar with the provided label and binds its presentation state to a given `Binding<Bool>`.
+    /// It allows customization of the snackbar's position, duration, and vertical offset.
+    ///
+    /// - Parameters:
+    ///   - label: The text to display in the snackbar.
+    ///   - isPresented: A binding to a Boolean value that determines whether the snackbar is presented.
+    ///   - position: The position of the snackbar on the screen. Default is `.top`.
+    ///   - duration: The duration for which the snackbar is displayed. Default is 3 seconds.
+    ///   - lineLimit: The maximum lines to be displayed.
+    ///   - vOffset: The vertical offset of the snackbar from its position. Default is 0.
+    /// - Returns: A view with the snackbar added to its background.
+    func snackbar(
+        _ label: String,
+        isPresented: Binding<Bool>,
+        position: SnackbarPosition = .bottom,
+        duration: TimeInterval = 3,
+        lineLimit: Int = 2,
+        vOffset: CGFloat? = nil
+    ) -> some View {
+        snackbar(isPresented: isPresented, position: position, duration: duration, vOffset: vOffset) {
+            Text(label)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(lineLimit)
+                .multilineTextAlignment(.center)
+        }
+    }
+
+    /// Adds a snackbar overlay to the view with customizable presentation options.
+    ///
+    /// This modifier creates a snackbar that appears as an overlay on top of the current view.
+    /// The snackbar can be positioned at different locations, configured with custom duration,
+    /// and styled with custom content. It automatically handles presentation timing and
+    /// dismissal based on the provided parameters.
+    ///
+    /// - Parameters:
+    ///   - isPresented: A binding that controls whether the snackbar is currently visible
+    ///   - position: The vertical position where the snackbar should appear (default: .bottom)
+    ///   - duration: The time in seconds the snackbar remains visible before auto-dismissing (default: 3)
+    ///   - vOffset: Optional vertical offset to adjust the snackbar's position from its default location
+    ///   - content: A view builder closure that defines the content to display inside the snackbar
+    /// - Returns: A view with the snackbar overlay attached
+    func snackbar<Content: View>(
+        isPresented: Binding<Bool>,
+        position: SnackbarPosition = .bottom,
+        duration: TimeInterval = 3,
+        vOffset: CGFloat? = nil,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+        overlay {
+            Snackbar(
+                isPresented: isPresented,
+                position: position,
+                duration: duration,
+                vOffset: vOffset,
+                content: content
+            )
+        }
+    }
+
     /// Adds a tap gesture recognizer to the view that executes the provided action.
     ///
     /// This modifier creates a tap gesture using a `DragGesture` with zero minimum distance,

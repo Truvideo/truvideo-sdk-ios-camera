@@ -66,11 +66,14 @@ public struct Theme: Sendable {
     /// The radius theme defining corner radius values for UI elements.
     public let radiusTheme: RadiusTheme
 
-    /// The spacing theme defining consistent spacing values for layouts.
-    public let spacingTheme: SpacingTheme
-
     /// The size theme defining consistent size values for layouts.
     public let sizeTheme: SizeTheme
+
+    /// The snackbar theme defining the appearance including color, shadows, etc.
+    public let snackbarTheme: SnackbarTheme
+
+    /// The spacing theme defining consistent spacing values for layouts.
+    public let spacingTheme: SpacingTheme
 
     /// The text theme defining typography styles and text hierarchy.
     public let textTheme: TextTheme
@@ -88,6 +91,7 @@ public struct Theme: Sendable {
         iconTheme: IconTheme.default,
         radiusTheme: RadiusTheme(),
         sizeTheme: SizeTheme(),
+        snackbarTheme: SnackbarTheme.default,
         spacingTheme: SpacingTheme(),
         textTheme: TextTheme.default
     )
@@ -97,19 +101,21 @@ public struct Theme: Sendable {
     /// Creates a new theme with the specified design system components.
     ///
     /// - Parameters:
-    ///   - buttonTheme: The button theme configuration
-    ///   - colorScheme: The color scheme defining the color palette
-    ///   - iconTheme: The icon theme defining icon styling
-    ///   - radiusTheme: The radius theme for corner radius values
+    ///   - buttonTheme: The button theme configuration.
+    ///   - colorScheme: The color scheme defining the color palette.
+    ///   - iconTheme: The icon theme defining icon styling.
+    ///   - radiusTheme: The radius theme for corner radius values.
     ///   - sizeTheme: The size theme defining consistent size values for layouts.
-    ///   - spacingTheme: The spacing theme for layout spacing
-    ///   - textTheme: The text theme for typography styles
+    ///   - snackbarTheme: The snackbar theme configuration.
+    ///   - spacingTheme: The spacing theme for layout spacing.
+    ///   - textTheme: The text theme for typography styles.
     public init(
         buttonTheme: ButtonTheme,
         colorScheme: DSColorScheme,
         iconTheme: IconTheme,
         radiusTheme: RadiusTheme,
         sizeTheme: SizeTheme,
+        snackbarTheme: SnackbarTheme,
         spacingTheme: SpacingTheme,
         textTheme: TextTheme
     ) {
@@ -119,6 +125,7 @@ public struct Theme: Sendable {
         self.iconTheme = iconTheme
         self.radiusTheme = radiusTheme
         self.sizeTheme = sizeTheme
+        self.snackbarTheme = snackbarTheme
         self.spacingTheme = spacingTheme
         self.textTheme = textTheme
     }
@@ -136,6 +143,7 @@ public struct Theme: Sendable {
     ///   - iconTheme: The new icon theme, or nil to keep the current one
     ///   - radiusTheme: The new radius theme, or nil to keep the current one
     ///   - sizeTheme: The size theme defining consistent size values for layouts.
+    ///   - snackbarTheme: The snackbar theme configuration.
     ///   - spacingTheme: The new spacing theme, or nil to keep the current one
     ///   - textTheme: The new text theme, or nil to keep the current one
     /// - Returns: A new theme instance with the specified changes applied
@@ -144,6 +152,7 @@ public struct Theme: Sendable {
         colorScheme: DSColorScheme? = nil,
         iconTheme: IconTheme? = nil,
         radiusTheme: RadiusTheme? = nil,
+        snackbarTheme: SnackbarTheme? = nil,
         spacingTheme: SpacingTheme? = nil,
         sizeTheme: SizeTheme? = nil,
         textTheme: TextTheme? = nil
@@ -154,6 +163,7 @@ public struct Theme: Sendable {
             iconTheme: iconTheme ?? self.iconTheme,
             radiusTheme: radiusTheme ?? self.radiusTheme,
             sizeTheme: sizeTheme ?? self.sizeTheme,
+            snackbarTheme: snackbarTheme ?? self.snackbarTheme,
             spacingTheme: spacingTheme ?? self.spacingTheme,
             textTheme: textTheme ?? self.textTheme
         )

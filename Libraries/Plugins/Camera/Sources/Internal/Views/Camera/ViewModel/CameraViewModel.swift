@@ -15,7 +15,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private let captureSession = AVCaptureSession()
     private let orientationMonitor: OrientationMonitor
     private let movieOutputProcessor = MovieOutputProcessor()
-    private let photoDevice = PhotoDevice()
     private var sessionWasRunning = false
     private let videoDevice = VideoDevice()
 
@@ -28,6 +27,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// has been determined. The property is updated when the camera device is configured
     /// and torch support is checked.
     private(set) var isTorchAvailable = false
+
+    /// Localized error message for display to users. Empty string when no error.
+    private(set) var localizedError = ""
 
     /// The video preview layer that displays the camera feed in the UI.
     let previewLayer = AVCaptureVideoPreviewLayer()
@@ -52,8 +54,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// Torch/flashlight status. `true` when torch is enabled, `false` when disabled.
     @Published private(set) var isTorchEnabled = false
 
-    /// Localized error message for display to users. Empty string when no error.
-    @Published private(set) var localizedError = ""
+    /// A boolean indicating whether the snackbar should be presented.
+    @Published var isSnackbarPresented = false
 
     /// The collection of media items displayed in the gallery.
     ///
@@ -193,14 +195,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     func capturePhoto() {
         Task { @MainActor in
             do {
-                let isRecording = await videoDevice.state == .running
-                let photo = try await isRecording ? videoDevice.capturePhoto() : photoDevice.capturePhoto()
-
-                if let photo {
+                if let photo = try await videoDevice.capturePhoto() {
                     medias.append(.photo(photo))
                 }
             } catch {
                 localizedError = error.localizedDescription
+                isSnackbarPresented = true
             }
         }
     }
@@ -246,7 +246,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 let point = previewLayer.captureDevicePointConverted(fromLayerPoint: point)
                 try await videoDevice.setFocusPoint(at: point)
             } catch {
-                localizedError = ""
+                localizedError = error.localizedDescription
+                isSnackbarPresented = true
             }
         }
     }
@@ -275,6 +276,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 try await videoDevice.setPosition(videoDevice.position == .back ? .front : .back)
             } catch {
                 localizedError = error.localizedDescription
+                isSnackbarPresented = true
             }
         }
     }
@@ -286,14 +288,20 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// actual torch mode. If the torch operation fails, it reverts the UI state
     /// to maintain consistency between the visual state and the actual hardware state.
     func switchTorch() {
-        Task { @MainActor in
+        Task { @DeviceActor in
             do {
-                isTorchEnabled.toggle()
+                await MainActor.run {
+                    isTorchEnabled.toggle()
+                }
 
-                try await videoDevice.setTorchMode(isTorchEnabled ? .off : .on)
+                try videoDevice.setTorchMode(isTorchEnabled ? .on : .off)
+                videoDevice.flashMode = isTorchEnabled ? .on : .off
             } catch {
-                isTorchEnabled.toggle()
-                localizedError = error.localizedDescription
+                await MainActor.run {
+                    localizedError = error.localizedDescription
+                    isTorchEnabled.toggle()
+                    isSnackbarPresented = true
+                }
             }
         }
     }
@@ -308,11 +316,17 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             do {
                 switch movieOutputProcessor.state {
                 case .paused:
+                    try await audioDevice.startCapturing()
+                    try await videoDevice.startCapturing()
                     await movieOutputProcessor.startProcessing()
+
                     state = .running
 
                 case .writing:
+                    await audioDevice.pause()
+                    await videoDevice.pause()
                     try await movieOutputProcessor.pause()
+
                     state = .paused
 
                 default:
@@ -320,6 +334,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 }
             } catch {
                 localizedError = error.localizedDescription
+                isSnackbarPresented = true
             }
         }
     }
@@ -356,8 +371,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     break
                 }
             } catch {
-                print(error)
                 localizedError = error.localizedDescription
+                isSnackbarPresented = true
             }
         }
     }
@@ -476,7 +491,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             do {
                 try videoDevice.configure(in: captureSession)
                 try audioDevice.configure(in: captureSession)
-                try photoDevice.configure(in: captureSession)
 
                 audioDevice.add(movieOutputProcessor)
                 videoDevice.add(movieOutputProcessor)
@@ -498,6 +512,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 captureSession.startRunning()
             } catch {
                 localizedError = error.localizedDescription
+                isSnackbarPresented = true
             }
         }
     }
@@ -535,7 +550,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                         state = .paused
                     }
                 } catch {
-                    localizedError = ""
+                    localizedError = error.localizedDescription
+                    isSnackbarPresented = true
                 }
             }
         }
@@ -553,7 +569,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                     captureSession.startRunning()
                 } catch {
-
+                    localizedError = error.localizedDescription
+                    isSnackbarPresented = true
                 }
             }
         }
@@ -625,7 +642,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             do {
                 try videoDevice.setZoomFactor(zoomFactor)
             } catch {
-
+                localizedError = error.localizedDescription
+                isSnackbarPresented = true
             }
         }
     }

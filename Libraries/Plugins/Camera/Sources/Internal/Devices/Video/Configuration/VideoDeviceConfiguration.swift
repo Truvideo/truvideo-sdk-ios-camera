@@ -46,6 +46,14 @@ struct VideoDeviceConfiguration: Sendable {
     /// post-processing steps required to achieve the desired output format.
     var imageFormat = FileFormat.jpeg
 
+    /// Whether high-resolution photo capture is enabled.
+    ///
+    /// When enabled, this property allows the camera to capture photos at the
+    /// device's maximum available resolution, which may be higher than the
+    /// standard capture resolution. This is useful for applications requiring
+    /// maximum detail and quality.
+    var isHighResolutionEnabled = false
+
     /// An optional maximum capture duration.
     ///
     /// When provided, the recording session should stop automatically once this duration elapses.

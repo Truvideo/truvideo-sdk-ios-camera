@@ -314,7 +314,7 @@ private final class FocusIndicatorView: UIView {
             self?.fadePropertyAnimator?.stopAnimation(true)
             self?.fadePropertyAnimator = self?.animate(\.alpha, to: alpha, duration: 0.25, delay: delay)
         }
-        
+
         if let showAnimation, showAnimation.isRunning {
             showAnimation.addCompletion { _ in
                 fadeOutAnimation()
