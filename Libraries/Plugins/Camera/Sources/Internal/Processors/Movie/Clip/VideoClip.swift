@@ -26,20 +26,25 @@ struct VideoClip {
     /// The timestamp when this object was created.
     let createdAt: TimeInterval = Date().timeIntervalSince1970
 
-    /// The camera position used to record this video clip.
-    ///
-    /// This property indicates whether the video was recorded using the front
-    /// camera (`.front`) or back camera (`.back`). This information is useful
-    /// for determining video mirroring, applying appropriate filters, or
-    /// organizing videos by camera source.
-    let devicePosition: AVCaptureDevice.Position
-
     /// The duration of the video clip in seconds.
     ///
     /// This property represents the total playback time of the video clip.
     /// It's useful for calculating video length, determining storage requirements,
     /// and providing duration information in user interfaces.
     let duration: TimeInterval
+
+    /// The camera lens position used for capture.
+    ///
+    /// This property specifies which camera lens was used to capture the photo,
+    /// such as front-facing or back-facing camera. It's useful for determining
+    /// the photo's context and applying appropriate processing.
+    let lensPosition: AVCaptureDevice.Position
+
+    /// The device orientation when the video was captured.
+    ///
+    /// This value indicates how the device was oriented when the video was recorded,
+    /// which is important for proper video display and rotation handling.
+    let orientation: UIDeviceOrientation
 
     /// The size of the video file in bytes.
     ///

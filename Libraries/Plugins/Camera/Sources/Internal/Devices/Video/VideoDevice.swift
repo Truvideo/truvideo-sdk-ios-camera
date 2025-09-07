@@ -843,10 +843,10 @@ class VideoDevice: NSObject, Device {
 
                 self.captureDeviceInput = nil
             }
-            
+
             if let capturePhotoOutput {
                 captureSession.removeOutput(capturePhotoOutput)
-                
+
                 self.capturePhotoOutput = nil
             }
 
@@ -865,6 +865,9 @@ class VideoDevice: NSObject, Device {
         guard
             /// The Image context to use when capturing the photo.
             let context,
+
+            /// The current capture device.
+            let captureDevice,
 
             /// The last captured video buffer.
             let sampleBuffer = lastVideoBuffer?.sampleBuffer
@@ -900,10 +903,16 @@ class VideoDevice: NSObject, Device {
 
         do {
             let outputURL = nextOutputURL()
+            let videoConnection = captureVideoDataOutput?.connection(with: .video)
 
             try data.write(to: outputURL, options: .atomic)
 
-            return Photo(url: outputURL, format: configuration.imageFormat, orientation: .portrait)
+            return Photo(
+                url: outputURL,
+                format: configuration.imageFormat,
+                lensPosition: position,
+                orientation: UIDeviceOrientation(from: videoConnection?.videoOrientation ?? .portrait)
+            )
         } catch {
             throw UtilityError(
                 kind: .VideoDeviceErrorReason.failedToCapturePhoto,
@@ -936,7 +945,7 @@ extension VideoDevice: AVCapturePhotoCaptureDelegate {
             continuation = nil
         }
 
-        if let continuation {
+        if let continuation, let captureDevice {
             if let error {
                 let error = UtilityError(kind: .VideoDeviceErrorReason.failedToCapturePhoto, underlyingError: error)
 
@@ -947,7 +956,13 @@ extension VideoDevice: AVCapturePhotoCaptureDelegate {
             do {
                 let data = try photo.imageData(with: configuration.imageFormat)
                 let outputURL = nextOutputURL()
-                let photo = Photo(url: outputURL, format: configuration.imageFormat, orientation: .portrait)
+                let videoConnection = captureVideoDataOutput?.connection(with: .video)
+                let photo = Photo(
+                    url: outputURL,
+                    format: configuration.imageFormat,
+                    lensPosition: captureDevice.position,
+                    orientation: UIDeviceOrientation(from: videoConnection?.videoOrientation ?? .portrait)
+                )
 
                 try data.write(to: outputURL, options: .atomic)
 

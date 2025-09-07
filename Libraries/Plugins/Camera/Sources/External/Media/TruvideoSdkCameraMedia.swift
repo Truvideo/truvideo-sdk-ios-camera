@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import UIKit
 
 /// A model representing a captured media item from the camera.
 ///
@@ -54,6 +55,66 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
         case duration
     }
 
+    // MARK: - Static methods
+
+    /// Creates a `TruvideoSdkCameraMedia` instance from a `Media` object.
+    ///
+    /// This method converts a `Media` instance into the corresponding `TruvideoSdkCameraMedia`
+    /// format used by the TruVideo SDK. It handles both photo and video clip media types by
+    /// delegating to the appropriate conversion method based on the media's associated value.
+    ///
+    /// - Parameter media: The `Media` object to convert from
+    /// - Returns: A `TruvideoSdkCameraMedia` instance with the media's data
+    static func from(_ media: Media) -> TruvideoSdkCameraMedia {
+        switch media {
+        case .clip(let clip):
+            from(clip)
+
+        case .photo(let photo):
+            from(photo)
+        }
+    }
+
+    /// Creates a `TruvideoSdkCameraMedia` instance from a `VideoClip` object.
+    ///
+    /// This method converts a `VideoClip` instance into the corresponding `TruvideoSdkCameraMedia`
+    /// format used by the TruVideo SDK. It maps the video clip's metadata including creation time,
+    /// duration, lens position, orientation, and file path to the SDK's media representation.
+    ///
+    /// - Parameter clip: The `VideoClip` object to convert from
+    /// - Returns: A `TruvideoSdkCameraMedia` instance with the video clip's data
+    static func from(_ clip: VideoClip) -> TruvideoSdkCameraMedia {
+        TruvideoSdkCameraMedia(
+            createdAt: clip.createdAt,
+            duration: clip.duration,
+            filePath: clip.url.path,
+            lensFacing: TruvideoSdkCameraLensFacing(position: clip.lensPosition),
+            orientation: TruvideoSdkCameraOrientation(orientation: clip.orientation),
+            resolution: .init(width: 0, height: 0),
+            type: .clip
+        )
+    }
+
+    /// Creates a `TruvideoSdkCameraMedia` instance from a `Photo` object.
+    ///
+    /// This method converts a `Photo` instance into the corresponding `TruvideoSdkCameraMedia`
+    /// format used by the TruVideo SDK. It maps the photo's metadata including creation time,
+    /// lens position, orientation, and file path to the SDK's media representation.
+    ///
+    /// - Parameter photo: The `Photo` object to convert from
+    /// - Returns: A `TruvideoSdkCameraMedia` instance with the photo's data
+    static func from(_ photo: Photo) -> TruvideoSdkCameraMedia {
+        TruvideoSdkCameraMedia(
+            createdAt: photo.createdAt,
+            duration: 0,
+            filePath: photo.url.path,
+            lensFacing: TruvideoSdkCameraLensFacing(position: photo.lensPosition),
+            orientation: TruvideoSdkCameraOrientation(orientation: photo.orientation),
+            resolution: .init(width: 0, height: 0),
+            type: .photo
+        )
+    }
+
     // MARK: - Initializer
 
     /// Creates a new media item with all required properties.
@@ -73,7 +134,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
     ///   - resolution: The resolution of the captured media
     ///   - type: The type of media that was captured
     public init(
-        id: UUID,
+        id: UUID = UUID(),
         createdAt: TimeInterval,
         duration: TimeInterval,
         filePath: String,
@@ -184,6 +245,33 @@ public enum TruvideoSdkCameraOrientation: Int, Encodable, RawRepresentable {
     }
 
     // MARK: - Initializers
+
+    /// Creates an orientation instance from a `UIDeviceOrientation`.
+    ///
+    /// This initializer converts a `UIDeviceOrientation` to the corresponding
+    /// orientation value, mapping the device orientation to the appropriate
+    /// orientation representation. It handles all standard orientations with
+    /// a default fallback for unknown orientation values.
+    ///
+    /// - Parameter orientation: The `UIDeviceOrientation` to convert from
+    init(orientation: UIDeviceOrientation) {
+        switch orientation {
+        case .landscapeLeft:
+            self = .landscapeLeft
+
+        case .landscapeRight:
+            self = .landscapeRight
+
+        case .portrait:
+            self = .portrait
+
+        case .portraitUpsideDown:
+            self = .portraitReverse
+
+        default:
+            self = .portrait
+        }
+    }
 
     /// Creates a new instance by decoding from the given decoder.
     ///

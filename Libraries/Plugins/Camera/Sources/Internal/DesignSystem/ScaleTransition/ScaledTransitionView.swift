@@ -85,7 +85,7 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
             }
 
             let hostingController = UIHostingController(rootView: content())
-            hostingController.view.backgroundColor = .red
+            hostingController.view.backgroundColor = .clear
             hostingController.view.bounds = uiViewController.view.bounds
 
             context.coordinator.startingFrame = startingFrame

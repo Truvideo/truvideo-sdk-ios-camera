@@ -34,14 +34,13 @@ struct GalleryView: View {
 
     var body: some View {
         ScrollView(.vertical) {
-            LazyVGrid(columns: columns, spacing: theme.spacingTheme.xxs) {
+            LazyVGrid(columns: columns, spacing: theme.spacingTheme.sm) {
                 ForEach(medias, id: \.createdAt) { media in
                     MediaView(media: media)
                         .overlay {
                             GeometryReader { geometryProxy in
                                 ScaledTransitionView(isPresented: $isPreviewPresented) {
                                     MediaPreviewView(medias: $medias, isPresented: $isPreviewPresented)
-                                        .hidden(!isPreviewPresented)
                                 }
                                 .startingFrame(geometryProxy.frame(in: .global))
                             }
@@ -90,25 +89,22 @@ private struct MediaView: View {
     // MARK: - Body
 
     var body: some View {
-        GeometryReader { geometryProxy in
-            ZStack {
-                switch media {
-                case let .clip(clip):
-                    VideoPlayer(player: AVPlayer(url: clip.url))
+        ZStack {
+            switch media {
+            case let .clip(clip):
+                VideoPlayer(player: AVPlayer(url: clip.url))
 
-                case let .photo(photo):
-                    AsyncRemoteImage(url: photo.url) { image in
-                        image.resizable()
-                            .scaledToFill()
-                    } placeholder: {
-                        theme.colorScheme.surface
-                    }
+            case let .photo(photo):
+                AsyncRemoteImage(url: photo.url) { image in
+                    image.resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    theme.colorScheme.surface
                 }
             }
-            .aspectRatio(1, contentMode: .fit)
-            .frame(height: geometryProxy.size.width)
-            .clipped()
-            .clipShape(.rect(cornerRadius: theme.radiusTheme.xs))
         }
+        .aspectRatio(1, contentMode: .fit)
+        .clipped()
+        .clipShape(.rect(cornerRadius: theme.radiusTheme.xs))
     }
 }

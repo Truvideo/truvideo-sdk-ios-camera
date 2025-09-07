@@ -24,7 +24,7 @@ struct MediaPreviewView: View {
 
     var body: some View {
         TabView(selection: $viewModel.selection) {
-            ForEach(Array(medias.enumerated()), id: \.offset) { index, media in
+            ForEach(Array(viewModel.medias.enumerated()), id: \.offset) { index, media in
                 MediaView(media: media)
                     .aspectRatio(viewModel.aspectRatio, contentMode: .fit)
                     .padding(.top, theme.spacingTheme.xxxl)

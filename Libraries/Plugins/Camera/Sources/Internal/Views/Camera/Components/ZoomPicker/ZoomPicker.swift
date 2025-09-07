@@ -84,7 +84,7 @@ struct ZoomPicker: View {
         let maxSizeForCollapsibleMask = viewModel.maxSizeForCollapsibleMask(isExpanded: isExpanded)
         let maxSizeForAnimatableMask = viewModel.maxSizeForAnimatableMask(isExpanded: isExpanded)
 
-        LayoutThatFits(isExpanded: $isExpanded) {
+        LayoutThatFits {
             ForEach(options, id: \.self) { option in
                 Chip(viewModel.format(option), isSelected: selection == option) {
                     guard binding.wrappedValue else { return }
@@ -113,6 +113,7 @@ struct ZoomPicker: View {
         .overlay {
             makeSelectedZoomChip()
         }
+        .hidden(options.isEmpty)
         .environmentObject(viewModel)
     }
 
@@ -201,10 +202,6 @@ private struct Chip: View {
 }
 
 private struct LayoutThatFits<Content: View>: View {
-    // MARK: - Binding Properties
-
-    @Binding var isExpanded: Bool
-
     // MARK: - Environment Properties
 
     @Environment(\.theme)

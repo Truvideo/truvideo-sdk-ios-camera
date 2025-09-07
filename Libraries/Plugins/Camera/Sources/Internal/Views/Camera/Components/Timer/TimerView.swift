@@ -19,6 +19,12 @@ struct TimerView: View {
     // MARK: - EnvironmentObject Properties
 
     @EnvironmentObject var viewModel: CameraViewModel
+    
+    // MARK: - Computed Properties
+    
+    var fillColor: Color {
+        viewModel.state == .running ? theme.colorScheme.error.opacity(0.8) : theme.colorScheme.surface.opacity(0.8)
+    }
 
     // MARK: - Body
 
@@ -29,7 +35,7 @@ struct TimerView: View {
             .padding(.vertical, theme.spacingTheme.xs)
             .background {
                 RoundedRectangle(cornerRadius: theme.radiusTheme.xs)
-                    .fill(true ? theme.colorScheme.error.opacity(0.8) : theme.colorScheme.surface.opacity(0.8))
+                    .fill(fillColor)
             }
             .padding(.top, theme.spacingTheme.x(1.5))
             .transition(.opacity)

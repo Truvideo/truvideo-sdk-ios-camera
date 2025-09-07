@@ -327,8 +327,9 @@ final class MovieOutputProcessor {
                     let asset = try await exportAsset()
                     let clip = try await VideoClip(
                         bitRate: bitRate ?? VideoDeviceConfiguration.defaultVideoBitRate,
-                        devicePosition: asset.isMirrored() ? .front : .back,
                         duration: asset.load(.duration).seconds,
+                        lensPosition: asset.isMirrored() ? .front : .back,
+                        orientation: .portrait,
                         size: FileManager.default.sizeOfItem(at: asset.url.path),
                         url: asset.url
                     )

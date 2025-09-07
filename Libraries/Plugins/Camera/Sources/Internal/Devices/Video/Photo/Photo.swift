@@ -2,20 +2,63 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+import AVFoundation
 import Foundation
 import UIKit
 
+/// A model representing a captured photo with metadata and lazy-loaded image data.
+///
+/// This class encapsulates a photo captured by the camera system, storing both
+/// the file location and associated metadata such as creation time, format,
+/// orientation, and lens position. The actual image data is loaded lazily to
+/// optimize memory usage and performance.
+///
+/// The photo provides access to the underlying image through a lazy property
+/// that loads the image data from the file URL when first accessed, making it
+/// efficient for displaying thumbnails or full-size images as needed.
 final class Photo {
+    /// The timestamp when the photo was captured.
+    ///
+    /// This value represents the time interval since the Unix epoch (January 1, 1970)
+    /// when the photo was taken. It's used for sorting, filtering, and displaying
+    /// photos in chronological order.
     let createdAt: TimeInterval
 
+    /// The file format of the captured photo.
+    ///
+    /// This property specifies the image format used for the photo, such as JPEG,
+    /// PNG, or other supported formats. It's used for proper image processing
+    /// and display.
     let format: FileFormat
 
+    /// The device orientation when the photo was captured.
+    ///
+    /// This value indicates how the device was oriented when the photo was taken,
+    /// which is important for proper image display and rotation handling.
     let orientation: UIDeviceOrientation
 
+    /// The camera lens position used for capture.
+    ///
+    /// This property specifies which camera lens was used to capture the photo,
+    /// such as front-facing or back-facing camera. It's useful for determining
+    /// the photo's context and applying appropriate processing.
+    let lensPosition: AVCaptureDevice.Position
+
+    /// The file URL where the photo is stored.
+    ///
+    /// This property provides the location of the photo file on the device's
+    /// file system. It's used for loading the image data and managing file
+    /// operations.
     let url: URL
 
     // MARK: - Lazy Properties
 
+    /// The loaded image data from the photo file.
+    ///
+    /// This lazy property loads the actual image data from the file URL when
+    /// first accessed. It returns `nil` if the file cannot be read or the
+    /// data is corrupted. The lazy loading optimizes memory usage by only
+    /// loading the image when needed.
     lazy var image: UIImage? = {
         guard let data = try? Data(contentsOf: url) else {
             return nil
@@ -26,15 +69,26 @@ final class Photo {
 
     // MARK: - Initializer
 
+    /// Creates a new photo instance with the specified metadata and file location.
+    ///
+    /// - Parameters:
+    ///   - url: The file URL where the photo is stored
+    ///   - format: The file format of the captured photo
+    ///   - lensPosition: The camera lens position used for capture
+    ///   - orientation: The device orientation when the photo was captured
+    ///   - createdAt: The timestamp when the photo was captured (defaults to current time)
+    /// - Throws: None
     init(
         url: URL,
         format: FileFormat,
+        lensPosition: AVCaptureDevice.Position,
         orientation: UIDeviceOrientation,
         createdAt: TimeInterval = Date().timeIntervalSince1970
     ) {
 
         self.createdAt = createdAt
         self.format = format
+        self.lensPosition = lensPosition
         self.orientation = orientation
         self.url = url
     }

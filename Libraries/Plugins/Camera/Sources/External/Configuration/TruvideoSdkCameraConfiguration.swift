@@ -171,6 +171,27 @@ public enum TruvideoSdkCameraLensFacing: Int, Codable, RawRepresentable {
 
     // MARK: - Initializers
 
+    /// Creates a lens position instance from an `AVCaptureDevice.Position`.
+    ///
+    /// This initializer converts an `AVCaptureDevice.Position` to the corresponding
+    /// lens position value, mapping both `.back` and `.unspecified` positions to the
+    /// back camera. It provides a safe conversion with a default fallback for unknown
+    /// position values.
+    ///
+    /// - Parameter position: The `AVCaptureDevice.Position` to convert from
+    init(position: AVCaptureDevice.Position) {
+        switch position {
+        case .back, .unspecified:
+            self = .back
+
+        case .front:
+            self = .front
+
+        @unknown default:
+            self = .back
+        }
+    }
+
     /// Creates a new instance by decoding from the given decoder.
     ///
     /// This initializer supports JSON deserialization by decoding the

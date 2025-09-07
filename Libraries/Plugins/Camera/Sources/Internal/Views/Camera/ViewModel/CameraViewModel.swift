@@ -205,6 +205,17 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    /// Processes the captured media and marks the validation state as valid.
+    ///
+    /// This method converts all captured media items to the TruVideo SDK format
+    /// and updates the validation state to indicate that the media collection
+    /// is ready for further processing or submission.
+    func onContinue() {
+        let medias = medias.map(TruvideoSdkCameraMedia.from)
+
+        validationState = .valid
+    }
+
     /// Validates clips state before dismissal and updates validation state accordingly.
     ///
     /// Sets `validationState` to `.invalid` if clips or photos are not empty (preventing dismissal),
@@ -359,13 +370,16 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     try await record()
                     await movieOutputProcessor.startProcessing()
 
-                case .paused, .writing:
+                case .paused where state.canTransition(to: .finished),
+                    .writing where state.canTransition(to: .finished):
+
                     state = .finished
 
                     let videoClip = try await movieOutputProcessor.endProcessing()
 
                     medias.append(.clip(videoClip))
-                    await endRecording()
+                    await videoDevice.pause()
+                    await audioDevice.pause()
 
                 default:
                     break
@@ -466,14 +480,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         )
     }
 
-    @DeviceActor
-    private func endRecording() async {
-        if state.canTransition(to: .finished) {
-            videoDevice.endCapturing(in: captureSession)
-            audioDevice.endCapturing(in: captureSession)
-        }
-    }
-
     private func initialize() {
         Task(priority: .userInitiated) { @DeviceActor in
             if audioDevice.authorizationStatus == .notDetermined, videoDevice.authorizationStatus == .notDetermined {
@@ -512,7 +518,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 captureSession.startRunning()
             } catch {
                 localizedError = error.localizedDescription
-                isSnackbarPresented = true
+                await MainActor.run {
+                    isSnackbarPresented = true
+                }
             }
         }
     }
@@ -561,7 +569,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         if state == .running, !captureSession.isRunning {
             Task { @DeviceActor in
 
-                await endRecording()
+                videoDevice.endCapturing(in: captureSession)
+                audioDevice.endCapturing(in: captureSession)
 
                 do {
                     try audioDevice.startCapturing()
