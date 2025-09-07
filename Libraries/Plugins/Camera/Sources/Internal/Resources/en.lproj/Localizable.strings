@@ -11,8 +11,12 @@
 "Exit" = "Exit";
 
 // F
+"FHD" = "FHD";
+
 // G
 // H
+"HD" = "HD";
+
 // I
 // J
 // K
@@ -33,7 +37,11 @@
 
 // Q
 // R
+"Resolutions" = "Resolutions";
+
 // S
+"SD" = "SD";
+
 // T
 // U
 // V

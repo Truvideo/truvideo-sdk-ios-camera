@@ -45,10 +45,7 @@ struct CameraView: View {
     ///    - onCompleted: Closure to be called when the operation completes with the result
     init(configuration: TruvideoSdkCameraConfiguration, onCompleted: @escaping (TruvideoSdkCameraResult) -> Void) {
         self._viewModel = StateObject(
-            wrappedValue: CameraViewModel(
-                configuration: configuration,
-                onCompleted: onCompleted
-            )
+            wrappedValue: CameraViewModel(configuration: configuration, onCompleted: onCompleted)
         )
     }
 }
@@ -80,6 +77,10 @@ private struct Camera: View {
 
     var body: some View {
         VideoPreview(previewLayer: viewModel.previewLayer)
+            .overlay {
+                RecordingFrameOverlay()
+                    .hidden(viewModel.state != .running)
+            }
             .aspectRatio(viewModel.aspectRatio, contentMode: .fit)
             .overlay(alignment: .bottom) {
                 ToolBar()
@@ -88,6 +89,7 @@ private struct Camera: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.top, theme.spacingTheme.xxxl)
+            .overlay(alignment: .top, content: makeTimerView)
             .onChange(of: viewModel.validationState) { validationState in
                 if validationState == .invalid {
                     isPresented = true
@@ -97,9 +99,6 @@ private struct Camera: View {
             }
             .onTapGesture { location in
                 viewModel.setFocusPoint(at: location)
-            }
-            .overlay(alignment: .top) {
-                makeTimerView()
             }
             .overlay(alignment: .topLeading) {
                 TopBar()
@@ -156,6 +155,53 @@ private struct FocusView: View {
             .onDisappear {
                 scale = 1.5
             }
+    }
+}
+
+private struct RecordingFrameOverlay: View {
+    // MARK: - Private Properties
+
+    private let lineLength: CGFloat = 70
+    private let lineWidth: CGFloat = 5
+
+    // MARK: - Environment Properties
+
+    @Environment(\.theme)
+    var theme
+
+    // MARK: - Body
+
+    var body: some View {
+        GeometryReader { geometryProxy in
+            let inset = lineWidth / 2
+            let size = geometryProxy.size
+
+            ZStack {
+                Path { path in
+                    // TOP-LEFT
+                    path.move(to: CGPoint(x: inset, y: lineLength))
+                    path.addLine(to: CGPoint(x: inset, y: inset))
+                    path.addLine(to: CGPoint(x: lineLength, y: inset))
+
+                    // TOP-RIGHT
+                    path.move(to: CGPoint(x: size.width - lineLength, y: inset))
+                    path.addLine(to: CGPoint(x: size.width - inset, y: inset))
+                    path.addLine(to: CGPoint(x: size.width - inset, y: lineLength))
+
+                    // BOTTOM-RIGHT
+                    path.move(to: CGPoint(x: size.width - inset, y: size.height - lineLength))
+                    path.addLine(to: CGPoint(x: size.width - inset, y: size.height - inset))
+                    path.addLine(to: CGPoint(x: size.width - lineLength, y: size.height - inset))
+
+                    // BOTTOM-LEFT
+                    path.move(to: CGPoint(x: lineLength, y: size.height - inset))
+                    path.addLine(to: CGPoint(x: inset, y: size.height - inset))
+                    path.addLine(to: CGPoint(x: inset, y: size.height - lineLength))
+                }
+                .stroke(theme.colorScheme.error, lineWidth: lineWidth)
+            }
+        }
+        .allowsHitTesting(false)
     }
 }
 
@@ -257,6 +303,7 @@ private struct TopBar: View {
                         makeCloseButton()
                         makeMediaCounterView()
                     }
+
                     Spacer()
                     PresetButton()
                     TorchButton()

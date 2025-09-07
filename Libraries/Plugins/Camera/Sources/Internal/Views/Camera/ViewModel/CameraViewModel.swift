@@ -66,6 +66,13 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// that are currently displayed in the gallery.
     @Published var medias: [Media] = []
 
+    /// The currently selected video resolution.
+    ///
+    /// Defaults to `.sd` (Standard Definition).
+    /// Use this property to track or update the active resolution
+    /// chosen by the user or the application.
+    @Published var selectedResolution = VideoResolution.sd
+
     /// The total duration of recorded video in Hours:Minutes:Seconds format.
     ///
     /// This property displays the cumulative recording time in a human-readable format.
@@ -132,9 +139,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// display scenarios including unlimited clips, no clips, and limited clip counts.
     var numberOfClips: String {
         let numberOfClips = medias.lazy.filter(\.isClip).count
-        let isUnlimited = configuration.mode.maxVideoCount == Int.max || configuration.mode.maxVideoCount == 0
 
-        if isUnlimited {
+        if configuration.mode.maxVideoCount == Int.max || configuration.mode.maxVideoCount == 0 {
             return numberOfClips == 0 ? "" : "\(numberOfClips)"
         }
 
@@ -165,9 +171,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// display scenarios including unlimited photos, no photos, and limited photo counts.
     var numberOfPhotos: String {
         let numberOfPhotos = medias.lazy.filter(\.isPhoto).count
-        let isUnlimited = configuration.mode.maxPictureCount == Int.max || configuration.mode.maxPictureCount == 0
 
-        if isUnlimited {
+        if configuration.mode.maxPictureCount == Int.max || configuration.mode.maxPictureCount == 0 {
             return numberOfPhotos == 0 ? "" : "\(numberOfPhotos)"
         }
 
@@ -276,8 +281,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     validate()
                 }
             } catch {
-                localizedError = error.localizedDescription
-                isSnackbarPresented = true
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -335,8 +339,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 let point = previewLayer.captureDevicePointConverted(fromLayerPoint: point)
                 try await videoDevice.setFocusPoint(at: point)
             } catch {
-                localizedError = error.localizedDescription
-                isSnackbarPresented = true
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -366,8 +369,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                 try await videoDevice.setPosition(position)
             } catch {
-                localizedError = error.localizedDescription
-                isSnackbarPresented = true
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -388,11 +390,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                 videoDevice.flashMode = isTorchEnabled ? .on : .off
             } catch {
-                localizedError = error.localizedDescription
-
                 await MainActor.run {
                     isTorchEnabled.toggle()
-                    isSnackbarPresented = true
+                    didReceiveError(error.localizedDescription)
                 }
             }
         }
@@ -427,8 +427,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     break
                 }
             } catch {
-                localizedError = error.localizedDescription
-                isSnackbarPresented = true
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -474,26 +473,34 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     break
                 }
             } catch {
-                localizedError = error.localizedDescription
-                isSnackbarPresented = true
+                didReceiveError(error.localizedDescription)
             }
         }
     }
 
     // MARK: - Notification methods
 
+    @MainActor
     @objc
-    func didReceiveBecomeActiveNotification(_ notification: Notification) {
-        if sessionWasRunning {
-            resumeSession()
+    func didReceiveDidEnterBackgroundNotification(_ notification: Notification) {
+        if state == .running {
+            Task {
+                do {
+                    try await endRecording()
+                } catch {
+                    didReceiveError(error.localizedDescription)
+                }
+            }
         }
     }
 
+    @MainActor
     @objc
     func didReceiveMediaServicesWereResetNotification(_ notification: Notification) {
         receivedMediaServicesWereResetNotification()
     }
 
+    @MainActor
     @objc
     func didReceiveSessionInterruptionEnded(_ notification: Notification) {
         if sessionWasRunning {
@@ -501,6 +508,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    @MainActor
     @objc
     func didReceiveRuntimeErrorNotification(_ notification: Notification) {
         if let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError {
@@ -508,17 +516,13 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    @MainActor
     @objc
     func didReceiveSessionWasInterruptedNotification(_ notification: Notification) {
-        if sessionWasRunning {
-            resumeSession()
-        }
-    }
-
-    @objc
-    func didReceiveWillResignActiveNotification(_ notification: Notification) {
         sessionWasRunning = state == .running
-        pauseSession()
+        if state == .running {
+            pauseSession()
+        }
     }
 
     // MARK: - OrientationMonitorSubscriber
@@ -543,15 +547,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private func configureObservers() {
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(didReceiveBecomeActiveNotification(_:)),
-            name: UIApplication.didBecomeActiveNotification,
-            object: nil
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveWillResignActiveNotification(_:)),
-            name: UIApplication.willResignActiveNotification,
+            selector: #selector(didReceiveDidEnterBackgroundNotification(_:)),
+            name: UIApplication.didEnterBackgroundNotification,
             object: nil
         )
     }
@@ -584,6 +581,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             name: AVCaptureSession.wasInterruptedNotification,
             object: nil
         )
+    }
+
+    @MainActor
+    private func didReceiveError(_ localizedError: String) {
+        self.localizedError = localizedError
+        isSnackbarPresented = true
     }
 
     @MainActor
@@ -646,10 +649,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     self.zoomFactors = zoomFactors
                 }
             } catch {
-                localizedError = error.localizedDescription
-                await MainActor.run {
-                    isSnackbarPresented = true
-                }
+                await didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -687,16 +687,17 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     state = .paused
                 }
             } catch {
-                await MainActor.run {
-                    localizedError = error.localizedDescription
-                    isSnackbarPresented = true
-                }
+                await didReceiveError(error.localizedDescription)
             }
         }
     }
 
     private func receivedMediaServicesWereResetNotification() {
-        if state == .running, !captureSession.isRunning {
+        if !captureSession.isRunning {
+            captureSession.startRunning()
+        }
+
+        if state == .running {
             Task { @DeviceActor in
                 videoDevice.endCapturing(in: captureSession)
                 audioDevice.endCapturing(in: captureSession)
@@ -704,11 +705,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 do {
                     try audioDevice.startCapturing()
                     try videoDevice.startCapturing()
-
-                    captureSession.startRunning()
                 } catch {
-                    localizedError = error.localizedDescription
-                    isSnackbarPresented = true
+                    await didReceiveError(error.localizedDescription)
                 }
             }
         }
@@ -747,14 +745,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     try videoDevice.startCapturing()
 
                     captureSession.startRunning()
+
                     await MainActor.run {
                         state = .running
                     }
                 } catch {
-                    localizedError = error.localizedDescription
-                    await MainActor.run {
-                        isSnackbarPresented = true
-                    }
+                    await didReceiveError(error.localizedDescription)
                 }
             }
         }
@@ -768,10 +764,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             .receive(on: RunLoop.main)
             .prefix { [weak self] recordingDuration in
                 if let self, recordingDuration.seconds > maxVideoDuration {
-                    localizedError = Localizations.maxClipDurationReached
-                    isSnackbarPresented = true
-
                     Task {
+                        await self.didReceiveError(Localizations.maxClipDurationReached)
                         try await self.endRecording()
                     }
 
@@ -807,8 +801,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             do {
                 try await videoDevice.setZoomFactor(zoomFactor)
             } catch {
-                localizedError = error.localizedDescription
-                isSnackbarPresented = true
+                didReceiveError(error.localizedDescription)
             }
         }
     }

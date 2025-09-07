@@ -154,7 +154,7 @@ public struct DSColorScheme: Sendable {
         secondary: .white,
         onSecondary: .black,
         tertiary: DSColor.amber.shadow500,
-        onTertiary: .black,
+        onTertiary: .gray,
         error: DSColor.red.shade500,
         onError: .white,
         surface: DSColor.gray.shade900,

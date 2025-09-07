@@ -14,6 +14,9 @@ packages:
   Kingfisher:
     url: https://github.com/onevcat/Kingfisher
     from: 8.5.0
+  TruvideoSdkVideoUtils:
+    url: https://github.com/Truvideo/truvideo-sdk-ios-video-utils
+    exactVersion: 0.0.3
 
 targets:
   # Foundation Core (Low-level infrastructure)
@@ -677,6 +680,7 @@ targets:
         - target: ExternalUtilities
         - target: Utilities
         - package: Kingfisher
+        - package: TruvideoSdkVideoUtils
     info:
       path: Libraries/Plugins/Camera/Sources/Info.plist
     settings:

@@ -40,6 +40,7 @@ final class MovieOutputProcessor {
     private var backgroundTaskIdentifier = UIBackgroundTaskIdentifier.invalid
     private var clipFilenameCount = 1
     private var currentClipDuration = CMTime.zero
+    private let mediaComposer: MediaComposer
     private var mediaProcessingOptions: MediaProcessingOptions = []
     private var pixelBufferAdapter: AVAssetWriterInputPixelBufferAdaptor?
     private var skippedAudioBuffers: [AudioSampleBuffer] = []
@@ -269,8 +270,18 @@ final class MovieOutputProcessor {
 
     // MARK: - Initializer
 
-    /// Creates a new instance of the `MovieOutputProcessor`.
-    init() {
+    /// Creates a new instance with a media composer and sets up background/foreground notifications.
+    ///
+    /// This initializer configures the instance with a media composer for handling
+    /// media processing operations and registers for application lifecycle notifications
+    /// to manage background and foreground state changes. The notifications are used
+    /// to pause, resume, or clean up operations when the app transitions between
+    /// background and foreground states.
+    ///
+    /// - Parameter composer: The media composer to use for processing operations (defaults to FFMPEGVideoComposer)
+    init(mediaComposer: MediaComposer = FFMPEGVideoComposer()) {
+        self.mediaComposer = mediaComposer
+
         NotificationCenter.default.addObserver(
             self,
             selector: #selector(didReceiveDidEnterBackgroundNotification(_:)),
@@ -548,85 +559,8 @@ final class MovieOutputProcessor {
         }
 
         let outputURL = nextOutputURL()
-        let assets = assetsURLs.map(AVAsset.init)
 
-        let comp = AVMutableComposition()
-        let videoTrack = comp.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
-        let audioTrack = comp.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
-
-        let timescale: Int32 = 600
-        var cursor = CMTime.zero
-
-        for asset in assets {
-            guard let v = try await asset.loadTracks(withMediaType: .video).first else { continue }
-            let a = try await asset.loadTracks(withMediaType: .audio).first
-
-            let dur = CMTimeConvertScale(try await asset.load(.duration), timescale: timescale, method: .default)
-            let range = CMTimeRange(start: .zero, duration: dur)
-
-            try videoTrack?.insertTimeRange(range, of: v, at: cursor)
-            if let a { try audioTrack?.insertTimeRange(range, of: a, at: cursor) }
-
-            cursor = cursor + dur
-        }
-
-        let instr = AVMutableVideoCompositionInstruction()
-        instr.timeRange = CMTimeRange(start: .zero, duration: cursor)
-
-        guard let videoTrack else {
-            throw UtilityError(
-                kind: .MovieOutputProcessorErrorReason.cannotExportAsset,
-                failureReason: "Cannot export asset: No asset URLs provided."
-            )
-        }
-
-        let layer = AVMutableVideoCompositionLayerInstruction(assetTrack: videoTrack)
-        let prefT = try await videoTrack.load(.preferredTransform)  // composition track’s transform
-        layer.setTransform(prefT, at: .zero)
-        // If you need a fade on the very end of the *whole* movie:
-        layer.setOpacityRamp(
-            fromStartOpacity: 1,
-            toEndOpacity: 0,
-            timeRange: CMTimeRange(
-                start: cursor - CMTime(seconds: 0.5, preferredTimescale: timescale),
-                duration: CMTime(seconds: 0.5, preferredTimescale: timescale)
-            )
-        )
-
-        instr.layerInstructions = [layer]
-
-        let vc = AVMutableVideoComposition()
-        vc.instructions = [instr]
-        vc.renderSize = try await videoTrack.load(.naturalSize)  // adjust for transform if needed
-        vc.frameDuration = CMTime(value: 1, timescale: 30)
-
-        // let asset = try await AVMutableComposition.from(assets)
-        let exportSession = AVAssetExportSession(asset: comp, presetName: AVAssetExportPreset1920x1080)
-
-        guard let exportSession else {
-            throw UtilityError(
-                kind: .MovieOutputProcessorErrorReason.cannotExportAsset,
-                failureReason: "Cannot export asset: Unable to create export session."
-            )
-        }
-
-        do {
-            exportSession.shouldOptimizeForNetworkUse = true
-            exportSession.outputURL = outputURL
-            exportSession.outputFileType = fileType.avFileType
-            exportSession.videoComposition = vc  //try await AVMutableVideoComposition.from(assets)
-
-            await exportSession.export()
-
-            if let error = exportSession.error {
-                throw error
-            }
-        } catch {
-            throw UtilityError(
-                kind: .MovieOutputProcessorErrorReason.cannotExportAsset,
-                underlyingError: error
-            )
-        }
+        try await mediaComposer.compose(assetsURLs, into: outputURL)
 
         return AVURLAsset(url: outputURL)
     }

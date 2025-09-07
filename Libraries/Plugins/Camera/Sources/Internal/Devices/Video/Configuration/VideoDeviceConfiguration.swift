@@ -61,6 +61,15 @@ struct VideoDeviceConfiguration: Sendable {
     /// aligning with expected frame rates.
     var maxKeyFrameInterval = 30
 
+    /// The maximum duration between keyframes in seconds.
+    ///
+    /// This property controls the maximum time interval between keyframes (I-frames)
+    /// in the video encoding process. Keyframes are reference frames that contain
+    /// complete image information and are used for seeking and error recovery.
+    /// Setting this value too high can make seeking less precise, while setting
+    /// it too low can increase file size and encoding time.
+    var maxKeyFrameIntervalDuration = 1
+
     /// The H.264 profile level to use when `codec == .h264`.
     ///
     /// Maps to `AVVideoProfileLevelKey`. Defaults to `AVVideoProfileLevelH264HighAutoLevel`.
@@ -227,6 +236,7 @@ struct VideoDeviceConfiguration: Sendable {
         compressionDict[AVVideoAverageBitRateKey] = bitRate
         compressionDict[AVVideoAllowFrameReorderingKey] = false
         compressionDict[AVVideoMaxKeyFrameIntervalKey] = maxKeyFrameInterval
+        compressionDict[AVVideoMaxKeyFrameIntervalDurationKey] = maxKeyFrameIntervalDuration
         compressionDict[AVVideoProfileLevelKey] = profileLevel
 
         config[AVVideoCompressionPropertiesKey] = compressionDict

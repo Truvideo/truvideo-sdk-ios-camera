@@ -21,7 +21,7 @@ struct MediaCounterView: View {
     @Environment(\.theme)
     var theme
 
-    // MARK: - StateObject Properties
+    // MARK: - EnvironmentObject Properties
 
     @EnvironmentObject var viewModel: CameraViewModel
 

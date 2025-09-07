@@ -52,6 +52,28 @@ struct Localizations {
     /// - Returns: A localized string.
     static let exit = NSLocalizedString("Exit", bundle: .module, comment: "")
 
+    // MARK: - F
+
+    /// FHD copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* FHD */
+    ///
+    /// - Returns: A localized string.
+    static let resolutionFhd = NSLocalizedString("FHD", bundle: .module, comment: "")
+
+    // MARK: - H
+
+    /// HD copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* HD */
+    ///
+    /// - Returns: A localized string.
+    static let resolutionHd = NSLocalizedString("HD", bundle: .module, comment: "")
+
     // MARK: - M
 
     /// Max clip duration reached copy.
@@ -123,4 +145,26 @@ struct Localizations {
     ///
     /// - Returns: A localized string.
     static let permissionMessage = NSLocalizedString("PermissionMessage", bundle: .module, comment: "")
+
+    // MARK: - R
+
+    /// Resolutions copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* Resolutions */
+    ///
+    /// - Returns: A localized string.
+    static let resolutions = NSLocalizedString("Resolutions", bundle: .module, comment: "")
+
+    // MARK: - S
+
+    /// SD copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* SD */
+    ///
+    /// - Returns: A localized string.
+    static let resolutionSd = NSLocalizedString("SD", bundle: .module, comment: "")
 }
