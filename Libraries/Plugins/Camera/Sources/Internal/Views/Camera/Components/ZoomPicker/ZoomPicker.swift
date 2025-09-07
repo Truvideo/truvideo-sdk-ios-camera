@@ -110,9 +110,7 @@ struct ZoomPicker: View {
                 .frame(maxWidth: maxSizeForAnimatableMask.width, maxHeight: maxSizeForAnimatableMask.height)
                 .animation(.interpolatingSpring(mass: 1, stiffness: 200, damping: 22), value: isExpanded)
         )
-        .overlay {
-            makeSelectedZoomChip()
-        }
+        .overlay(content: makeSelectedZoomChip)
         .hidden(options.isEmpty)
         .environmentObject(viewModel)
     }

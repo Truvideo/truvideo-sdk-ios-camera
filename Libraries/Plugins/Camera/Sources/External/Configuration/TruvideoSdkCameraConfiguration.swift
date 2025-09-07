@@ -304,6 +304,22 @@ public enum TruvideoSdkCameraFlashMode: Int, Codable, RawRepresentable {
         }
     }
 
+    /// Converts the flash mode to the corresponding `AVCaptureDevice.FlashMode`.
+    ///
+    /// This computed property maps the current flash mode value to the equivalent
+    /// `AVCaptureDevice.FlashMode` used by the camera system. It handles the
+    /// conversion between the custom flash mode enumeration and the system's
+    /// flash mode representation.
+    var value: AVCaptureDevice.FlashMode {
+        switch self {
+        case .off:
+            .off
+
+        case .on:
+            .on
+        }
+    }
+
     // MARK: - Initializers
 
     /// Creates a new `TruvideoSdkCameraFlashMode` instance with the specified raw value.
@@ -397,6 +413,24 @@ public enum TruvideoSdkCameraImageFormat: Int, RawRepresentable {
             "PNG"
         }
     }
+
+    /// Converts the image format to the corresponding `FileFormat`.
+    ///
+    /// This computed property maps the current image format value to the equivalent
+    /// `FileFormat` used by the file system. It handles the conversion between
+    /// the custom image format enumeration and the system's file format
+    /// representation.
+    var value: FileFormat {
+        switch self {
+        case .jpeg:
+            .jpeg
+
+        case .png:
+            .png
+        }
+    }
+
+    // MARK: - Initializer
 
     /// Creates a new `TruvideoSdkCameraImageFormat` instance from the given raw value.
     ///

@@ -26,7 +26,7 @@ extension View {
         onComplete: @escaping (TruvideoSdkCameraResult) -> Void
     ) -> some View {
         fullScreenCover(isPresented: isPresented) {
-            CameraView()
+            CameraView(configuration: preset, onCompleted: onComplete)
         }
     }
 }

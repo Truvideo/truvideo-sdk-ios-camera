@@ -19,11 +19,15 @@ struct TimerView: View {
     // MARK: - EnvironmentObject Properties
 
     @EnvironmentObject var viewModel: CameraViewModel
-    
+
     // MARK: - Computed Properties
-    
+
     var fillColor: Color {
-        viewModel.state == .running ? theme.colorScheme.error.opacity(0.8) : theme.colorScheme.surface.opacity(0.8)
+        guard [.paused, .running].contains(viewModel.state) else {
+            return viewModel.deviceOrientation.isPortrait ? .clear : theme.colorScheme.surface.opacity(0.8)
+        }
+
+        return theme.colorScheme.error.opacity(0.8)
     }
 
     // MARK: - Body

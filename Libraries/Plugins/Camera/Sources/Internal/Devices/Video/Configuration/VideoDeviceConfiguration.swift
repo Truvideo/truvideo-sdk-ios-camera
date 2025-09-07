@@ -54,12 +54,6 @@ struct VideoDeviceConfiguration: Sendable {
     /// maximum detail and quality.
     var isHighResolutionEnabled = false
 
-    /// An optional maximum capture duration.
-    ///
-    /// When provided, the recording session should stop automatically once this duration elapses.
-    /// Represented as `CMTime` to align with AVFoundation timing semantics.
-    var maximumCaptureDuration: CMTime?
-
     /// Maximum interval between key frames (GOP length).
     ///
     /// Maps to `AVVideoMaxKeyFrameIntervalKey`. A value of `1` produces key‑frames only,

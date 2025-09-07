@@ -110,7 +110,7 @@ class VideoDevice: NSObject, Device {
     /// format-related preferences that guide how the device is configured. This instance
     /// is created with sensible defaults and may be updated by higher-level APIs before
     /// applying changes to the underlying `AVCaptureDevice`/session.
-    let configuration = VideoDeviceConfiguration()
+    var configuration = VideoDeviceConfiguration()
 
     /// The flash mode to use during photo capture.
     ///
@@ -707,6 +707,18 @@ class VideoDevice: NSObject, Device {
 
                 captureDeviceInput = try captureSession.addDeviceInput(for: captureDevice)
 
+                if /// The zoom factor of the next constituent device.
+                let zoomFactor = captureDevice.virtualDeviceSwitchOverVideoZoomFactors.first,
+
+                    /// Whether the device is virtual and the position is back, since the back position resets the zoom factor.
+                    captureDevice.isVirtualDevice, position == .back
+                {
+
+                    if let zoomFactor = captureDevice.virtualDeviceSwitchOverVideoZoomFactors.first {
+                        captureDevice.videoZoomFactor = zoomFactor.doubleValue
+                    }
+                }
+
                 updateVideoOutputSettings()
                 notificationCenter.post(
                     Self.deviceDidChangePosition,
@@ -744,7 +756,7 @@ class VideoDevice: NSObject, Device {
             guard captureDevice.isTorchModeSupported(mode) else {
                 throw UtilityError(
                     kind: .VideoDeviceErrorReason.torchNotSupported,
-                    failureReason: "The torch mode \(mode) is not supported by the device."
+                    failureReason: "The torch mode selected is not supported by the device."
                 )
             }
 

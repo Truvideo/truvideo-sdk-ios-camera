@@ -329,11 +329,12 @@ final class MovieOutputProcessor {
                         bitRate: bitRate ?? VideoDeviceConfiguration.defaultVideoBitRate,
                         duration: asset.load(.duration).seconds,
                         lensPosition: asset.isMirrored() ? .front : .back,
-                        orientation: .portrait,
+                        orientation: asset.orientation(),
                         size: FileManager.default.sizeOfItem(at: asset.url.path),
                         url: asset.url
                     )
 
+                    assetsURLs.removeAll()
                     currentClipDuration = .zero
                     recordingDuration = .zero
                     state = .finished

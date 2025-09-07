@@ -52,6 +52,47 @@ struct Localizations {
     /// - Returns: A localized string.
     static let exit = NSLocalizedString("Exit", bundle: .module, comment: "")
 
+    // MARK: - M
+
+    /// Max clip duration reached copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* You’ve reached the video recording time limit.. */
+    ///
+    /// - Returns: A localized string.
+    static let maxClipDurationReached = NSLocalizedString(
+        "MaxClipDurationReached",
+        bundle: .module,
+        comment: ""
+    )
+
+    /// Max number of clips reached copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* You have reached the maximum number of videos for this session. */
+    ///
+    /// - Returns: A localized string.
+    static let maxNumberOfClipsReached = NSLocalizedString(
+        "MaxNumberOfClipsReached",
+        bundle: .module,
+        comment: ""
+    )
+
+    /// Max number of pictures reached copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* You have reached the maximum number of pictures for this session. */
+    ///
+    /// - Returns: A localized string.
+    static let maxNumberOfPicturesReached = NSLocalizedString(
+        "MaxNumberOfPicturesReached",
+        bundle: .module,
+        comment: ""
+    )
+
     // MARK: - O
 
     /// Open Settings copy.

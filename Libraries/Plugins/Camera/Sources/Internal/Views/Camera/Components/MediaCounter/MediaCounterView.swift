@@ -21,9 +21,15 @@ struct MediaCounterView: View {
     @Environment(\.theme)
     var theme
 
-    // MARK: - EnvironmentObject Properties
+    // MARK: - StateObject Properties
 
     @EnvironmentObject var viewModel: CameraViewModel
+
+    // MARK: - Computed Properties
+
+    var isHidden: Bool {
+        viewModel.numberOfClips.isEmpty && viewModel.numberOfPhotos.isEmpty && viewModel.numberOfMedias.isEmpty
+    }
 
     // MARK: - Body
 
@@ -42,26 +48,31 @@ struct MediaCounterView: View {
         .padding([.horizontal, .top], theme.spacingTheme.sm)
         .padding(.bottom, theme.spacingTheme.xs)
         .background(theme.colorScheme.primary)
-        .clipShape(.rect(cornerRadius: theme.radiusTheme.sm))
-        .hidden(viewModel.medias.isEmpty)
+        .clipShape(.rect(cornerRadius: theme.radiusTheme.xs))
+        .hidden(isHidden)
     }
 
     // MARK: - Private methods
 
     @ViewBuilder
     private func makeContent() -> some View {
+        Text(viewModel.numberOfMedias)
+            .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface, kerning: 1.3))
+            .padding(.bottom, theme.spacingTheme.xs)
+            .hidden(viewModel.numberOfMedias.isEmpty)
+
         VStack(spacing: theme.spacingTheme.xxs) {
             Icon(icon: DSIcons.video, size: CGSize(width: theme.spacingTheme.lg, height: theme.spacingTheme.md))
-            Text(viewModel.numberOfClips.description)
-                .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface))
+            Text(viewModel.numberOfClips)
+                .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface, kerning: 1.3))
         }
-        .hidden(viewModel.numberOfClips == 0)
+        .hidden(viewModel.numberOfClips.isEmpty)
 
         VStack(spacing: theme.spacingTheme.xxs) {
             Icon(icon: DSIcons.photo, size: CGSize(width: theme.spacingTheme.lg, height: theme.spacingTheme.md))
-            Text(viewModel.numberOfPhotos.description)
-                .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface))
+            Text(viewModel.numberOfPhotos)
+                .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface, kerning: 1.3))
         }
-        .hidden(viewModel.numberOfPhotos == 0)
+        .hidden(viewModel.numberOfPhotos.isEmpty)
     }
 }

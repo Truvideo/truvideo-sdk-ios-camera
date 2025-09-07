@@ -44,6 +44,16 @@ enum Media: Equatable {
         }
     }
 
+    var url: URL {
+        switch self {
+        case let .clip(videoClip):
+            videoClip.url
+
+        case let .photo(photo):
+            photo.url
+        }
+    }
+
     /// Indicates whether this media item is a video clip.
     ///
     /// This computed property provides a convenient way to check if the media

@@ -15,7 +15,7 @@ import UIKit
 ///
 /// The struct provides a convenient way to access video metadata without
 /// needing to load the entire video file or parse complex format descriptions.
-struct VideoClip {
+final class VideoClip {
     /// The frame rate at which the video was recorded, measured in frames per second.
     ///
     /// This property indicates how smooth the video playback will be. Higher
@@ -59,6 +59,51 @@ struct VideoClip {
     /// application to access, play, or process the video content. The URL
     /// can be used with AVPlayer, AVAsset, or other video processing APIs.
     let url: URL
+
+    // MARK: - Lazy Properties
+
+    /// A lazy-loaded thumbnail image from the beginning of the video.
+    ///
+    /// This property generates a thumbnail image from the first frame of the video
+    /// using the video's URL. The thumbnail is created lazily to optimize performance
+    /// and memory usage, only generating the image when first accessed.
+    lazy var thumbnail: UIImage? = {
+        let asset = AVAsset(url: url)
+
+        return try? asset.snapshot(at: CMTime(seconds: 1, preferredTimescale: 1), actualTime: nil)
+    }()
+
+    // MARK: - Initializer
+
+    /// Creates a new video clip instance with the specified metadata and file location.
+    ///
+    /// This initializer creates a video clip object with all the necessary metadata
+    /// including bit rate, duration, lens position, orientation, file size, and
+    /// the URL where the video file is stored.
+    ///
+    /// - Parameters:
+    ///   - bitRate: The bit rate of the video in bits per second
+    ///   - duration: The duration of the video in seconds
+    ///   - lensPosition: The camera lens position used for recording (front or back)
+    ///   - orientation: The device orientation when the video was recorded
+    ///   - size: The file size of the video in bytes
+    ///   - url: The file URL where the video is stored
+    init(
+        bitRate: Int,
+        duration: TimeInterval,
+        lensPosition: AVCaptureDevice.Position,
+        orientation: UIDeviceOrientation,
+        size: Int64,
+        url: URL
+    ) {
+
+        self.bitRate = bitRate
+        self.duration = duration
+        self.lensPosition = lensPosition
+        self.orientation = orientation
+        self.size = size
+        self.url = url
+    }
 }
 
 extension VideoClip: Hashable {

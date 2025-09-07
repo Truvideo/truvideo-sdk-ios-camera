@@ -102,7 +102,7 @@ final class DeviceOrientationMonitor: OrientationMonitor {
     // MARK: - Private Properties
 
     private var isRunning = false
-    private var subscribers: [ObjectIdentifier: any OrientationMonitorSubscriber] = [:]
+    private var subscribers = NSHashTable<AnyObject>.weakObjects()
 
     // MARK: - Initializer
 
@@ -126,8 +126,10 @@ final class DeviceOrientationMonitor: OrientationMonitor {
         if UIDevice.supportedOrientations.contains(UIDevice.current.orientation) {
             let deviceOrientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
 
-            for subscriber in subscribers.values {
-                subscriber.didReceive(deviceOrientation)
+            for subscriber in subscribers.allObjects {
+                if let subscriber = subscriber as? OrientationMonitorSubscriber {
+                    subscriber.didReceive(deviceOrientation)
+                }
             }
         }
     }
@@ -140,7 +142,7 @@ final class DeviceOrientationMonitor: OrientationMonitor {
     func add(_ subscriber: any OrientationMonitorSubscriber) {
         let deviceOrientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
 
-        subscribers[ObjectIdentifier(subscriber)] = subscriber
+        subscribers.add(subscriber)
         subscriber.didReceive(deviceOrientation)
     }
 
@@ -182,7 +184,7 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     private var isRunning = false
     private let motionManager = CMMotionManager()
     private let operationQueue = OperationQueue()
-    private var subscribers: [ObjectIdentifier: any OrientationMonitorSubscriber] = [:]
+    private var subscribers = NSHashTable<AnyObject>.weakObjects()
 
     // MARK: - Initializer
 
@@ -217,7 +219,7 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     ///
     /// - Parameter subscriber: An object conforming to `OrientationMonitorSubscriber`.
     func add(_ subscriber: any OrientationMonitorSubscriber) {
-        subscribers[ObjectIdentifier(subscriber)] = subscriber
+        subscribers.add(subscriber)
 
         guard UIDevice.supportedOrientations.contains(deviceOrientation.value.orientation) else { return }
 
@@ -285,8 +287,10 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
             .compactMap { $0.first { $0.source == .system } ?? $0.first }
             .sink { [weak self] orientation in
                 if let self {
-                    for subscriber in subscribers.values {
-                        subscriber.didReceive(orientation)
+                    for subscriber in subscribers.allObjects {
+                        if let subscriber = subscriber as? OrientationMonitorSubscriber {
+                            subscriber.didReceive(orientation)
+                        }
                     }
                 }
             }
@@ -311,23 +315,20 @@ extension CMAcceleration {
     ///
     /// - Returns: The calculated `UIDeviceOrientation` based on accelerometer data analysis.
     fileprivate var orientation: UIDeviceOrientation {
+        let faceUpZThreshold = -0.7
+        let faceUpPortraitThreshold = 0.6
         let threshold = 0.82
 
-        if z < -0.7 {
-            guard abs(x) > abs(y), abs(x) > abs(z), abs(x) > threshold else {
-                switch y {
-                case let value where value > 0.6:
-                    return .portraitUpsideDown
-
-                case let value where value < -0.6:
-                    return .portrait
-
-                default:
-                    return .unknown
-                }
+        if z < faceUpZThreshold {
+            if abs(x) > abs(y), abs(x) > abs(z), abs(x) > threshold {
+                return x > 0 ? .landscapeRight : .landscapeLeft
             }
 
-            return x > 0 ? .landscapeRight : .landscapeLeft
+            if abs(y) > faceUpPortraitThreshold {
+                return y > 0 ? .portraitUpsideDown : .portrait
+            }
+
+            return .unknown
         }
 
         if abs(x) > abs(y), abs(x) > abs(z), abs(x) > threshold {

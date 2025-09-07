@@ -12,7 +12,7 @@ struct CameraView: View {
 
     // MARK: - StateObject Properties
 
-    @StateObject var viewModel = CameraViewModel()
+    @StateObject var viewModel: CameraViewModel
 
     // MARK: - Body
 
@@ -26,8 +26,30 @@ struct CameraView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.colorScheme.surfaceContainer)
-        .snackbar(viewModel.localizedError, isPresented: $viewModel.isSnackbarPresented)
+        .snackbar(isPresented: $viewModel.isSnackbarPresented) {
+            Text(viewModel.localizedError)
+                .fixedSize(horizontal: false, vertical: true)
+        }
         .environmentObject(viewModel)
+    }
+
+    // MARK: - Initializer
+
+    /// Creates a new instance with completion handler.
+    ///
+    /// This initializer sets up the instance with a completion callback that will be
+    /// invoked when the operation completes.
+    ///
+    /// - Parameters:
+    ///    - configuration: The camera configuration containing settings and preferences.
+    ///    - onCompleted: Closure to be called when the operation completes with the result
+    init(configuration: TruvideoSdkCameraConfiguration, onCompleted: @escaping (TruvideoSdkCameraResult) -> Void) {
+        self._viewModel = StateObject(
+            wrappedValue: CameraViewModel(
+                configuration: configuration,
+                onCompleted: onCompleted
+            )
+        )
     }
 }
 
@@ -284,6 +306,6 @@ private struct TopBar: View {
                 .hidden(!isPresented)
             }
         }
-        .hidden(viewModel.numberOfClips == 0 && viewModel.numberOfPhotos == 0)
+        .allowsHitTesting(!viewModel.medias.isEmpty)
     }
 }

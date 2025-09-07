@@ -92,7 +92,14 @@ private struct MediaView: View {
         ZStack {
             switch media {
             case let .clip(clip):
-                VideoPlayer(player: AVPlayer(url: clip.url))
+                Image(uiImage: clip.thumbnail ?? UIImage())
+                    .resizable()
+                    .scaledToFill()
+                    .overlay(alignment: .bottomTrailing) {
+                        Text(clip.duration.toHMS())
+                            .style(theme.textTheme.callout.copyWith(color: theme.colorScheme.onSurface))
+                            .bold()
+                    }
 
             case let .photo(photo):
                 AsyncRemoteImage(url: photo.url) { image in

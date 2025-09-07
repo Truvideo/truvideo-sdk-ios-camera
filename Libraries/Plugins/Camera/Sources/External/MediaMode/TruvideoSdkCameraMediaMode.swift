@@ -179,8 +179,8 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
 
         TruvideoSdkCameraMediaMode(
             maxMediaCount: mediaCount ?? Int.max,
-            maxPictureCount: Int.max,
-            maxVideoCount: Int.max,
+            maxPictureCount: mediaCount ?? Int.max,
+            maxVideoCount: mediaCount ?? Int.max,
             maxVideoDuration: TimeInterval(videoDuration ?? Int.max)
         )
     }

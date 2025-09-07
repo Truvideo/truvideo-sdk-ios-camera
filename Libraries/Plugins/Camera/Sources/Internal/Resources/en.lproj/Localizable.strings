@@ -18,6 +18,10 @@
 // K
 // L
 // M
+"MaxClipDurationReached" = "You’ve reached the video recording time limit.";
+"MaxNumberOfClipsReached" = "You have reached the maximum number of videos for this session.";
+"MaxNumberOfPicturesReached" = "You have reached the maximum number of pictures for this session.";
+
 // N
 // Ñ
 // O

@@ -6,6 +6,7 @@ import AVFoundation
 import Combine
 import Foundation
 import UIKit
+internal import Utilities
 
 final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Private Properties
@@ -13,8 +14,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private let audioDevice = AudioDevice()
     private var cancellables = Set<AnyCancellable>()
     private let captureSession = AVCaptureSession()
+    private let configuration: TruvideoSdkCameraConfiguration
     private let orientationMonitor: OrientationMonitor
     private let movieOutputProcessor = MovieOutputProcessor()
+    private let onCompleted: (TruvideoSdkCameraResult) -> Void
     private var sessionWasRunning = false
     private let videoDevice = VideoDevice()
 
@@ -82,30 +85,93 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     ///
     /// This array defines the zoom levels that are available for selection in the camera
     /// interface. Each value represents a magnification factor.
-    @Published private(set) var zoomFactors: [CGFloat] = []
+    @Published private(set) var zoomFactors: [CGFloat] = [1]
 
     /// The current zoom factor applied to the camera preview.
     ///
     /// This property represents the magnification level of the camera view.
     @Published var zoomFactor: CGFloat = 1 {
         didSet {
-            updateZoomFactor()
+            if oldValue != zoomFactor {
+                updateZoomFactor()
+            }
         }
     }
 
     @Published private(set) var availableFormats: [VideoDevice.Format] = []
     @Published var selectedFormat: VideoDevice.Format?
 
-    // MARK: - Computed Properties
+    // MARK: - Private Computed Properties
 
-    /// The total number of video clips in the media collection.
-    var numberOfClips: Int {
-        medias.filter(\.isClip).count
+    private var maxNumberOfClips: Int {
+        let mode = configuration.mode
+
+        guard mode.maxPictureCount == 0, mode.maxVideoCount == 0, mode.maxMediaCount > 0 else {
+            return mode.maxVideoCount
+        }
+
+        return mode.maxMediaCount
     }
 
-    /// The total number of photos in the media collection.
-    var numberOfPhotos: Int {
-        medias.filter(\.isPhoto).count
+    private var maxNumberOfPhotos: Int {
+        let mode = configuration.mode
+
+        guard mode.maxPictureCount == 0, mode.maxVideoCount == 0, mode.maxMediaCount > 0 else {
+            return mode.maxPictureCount
+        }
+
+        return mode.maxMediaCount
+    }
+
+    // MARK: - Computed Properties
+
+    /// Returns a formatted string representing the current video clip count and limit.
+    ///
+    /// This computed property calculates the number of video clips captured and formats
+    /// it according to the configuration's maximum video count. It handles different
+    /// display scenarios including unlimited clips, no clips, and limited clip counts.
+    var numberOfClips: String {
+        let numberOfClips = medias.lazy.filter(\.isClip).count
+        let isUnlimited = configuration.mode.maxVideoCount == Int.max || configuration.mode.maxVideoCount == 0
+
+        if isUnlimited {
+            return numberOfClips == 0 ? "" : "\(numberOfClips)"
+        }
+
+        return "\(numberOfClips)/\(configuration.mode.maxVideoCount)"
+    }
+
+    /// Returns a formatted string representing the current total media count and limit.
+    ///
+    /// This computed property calculates the total number of media items captured and
+    /// formats it according to the configuration's maximum media count. It only displays
+    /// the count when the mode is configured for total media limits (not individual
+    /// photo or video limits).
+    var numberOfMedias: String {
+        let maxPictureCount = configuration.mode.maxPictureCount
+        let maxVideoCount = configuration.mode.maxVideoCount
+
+        guard configuration.mode.maxMediaCount > 0, maxPictureCount == 0, maxVideoCount == 0 else {
+            return ""
+        }
+
+        return "\(medias.count)/\(configuration.mode.maxMediaCount)"
+    }
+
+    /// Returns a formatted string representing the current photo count and limit.
+    ///
+    /// This computed property calculates the number of photos captured and formats
+    /// it according to the configuration's maximum picture count. It handles different
+    /// display scenarios including unlimited photos, no photos, and limited photo counts.
+    var numberOfPhotos: String {
+        let numberOfPhotos = medias.lazy.filter(\.isPhoto).count
+        let isUnlimited = configuration.mode.maxPictureCount == Int.max || configuration.mode.maxPictureCount == 0
+
+        if isUnlimited {
+            return numberOfPhotos == 0 ? "" : "\(numberOfPhotos)"
+        }
+
+        return "\(numberOfPhotos)/\(configuration.mode.maxPictureCount)"
     }
 
     // MARK: - Types
@@ -140,7 +206,26 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     // MARK: - Initializer
 
-    init(orientationMonitor: OrientationMonitor = DeviceOrientationMonitor()) {
+    /// Creates a new instance with configuration, completion handler, and orientation monitoring.
+    ///
+    /// This initializer sets up the instance with a camera configuration, a completion
+    /// callback that will be invoked when the operation completes, and an orientation
+    /// monitor for tracking device orientation changes during the process.
+    ///
+    /// - Parameters:
+    ///   - configuration: The camera configuration containing settings and preferences.
+    ///   - orientationMonitor: The orientation monitor to use for tracking device orientation .
+    ///   - onCompleted: Closure to be called when the operation completes with the result.
+    init(
+        configuration: TruvideoSdkCameraConfiguration,
+        orientationMonitor: OrientationMonitor = DeviceOrientationMonitor(),
+        onCompleted: @escaping (TruvideoSdkCameraResult) -> Void
+    ) {
+
+        let outputDirectory = URL(string: configuration.outputPath) ?? URL(fileURLWithPath: NSTemporaryDirectory())
+
+        self.configuration = configuration
+        self.onCompleted = onCompleted
         self.orientationMonitor = orientationMonitor
 
         self.previewLayer.session = captureSession
@@ -149,16 +234,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         self.orientationMonitor.add(self)
         self.orientationMonitor.startMonitoring()
 
-        movieOutputProcessor.$recordingDuration
-            .filter(\.isValid)
-            .map { $0.seconds.toHMS() }
-            .receive(on: RunLoop.main)
-            .assign(to: \.secondsRecorded, on: self)
-            .store(in: &cancellables)
+        self.isTorchEnabled = configuration.flashMode == .on
+
+        movieOutputProcessor.outputDirectory = outputDirectory
 
         initialize()
         configureObservers()
         configureSessionObservers()
+        subscribeToSecondsRecorded()
 
         if captureSession.canSetSessionPreset(.hd4K3840x2160) {
             captureSession.sessionPreset = .hd4K3840x2160
@@ -171,21 +254,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     // MARK: - Instance methods
 
-    /// Handles a new device orientation update and applies the corresponding rotation angle.
-    ///
-    /// This method is triggered when a new `DeviceOrientationInfo` is received.
-    /// It updates the current orientation, calculates the transition between the
-    /// previous and new orientations, and determines the appropriate rotation angle.
-    /// If the orientation source comes from sensors while the device is physically
-    /// in portrait mode, it preserves or updates the rotation angle accordingly.
-    ///
-    /// - Parameter deviceOrientation: The latest orientation information, including its source and value.
-    func didReceive(_ deviceOrientation: DeviceOrientation) {
-        if deviceOrientation.orientation != .portraitUpsideDown {
-            orientationDidUpdate(to: deviceOrientation.orientation)
-        }
-    }
-
     /// Captures a photo using the photo device and adds it to the photos collection.
     ///
     /// This function initiates an asynchronous photo capture operation on the main actor.
@@ -193,10 +261,19 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// If an error occurs during capture, the error's localized description is stored
     /// in the localizedError property for user feedback.
     func capturePhoto() {
+        let photos = medias.filter(\.isPhoto)
+
+        guard photos.count < maxNumberOfPhotos else {
+            localizedError = Localizations.maxNumberOfPicturesReached
+            isSnackbarPresented = true
+            return
+        }
+
         Task { @MainActor in
             do {
                 if let photo = try await videoDevice.capturePhoto() {
                     medias.append(.photo(photo))
+                    validate()
                 }
             } catch {
                 localizedError = error.localizedDescription
@@ -211,8 +288,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// and updates the validation state to indicate that the media collection
     /// is ready for further processing or submission.
     func onContinue() {
-        let medias = medias.map(TruvideoSdkCameraMedia.from)
+        let result = TruvideoSdkCameraResult(media: medias.map(TruvideoSdkCameraMedia.from))
 
+        onCompleted(result)
         validationState = .valid
     }
 
@@ -284,7 +362,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     func switchCamera() {
         Task { @MainActor in
             do {
-                try await videoDevice.setPosition(videoDevice.position == .back ? .front : .back)
+                let position = await videoDevice.position == .back ? AVCaptureDevice.Position.front : .back
+
+                try await videoDevice.setPosition(position)
             } catch {
                 localizedError = error.localizedDescription
                 isSnackbarPresented = true
@@ -299,17 +379,18 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// actual torch mode. If the torch operation fails, it reverts the UI state
     /// to maintain consistency between the visual state and the actual hardware state.
     func switchTorch() {
+        isTorchEnabled.toggle()
+
         Task { @DeviceActor in
             do {
-                await MainActor.run {
-                    isTorchEnabled.toggle()
-                }
+                let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
+                try videoDevice.setTorchMode(torchMode)
 
-                try videoDevice.setTorchMode(isTorchEnabled ? .on : .off)
                 videoDevice.flashMode = isTorchEnabled ? .on : .off
             } catch {
+                localizedError = error.localizedDescription
+
                 await MainActor.run {
-                    localizedError = error.localizedDescription
                     isTorchEnabled.toggle()
                     isSnackbarPresented = true
                 }
@@ -329,6 +410,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 case .paused:
                     try await audioDevice.startCapturing()
                     try await videoDevice.startCapturing()
+
                     await movieOutputProcessor.startProcessing()
 
                     state = .running
@@ -336,6 +418,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 case .writing:
                     await audioDevice.pause()
                     await videoDevice.pause()
+
                     try await movieOutputProcessor.pause()
 
                     state = .paused
@@ -367,19 +450,25 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             do {
                 switch movieOutputProcessor.state {
                 case .initialized, .finished, .failed:
-                    try await record()
+                    let clips = medias.filter(\.isClip)
+
+                    guard clips.count < maxNumberOfClips else {
+                        localizedError = Localizations.maxNumberOfClipsReached
+                        isSnackbarPresented = true
+                        return
+                    }
+
+                    try await videoDevice.startCapturing()
+                    try await audioDevice.startCapturing()
+
                     await movieOutputProcessor.startProcessing()
+
+                    state = .running
 
                 case .paused where state.canTransition(to: .finished),
                     .writing where state.canTransition(to: .finished):
 
-                    state = .finished
-
-                    let videoClip = try await movieOutputProcessor.endProcessing()
-
-                    medias.append(.clip(videoClip))
-                    await videoDevice.pause()
-                    await audioDevice.pause()
+                    try await endRecording()
 
                 default:
                     break
@@ -432,6 +521,23 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         pauseSession()
     }
 
+    // MARK: - OrientationMonitorSubscriber
+
+    /// Handles a new device orientation update and applies the corresponding rotation angle.
+    ///
+    /// This method is triggered when a new `DeviceOrientationInfo` is received.
+    /// It updates the current orientation, calculates the transition between the
+    /// previous and new orientations, and determines the appropriate rotation angle.
+    /// If the orientation source comes from sensors while the device is physically
+    /// in portrait mode, it preserves or updates the rotation angle accordingly.
+    ///
+    /// - Parameter deviceOrientation: The latest orientation information, including its source and value.
+    func didReceive(_ deviceOrientation: DeviceOrientation) {
+        if deviceOrientation.orientation != .portraitUpsideDown {
+            orientationDidUpdate(to: deviceOrientation.orientation)
+        }
+    }
+
     // MARK: - Private methods
 
     private func configureObservers() {
@@ -480,6 +586,20 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         )
     }
 
+    @MainActor
+    private func endRecording() async throws {
+        state = .finished
+
+        let videoClip = try await movieOutputProcessor.endProcessing()
+
+        medias.append(.clip(videoClip))
+
+        await videoDevice.pause()
+        await audioDevice.pause()
+
+        validate()
+    }
+
     private func initialize() {
         Task(priority: .userInitiated) { @DeviceActor in
             if audioDevice.authorizationStatus == .notDetermined, videoDevice.authorizationStatus == .notDetermined {
@@ -501,21 +621,30 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 audioDevice.add(movieOutputProcessor)
                 videoDevice.add(movieOutputProcessor)
 
-                let isTorchEnabled = videoDevice.torchMode == .on
+                let torchMode = configuration.flashMode == .on ? AVCaptureDevice.TorchMode.on : .off
+                let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
                 let zoomFactors = videoDevice.displayVideoZoomFactors
 
                 isTorchAvailable = videoDevice.isTorchAvailable
 
-                await MainActor.run {
-                    self.zoomFactors = zoomFactors
-                    self.isTorchEnabled = isTorchEnabled
-                }
+                try videoDevice.setTorchMode(torchMode)
 
-                let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
+                videoDevice.configuration.isHighResolutionEnabled = configuration.isHighResolutionPhotoEnabled
+                videoDevice.configuration.imageFormat = configuration.imageFormat.value
+                videoDevice.flashMode = configuration.flashMode.value
+
+                if configuration.lensFacing == .front {
+                    try videoDevice.setPosition(.front)
+                }
 
                 videoDevice.setVideoOrientation(videoOrientation)
                 updatePreviewOrientation()
+
                 captureSession.startRunning()
+
+                await MainActor.run {
+                    self.zoomFactors = zoomFactors
+                }
             } catch {
                 localizedError = error.localizedDescription
                 await MainActor.run {
@@ -545,19 +674,20 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     private func pauseSession() {
-        if state.canTransition(to: .paused) {
-            Task { @DeviceActor in
-                audioDevice.pause()
-                videoDevice.pause()
+        Task { @DeviceActor in
+            audioDevice.pause()
+            videoDevice.pause()
 
-                captureSession.stopRunning()
+            captureSession.stopRunning()
 
-                do {
-                    try await movieOutputProcessor.pause()
-                    await MainActor.run {
-                        state = .paused
-                    }
-                } catch {
+            do {
+                try await movieOutputProcessor.pause()
+
+                await MainActor.run {
+                    state = .paused
+                }
+            } catch {
+                await MainActor.run {
                     localizedError = error.localizedDescription
                     isSnackbarPresented = true
                 }
@@ -568,7 +698,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private func receivedMediaServicesWereResetNotification() {
         if state == .running, !captureSession.isRunning {
             Task { @DeviceActor in
-
                 videoDevice.endCapturing(in: captureSession)
                 audioDevice.endCapturing(in: captureSession)
 
@@ -604,18 +733,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    @DeviceActor
-    private func record() async throws {
-        if state.canTransition(to: .running) {
-            try videoDevice.startCapturing()
-            try audioDevice.startCapturing()
-
-            await MainActor.run {
-                state = .running
-            }
-        }
-    }
-
     @MainActor
     private func requestDeviceAccess() async {
         await audioDevice.requestAccess()
@@ -634,8 +751,47 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                         state = .running
                     }
                 } catch {
-                    localizedError = ""
+                    localizedError = error.localizedDescription
+                    await MainActor.run {
+                        isSnackbarPresented = true
+                    }
                 }
+            }
+        }
+    }
+
+    private func subscribeToSecondsRecorded() {
+        let maxVideoDuration = configuration.mode.maxVideoDuration
+
+        movieOutputProcessor.$recordingDuration
+            .filter(\.isValid)
+            .receive(on: RunLoop.main)
+            .prefix { [weak self] recordingDuration in
+                if let self, recordingDuration.seconds > maxVideoDuration {
+                    localizedError = Localizations.maxClipDurationReached
+                    isSnackbarPresented = true
+
+                    Task {
+                        try await self.endRecording()
+                    }
+
+                    return false
+                }
+
+                return true
+            }
+            .map { $0.seconds.toHMS() }
+            .assign(to: &$secondsRecorded)
+    }
+
+    private func validate() {
+        Task.delayed(milliseconds: 500) { @MainActor in
+            if medias.count == configuration.mode.maxMediaCount {
+                let medias = medias.map(TruvideoSdkCameraMedia.from)
+                let result = TruvideoSdkCameraResult(media: medias)
+
+                onCompleted(result)
+                validationState = .valid
             }
         }
     }
@@ -647,9 +803,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     private func updateZoomFactor() {
-        Task { @DeviceActor in
+        Task { @MainActor in
             do {
-                try videoDevice.setZoomFactor(zoomFactor)
+                try await videoDevice.setZoomFactor(zoomFactor)
             } catch {
                 localizedError = error.localizedDescription
                 isSnackbarPresented = true
