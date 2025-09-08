@@ -755,7 +755,7 @@ class VideoDevice: NSObject, Device {
     ///   - `UtilityError(kind: .VideoDeviceErrorReason.torchModeFailed, underlyingError:)` on failure.
     @DeviceActor
     func setTorchMode(_ mode: AVCaptureDevice.TorchMode) throws(UtilityError) {
-        if let captureDevice {
+        if let captureDevice, captureDevice.isTorchAvailable {
             guard captureDevice.isTorchModeSupported(mode) else {
                 throw UtilityError(
                     kind: .VideoDeviceErrorReason.torchNotSupported,

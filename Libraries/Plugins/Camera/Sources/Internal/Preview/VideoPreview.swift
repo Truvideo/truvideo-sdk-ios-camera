@@ -19,7 +19,7 @@ internal import Utilities
 ///     @StateObject private var recorder = Recorder()
 ///
 ///     var body: some View {
-///         RecorderVideoPreview(recorder: recorder)
+///         VideoPreview(recorder: recorder)
 ///             .edgesIgnoringSafeArea(.all)
 ///     }
 /// }

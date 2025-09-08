@@ -25,6 +25,9 @@ import SwiftUI
 struct Icon: View {
     // MARK: - Environment Properties
 
+    @Environment(\.isEnabled)
+    var isEnabled
+
     @Environment(\.theme)
     var theme
 
@@ -47,6 +50,6 @@ struct Icon: View {
             .renderingMode(.template)
             .frame(size: size)
             .foregroundStyle(color ?? theme.iconTheme.color ?? theme.colorScheme.onSurface)
-            .opacity(theme.iconTheme.opacity)
+            .opacity(isEnabled ? theme.iconTheme.opacity : 0.5)
     }
 }

@@ -6,17 +6,6 @@ import AVKit
 import Foundation
 import UIKit
 
-@objc
-public class TruvideoSdkCameraResolution: NSObject, Encodable {
-    @objc public let width: Int
-    @objc public let height: Int
-
-    public init(width: Int, height: Int) {
-        self.width = width
-        self.height = height
-    }
-}
-
 /// A configuration object that defines camera behavior and capture settings.
 ///
 /// This class encapsulates all the settings needed to configure the camera

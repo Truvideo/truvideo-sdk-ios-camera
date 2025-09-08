@@ -432,17 +432,18 @@ final class MovieOutputProcessor {
         skippedAudioBuffers = []
 
         for buffer in buffers {
-            let adjustedBuffer = buffer.sampleBuffer.offset(by: buffer.timestamp, duration: buffer.duration)
-            if let audioInput, audioInput.isReadyForMoreMediaData, audioInput.append(adjustedBuffer) {
-                mediaProcessingOptions.insert(.audio)
+            if let adjustedBuffer = buffer.sampleBuffer.offset(by: buffer.timestamp, duration: buffer.duration) {
+                if let audioInput, audioInput.isReadyForMoreMediaData, audioInput.append(adjustedBuffer) {
+                    mediaProcessingOptions.insert(.audio)
 
-                if !mediaProcessingOptions.contains(.video) {
-                    let timestamp = buffer.timestamp - startTimestamp
+                    if !mediaProcessingOptions.contains(.video) {
+                        let timestamp = buffer.timestamp - startTimestamp
 
-                    recordingDuration = CMTimeAdd(currentClipDuration, timestamp)
+                        recordingDuration = CMTimeAdd(currentClipDuration, timestamp)
+                    }
+                } else {
+                    failedBuffers.append(buffer)
                 }
-            } else {
-                failedBuffers.append(buffer)
             }
         }
 

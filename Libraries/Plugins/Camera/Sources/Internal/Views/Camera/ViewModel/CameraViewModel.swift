@@ -105,9 +105,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    @Published private(set) var availableFormats: [VideoDevice.Format] = []
-    @Published var selectedFormat: VideoDevice.Format?
-
     // MARK: - Private Computed Properties
 
     private var maxNumberOfClips: Int {
@@ -344,19 +341,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    func setFormat(_ format: VideoDevice.Format) {
-        Task { @MainActor in
-            let currentFormat = selectedFormat
-
-            do {
-                selectedFormat = format
-                try await videoDevice.setFormat(format)
-            } catch {
-                selectedFormat = currentFormat
-            }
-        }
-    }
-
     /// Switches between the front and back camera positions.
     ///
     /// This function toggles the camera position between the front-facing camera (selfie camera)
@@ -382,11 +366,15 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// actual torch mode. If the torch operation fails, it reverts the UI state
     /// to maintain consistency between the visual state and the actual hardware state.
     func switchTorch() {
-        isTorchEnabled.toggle()
-
         Task { @MainActor in
+            let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
+
+            isTorchEnabled.toggle()
+
             do {
-                let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
+                if await videoDevice.isTorchAvailable {
+                    try await videoDevice.setTorchMode(torchMode)
+                }
 
                 if await videoDevice.isTorchAvailable {
                     try await videoDevice.setTorchMode(torchMode)
@@ -412,7 +400,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             do {
                 switch movieOutputProcessor.state {
                 case .paused:
-                    ensureTorchCompatibility()
+                    await ensureTorchCompatibility()
+
                     try await audioDevice.startCapturing()
                     try await videoDevice.startCapturing()
 
@@ -462,7 +451,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                         return
                     }
 
-                    ensureTorchCompatibility()
+                    await ensureTorchCompatibility()
 
                     try await videoDevice.startCapturing()
                     try await audioDevice.startCapturing()
@@ -490,14 +479,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @MainActor
     @objc
     func didReceiveDidEnterBackgroundNotification(_ notification: Notification) {
+        sessionWasRunning = state == .running
+
         if state == .running {
-            Task {
-                do {
-                    try await endRecording()
-                } catch {
-                    didReceiveError(error.localizedDescription)
-                }
-            }
+            pauseSession()
         }
     }
 
@@ -532,6 +517,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    @MainActor
+    @objc
+    func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
+        if sessionWasRunning {
+            captureSession.startRunning()
+        }
+    }
+
     // MARK: - OrientationMonitorSubscriber
 
     /// Handles a new device orientation update and applies the corresponding rotation angle.
@@ -556,6 +549,13 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             self,
             selector: #selector(didReceiveDidEnterBackgroundNotification(_:)),
             name: UIApplication.didEnterBackgroundNotification,
+            object: nil
+        )
+
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(didReceiveWillEnterForegroundNotification(_:)),
+            name: UIApplication.willEnterForegroundNotification,
             object: nil
         )
     }
@@ -608,6 +608,13 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         await audioDevice.pause()
 
         validate()
+    }
+
+    @DeviceActor
+    private func ensureTorchCompatibility() {
+        if videoDevice.position == .front, videoDevice.flashMode == .on {
+            switchTorch()
+        }
     }
 
     private func initialize() {

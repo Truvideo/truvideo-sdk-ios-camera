@@ -144,6 +144,8 @@ included:
 
 excluded:  
   # Test directories
+  - "**/Deprecated"
+  - "**/Deprecated/**"
   - Libraries/App/Tests/*
   - Libraries/*/*/Testing/*
   - Libraries/*/*/Tests/*
