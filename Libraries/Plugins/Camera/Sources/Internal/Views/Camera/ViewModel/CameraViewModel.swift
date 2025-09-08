@@ -803,17 +803,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             }
         }
     }
-
-    private func ensureTorchCompatibility() {
-        Task { @DeviceActor in
-            if videoDevice.position == .front, videoDevice.flashMode == .on {
-                await MainActor.run {
-                    switchTorch()
-                }
-            }
-        }
-    }
-
+    
     private func updatePreviewOrientation() {
         if [.landscapeLeft, .landscapeRight, .portrait].contains(deviceOrientation) {
             previewLayer.connection?.videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
