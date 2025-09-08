@@ -363,13 +363,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// and the back-facing camera (main camera). It attempts to change the camera position
     /// and updates the error state if the operation fails.
     func switchCamera() {
-        Task { @MainActor in
+        Task { @DeviceActor in
             do {
-                let position = await videoDevice.position == .back ? AVCaptureDevice.Position.front : .back
+                let position = videoDevice.position == .back ? AVCaptureDevice.Position.front : .back
 
-                try await videoDevice.setPosition(position)
+                try videoDevice.setPosition(position)
+                isTorchAvailable = videoDevice.isTorchAvailable
             } catch {
-                didReceiveError(error.localizedDescription)
+                await didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -383,17 +384,20 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     func switchTorch() {
         isTorchEnabled.toggle()
 
-        Task { @DeviceActor in
+        Task { @MainActor in
             do {
                 let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
-                try videoDevice.setTorchMode(torchMode)
 
-                videoDevice.flashMode = isTorchEnabled ? .on : .off
-            } catch {
-                await MainActor.run {
-                    isTorchEnabled.toggle()
-                    didReceiveError(error.localizedDescription)
+                if await videoDevice.isTorchAvailable {
+                    try await videoDevice.setTorchMode(torchMode)
                 }
+
+                Task { @DeviceActor in
+                    videoDevice.flashMode = isTorchEnabled ? .on : .off
+                }
+            } catch {
+                isTorchEnabled.toggle()
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -408,6 +412,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             do {
                 switch movieOutputProcessor.state {
                 case .paused:
+                    ensureTorchCompatibility()
                     try await audioDevice.startCapturing()
                     try await videoDevice.startCapturing()
 
@@ -456,6 +461,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                         isSnackbarPresented = true
                         return
                     }
+
+                    ensureTorchCompatibility()
 
                     try await videoDevice.startCapturing()
                     try await audioDevice.startCapturing()
@@ -786,6 +793,16 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                 onCompleted(result)
                 validationState = .valid
+            }
+        }
+    }
+
+    private func ensureTorchCompatibility() {
+        Task { @DeviceActor in
+            if videoDevice.position == .front, videoDevice.flashMode == .on {
+                await MainActor.run {
+                    switchTorch()
+                }
             }
         }
     }

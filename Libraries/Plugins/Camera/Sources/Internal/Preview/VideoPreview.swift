@@ -333,7 +333,7 @@ private final class FocusIndicatorView: UIView {
         fadePropertyAnimator?.stopAnimation(true)
         showAnimation?.stopAnimation(true)
 
-        transform = transform.scaledBy(x: 2.5, y: 2.5)
+        transform = .identity.scaledBy(x: 2.5, y: 2.5)
         showAnimation = UIViewPropertyAnimator(duration: 0.25, curve: .linear) { [weak self] in
             self?.alpha = 1
             self?.transform = .identity

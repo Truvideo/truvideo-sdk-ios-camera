@@ -523,7 +523,10 @@ class VideoDevice: NSObject, Device {
             }
 
             state = .running
-            try setTorchMode(torchMode)
+
+            if let captureDevice, captureDevice.isTorchAvailable {
+                try setTorchMode(torchMode)
+            }
         }
     }
 
