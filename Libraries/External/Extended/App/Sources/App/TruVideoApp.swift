@@ -6,6 +6,7 @@ internal import DI
 @_spi(Internal) import ExternalUtilities
 import Foundation
 internal import Registry
+internal import Storage
 internal import TruVideoApi
 internal import Utilities
 
@@ -136,6 +137,8 @@ public final class TruVideoApp: TruVideoSDK {
     // MARK: - Private Properties
 
     private var hasBeenConfigured = false
+    private let legacyStorage: LegacyStorage
+    private let migrator: Migrator
 
     // MARK: - Dependencies
 
@@ -162,7 +165,14 @@ public final class TruVideoApp: TruVideoSDK {
     // MARK: - Initializer
 
     /// Creates a new instance of the `TruVideoApp`.
-    init() {
+    ///
+    ///  - Parameters:
+    ///     - legacyStorage: A type that defines the interface for storing authentication data in legacy storage systems.
+    ///     - migrator: A type that defines the interface for performing data migrations.
+    init(legacyStorage: LegacyStorage = LegacySessionStorage(), migrator: Migrator = SDKMigrator()) {
+        self.legacyStorage = legacyStorage
+        self.migrator = migrator
+
         LibraryRegistry.register(TruVideoSDKLibrary())
     }
 
@@ -211,7 +221,11 @@ public final class TruVideoApp: TruVideoSDK {
                 signature: signature,
                 externalId: options.externalId
             )
-
+            
+            if let authToken = authenticatableClient.currentToken {
+                try legacyStorage.set(authToken, apiKey: options.apiKey)
+            }
+            
             retrieveDeviceSettings()
         } catch let error as UtilityError {
             throw TruVideoSdkError(
@@ -250,6 +264,12 @@ public final class TruVideoApp: TruVideoSDK {
             throw TruVideoSdkError.appAlreadyConfigured
         }
 
+        do {
+            try migrator.migrate()
+        } catch {
+            throw TruVideoSdkError.unknown
+        }
+        
         DependencyValues.current.options = options
         LibraryRegistry.configureAll()
         retrieveDeviceSettings()
@@ -259,7 +279,7 @@ public final class TruVideoApp: TruVideoSDK {
     // MARK: - Private methods
 
     private func retrieveDeviceSettings() {
-        guard !isAuthenticated else { return }
+        guard isAuthenticated else { return }
 
         Task {
             do {

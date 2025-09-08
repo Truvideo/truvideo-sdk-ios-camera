@@ -50,7 +50,7 @@ public struct Environment: Hashable, RawRepresentable, Sendable {
     /// It serves as the foundation for constructing full API endpoints throughout the SDK.
     /// The URL is automatically determined by the environment type, ensuring that requests
     /// are directed to the correct backend instance.
-    var baseURL: String {
+    public var baseURL: String {
         switch self {
         case .beta:
             "https://sdk-mobile-api-beta.truvideo.com"

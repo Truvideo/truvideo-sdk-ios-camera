@@ -16,7 +16,7 @@ import Utilities
 ///
 /// Read value for key.
 /// let value = storage.read(key:  "mykey")
-public struct UserDefaultsStorage: Storage {
+public final class UserDefaultsStorage: Storage, @unchecked Sendable {
     private let encoder = JSONEncoder()
     private let decoder = JSONDecoder()
     private let userDefaults: UserDefaults

@@ -11,7 +11,7 @@ import Storage
 /// This struct encapsulates the data required for an authenticated session,
 /// including the API key for service identification and the authentication
 /// token for API access authorization.
-struct AuthSession: Codable {
+public struct AuthSession: Codable {
     /// The API key that identifies the application or service.
     ///
     /// This key is used to authenticate requests to the TruVideo API
@@ -101,7 +101,7 @@ final class SessionManagerImpl: SessionManager, @unchecked Sendable {
     /// The storage is initialized lazily to ensure the environment dependency is properly
     /// resolved before storage creation.
     lazy var storage: any Storage = {
-        KeychainStorage(url: environment.baseURL)
+        UserDefaultsStorage(userDefaults: UserDefaults(suiteName: environment.baseURL) ?? .standard)
     }()
 
     // MARK: - Computed Properties
