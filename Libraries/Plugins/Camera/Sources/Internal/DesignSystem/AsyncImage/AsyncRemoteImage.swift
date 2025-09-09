@@ -264,7 +264,7 @@ struct AsyncRemoteImage<Content: View>: View {
         KingfisherManager.shared.retrieveImage(with: url, options: []) { result in
             Task { @MainActor in
                 switch result {
-                case .failure(let error):
+                case .failure:
                     status = .failure
 
                 case .success(let result):

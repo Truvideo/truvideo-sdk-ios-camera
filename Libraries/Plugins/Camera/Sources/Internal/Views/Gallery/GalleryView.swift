@@ -2,54 +2,30 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import AVKit
 import SwiftUI
 
+/// A full-screen gallery view that displays a grid of media items
+/// and provides a close button to dismiss the gallery.
 struct GalleryView: View {
     // MARK: - Binding Properties
 
-    @Binding var isPresented: Bool
+    /// The collection of media items to display in the gallery.
     @Binding var medias: [Media]
+
+    /// A Boolean value that indicates whether the gallery is currently presented.
+    @Binding var isPresented: Bool
 
     // MARK: - Environment Properties
 
+    /// The current theme, injected from the environment.
     @Environment(\.theme)
     var theme
-
-    // MARK: - State Properties
-
-    @State var isPreviewPresented = false
-
-    // MARK: - Computed Properties
-
-    var columns: [GridItem] {
-        [
-            GridItem(.flexible(), spacing: theme.spacingTheme.xxs),
-            GridItem(.flexible(), spacing: theme.spacingTheme.xxs),
-            GridItem(.flexible(), spacing: theme.spacingTheme.xxs),
-        ]
-    }
 
     // MARK: - Body
 
     var body: some View {
-        ScrollView(.vertical) {
-            LazyVGrid(columns: columns, spacing: theme.spacingTheme.sm) {
-                ForEach(medias, id: \.createdAt) { media in
-                    MediaView(media: media)
-                        .overlay {
-                            GeometryReader { geometryProxy in
-                                ScaledTransitionView(isPresented: $isPreviewPresented) {
-                                    MediaPreviewView(medias: $medias, isPresented: $isPreviewPresented)
-                                }
-                                .startingFrame(geometryProxy.frame(in: .global))
-                            }
-                        }
-                        .onTapGesture {
-                            isPreviewPresented.toggle()
-                        }
-                }
-            }
+        VStack {
+            GalleryGrid(medias: medias, theme: theme)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)
@@ -59,59 +35,7 @@ struct GalleryView: View {
             } action: {
                 isPresented.toggle()
             }
-            .padding(.leading, theme.spacingTheme.md)
+            .padding(theme.spacingTheme.md)
         }
-    }
-
-    // MARK: - Initializer
-
-    /// Creates a new instance with bindings to control media content and presentation state.
-    ///
-    /// - Parameters:
-    ///   - medias: A binding to the media collection that will be displayed in the gallery
-    ///   - isPresented: A binding that controls whether the gallery is currently presented
-    init(medias: Binding<[Media]>, isPresented: Binding<Bool>) {
-        _isPresented = isPresented
-        _medias = medias
-    }
-}
-
-private struct MediaView: View {
-    // MARK: - Environment Properties
-
-    @Environment(\.theme)
-    var theme
-
-    // MARK: - Properties
-
-    let media: Media
-
-    // MARK: - Body
-
-    var body: some View {
-        ZStack {
-            switch media {
-            case let .clip(clip):
-                Image(uiImage: clip.thumbnail ?? UIImage())
-                    .resizable()
-                    .scaledToFill()
-                    .overlay(alignment: .bottomTrailing) {
-                        Text(clip.duration.toHMS())
-                            .style(theme.textTheme.callout.copyWith(color: theme.colorScheme.onSurface))
-                            .bold()
-                    }
-
-            case let .photo(photo):
-                AsyncRemoteImage(url: photo.url) { image in
-                    image.resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    theme.colorScheme.surface
-                }
-            }
-        }
-        .aspectRatio(1, contentMode: .fit)
-        .clipped()
-        .clipShape(.rect(cornerRadius: theme.radiusTheme.xs))
     }
 }

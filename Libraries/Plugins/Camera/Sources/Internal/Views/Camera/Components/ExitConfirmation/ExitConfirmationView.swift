@@ -60,6 +60,7 @@ struct ExitConfirmationView: View {
             } action: {
                 isPresented.toggle()
             }
+            .padding(.horizontal, theme.spacingTheme.md)
         }
     }
 }

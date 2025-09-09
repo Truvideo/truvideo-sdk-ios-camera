@@ -803,7 +803,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             }
         }
     }
-    
+
     private func updatePreviewOrientation() {
         if [.landscapeLeft, .landscapeRight, .portrait].contains(deviceOrientation) {
             previewLayer.connection?.videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)

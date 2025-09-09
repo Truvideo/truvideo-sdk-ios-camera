@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import UIKit
 
 /// Represents a media item that can be either a video clip or a photo.
 ///
@@ -87,6 +88,19 @@ enum Media: Equatable {
 
         case .photo:
             return true
+        }
+    }
+
+    /// A thumbnail image representing this media item.
+    ///
+    /// Returns either the video clip thumbnail or the photo image.
+    var thumbnail: UIImage? {
+        switch self {
+        case let .clip(video):
+            return video.thumbnail
+
+        case let .photo(image):
+            return image.image
         }
     }
 }

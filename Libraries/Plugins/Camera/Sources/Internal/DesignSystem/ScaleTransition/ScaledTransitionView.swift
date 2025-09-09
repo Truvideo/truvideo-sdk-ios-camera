@@ -86,10 +86,12 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
 
             let hostingController = UIHostingController(rootView: content())
             hostingController.view.backgroundColor = .clear
+            hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
             hostingController.view.bounds = uiViewController.view.bounds
 
             context.coordinator.startingFrame = startingFrame
             hostingController.modalPresentationStyle = .custom
+            hostingController.modalTransitionStyle = .crossDissolve
             hostingController.transitioningDelegate = context.coordinator
 
             DispatchQueue.main.async {
