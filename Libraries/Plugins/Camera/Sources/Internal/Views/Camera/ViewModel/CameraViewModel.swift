@@ -135,9 +135,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// it according to the configuration's maximum video count. It handles different
     /// display scenarios including unlimited clips, no clips, and limited clip counts.
     var numberOfClips: String {
+        let maxVideoCount = TruvideoSdkCameraMediaMode.maxVideoCount
         let numberOfClips = medias.lazy.filter(\.isClip).count
 
-        if configuration.mode.maxVideoCount == Int.max || configuration.mode.maxVideoCount == 0 {
+        if configuration.mode.maxVideoCount == maxVideoCount || configuration.mode.maxVideoCount == 0 {
             return numberOfClips == 0 ? "" : "\(numberOfClips)"
         }
 
@@ -167,9 +168,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// it according to the configuration's maximum picture count. It handles different
     /// display scenarios including unlimited photos, no photos, and limited photo counts.
     var numberOfPhotos: String {
+        let maxPictureCount = TruvideoSdkCameraMediaMode.maxPictureCount
         let numberOfPhotos = medias.lazy.filter(\.isPhoto).count
 
-        if configuration.mode.maxPictureCount == Int.max || configuration.mode.maxPictureCount == 0 {
+        if configuration.mode.maxPictureCount == maxPictureCount || configuration.mode.maxPictureCount == 0 {
             return numberOfPhotos == 0 ? "" : "\(numberOfPhotos)"
         }
 

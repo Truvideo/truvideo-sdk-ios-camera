@@ -509,7 +509,7 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
 
   TruVideoApiTesting:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Internal/Extended/TruVideoApi/Testing
