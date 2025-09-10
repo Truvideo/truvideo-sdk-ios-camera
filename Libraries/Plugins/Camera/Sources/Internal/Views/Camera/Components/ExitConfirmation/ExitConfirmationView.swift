@@ -51,7 +51,7 @@ struct ExitConfirmationView: View {
             .frame(width: theme.sizeTheme.x(75))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.ultraThinMaterial)
+        .background(style: .dark)
         .animation(.easeInOut, value: isPresented)
         .transition(.scale.combined(with: .opacity))
         .overlay(alignment: .topLeading) {

@@ -20,7 +20,7 @@ public final class DataRequestMock: DataRequest {
     public var response: HTTPURLResponse?
 
     /// The current retry count for this request.
-    public var retryCount: Int = 0
+    public var retryCount = 0
 
     /// A human-readable description for debugging purposes.
     public var debugDescription: String {
@@ -28,6 +28,9 @@ public final class DataRequestMock: DataRequest {
     }
 
     // MARK: - Mock Configuration Properties
+
+    /// The data associated to the request.
+    public var data: Data?
 
     /// The mock response object to return for data serialization.
     public var mockDataResponse: Response<Data, NetworkingError>?
@@ -45,6 +48,9 @@ public final class DataRequestMock: DataRequest {
 
     /// The number of times `resume()` has been called.
     public private(set) var resumeCallCount = 0
+
+    /// The number of times `suspend` has been called.
+    public private(set) var suspendCallCount = 0
 
     /// The number of times `validate()` has been called.
     public private(set) var validateCallCount = 0
@@ -187,6 +193,14 @@ public final class DataRequestMock: DataRequest {
     @discardableResult
     public func resume() -> Self {
         resumeCallCount += 1
+        return self
+    }
+
+    /// Suspends the request, if allowed.
+    ///
+    /// - Returns: The current `Request` instance.
+    public func suspend() -> Self {
+        suspendCallCount += 1
         return self
     }
 }

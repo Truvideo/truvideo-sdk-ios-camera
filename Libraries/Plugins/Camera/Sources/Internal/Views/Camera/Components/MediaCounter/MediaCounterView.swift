@@ -66,13 +66,13 @@ struct MediaCounterView: View {
             Text(viewModel.numberOfClips)
                 .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface, kerning: 1.3))
         }
-        .hidden(viewModel.numberOfClips.isEmpty)
+        .hidden(viewModel.numberOfClips.isEmpty || !viewModel.numberOfMedias.isEmpty)
 
         VStack(spacing: theme.spacingTheme.xxs) {
             Icon(icon: DSIcons.photo, size: CGSize(width: theme.spacingTheme.lg, height: theme.spacingTheme.md))
             Text(viewModel.numberOfPhotos)
                 .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface, kerning: 1.3))
         }
-        .hidden(viewModel.numberOfPhotos.isEmpty)
+        .hidden(viewModel.numberOfPhotos.isEmpty || !viewModel.numberOfMedias.isEmpty)
     }
 }

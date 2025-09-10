@@ -3,8 +3,8 @@
 //
 
 import DI
-import Storage
-import StorageTesting
+import StorageKit
+import StorageKitTesting
 import Foundation
 import Testing
 import UIKit

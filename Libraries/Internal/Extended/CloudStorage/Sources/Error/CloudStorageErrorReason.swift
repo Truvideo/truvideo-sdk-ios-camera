@@ -36,7 +36,7 @@ extension ErrorReason {
         /// This error occurs when the AWS S3 Transfer Utility is unable to complete
         /// the upload operation successfully.
         public static let failedToUploadData = ErrorReason(rawValue: "FAILED_TO_UPLOAD_DATA")
-        
+
         /// Error indicating that the ETag header was missing in the server response.
         ///
         /// This error occurs when the upload operation completes, but the expected

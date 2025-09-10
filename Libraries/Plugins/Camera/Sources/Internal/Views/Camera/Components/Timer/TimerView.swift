@@ -11,37 +11,46 @@ import SwiftUI
 /// updates to reflect the current recording duration and provides visual feedback
 /// through its background styling.
 struct TimerView: View {
+    // MARK: - Binding Properties
+
+    @Binding var secondsRecorded: String
+
     // MARK: - Environment Properties
+
+    @Environment(\.isSelected)
+    var isSelected
 
     @Environment(\.theme)
     var theme
 
-    // MARK: - EnvironmentObject Properties
+    // MARK: - StateObject Properties
 
-    @EnvironmentObject var viewModel: CameraViewModel
+    @StateObject var viewModel = TimerViewModel()
 
     // MARK: - Computed Properties
 
     var fillColor: Color {
-        guard [.paused, .running].contains(viewModel.state) else {
-            return viewModel.deviceOrientation.isPortrait ? .clear : theme.colorScheme.surface.opacity(0.8)
-        }
-
-        return theme.colorScheme.error.opacity(0.8)
+        isSelected ? theme.colorScheme.error.opacity(0.8) : .clear
     }
 
     // MARK: - Body
 
     var body: some View {
-        Text(viewModel.secondsRecorded)
-            .style(theme.textTheme.callout.copyWith(color: theme.colorScheme.onSurface))
-            .padding(.horizontal, theme.spacingTheme.sm)
-            .padding(.vertical, theme.spacingTheme.xs)
-            .background {
-                RoundedRectangle(cornerRadius: theme.radiusTheme.xs)
-                    .fill(fillColor)
-            }
-            .padding(.top, theme.spacingTheme.x(1.5))
-            .transition(.opacity)
+        ZStack {
+            Text(secondsRecorded)
+                .style(theme.textTheme.callout.copyWith(color: theme.colorScheme.onSurface))
+                .padding(.horizontal, theme.spacingTheme.sm)
+                .padding(.vertical, theme.spacingTheme.xs)
+                .background {
+                    RoundedRectangle(cornerRadius: theme.radiusTheme.xs)
+                        .fill(fillColor)
+                }
+                .padding(.top, theme.spacingTheme.x(1.5))
+                .rotationEffect(viewModel.rotationAngle)
+                .transition(.opacity)
+                .id(viewModel.rotationAngle)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: viewModel.alignment)
+        .animation(.easeInOut(duration: 0.8), value: viewModel.alignment)
     }
 }

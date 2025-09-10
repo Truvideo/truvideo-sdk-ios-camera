@@ -2,6 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+import AVKit
 import CoreImage
 import CoreMedia
 import UIKit
@@ -24,7 +25,7 @@ extension CIContext {
         let options: [CIContextOption: Any] = [
             .outputColorSpace: CGColorSpaceCreateDeviceRGB(),
             .outputPremultiplied: true,
-            .useSoftwareRenderer: NSNumber(booleanLiteral: false),
+            .useSoftwareRenderer: NSNumber(value: false),
         ]
 
         if let device = MTLCreateSystemDefaultDevice() {
@@ -48,19 +49,22 @@ extension CIContext {
     /// generating a CGImage from the CIImage using the full buffer dimensions,
     /// and finally creating a UIImage from the CGImage.
     ///
-    /// - Parameter sampleBuffer: The Core Media sample buffer containing image data
-    /// - Returns: A UIImage representation of the sample buffer, or nil if the
-    ///           conversion process fails at any step
-    func createImage(from sampleBuffer: CMSampleBuffer) -> UIImage? {
+    /// - Parameters:
+    ///    - sampleBuffer: The Core Media sample buffer containing image data.
+    ///    - orientation: The orientation to be applied for the image.
+    /// - Returns: A UIImage representation of the sample buffer, or nil if the conversion
+    ///            process fails at any step
+    func createImage(from sampleBuffer: CMSampleBuffer, orientation: CGImagePropertyOrientation) -> UIImage? {
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer) else {
             return nil
         }
 
-        let ciimage = CIImage(cvPixelBuffer: pixelBuffer)
-        var sampleBufferImage: UIImage?
-        let size = CGSize(width: CVPixelBufferGetWidth(pixelBuffer), height: CVPixelBufferGetHeight(pixelBuffer))
+        var cImage = CIImage(cvPixelBuffer: pixelBuffer).oriented(orientation)
+        cImage = cImage.cropped(to: cImage.extent.integral)
 
-        if let cgimage = createCGImage(ciimage, from: .init(origin: .zero, size: size)) {
+        var sampleBufferImage: UIImage?
+
+        if let cgimage = createCGImage(cImage, from: cImage.extent) {
             sampleBufferImage = UIImage(cgImage: cgimage)
         }
 

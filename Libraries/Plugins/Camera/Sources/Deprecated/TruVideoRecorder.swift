@@ -515,7 +515,8 @@ class TruVideoRecorder: NSObject {
         switch devicePosition {
         case .front:
             return .front
-        @unknown default:
+
+        default:
             return .back
         }
     }
@@ -530,7 +531,7 @@ class TruVideoRecorder: NSObject {
             return .landscapeLeft
         case .landscapeRight:
             return .landscapeRight
-        @unknown default:
+        default:
             return .portrait
         }
     }

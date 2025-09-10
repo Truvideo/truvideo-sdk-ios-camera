@@ -3,7 +3,8 @@
 //
 
 import DI
-import Storage
+import Foundation
+import StorageKit
 import Testing
 import NetworkingTesting
 import Networking
@@ -194,11 +195,15 @@ struct SessionTokenRefresherTests {
             
             
             try sessionManager.set(expiredSession)
-            try await sut.refreshToken()
             
             // Then
+            await #expect {
+                try await sut.refreshToken()
+            } throws: { error in
+                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.refreshTokenFailed
+            }
+            
             #expect(dataRequest.validateCallCount == 1, "Expected validate to be called once")
-            #expect(dataRequest.lastValidationError == nil)
         }
     }
     
@@ -244,14 +249,16 @@ struct SessionTokenRefresherTests {
                 type: .networkLoad
             )
             
-            
             try sessionManager.set(expiredSession)
-            try await sut.refreshToken()
             
             // Then
+            await #expect {
+                try await sut.refreshToken()
+            } throws: { error in
+                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.refreshTokenFailed
+            }
+            
             #expect(dataRequest.validateCallCount == 1, "Expected validate to be called once")
-            #expect(dataRequest.lastValidationError != nil)
-            #expect((dataRequest.lastValidationError as? NetworkingError)?.kind == .responseValidationFailed)
         }
     }
     
@@ -303,6 +310,7 @@ struct SessionTokenRefresherTests {
                 result: .success(AuthToken.new),
                 type: .networkLoad
             )
+            
             try sessionManager.set(expiredSession)
             sessionManager.error = NSError(domain: "StorageError", code: 1)
             

@@ -63,7 +63,7 @@ struct FFMPEGVideoComposer: MediaComposer {
             .replacingOccurrences(of: "{output}", with: destination.sanitizedPath)
 
         if !FileManager.default.createFile(atPath: inputDestination.path, contents: Data(inputFileContent.utf8)) {
-            let error = UtilityError(
+            throw UtilityError(
                 kind: .MediaComposerErrorReason.composeFailed,
                 failureReason: "Unable to create temporary input file at \(inputDestination.path)"
             )

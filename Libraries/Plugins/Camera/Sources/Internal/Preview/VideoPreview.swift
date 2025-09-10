@@ -69,7 +69,9 @@ struct VideoPreview: UIViewRepresentable {
             self.overlayView.alpha = 0
             self.overlayView.backgroundColor = .black
 
+            clipsToBounds = true
             layer.addSublayer(previewLayer)
+
             addSubview(focusIndicatorView)
 
             configureConstraints()
@@ -126,9 +128,8 @@ struct VideoPreview: UIViewRepresentable {
         @objc
         func didReceiveDeviceDidChangePosition(_ notification: Notification) {
             let position = notification.userInfo?[VideoDevice.newPosition] as? AVCaptureDevice.Position
-            let milliseconds: TimeInterval = position == .back ? 900 : 600
 
-            Task.delayed(milliseconds: milliseconds) { @MainActor in
+            Task.delayed(milliseconds: 900) { @MainActor in
                 blurView.animate(\.alpha, to: 0, duration: 0.5)
             }
         }

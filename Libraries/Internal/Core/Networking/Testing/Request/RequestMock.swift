@@ -20,12 +20,7 @@ public final class RequestMock: Request {
     public var response: HTTPURLResponse?
 
     /// The current retry count for this request.
-    public var retryCount: Int = 0
-
-    /// A human-readable description for debugging purposes.
-    public var debugDescription: String {
-        "DataRequestMock(id: \(id), retryCount: \(retryCount))"
-    }
+    public var retryCount = 0
 
     // MARK: - Call Count Properties
 
@@ -34,6 +29,16 @@ public final class RequestMock: Request {
 
     /// The number of times `resume` has been called.
     public private(set) var resumeCallCount = 0
+
+    /// The number of times `suspend` has been called.
+    public private(set) var suspendCallCount = 0
+
+    // MARK: - Computed Properties
+
+    /// A human-readable description for debugging purposes.
+    public var debugDescription: String {
+        "DataRequestMock(id: \(id), retryCount: \(retryCount))"
+    }
 
     // MARK: - Initializer
 
@@ -56,6 +61,14 @@ public final class RequestMock: Request {
     /// - Returns: The current `Request` instance.
     public func resume() -> Self {
         resumeCallCount += 1
+        return self
+    }
+
+    /// Suspends the request, if allowed.
+    ///
+    /// - Returns: The current `Request` instance.
+    public func suspend() -> Self {
+        suspendCallCount += 1
         return self
     }
 }

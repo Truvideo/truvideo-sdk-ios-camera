@@ -543,7 +543,6 @@ class TVCameraManager: NSObject, TVCameraManagerProtocol {
         enableTorchIfNeeded()
 
         Task {
-            let outputURL = generateNextVideoOutputURL()
             await processor.startProcessing()
 
             await MainActor.run {

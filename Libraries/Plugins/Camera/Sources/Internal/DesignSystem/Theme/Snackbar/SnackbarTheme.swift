@@ -53,7 +53,7 @@ import SwiftUI
 ///
 /// This allows for rich visual feedback and improved user experience across different
 /// snackbar implementations and contexts.
-public struct SnackbarTheme {
+public struct SnackbarTheme: Sendable {
     /// The background color of the snackbar.
     ///
     /// This property defines the background color that will be applied to the snackbar container.

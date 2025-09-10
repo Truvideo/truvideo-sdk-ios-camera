@@ -12,6 +12,10 @@ import Utilities
 @testable import TruVideoApi
 
 struct AuthenticatableClientTests {
+    // MARK: - Private Properties
+    
+    private let context = Context(brand: "brand", model: "model", os: "os", osVersion: "osVersion", timestamp: 0)
+    
     // MARK: - Tests
     
     @Test
@@ -32,7 +36,6 @@ struct AuthenticatableClientTests {
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
             let apiKey = "test-api-Key"
-            let context = Context()
             let signature = "signature"
             let sut = AuthenticationClient(session: session)
             
@@ -72,10 +75,6 @@ struct AuthenticatableClientTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             
             // When
@@ -95,10 +94,10 @@ struct AuthenticatableClientTests {
             // Then
             await #expect {
                 try await sut.authenticate(
-                    apiKey: apiKey,
+                    apiKey: "test-api-key",
                     context: context,
-                    signature: signature,
-                    externalId: externalId
+                    signature: "signature",
+                    externalId: ""
                 )
             } throws: { error in
                 return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed
@@ -116,9 +115,6 @@ struct AuthenticatableClientTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
             let externalId = "QA"
             let sut = AuthenticationClient(session: session)
             
@@ -136,9 +132,9 @@ struct AuthenticatableClientTests {
             )
             
             try await sut.authenticate(
-                apiKey: apiKey,
+                apiKey: "test-api-key",
                 context: context,
-                signature: signature,
+                signature: "signature",
                 externalId: externalId
             )
             
@@ -155,10 +151,6 @@ struct AuthenticatableClientTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             let deviceId = "36BBA8E7-A9C6-4F00-B4E1-F6BA888FF093"
             
@@ -178,10 +170,10 @@ struct AuthenticatableClientTests {
             try sessionManager.set(AuthSession.mock)
             
             try await sut.authenticate(
-                apiKey: apiKey,
+                apiKey: "test-api-key",
                 context: context,
-                signature: signature,
-                externalId: externalId
+                signature: "signature",
+                externalId: ""
             )
             
             // Then
@@ -198,9 +190,7 @@ struct AuthenticatableClientTests {
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
             let apiKey = "test-api-Key"
-            let context = Context()
             let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             
             // When
@@ -220,7 +210,7 @@ struct AuthenticatableClientTests {
                 apiKey: apiKey,
                 context: context,
                 signature: signature,
-                externalId: externalId
+                externalId: ""
             )
             
             // Then
@@ -237,10 +227,6 @@ struct AuthenticatableClientTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             
             // When
@@ -257,10 +243,10 @@ struct AuthenticatableClientTests {
             )
             
             try await sut.authenticate(
-                apiKey: apiKey,
+                apiKey: "test-api-key",
                 context: context,
-                signature: signature,
-                externalId: externalId
+                signature: "signature",
+                externalId: ""
             )
             
             // Then
@@ -280,10 +266,6 @@ struct AuthenticatableClientTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             
             // When
@@ -300,10 +282,10 @@ struct AuthenticatableClientTests {
             )
             
             try await sut.authenticate(
-                apiKey: apiKey,
+                apiKey: "test-api-key",
                 context: context,
-                signature: signature,
-                externalId: externalId
+                signature: "signature",
+                externalId: ""
             )
             
             let url = try session.lastRequestURL?.asURL()
@@ -321,10 +303,6 @@ struct AuthenticatableClientTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             
             // When
@@ -341,10 +319,10 @@ struct AuthenticatableClientTests {
             )
             
             try await sut.authenticate(
-                apiKey: apiKey,
+                apiKey: "test-api-key",
                 context: context,
-                signature: signature,
-                externalId: externalId
+                signature: "signature",
+                externalId: ""
             )
             
             // Then
@@ -360,10 +338,6 @@ struct AuthenticatableClientTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             let response = HTTPURLResponse(
                 url: URL(string: "https://beta.truvideo.com/api/device")!,
@@ -395,30 +369,25 @@ struct AuthenticatableClientTests {
             )
 
             try await sut.authenticate(
-                apiKey: apiKey,
+                apiKey: "test-api-key",
                 context: context,
-                signature: signature,
-                externalId: externalId
+                signature: "signature",
+                externalId: ""
             )
 
             // Then
             #expect(dataRequest.validateCallCount == 1, "Expected validate to be called once")
-            #expect(dataRequest.lastValidationError == nil)
         }
     }
     
-@Test
+    @Test
     func testThatAuthenticateShouldThrowResponseValidationFailedWhenValidationFails() async throws {
-        try await withDependencyValues { dependencies in
+        await withDependencyValues { dependencies in
             // Given
             let dataRequest = DataRequestMock()
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             let response = HTTPURLResponse(
                 url: URL(string: "https://beta.truvideo.com/api/device")!,
@@ -451,18 +420,20 @@ struct AuthenticatableClientTests {
                 result: .success(authToken),
                 type: .networkLoad
             )
-            
-            try await sut.authenticate(
-                apiKey: apiKey,
-                context: context,
-                signature: signature,
-                externalId: externalId
-            )
 
             // Then
-            #expect(dataRequest.validateCallCount == 1, "Expected validate to be called once")
-            #expect(dataRequest.lastValidationError != nil)
-            #expect((dataRequest.lastValidationError as? NetworkingError)?.kind == .responseValidationFailed)
+            await #expect {
+                try await sut.authenticate(
+                    apiKey: "test-api-key",
+                    context: context,
+                    signature: "signature",
+                    externalId: ""
+                )
+            } throws: { error in
+                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed
+            }
+            
+            #expect(dataRequest.validateCallCount == 1, "Expected validate to be called once")            
         }
     }
 
@@ -473,10 +444,6 @@ struct AuthenticatableClientTests {
             let dataRequest = DataRequestMock()
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
-            let apiKey = "test-api-Key"
-            let context = Context()
-            let signature = "signature"
-            let externalId = ""
             let sut = AuthenticationClient(session: session)
             
             // When
@@ -495,10 +462,10 @@ struct AuthenticatableClientTests {
             // Then
             await #expect {
                 try await sut.authenticate(
-                    apiKey: apiKey,
+                    apiKey: "test-api-key",
                     context: context,
-                    signature: signature,
-                    externalId: externalId
+                    signature: "signature",
+                    externalId: ""
                 )
             } throws: { error in
                 return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed

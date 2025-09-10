@@ -3,8 +3,8 @@
 //
 
 import Foundation
+internal import StorageKit
 internal import TruVideoApi
-internal import Storage
 internal import Utilities
 
 /// A protocol that defines the interface for storing authentication data in legacy storage systems.

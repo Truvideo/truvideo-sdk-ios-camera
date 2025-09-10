@@ -13,9 +13,6 @@ import SwiftUI
 struct ContinueButton: View {
     // MARK: - Environment Properties
 
-    @Environment(\.dismiss)
-    var dismiss
-
     @Environment(\.theme)
     var theme
 
@@ -23,11 +20,19 @@ struct ContinueButton: View {
 
     @EnvironmentObject var viewModel: CameraViewModel
 
+    // MARK: - Computed Properties
+
+    var buttonTheme: ButtonTheme {
+        theme.buttonTheme.copyWith(minimunSize: CGSize(width: theme.sizeTheme.x(30), height: theme.sizeTheme.xxxl))
+    }
+
     // MARK: - Body
 
     var body: some View {
-        Button("Continue", action: dismiss.callAsFunction)
+        Button(Localizations.continueText, action: viewModel.onContinue)
             .buttonStyle(.primary)
+            .fixedSize()
+            .theme(theme.copyWith(buttonTheme: buttonTheme))
             .overlay(
                 RoundedRectangle(cornerRadius: theme.radiusTheme.xs)
                     .stroke(theme.colorScheme.onPrimary, lineWidth: 1)

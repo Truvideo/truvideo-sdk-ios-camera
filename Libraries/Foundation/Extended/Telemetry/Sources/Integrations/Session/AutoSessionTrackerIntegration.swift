@@ -4,7 +4,7 @@
 
 import DI
 import Foundation
-import Storage
+import StorageKit
 import UIKit
 
 /// An integration that automatically manages telemetry sessions based on app lifecycle events.

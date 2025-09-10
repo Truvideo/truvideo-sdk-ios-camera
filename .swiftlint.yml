@@ -149,6 +149,8 @@ excluded:
   - Libraries/App/Tests/*
   - Libraries/*/*/Testing/*
   - Libraries/*/*/Tests/*
+  - Libraries/*/*/*/Deprecated/*
+  - Libraries/*/*/*/*/Deprecated/*
   - Libraries/*/*/*/Testing/*
   - Libraries/*/*/*/Tests/*
   - Libraries/*/*/*/*/Testing/*

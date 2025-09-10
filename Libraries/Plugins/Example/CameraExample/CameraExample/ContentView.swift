@@ -5,8 +5,8 @@
 //  Created by Jorge Orjuela on 4/09/25.
 //
 
-import TruvideoSdkCamera
 import SwiftUI
+import TruvideoSdkCamera
 
 struct ContentView: View {
     @State var isPresented = false

@@ -57,7 +57,7 @@ struct RecordButton: View {
                 .fill(fillColor)
                 .frame(width: squareSize, height: squareSize)
                 .scaleEffect([.paused, .running].contains(viewModel.state) ? 0.65 : 1)
-                .animation(.easeInOut(duration: 0.25).delay(0.3), value: viewModel.state)
+                .animation(.easeInOut(duration: 0.25).delay(0.25), value: viewModel.state)
         }
         .frame(width: size, height: size)
         .contentShape(.rect)

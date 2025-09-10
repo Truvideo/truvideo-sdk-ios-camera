@@ -63,24 +63,16 @@ private struct Camera: View {
 
     @EnvironmentObject var viewModel: CameraViewModel
 
-    // MARK: - State Properties
-
-    @State var isPresented = false
-
-    // MARK: - Computed Properties
-
-    var animationDuration: TimeInterval {
-        [.landscapeLeft, .landscapeRight].contains(viewModel.deviceOrientation) ? 1 : 0
-    }
-
     // MARK: - Body
 
     var body: some View {
         VideoPreview(previewLayer: viewModel.previewLayer)
+            .simultaneousGesture(makeMagnificationGesture())
             .overlay {
                 RecordingFrameOverlay()
                     .hidden(viewModel.state != .running)
             }
+            .overlay(alignment: .topTrailing, content: makeContinueButton)
             .aspectRatio(viewModel.aspectRatio, contentMode: .fit)
             .overlay(alignment: .bottom) {
                 ToolBar()
@@ -89,16 +81,15 @@ private struct Camera: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.top, theme.spacingTheme.xxxl)
-            .overlay(alignment: .top, content: makeTimerView)
+            .onTapGesture(perform: viewModel.setFocusPoint(at:))
             .onChange(of: viewModel.validationState) { validationState in
-                if validationState == .invalid {
-                    isPresented = true
-                } else if validationState == .valid {
+                if validationState == .valid {
                     dismiss()
                 }
             }
-            .onTapGesture { location in
-                viewModel.setFocusPoint(at: location)
+            .overlay {
+                TimerView(secondsRecorded: $viewModel.secondsRecorded)
+                    .selected([.paused, .running].contains(viewModel.state))
             }
             .overlay(alignment: .topLeading) {
                 TopBar()
@@ -109,52 +100,25 @@ private struct Camera: View {
                     .hidden(viewModel.deviceOrientation.isPortrait)
             }
             .overlay {
-                ExitConfirmationView(isPresented: $isPresented)
-                    .hidden(!isPresented)
+                ExitConfirmationView(isPresented: $viewModel.requiresConfirmation)
+                    .hidden(!viewModel.requiresConfirmation)
             }
     }
 
     // MARK: - Private methods
 
-    private func makeTimerView() -> some View {
-        ZStack {
-            TimerView()
-                .padding(.top, theme.spacingTheme.xxxl)
-                .transition(.opacity)
-                .hidden(viewModel.deviceOrientation.isPortrait)
-        }
-        .animation(.easeInOut(duration: animationDuration), value: viewModel.deviceOrientation)
+    @ViewBuilder
+    private func makeContinueButton() -> some View {
+        ContinueButton()
+            .padding(.top)
+            .padding(.trailing, theme.spacingTheme.sm)
+            .hidden(viewModel.medias.isEmpty || [.paused, .running].contains(viewModel.state))
+            .animation(.linear(duration: 0.1).delay(0.7), value: viewModel.medias)
     }
-}
 
-private struct FocusView: View {
-    // MARK: - EnvironmentObject Properties
-
-    @EnvironmentObject var viewModel: CameraViewModel
-
-    // MARK: - State
-
-    @State var opacity = 1.0
-    @State var scale = 2.5
-
-    // MARK: - Body
-
-    var body: some View {
-        DSIcons.viewFinder
-            .scaleEffect(scale)
-            .opacity(opacity)
-            .onAppear {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    scale = 1.0
-                }
-
-                withAnimation(.easeInOut.delay(3)) {
-                    opacity = 0.5
-                }
-            }
-            .onDisappear {
-                scale = 1.5
-            }
+    private func makeMagnificationGesture() -> some Gesture {
+        MagnificationGesture()
+            .onChanged { _ in }
     }
 }
 
@@ -215,12 +179,22 @@ private struct ToolBar: View {
 
     @EnvironmentObject var viewModel: CameraViewModel
 
+    // MARK: - Binding Properties
+
+    var zoomFactor: Binding<CGFloat> {
+        Binding {
+            viewModel.zoomFactor
+        } set: { zoomFactor in
+            viewModel.rampZoomFactor(to: zoomFactor)
+        }
+    }
+
     // MARK: - Body
 
     var body: some View {
         if viewModel.deviceOrientation.isPortrait {
             VStack {
-                ZoomPicker(options: viewModel.zoomFactors, selection: $viewModel.zoomFactor)
+                ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor)
                 HStack {
                     makeTakePhotoButton()
                     RecordButton()
@@ -230,12 +204,12 @@ private struct ToolBar: View {
             }
         } else if viewModel.deviceOrientation.isLandscape {
             HStack {
-                ZoomPicker(options: viewModel.zoomFactors, selection: $viewModel.zoomFactor)
+                ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor)
                 VStack {
-                    makeTakePhotoButton()
-                    RecordButton()
-                    makePlayPauseButton()
                     makeSwitchCameraButton()
+                    makePlayPauseButton()
+                    RecordButton()
+                    makeTakePhotoButton()
                 }
             }
         }
@@ -318,14 +292,6 @@ private struct TopBar: View {
                 .padding(.top)
             }
         }
-        .overlay(alignment: .top) {
-            ZStack {
-                TimerView()
-                    .padding(.bottom, theme.spacingTheme.xs)
-                    .hidden(viewModel.deviceOrientation.isLandscape)
-            }
-            .animation(.easeInOut(duration: animationDuration), value: viewModel.deviceOrientation)
-        }
     }
 
     // MARK: - Private methods
@@ -336,6 +302,7 @@ private struct TopBar: View {
         } action: {
             viewModel.onDismiss()
         }
+        .disabled(viewModel.state == .running)
     }
 
     private func makeMediaCounterView() -> some View {

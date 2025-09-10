@@ -3,7 +3,7 @@
 //
 
 import DI
-import Storage
+import StorageKit
 
 /// Provides a `DependencyKey` for injecting a `ContextProvider` dependency.
 ///

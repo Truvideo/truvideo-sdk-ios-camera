@@ -21,6 +21,21 @@ final class SessionManagerMock: SessionManager, @unchecked Sendable {
     
     // MARK: - SessionManager
 
+    /// Deletes the currently stored authentication session.
+    ///
+    /// This method removes the authentication session from secure storage, effectively
+    /// logging out the current user. After deletion, the `currentSession` property
+    /// will return `nil`, and any operations requiring authentication will need to re-authenticate.
+    ///
+    /// - Throws: A storage error if the session cannot be deleted from storage
+    func deleteCurrentSession() throws {
+        if let error = error {
+            throw error
+        }
+
+        currentSession = nil
+    }
+
     /// Stores the provided authentication session.
     ///
     /// This method persists the authentication session for future use. The session

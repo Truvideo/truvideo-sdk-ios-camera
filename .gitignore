@@ -65,5 +65,3 @@ Libraries/**/.DS_Store
 *.xcodeproj
 Info.plist
 **/Info.plist
-*.h
-**/*.h

@@ -5,6 +5,18 @@
 import SwiftUI
 
 extension View {
+    /// Applies a full-size blur **behind** this view.
+    ///
+    /// - Parameters:
+    ///   - style: The `UIBlurEffect.Style` to use.
+    ///   - ignoresSafeArea: Whether the blur extends under safe areas (default: true).
+    /// - Returns: A view with a blur background applied.
+    func background(style: UIBlurEffect.Style) -> some View {
+        background(
+            BlurView(style: style)
+        )
+    }
+
     /// A conditional view modifier that allows you to take a view,
     /// and only apply a view modifier when the condition holds.
     ///

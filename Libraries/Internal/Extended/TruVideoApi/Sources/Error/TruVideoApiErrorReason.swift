@@ -54,6 +54,14 @@ extension ErrorReason {
         /// malformed context data, or cryptographic algorithm issues.
         public static let signFailed = ErrorReason(rawValue: "signFailed")
 
+        /// Error indicating that the sign-out process has failed.
+        ///
+        /// This error occurs when the attempt to delete the current authentication session
+        /// from secure storage fails. It may be due to underlying storage issues such as
+        /// access denial, corruption, or internal exceptions during the deletion process.
+        /// A failed sign-out may result in the session remaining active.
+        public static let signOutFailed = ErrorReason(rawValue: "signOutFailed")
+
         /// Error indicating that the user is not authenticated.
         ///
         /// This error occurs when attempting to access protected resources or perform

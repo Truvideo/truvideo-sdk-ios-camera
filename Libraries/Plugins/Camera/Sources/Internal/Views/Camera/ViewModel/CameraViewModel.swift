@@ -2,6 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+// swiftlint:disable type_body_length
+
 import AVFoundation
 import Combine
 import Foundation
@@ -66,17 +68,21 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// that are currently displayed in the gallery.
     @Published var medias: [Media] = []
 
+    /// Whether the user must confirm before leaving or performing a potentially
+    /// destructive action.
+    @Published var requiresConfirmation = false
+
+    /// The total duration of recorded video in Hours:Minutes:Seconds format.
+    ///
+    /// This property displays the cumulative recording time in a human-readable format.
+    @Published var secondsRecorded = 0.toHMS()
+
     /// The currently selected video resolution.
     ///
     /// Defaults to `.sd` (Standard Definition).
     /// Use this property to track or update the active resolution
     /// chosen by the user or the application.
-    @Published var selectedResolution = VideoResolution.sd
-
-    /// The total duration of recorded video in Hours:Minutes:Seconds format.
-    ///
-    /// This property displays the cumulative recording time in a human-readable format.
-    @Published private(set) var secondsRecorded = 0.toHMS()
+    @Published var selectedResolution = VideoResolution.highDefinition
 
     /// The current lifecycle state of the recording process.
     @Published private(set) var state = RecordingState.initialized
@@ -97,13 +103,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// The current zoom factor applied to the camera preview.
     ///
     /// This property represents the magnification level of the camera view.
-    @Published var zoomFactor: CGFloat = 1 {
-        didSet {
-            if oldValue != zoomFactor {
-                updateZoomFactor()
-            }
-        }
-    }
+    @Published private(set) var zoomFactor: CGFloat = 1
 
     // MARK: - Private Computed Properties
 
@@ -274,7 +274,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         Task { @MainActor in
             do {
                 if let photo = try await videoDevice.capturePhoto() {
-                    medias.append(.photo(photo))
+                    medias.insert(.photo(photo), at: 0)
                     validate()
                 }
             } catch {
@@ -300,7 +300,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// Sets `validationState` to `.invalid` if clips or photos are not empty (preventing dismissal),
     /// or `.valid` if clips are empty (allowing dismissal).
     func onDismiss() {
-        guard medias.isEmpty else {
+        guard medias.isEmpty, ![.paused, .running].contains(state) else {
+            requiresConfirmation = true
             validationState = .invalid
             return
         }
@@ -317,6 +318,24 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
             if UIApplication.shared.canOpenURL(settingsURL) {
                 UIApplication.shared.open(settingsURL, options: [:], completionHandler: nil)
+            }
+        }
+    }
+
+    /// Smoothly ramps the camera to a target zoom factor.
+    ///
+    /// Requests the underlying `VideoDevice` to animate (ramp) the zoom to `zoomFactor`
+    /// using its configured ramp rate. Runs on the main actor for UI safety and
+    /// surfaces any errors via `didReceiveError(_:)`.
+    ///
+    /// - Parameter zoomFactor: The desired target zoom factor.
+    func rampZoomFactor(to zoomFactor: CGFloat) {
+        Task { @MainActor in
+            do {
+                self.zoomFactor = zoomFactor
+                try await videoDevice.setZoomFactor(zoomFactor)
+            } catch {
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -347,14 +366,17 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// and the back-facing camera (main camera). It attempts to change the camera position
     /// and updates the error state if the operation fails.
     func switchCamera() {
-        Task { @DeviceActor in
+        Task { @MainActor in
             do {
-                let position = videoDevice.position == .back ? AVCaptureDevice.Position.front : .back
+                let position = await videoDevice.position == .back ? AVCaptureDevice.Position.front : .back
 
-                try videoDevice.setPosition(position)
-                isTorchAvailable = videoDevice.isTorchAvailable
+                try await videoDevice.setPosition(position)
+
+                isTorchAvailable = await videoDevice.isTorchAvailable
+                zoomFactors = await videoDevice.displayVideoZoomFactors
+                zoomFactor = 1
             } catch {
-                await didReceiveError(error.localizedDescription)
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -367,9 +389,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// to maintain consistency between the visual state and the actual hardware state.
     func switchTorch() {
         Task { @MainActor in
-            let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
-
             isTorchEnabled.toggle()
+
+            let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
 
             do {
                 if await videoDevice.isTorchAvailable {
@@ -517,11 +539,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    @MainActor
     @objc
     func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
         if sessionWasRunning {
-            captureSession.startRunning()
+            Task {
+                captureSession.startRunning()
+            }
         }
     }
 
@@ -600,9 +623,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private func endRecording() async throws {
         state = .finished
 
-        let videoClip = try await movieOutputProcessor.endProcessing()
+        let clip = try await movieOutputProcessor.endProcessing()
 
-        medias.append(.clip(videoClip))
+        medias.insert(.clip(clip), at: 0)
 
         await videoDevice.pause()
         await audioDevice.pause()
@@ -691,8 +714,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         Task { @DeviceActor in
             audioDevice.pause()
             videoDevice.pause()
-
-            captureSession.stopRunning()
 
             do {
                 try await movieOutputProcessor.pause()
@@ -806,17 +827,13 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     private func updatePreviewOrientation() {
         if [.landscapeLeft, .landscapeRight, .portrait].contains(deviceOrientation) {
-            previewLayer.connection?.videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
-        }
-    }
+            Task { @MainActor in
+                let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
 
-    private func updateZoomFactor() {
-        Task { @MainActor in
-            do {
-                try await videoDevice.setZoomFactor(zoomFactor)
-            } catch {
-                didReceiveError(error.localizedDescription)
+                previewLayer.connection?.videoOrientation = videoOrientation
+                await videoDevice.setVideoOrientation(videoOrientation)
             }
         }
     }
 }
+// swiftlint:enable type_body_length

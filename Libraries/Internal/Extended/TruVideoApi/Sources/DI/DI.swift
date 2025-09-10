@@ -4,7 +4,7 @@
 
 import DI
 import Networking
-import Storage
+import StorageKit
 
 /// Provides a `DependencyKey` for injecting a `EnvironmentDependencyKey` dependency.
 ///

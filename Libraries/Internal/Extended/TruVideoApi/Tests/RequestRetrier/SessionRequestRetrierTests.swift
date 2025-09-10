@@ -3,7 +3,8 @@
 //
 
 import DI
-import Storage
+import Foundation
+import StorageKit
 import Testing
 import NetworkingTesting
 import Networking

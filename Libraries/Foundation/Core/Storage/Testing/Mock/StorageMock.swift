@@ -4,9 +4,9 @@
 
 import Foundation
 
-@testable import Storage
+@testable import StorageKit
 
-public final class StorageMock: Storage {
+public final class StorageMock: Storage, @unchecked Sendable {
     // MARK: - Properties
 
     private(set) var callCount = 0

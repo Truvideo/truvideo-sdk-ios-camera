@@ -8,6 +8,9 @@ packages:
   AWSS3:
     url: https://github.com/aws-amplify/aws-sdk-ios-spm
     from: 2.41.0
+  Common:
+    url: https://github.com/Truvideo/truvideo-sdk-ios-common
+    from: 0.0.78
   KeychainAccess:
     url: https://github.com/kishikawakatsumi/KeychainAccess
     from: 4.2.2
@@ -102,7 +105,7 @@ targets:
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
-  Storage:
+  StorageKit:
     type: library.static
     platform: iOS
     sources:
@@ -111,12 +114,12 @@ targets:
       path: Libraries/Foundation/Core/Storage/Sources/Info.plist
     settings:
       DEFINES_MODULE: YES
-      PRODUCT_MODULE_NAME: Storage
+      PRODUCT_MODULE_NAME: StorageKit
     dependencies:
       - package: KeychainAccess
     scheme:
       testTargets:
-        - StorageTests
+        - StorageKitTests
     postCompileScripts:
       - script: |
           if which swift-format > /dev/null; then
@@ -135,28 +138,26 @@ targets:
         name: SwiftLint
         basedOnDependencyAnalysis: false
 
-  StorageTests:
+  StorageKitTests:
     type: bundle.unit-test
     platform: iOS
     sources:
       - Libraries/Foundation/Core/Storage/Tests
     dependencies:
-      - target: Storage
+      - target: StorageKit
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
-  StorageTesting:
+  StorageKitTesting:
     type: library.static
     platform: iOS
     sources:
       - Libraries/Foundation/Core/Storage/Testing
-    info:
-      path: Libraries/Foundation/Core/Storage/Testing/Info.plist
     settings:
       DEFINES_MODULE: YES
       PRODUCT_MODULE_NAME: StorageTesting
     dependencies:
-      - target: Storage
+      - target: StorageKit
     postCompileScripts:
       - script: |
           if which swift-format > /dev/null; then
@@ -274,7 +275,7 @@ targets:
     dependencies:
       - target: DI
       - target: Registry
-      - target: Storage
+      - target: StorageKit
       - target: Utilities
     scheme:
       testTargets:
@@ -303,7 +304,7 @@ targets:
     sources:
       - Libraries/Foundation/Extended/Telemetry/Tests
     dependencies:
-      - target: StorageTesting
+      - target: StorageKitTesting
       - target: Telemetry
     settings:
       GENERATE_INFOPLIST_FILE: YES
@@ -356,12 +357,10 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
 
   NetworkingTesting:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Internal/Core/Networking/Testing
-    info:
-      path: Libraries/Internal/Core/Networking/Testing/Info.plist
     settings:
       DEFINES_MODULE: YES
       PRODUCT_MODULE_NAME: NetworkingTesting
@@ -387,7 +386,7 @@ targets:
 
   # Internal Extended (Business Logic)
   CloudStorage:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Internal/Extended/CloudStorage/Sources
@@ -423,12 +422,10 @@ targets:
         basedOnDependencyAnalysis: false
     
   CloudStorageTesting:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/Internal/Extended/CloudStorage/Testing
-    info:
-      path: Libraries/Internal/Extended/CloudStorage/Testing/Info.plist
     settings:
       DEFINES_MODULE: YES
       PRODUCT_MODULE_NAME: CloudStorageTesting
@@ -540,36 +537,7 @@ targets:
           fi
         name: SwiftLint
         basedOnDependencyAnalysis: false
-
-  # External Core (Shared Dependencies)
-  ExternalUtilities:
-    type: library.static
-    platform: iOS
-    sources:
-      - Libraries/External/Core/Utilities/Sources
-    info:
-      path: Libraries/External/Core/Utilities/Sources/Info.plist
-    settings:
-      DEFINES_MODULE: YES
-      PRODUCT_MODULE_NAME: ExternalUtilities
-    postCompileScripts:
-      - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/External/Core/Utilities/Sources" -i
-          else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
-          fi
-        name: SwiftFormat
-        basedOnDependencyAnalysis: false
-      - script: |
-          if which swiftlint > /dev/null; then
-            swiftlint
-          else
-            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
-          fi
-        name: SwiftLint
-        basedOnDependencyAnalysis: false
-
+        
   # External Extended Schemes
   TruvideoSdk:
     type: framework
@@ -577,14 +545,14 @@ targets:
     sources:
       - Libraries/External/Extended/App/Sources
     dependencies:
-      - target: DI
-      - target: ExternalUtilities
+      - target: DI      
       - target: Networking
       - target: Registry
-      - target: Storage
+      - target: StorageKit
       - target: Telemetry
       - target: TruVideoApi
       - target: Utilities
+      - package: Common
       - package: KeychainAccess
         product: KeychainAccess
     info:
@@ -599,12 +567,11 @@ targets:
         - $(inherited)
         - -ObjC
         - -force_load $(BUILT_PRODUCTS_DIR)/libTruVideoApi.a
-        - -force_load $(BUILT_PRODUCTS_DIR)/libExternalUtilities.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libUtilities.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libRegistry.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libTelemetry.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libNetworking.a
-        - -force_load $(BUILT_PRODUCTS_DIR)/libStorage.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libStorageKit.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libDI.a
     scheme:
       testTargets:
@@ -676,8 +643,7 @@ targets:
     sources:
       - Libraries/Plugins/Camera/Sources
     dependencies:
-        - target: TruvideoSdk
-        - target: ExternalUtilities
+        - target: TruvideoSdk        
         - target: Utilities
         - package: Kingfisher
         - package: TruvideoSdkVideoUtils
@@ -734,21 +700,21 @@ schemes:
         Registry: all
     test:
       targets: [RegistryTests]
-  Storage:
+  StorageKit:
     build:
       targets:
         DI: all
         Utilities: all
-        Storage: all
+        StorageKit: all
     test:
-      targets: [StorageTests]
-  StorageTesting:
+      targets: [StorageKitTests]
+  StorageKitTesting:
     build:
       targets:
         DI: all        
         Utilities: all
-        Storage: all
-        StorageTesting: all
+        StorageKit: all
+        StorageKitTesting: all
   Utilities:
     build:
       targets:
@@ -822,12 +788,6 @@ schemes:
     test:
       targets: [CloudStorageTests] 
 
-  # External Core (Shared Dependencies)
-  ExternalUtilities:
-    build:
-      targets:
-        ExternalUtilities: all
-        Utilities: all
 
   # External Extended Schemes
   TruvideoSdk:

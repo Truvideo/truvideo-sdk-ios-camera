@@ -5,7 +5,7 @@
 import DI
 import Foundation
 import Networking
-import Storage
+import StorageKit
 import Utilities
 
 /// A protocol defining the interface for client authentication with the TruVideo API.
@@ -46,12 +46,12 @@ import Utilities
 ///
 /// - Note: Authentication tokens are automatically stored after successful authentication.
 public protocol AuthenticatableClient {
-    /// The currently stored authentication token, if any.
+    /// The currently stored authentication session, if any.
     ///
-    /// This property provides access to the authentication token that was received
-    /// during the most recent successful authentication. The token is automatically
+    /// This property provides access to the authentication session that was received
+    /// during the most recent successful authentication. The session is automatically
     /// stored after successful authentication and can be used for subsequent API requests.
-    var currentToken: AuthToken? { get }
+    var currentSession: AuthSession? { get }
 
     /// Authenticates the client with the TruVideo API.
     ///
@@ -71,6 +71,16 @@ public protocol AuthenticatableClient {
         signature: String,
         externalId: String?
     ) async throws(UtilityError)
+
+    /// Signs out the current authenticated session.
+    ///
+    /// This method clears the stored authentication session from secure storage,
+    /// effectively logging out the current user or device. After sign-out, the
+    /// `currentToken` property will return `nil`, and any operations requiring
+    /// authentication must perform a new login.
+    ///
+    /// - Throws: An error if the session cannot be deleted from storage.
+    func signOut() throws(UtilityError)
 }
 
 /// Default implementation providing convenience methods for authentication.
@@ -121,13 +131,13 @@ public final class AuthenticationClient: AuthenticatableClient {
 
     // MARK: - Computed Properties
 
-    /// The currently stored authentication token, if any.
+    /// The currently stored authentication session, if any.
     ///
-    /// This property provides access to the authentication token that was received
-    /// during the most recent successful authentication. The token is automatically
+    /// This property provides access to the authentication session that was received
+    /// during the most recent successful authentication. The session is automatically
     /// stored after successful authentication and can be used for subsequent API requests.
-    public var currentToken: AuthToken? {
-        sessionManager.currentSession?.authToken
+    public var currentSession: AuthSession? {
+        sessionManager.currentSession
     }
 
     // MARK: - Initializer
@@ -183,7 +193,7 @@ public final class AuthenticationClient: AuthenticatableClient {
                 headers["x-multitenant-external-id"] = externalId
             }
 
-            if let deviceId = currentToken?.id {
+            if let deviceId = currentSession?.authToken.id {
                 headers["x-authentication-device-id"] = deviceId.uuidString
             }
 
@@ -209,6 +219,22 @@ public final class AuthenticationClient: AuthenticatableClient {
             try sessionManager.set(authSession)
         } catch {
             throw error.asUtilityError(or: .TruVideoApiErrorReason.authenticationFailed)
+        }
+    }
+
+    /// Signs out the current authenticated session.
+    ///
+    /// This method clears the stored authentication session from secure storage,
+    /// effectively logging out the current user or device. After sign-out, the
+    /// `currentToken` property will return `nil`, and any operations requiring
+    /// authentication must perform a new login.
+    ///
+    /// - Throws: An error if the session cannot be deleted from storage.
+    public func signOut() throws(UtilityError) {
+        do {
+            try sessionManager.deleteCurrentSession()
+        } catch {
+            throw error.asUtilityError(or: .TruVideoApiErrorReason.signOutFailed)
         }
     }
 }

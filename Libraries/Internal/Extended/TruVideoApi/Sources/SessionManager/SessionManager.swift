@@ -4,26 +4,26 @@
 
 import DI
 import Foundation
-import Storage
+import StorageKit
 
 /// Represents an authenticated session with API credentials and authentication token.
 ///
 /// This struct encapsulates the data required for an authenticated session,
 /// including the API key for service identification and the authentication
 /// token for API access authorization.
-public struct AuthSession: Codable {
+public struct AuthSession: Codable, Sendable {
     /// The API key that identifies the application or service.
     ///
     /// This key is used to authenticate requests to the TruVideo API
     /// and identify the source of the authentication request.
-    let apiKey: String
+    public let apiKey: String
 
     /// The authentication token containing access and refresh tokens.
     ///
     /// This token provides the necessary credentials for API access
     /// and includes both the access token for immediate use and the
     /// refresh token for token renewal.
-    let authToken: AuthToken
+    public let authToken: AuthToken
 }
 
 /// A protocol that defines the interface for managing authentication sessions.
@@ -37,6 +37,15 @@ protocol SessionManager: Sendable {
     /// This property provides access to the authentication session that was most recently
     /// stored. Returns `nil` if no session has been stored or if the session has been cleared.
     var currentSession: AuthSession? { get }
+
+    /// Deletes the currently stored authentication session.
+    ///
+    /// This method removes the authentication session from secure storage, effectively
+    /// logging out the current user. After deletion, the `currentSession` property
+    /// will return `nil`, and any operations requiring authentication will need to re-authenticate.
+    ///
+    /// - Throws: A storage error if the session cannot be deleted from storage
+    func deleteCurrentSession() throws
 
     /// Stores the provided authentication session.
     ///
@@ -139,6 +148,17 @@ final class SessionManagerImpl: SessionManager, @unchecked Sendable {
     }
 
     // MARK: - SessionManager
+
+    /// Deletes the currently stored authentication session.
+    ///
+    /// This method removes the authentication session from secure storage, effectively
+    /// logging out the current user. After deletion, the `currentSession` property
+    /// will return `nil`, and any operations requiring authentication will need to re-authenticate.
+    ///
+    /// - Throws: A storage error if the session cannot be deleted from storage
+    func deleteCurrentSession() throws {
+        try storage.deleteValue(for: AuthSessionStorageKey.self)
+    }
 
     /// Stores an authentication session in secure storage.
     ///

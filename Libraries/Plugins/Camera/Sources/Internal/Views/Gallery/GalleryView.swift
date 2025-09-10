@@ -17,25 +17,24 @@ struct GalleryView: View {
 
     // MARK: - Environment Properties
 
-    /// The current theme, injected from the environment.
     @Environment(\.theme)
     var theme
 
     // MARK: - Body
 
     var body: some View {
-        VStack {
-            GalleryGrid(medias: medias, theme: theme)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.ultraThinMaterial)
-        .overlay(alignment: .topLeading) {
+        VStack(alignment: .leading) {
             CircleButton {
                 Icon(icon: DSIcons.xmark, size: CGSize(theme.sizeTheme.lg))
             } action: {
                 isPresented.toggle()
             }
             .padding(theme.spacingTheme.md)
+
+            GalleryGrid(medias: $medias, isPresented: $isPresented, theme: theme)
+                .ignoresSafeArea()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(style: .dark)
     }
 }

@@ -4,7 +4,7 @@
 
 import DI
 import Foundation
-import Storage
+import StorageKit
 
 /// A protocol that defines a contract for providing a unique, persistent identifier
 /// tied to an installation of the application.

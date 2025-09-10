@@ -522,7 +522,7 @@ final class MovieOutputProcessor {
 
             if let videoInput {
                 videoInput.expectsMediaDataInRealTime = true
-                videoInput.transform = .identity
+                videoInput.transform = buffer.preferredTransform
 
                 pixelBufferAdapter = AVAssetWriterInputPixelBufferAdaptor(
                     assetWriterInput: videoInput,
@@ -636,8 +636,8 @@ extension MovieOutputProcessor: DeviceOutputProcessor {
     ///             data in the format specified by the buffer's audio format description.
     ///   - configuration: The audio configuration object that defines how the audio should be processed.
     func process(_ buffer: AudioSampleBuffer, with configuration: AudioDeviceConfiguration) {
-        if state == .writing {
-            Task { @MovieOutputProcessorActor in
+        Task { @MovieOutputProcessorActor in
+            if state == .writing {
                 configureAudioInput(with: buffer, configuration: configuration)
                 appendAudio(buffer: buffer)
             }
@@ -654,8 +654,8 @@ extension MovieOutputProcessor: DeviceOutputProcessor {
     ///   - buffer: The video sample to process.
     ///   - configuration: A snapshot of capture/encoding preferences to inform processing.
     func process(_ buffer: VideoSampleBuffer, with configuration: VideoDeviceConfiguration) {
-        if state == .writing {
-            Task { @MovieOutputProcessorActor in
+        Task { @MovieOutputProcessorActor in
+            if state == .writing {
                 configureVideoInput(with: buffer, configuration: configuration)
                 startSessionIfNecessary(at: buffer.timestamp)
                 appendVideo(buffer: buffer)

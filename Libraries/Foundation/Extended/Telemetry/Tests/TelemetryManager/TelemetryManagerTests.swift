@@ -4,7 +4,7 @@
 
 import DI
 import Foundation
-import Storage
+import StorageKit
 import Testing
 
 @testable import Telemetry

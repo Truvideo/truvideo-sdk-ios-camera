@@ -8,68 +8,8 @@ import Foundation
 import UIKit
 internal import Utilities
 
-/// A lightweight wrapper that couples a video `CMSampleBuffer` with its presentation timestamp.
-///
-/// Use this type to pass samples through processing pipelines with an explicit, immutable
-/// timestamp, avoiding repeated queries to the buffer’s timing info. The underlying buffer
-/// is not copied; this struct only stores a reference.
-struct VideoSampleBuffer {
-    /// The nominal frame duration for the capture source.
-    ///
-    /// Typically the inverse of the target FPS (e.g., 1/24, 1/30). Used to pace processing,
-    /// compute scaled frame durations, and maintain continuous timestamps. For variable‑frame‑rate
-    /// streams this is a baseline reference and individual samples may deviate.
-    let minFrameDuration: CMTime
-
-    /// The underlying captured/decoded media sample.
-    ///
-    /// Contains the pixel data and timing/format metadata for this frame.
-    /// The buffer is not owned or retained beyond normal ARC semantics.
-    let sampleBuffer: CMSampleBuffer
-
-    // MARK: - Computed Properties
-
-    /// Returns the format description of the samples in a sample buffer.
-    var formatDescription: CMFormatDescription? {
-        CMSampleBufferGetFormatDescription(sampleBuffer)
-    }
-
-    /// Returns an image buffer that contains the media data.
-    var imageBuffer: CVImageBuffer? {
-        CMSampleBufferGetImageBuffer(sampleBuffer)
-    }
-
-    /// The sample’s presentation timestamp.
-    ///
-    /// Use this for ordering, synchronization with audio, and writer session timing.
-    var timestamp: CMTime {
-        sampleBuffer.presentationTimeStamp
-    }
-}
-
-/// A class‑bound contract for components that consume video samples with access
-/// to the active capture/encode configuration.
-///
-/// Conforming types are reference types to enable stable identity Implementations should
-/// keep per‑frame work lightweight and offload heavy tasks to background queues to avoid
-/// blocking the capture pipeline. The provided configuration is a read‑only snapshot of the
-/// current device/encoding preferences and must not be mutated by processors.
-protocol VideoOutputProcessor: AnyObject {
-    /// Processes a single video sample using the provided configuration.
-    ///
-    /// Use the configuration to guide transformations (e.g., scaling, color space,
-    /// orientation/transform, target bitrate hints) while relying on the sample’s
-    /// timing for ordering. This method is expected to run on the component’s serialization context
-    ///
-    /// - Parameters:
-    ///   - buffer: The video sample to process.
-    ///   - configuration: A snapshot of capture/encoding preferences to inform processing.
-    func process(_ buffer: VideoSampleBuffer, with configuration: VideoDeviceConfiguration)
-}
-
 // TODO:
 // 1. We should be setting session presset instead
-// 2. Reset focus on move
 
 /// A concrete video capture device that configures inputs/outputs and manages lifecycle.
 ///
@@ -82,6 +22,7 @@ class VideoDevice: NSObject, Device {
     private let identifier = UUID()
     private var captureDevice: AVCaptureDevice?
     private var captureDeviceInput: AVCaptureDeviceInput?
+    private var capturePhotoOutput: AVCapturePhotoOutput?
     private var captureSession: AVCaptureSession?
     private var captureVideoDataOutput: AVCaptureVideoDataOutput?
     private let context = CIContext.createDefault()
@@ -91,10 +32,10 @@ class VideoDevice: NSObject, Device {
     private var lastVideoBuffer: VideoSampleBuffer?
     private var needsConfiguration = true
     private let notificationCenter: NotificationCenter
-    private var capturePhotoOutput: AVCapturePhotoOutput?
     private var processors: [ObjectIdentifier: any VideoOutputProcessor] = [:]
     private var supportedFormats: [AVCaptureDevice.Position: [Format]] = [:]
     private let queue = DispatchQueue(label: "com.video.device.queue")
+    private var videoOrientation = AVCaptureVideoOrientation.portrait
     private lazy var availableDevices: [AVCaptureDevice.Position: [AVCaptureDevice]] = {
         [
             .back: AVCaptureDevice.availableVideoDevices(for: .back),
@@ -246,6 +187,18 @@ class VideoDevice: NSObject, Device {
     /// 0.5x magnification, which provides an ultra-wide field of view that
     /// captures more of the scene in a single frame.
     static let minZoomFactor: CGFloat = 1
+
+    /// Default TIFF metadata attached to photos and frame snapshots.
+    ///
+    /// Includes three standard TIFF tags:
+    /// - `kCGImagePropertyTIFFSoftware`: A human-readable app identifier (e.g., `truVideoMetadataTitle`).
+    /// - `kCGImagePropertyTIFFArtist`: The creator/author tag (e.g., `truVideoMetadataArtist`).
+    /// - `kCGImagePropertyTIFFDateTime`: An ISO-8601 timestamp string.
+    static let imageMetadata = [
+        kCGImagePropertyTIFFSoftware as String: truVideoMetadataTitle,
+        kCGImagePropertyTIFFArtist as String: truVideoMetadataArtist,
+        kCGImagePropertyTIFFDateTime as String: ISO8601DateFormatter().string(from: Date()),
+    ]
 
     // MARK: - Notification Keys
 
@@ -717,9 +670,7 @@ class VideoDevice: NSObject, Device {
                     captureDevice.isVirtualDevice, position == .back
                 {
 
-                    if let zoomFactor = captureDevice.virtualDeviceSwitchOverVideoZoomFactors.first {
-                        captureDevice.videoZoomFactor = zoomFactor.doubleValue
-                    }
+                    captureDevice.videoZoomFactor = zoomFactor.doubleValue
                 }
 
                 updateVideoOutputSettings()
@@ -792,15 +743,7 @@ class VideoDevice: NSObject, Device {
     /// - Parameter orientation: The desired video orientation for the capture session
     @DeviceActor
     func setVideoOrientation(_ orientation: AVCaptureVideoOrientation) {
-        if /// The current video connection.
-        let videoConnection = captureVideoDataOutput?.connection(with: .video),
-
-            /// Whether the connection supports orientation.
-            videoConnection.isVideoOrientationSupported
-        {
-
-            videoConnection.videoOrientation = orientation
-        }
+        videoOrientation = orientation
     }
 
     /// Sets the zoom factor for the video capture device.
@@ -814,26 +757,25 @@ class VideoDevice: NSObject, Device {
     ///    - zoomFactor: The desired zoom factor to apply to the video capture.
     ///    - rate: The rate at which to transition to the new magnification factor, specified in powers of two per second.
     @DeviceActor
-    func setZoomFactor(_ zoomFactor: CGFloat, rate: Float = 200) throws(UtilityError) {
+    func setZoomFactor(_ zoomFactor: CGFloat, rate: Float = 10) throws(UtilityError) {
         if let captureDevice {
-            var adjustedZoomFactor = zoomFactor
             let minAvailableVideoZoomFactor = max(captureDevice.minAvailableVideoZoomFactor, Self.minZoomFactor)
             let maxAvailableVideoZoomFactor = min(captureDevice.maxAvailableVideoZoomFactor, Self.maxZoomFactor)
-
-            if adjustedZoomFactor < 0 {
-                adjustedZoomFactor = minAvailableVideoZoomFactor
-            } else {
-                adjustedZoomFactor += hasBuiltInUltraWideCamera ? 1 : 0
-            }
 
             do {
                 try captureDevice.lockForConfiguration()
                 defer { captureDevice.unlockForConfiguration() }
 
-                let clampedZoomFactor = min(
-                    max(adjustedZoomFactor, minAvailableVideoZoomFactor),
+                var clampedZoomFactor = min(
+                    max(zoomFactor, minAvailableVideoZoomFactor),
                     maxAvailableVideoZoomFactor
                 )
+                
+                clampedZoomFactor += hasBuiltInUltraWideCamera && zoomFactor >= 1 ? 1 : 0
+
+                if captureDevice.isRampingVideoZoom {
+                    captureDevice.cancelVideoZoomRamp()
+                }
 
                 captureDevice.ramp(toVideoZoomFactor: clampedZoomFactor, withRate: rate)
             } catch {
@@ -881,8 +823,8 @@ class VideoDevice: NSObject, Device {
             /// The Image context to use when capturing the photo.
             let context,
 
-            /// The current capture device.
-            let captureDevice,
+            /// The current video connection.
+            let captureVideoConnection = captureVideoDataOutput?.connection(with: .video),
 
             /// The last captured video buffer.
             let sampleBuffer = lastVideoBuffer?.sampleBuffer
@@ -894,17 +836,13 @@ class VideoDevice: NSObject, Device {
             )
         }
 
-        let metadata = [
-            kCGImagePropertyTIFFSoftware as String: truVideoMetadataTitle,
-            kCGImagePropertyTIFFArtist as String: truVideoMetadataArtist,
-            kCGImagePropertyTIFFDateTime as String: ISO8601DateFormatter().string(from: Date()),
-        ]
+        let orientation = CGImagePropertyOrientation(from: videoOrientation, devicePosition: position)
 
-        sampleBuffer.append(metadataAdditions: metadata)
+        sampleBuffer.append(metadataAdditions: Self.imageMetadata)
 
         guard
             /// The image extracted from the buffer.
-            let image = context.createImage(from: sampleBuffer),
+            let image = context.createImage(from: sampleBuffer, orientation: orientation),
 
             /// The data representation of the image in the specified format.
             let data = image.data(with: configuration.imageFormat)
@@ -918,16 +856,12 @@ class VideoDevice: NSObject, Device {
 
         do {
             let outputURL = nextOutputURL()
-            let videoConnection = captureVideoDataOutput?.connection(with: .video)
+            let orientation = UIDeviceOrientation(from: captureVideoConnection.videoOrientation)
+            let format = configuration.imageFormat
 
             try data.write(to: outputURL, options: .atomic)
 
-            return Photo(
-                url: outputURL,
-                format: configuration.imageFormat,
-                lensPosition: position,
-                orientation: UIDeviceOrientation(from: videoConnection?.videoOrientation ?? .portrait)
-            )
+            return Photo(url: outputURL, format: format, lensPosition: position, orientation: orientation)
         } catch {
             throw UtilityError(
                 kind: .VideoDeviceErrorReason.failedToCapturePhoto,
@@ -937,12 +871,18 @@ class VideoDevice: NSObject, Device {
     }
 
     private func updateVideoOutputSettings() {
-        if let videoConnection = captureVideoDataOutput?.connection(with: .video) {
-            videoConnection.automaticallyAdjustsVideoMirroring = position != .front
+        if let capturePhotoOutputConnection = capturePhotoOutput?.connection(with: .video) {
+            capturePhotoOutputConnection.automaticallyAdjustsVideoMirroring = false
+            capturePhotoOutputConnection.isVideoMirrored = false
 
-            if !videoConnection.automaticallyAdjustsVideoMirroring {
-                videoConnection.isVideoMirrored = position == .front
+            if capturePhotoOutputConnection.isVideoStabilizationSupported {
+                capturePhotoOutputConnection.preferredVideoStabilizationMode = stabilizationMode
             }
+        }
+
+        if let videoConnection = captureVideoDataOutput?.connection(with: .video) {
+            videoConnection.automaticallyAdjustsVideoMirroring = false
+            videoConnection.isVideoMirrored = false
 
             if videoConnection.isVideoStabilizationSupported {
                 videoConnection.preferredVideoStabilizationMode = stabilizationMode
@@ -960,7 +900,7 @@ extension VideoDevice: AVCapturePhotoCaptureDelegate {
             continuation = nil
         }
 
-        if let continuation, let captureDevice {
+        if let continuation {
             if let error {
                 let error = UtilityError(kind: .VideoDeviceErrorReason.failedToCapturePhoto, underlyingError: error)
 
@@ -969,14 +909,36 @@ extension VideoDevice: AVCapturePhotoCaptureDelegate {
             }
 
             do {
-                let data = try photo.imageData(with: configuration.imageFormat)
+                guard let cgImage = photo.cgImageRepresentation() else {
+                    throw UtilityError(
+                        kind: .VideoDeviceErrorReason.failedToCapturePhoto,
+                        failureReason: "Unable to get data representation of the photo."
+                    )
+                }
+
+                let orientation = CGImagePropertyOrientation(from: videoOrientation, devicePosition: position)
+                let ciiImage = CIImage(cgImage: cgImage).oriented(orientation)
+
+                guard
+                    /// The new image from the photo.
+                    let image = context?.createCGImage(ciiImage, from: ciiImage.extent),
+
+                    /// The image data representation.
+                    let data = UIImage(cgImage: image).data(with: configuration.imageFormat)
+                else {
+
+                    throw UtilityError(
+                        kind: .VideoDeviceErrorReason.failedToCapturePhoto,
+                        failureReason: "Unable to get data representation of the photo."
+                    )
+                }
+
                 let outputURL = nextOutputURL()
-                let videoConnection = captureVideoDataOutput?.connection(with: .video)
                 let photo = Photo(
                     url: outputURL,
                     format: configuration.imageFormat,
-                    lensPosition: captureDevice.position,
-                    orientation: UIDeviceOrientation(from: videoConnection?.videoOrientation ?? .portrait)
+                    lensPosition: position,
+                    orientation: UIDeviceOrientation(from: videoOrientation)
                 )
 
                 try data.write(to: outputURL, options: .atomic)
@@ -1002,6 +964,8 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
 
         if let captureDevice, state == .running {
             let sampleBuffer = VideoSampleBuffer(
+                isMirrored: position == .front,
+                orientation: videoOrientation,
                 minFrameDuration: captureDevice.activeVideoMinFrameDuration,
                 sampleBuffer: sampleBuffer
             )
@@ -1013,44 +977,6 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
                 processors.forEach { $0.process(sampleBuffer, with: configuration) }
             }
         }
-    }
-}
-
-extension AVCapturePhoto {
-    /// Converts the photo to the specified file format and returns the data representation.
-    ///
-    /// This function processes the captured photo data according to the requested file format.
-    /// For HEIC and JPEG formats, it returns the original data representation directly.
-    /// For PNG format, it converts the data to a UIImage and then generates PNG data,
-    /// which may involve format conversion and re-encoding.
-    ///
-    /// The function handles format-specific processing requirements, ensuring that
-    /// the output data is properly encoded for the target format. PNG conversion
-    /// requires additional processing steps compared to the other formats.
-    ///
-    /// - Parameter fileFormat: The desired output format for the photo data
-    /// - Returns: The photo data encoded in the specified format
-    /// - Throws: A UtilityError if the data representation cannot be obtained or if PNG conversion fails
-    fileprivate func imageData(with fileFormat: FileFormat) throws(UtilityError) -> Data {
-        guard let data = fileDataRepresentation() else {
-            throw UtilityError(
-                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                failureReason: "Unable to get data representation of the photo."
-            )
-        }
-
-        guard fileFormat == .png else {
-            return data
-        }
-
-        guard let data = UIImage(data: data)?.pngData() else {
-            throw UtilityError(
-                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                failureReason: "Unable to get data representation of the photo."
-            )
-        }
-
-        return data
     }
 }
 

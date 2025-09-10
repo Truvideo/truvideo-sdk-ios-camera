@@ -3,10 +3,9 @@
 //
 
 internal import DI
-@_spi(Internal) import ExternalUtilities
 import Foundation
 internal import Registry
-internal import Storage
+internal import StorageKit
 internal import TruVideoApi
 internal import Utilities
 
@@ -67,13 +66,13 @@ internal import Utilities
 /// - Important: Always configure the SDK before attempting authentication.
 /// - Warning: Authentication is required to use most SDK features.
 public protocol TruVideoSDK {
-    /// Indicates whether the user is currently authenticated.
+    /// The configuration options used to initialize the TruVideo SDK.
     ///
-    /// This property returns `true` if the user has successfully authenticated
-    /// and the authentication token is valid. Returns `false` if the user
-    /// has not authenticated or the authentication has expired.
-    var isAuthenticated: Bool { get }
-
+    /// This property provides access to the complete configuration that was set during
+    /// SDK initialization. It includes all the necessary parameters such as API credentials,
+    /// signing configuration, external identifiers, and other SDK settings.
+    var options: TruVideoOptions { get }
+    
     /// Authenticates the user with the TruVideo service.
     ///
     /// This method performs device authentication by sending device context information
@@ -125,7 +124,65 @@ public protocol TruVideoSDK {
     /// ```
     /// - Parameter options: The configuration options containing API credentials, signing configuration, and other SDK settings
     /// - Throws: `TruVideoSdkError.alreadyConfigured` if the SDK has already been configured.
-    func configure(with options: TruVideoOptions) throws
+    func configure(with options: TruVideoOptions)
+
+    /// Indicates if the client is authenticated.
+    ///
+    /// - Returns: `true` if the client is authenticated; otherwise, `false`.
+    func isAuthenticated() throws -> Bool
+
+    // MARK: - Deprecated
+
+    /// Returns the currently configured API key.
+    ///
+    /// - Returns: A `String` representing the configured API key.
+    /// - Throws: An error if the API key is not available.
+    @available(*, deprecated, message: "Use TruVideoSDK.options.apiKey instead.")
+    func apiKey() throws -> String
+
+    /// Performs client authentication using the given payload and signature.
+    ///
+    /// - Parameters:
+    ///   - apiKey: The API key for authentication.
+    ///   - payload: The signed payload (usually device context).
+    ///   - signature: The HMAC signature generated from the payload.
+    ///   - externalId: Optional identifier for multi-tenant support.
+    /// - Throws: An error if authentication fails.
+    @available(*, deprecated, message: "Use TruVideoSDK.authenticate() instead.")
+    func authenticate(apiKey: String, payload: String, signature: String, externalId: String) async throws
+
+    /// Clears the current authentication session.
+    ///
+    /// - Throws: An error if sign-out fails.
+    @available(*, deprecated)
+    func clearAuthentication() throws
+
+    /// Generates a JSON string from the current device context.
+    ///
+    /// - Returns: A string representing the JSON-encoded payload.
+    /// - Throws: An error if encoding fails.
+    @available(
+        *,
+         deprecated,
+         message: "This method is no longer needed. Payloads are generated internally during authentication."
+    )
+    func generatePayload() throws -> String
+
+    /// Initializes the authentication process.
+    ///
+    /// This function was a placeholder for starting authentication. It is now deprecated.
+    @available(*, deprecated, message: "No longer needed. Authentication is triggered automatically.")
+    func initAuthentication() async throws
+
+    /// Checks if the current authentication token is expired.
+    ///
+    /// - Returns: `true` if the token is expired; otherwise, `false`.
+    @available(
+        *,
+         deprecated,
+         message: "Token expiration is handled internally. Use TruVideoSDK.isAuthenticated() instead."
+    )
+    func isAuthenticationExpired() throws -> Bool
 }
 
 /// The main implementation of the TruVideo SDK.
@@ -143,24 +200,19 @@ public final class TruVideoApp: TruVideoSDK {
     // MARK: - Dependencies
 
     @Dependency(\.authenticatableClient)
-    private var authenticatableClient: AuthenticatableClient
+    var authenticatableClient: AuthenticatableClient
 
     @Dependency(\.deviceSettingResource)
-    private var deviceSettingResource: DeviceSettingsResource
+    var deviceSettingResource: DeviceSettingsResource
 
-    @Dependency(\.options)
-    private var options: TruVideoOptions
-
-    // MARK: - Computed Properties
-
-    /// Indicates whether the user is currently authenticated.
+    // MARK: - Public Properties
+    
+    /// The configuration options used to initialize the TruVideo SDK.
     ///
-    /// This property returns `true` if the user has successfully authenticated
-    /// and the authentication token is valid. Returns `false` if the user
-    /// has not authenticated or the authentication has expired.
-    public var isAuthenticated: Bool {
-        authenticatableClient.currentToken != nil
-    }
+    /// This property provides access to the complete configuration that was set during
+    /// SDK initialization. It includes all the necessary parameters such as API credentials,
+    /// signing configuration, external identifiers, and other SDK settings.
+    public private(set) var options = TruVideoOptions(apiKey: "", secretKey: "", externalId: nil)
 
     // MARK: - Initializer
 
@@ -222,14 +274,14 @@ public final class TruVideoApp: TruVideoSDK {
                 externalId: options.externalId
             )
             
-            if let authToken = authenticatableClient.currentToken {
-                try legacyStorage.set(authToken, apiKey: options.apiKey)
+            if let currentSession = authenticatableClient.currentSession {
+                try legacyStorage.set(currentSession.authToken, apiKey: currentSession.apiKey)
             }
             
             retrieveDeviceSettings()
         } catch let error as UtilityError {
             throw TruVideoSdkError(
-                kind: .TruVideoSdkErrorReason.from(error.kind.rawValue),
+                kind: .from(error.kind.rawValue),
                 errorDescription: error.errorDescription,
                 failureReason: error.failureReason
             )
@@ -259,27 +311,21 @@ public final class TruVideoApp: TruVideoSDK {
     /// ```
     /// - Parameter options: The configuration options containing API credentials, signing configuration, and other SDK settings
     /// - Throws: `TruVideoSdkError.alreadyConfigured` if the SDK has already been configured.
-    public func configure(with options: TruVideoOptions) throws {
-        guard !hasBeenConfigured else {
-            throw TruVideoSdkError.appAlreadyConfigured
+    public func configure(with options: TruVideoOptions) {
+        if !hasBeenConfigured {
+            try? migrator.migrate()
+            
+            self.options = options
+            LibraryRegistry.configureAll()
+            retrieveDeviceSettings()
+            hasBeenConfigured = true
         }
-
-        do {
-            try migrator.migrate()
-        } catch {
-            throw TruVideoSdkError.unknown
-        }
-        
-        DependencyValues.current.options = options
-        LibraryRegistry.configureAll()
-        retrieveDeviceSettings()
-        hasBeenConfigured = true
     }
 
     // MARK: - Private methods
 
     private func retrieveDeviceSettings() {
-        guard isAuthenticated else { return }
+        guard authenticatableClient.currentSession != nil else { return }
 
         Task {
             do {

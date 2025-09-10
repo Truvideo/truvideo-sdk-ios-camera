@@ -4,7 +4,7 @@
 
 internal import DI
 import Foundation
-internal import Storage
+internal import StorageKit
 internal import TruVideoApi
 internal import Utilities
 

@@ -31,7 +31,7 @@ struct ResolutionsView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.ultraThinMaterial)
+        .background(style: .dark)
         .overlay(alignment: .topLeading) {
             CircleButton {
                 Icon(icon: DSIcons.xmark, size: CGSize(theme.sizeTheme.lg))
