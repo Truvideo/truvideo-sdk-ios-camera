@@ -32,9 +32,12 @@ struct GalleryView: View {
             .padding(theme.spacingTheme.md)
 
             GalleryGrid(medias: $medias, isPresented: $isPresented, theme: theme)
-                .ignoresSafeArea()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(style: .dark)
+        .background {
+            EmptyView()
+                .background(style: .dark)
+                .ignoresSafeArea()
+        }
     }
 }

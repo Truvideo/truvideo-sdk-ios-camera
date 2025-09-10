@@ -95,7 +95,7 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
             hostingController.transitioningDelegate = context.coordinator
 
             DispatchQueue.main.async {
-                if uiViewController.view.window != nil, uiViewController.view.window != nil {
+                if uiViewController.view.window != nil {
                     uiViewController.present(hostingController, animated: true)
                 }
             }
