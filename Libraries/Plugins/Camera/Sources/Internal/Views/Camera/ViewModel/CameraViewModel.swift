@@ -62,6 +62,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// A boolean indicating whether the snackbar should be presented.
     @Published var isSnackbarPresented = false
 
+    /// The last zoom factor applied to the camera preview.
+    @Published var lastZoomFactor: CGFloat = 1
+
     /// The collection of media items displayed in the gallery.
     ///
     /// This published property contains all media items (both video clips and photos)
@@ -285,6 +288,32 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    /// Adjusts the current zoom level based on a magnification value.
+    ///
+    /// This method applies a magnification factor to the last known zoom factor
+    /// and clamps the result to the valid range of `zoomFactors`.
+    ///
+    /// - The zoom factor is always kept within the minimum and maximum supported values.
+    /// - If the calculated factor is below the minimum, the minimum zoom is applied.
+    /// - If the factor is between the first two levels, the raw factor is used.
+    /// - If the factor exceeds the second level, it is clamped to the maximum zoom.
+    ///
+    /// - Parameter value: The magnification multiplier from a gesture
+    func magnify(by value: CGFloat) {
+        if zoomFactors.count > 1 {
+            let rawFactor = max(lastZoomFactor * value, zoomFactors[0])
+
+            guard rawFactor <= zoomFactors[1] else {
+                let zoomFactor = min(rawFactor, zoomFactors[zoomFactors.count - 1])
+                rampZoomFactor(to: zoomFactor, rate: 0)
+
+                return
+            }
+
+            rampZoomFactor(to: rawFactor)
+        }
+    }
+
     /// Processes the captured media and marks the validation state as valid.
     ///
     /// This method converts all captured media items to the TruVideo SDK format
@@ -324,18 +353,22 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    /// Smoothly ramps the camera to a target zoom factor.
+    /// Smoothly animates the camera to a target zoom factor.
     ///
-    /// Requests the underlying `VideoDevice` to animate (ramp) the zoom to `zoomFactor`
-    /// using its configured ramp rate. Runs on the main actor for UI safety and
-    /// surfaces any errors via `didReceiveError(_:)`.
+    /// This method updates the published `zoomFactor` and requests the underlying
+    /// `VideoDevice` to ramp the zoom to the specified level. The zoom transition
+    /// can be performed at a configurable rate, or using the device’s default rate
+    /// if none is provided. Execution is dispatched to the main actor for UI safety,
+    /// and any errors encountered are forwarded through `didReceiveError(_:)`.
     ///
-    /// - Parameter zoomFactor: The desired target zoom factor.
-    func rampZoomFactor(to zoomFactor: CGFloat) {
+    /// - Parameters:
+    ///   - zoomFactor: The target zoom factor to apply to the camera.
+    ///   - rate: The optional speed of the zoom ramp, in device-specific units.
+    func rampZoomFactor(to newZoomFactor: CGFloat, rate: Float = 10) {
         Task { @MainActor in
             do {
-                self.zoomFactor = zoomFactor
-                try await videoDevice.setZoomFactor(zoomFactor)
+                zoomFactor = newZoomFactor
+                try await videoDevice.setZoomFactor(zoomFactor, rate: rate)
             } catch {
                 didReceiveError(error.localizedDescription)
             }
@@ -375,7 +408,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 try await videoDevice.setPosition(position)
 
                 isTorchAvailable = await videoDevice.isTorchAvailable
-                zoomFactors = await videoDevice.displayVideoZoomFactors
+                zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
                 zoomFactor = 1
             } catch {
                 didReceiveError(error.localizedDescription)

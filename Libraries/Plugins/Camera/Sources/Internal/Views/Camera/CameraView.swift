@@ -118,7 +118,10 @@ private struct Camera: View {
 
     private func makeMagnificationGesture() -> some Gesture {
         MagnificationGesture()
-            .onChanged { _ in }
+            .onChanged(viewModel.magnify(by:))
+            .onEnded { _ in
+                viewModel.lastZoomFactor = viewModel.zoomFactor
+            }
     }
 }
 

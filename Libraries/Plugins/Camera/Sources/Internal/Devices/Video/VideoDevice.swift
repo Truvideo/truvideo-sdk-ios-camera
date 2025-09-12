@@ -758,26 +758,29 @@ class VideoDevice: NSObject, Device {
     ///    - rate: The rate at which to transition to the new magnification factor, specified in powers of two per second.
     @DeviceActor
     func setZoomFactor(_ zoomFactor: CGFloat, rate: Float = 10) throws(UtilityError) {
-        if let captureDevice {
+        if let captureDevice, rate >= 0 {
             let minAvailableVideoZoomFactor = max(captureDevice.minAvailableVideoZoomFactor, Self.minZoomFactor)
-            let maxAvailableVideoZoomFactor = min(captureDevice.maxAvailableVideoZoomFactor, Self.maxZoomFactor)
+            var maxAvailableVideoZoomFactor = min(captureDevice.maxAvailableVideoZoomFactor, Self.maxZoomFactor)
 
             do {
                 try captureDevice.lockForConfiguration()
                 defer { captureDevice.unlockForConfiguration() }
 
-                var clampedZoomFactor = min(
-                    max(zoomFactor, minAvailableVideoZoomFactor),
-                    maxAvailableVideoZoomFactor
-                )
-                
-                clampedZoomFactor += hasBuiltInUltraWideCamera && zoomFactor >= 1 ? 1 : 0
+                var zoomFactor = hasBuiltInUltraWideCamera ? zoomFactor + 1 : zoomFactor
+
+                maxAvailableVideoZoomFactor += hasBuiltInUltraWideCamera ? 1 : 0
+                zoomFactor = min(max(zoomFactor, minAvailableVideoZoomFactor), maxAvailableVideoZoomFactor)
 
                 if captureDevice.isRampingVideoZoom {
                     captureDevice.cancelVideoZoomRamp()
                 }
 
-                captureDevice.ramp(toVideoZoomFactor: clampedZoomFactor, withRate: rate)
+                guard rate > 0 else {
+                    captureDevice.videoZoomFactor = zoomFactor
+                    return
+                }
+
+                captureDevice.ramp(toVideoZoomFactor: zoomFactor, withRate: rate)
             } catch {
                 throw UtilityError(kind: .VideoDeviceErrorReason.setZoomFactorFailed, underlyingError: error)
             }
