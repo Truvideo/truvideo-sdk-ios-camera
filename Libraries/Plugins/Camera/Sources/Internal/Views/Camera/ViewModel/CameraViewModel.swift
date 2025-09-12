@@ -141,6 +141,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         let maxVideoCount = TruvideoSdkCameraMediaMode.maxVideoCount
         let numberOfClips = medias.lazy.filter(\.isClip).count
 
+        guard configuration.mode.maxVideoDuration > 0 else {
+            return ""
+        }
+
         if configuration.mode.maxVideoCount == maxVideoCount || configuration.mode.maxVideoCount == 0 {
             return numberOfClips == 0 ? "" : "\(numberOfClips)"
         }
@@ -268,15 +272,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// If an error occurs during capture, the error's localized description is stored
     /// in the localizedError property for user feedback.
     func capturePhoto() {
-        let photos = medias.filter(\.isPhoto)
-
-        guard photos.count < maxNumberOfPhotos else {
-            localizedError = Localizations.maxNumberOfPicturesReached
-            isSnackbarPresented = true
-            return
-        }
-
         Task { @MainActor in
+            let photos = medias.filter(\.isPhoto)
+
+            guard photos.count < maxNumberOfPhotos else {
+                didReceiveError(Localizations.maxNumberOfPicturesReached)
+                return
+            }
+
             do {
                 if let photo = try await videoDevice.capturePhoto() {
                     medias.insert(.photo(photo), at: 0)
@@ -503,8 +506,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     let clips = medias.filter(\.isClip)
 
                     guard clips.count < maxNumberOfClips else {
-                        localizedError = Localizations.maxNumberOfClipsReached
-                        isSnackbarPresented = true
+                        didReceiveError(Localizations.maxNumberOfClipsReached)
                         return
                     }
 
@@ -650,8 +652,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     @MainActor
-    private func didReceiveError(_ localizedError: String) {
-        self.localizedError = localizedError
+    private func didReceiveError(_ error: String) {
+        localizedError = error
         isSnackbarPresented = true
     }
 
@@ -814,18 +816,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         movieOutputProcessor.$recordingDuration
             .filter(\.isValid)
             .receive(on: RunLoop.main)
-            .prefix { [weak self] recordingDuration in
-                if let self, recordingDuration.seconds > maxVideoDuration {
+            .handleEvents(receiveOutput: { [weak self] recordingDuration in
+                if let self, recordingDuration.seconds >= maxVideoDuration {
                     Task {
                         await self.didReceiveError(Localizations.maxClipDurationReached)
                         try await self.endRecording()
                     }
-
-                    return false
                 }
-
-                return true
-            }
+            })
             .map { $0.seconds.toHMS() }
             .assign(to: &$secondsRecorded)
     }

@@ -69,7 +69,7 @@ final class MovieOutputProcessor {
     /// audio and video samples since the start of the current processing session.
     /// It automatically updates as new media samples are processed, providing
     /// real-time feedback on the current recording or processing progress.
-    @Published private(set) var recordingDuration = CMTime.zero
+    @Published private(set) var recordingDuration = CMTime.invalid
 
     // MARK: - Computed Properties
 

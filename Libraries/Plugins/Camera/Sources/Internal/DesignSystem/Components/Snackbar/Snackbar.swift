@@ -78,8 +78,8 @@ struct Snackbar<Content: View>: View {
         WindowReader { window in
             Color.clear
                 .fixedSize()
-                .onChange(of: isPresented) { isShowing in
-                    guard let window, isShowing else { return }
+                .onChange(of: isPresented) { isPresented in
+                    guard let window, isPresented else { return }
 
                     showSnackBar(in: window)
                 }
