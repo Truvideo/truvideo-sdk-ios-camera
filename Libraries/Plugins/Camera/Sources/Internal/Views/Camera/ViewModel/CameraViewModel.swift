@@ -536,8 +536,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @MainActor
     @objc
     func didReceiveDidEnterBackgroundNotification(_ notification: Notification) {
-        sessionWasRunning = state == .running
-
         if state == .running {
             pauseSession()
         }
@@ -560,15 +558,18 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @MainActor
     @objc
     func didReceiveRuntimeErrorNotification(_ notification: Notification) {
-        if let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError {
-            receivedRuntimeError(error)
+        if let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError, state == .running {
+            if [.sessionConfigurationChanged, .sessionNotRunning].contains(error.code), !captureSession.isRunning {
+                captureSession.startRunning()
+            }
         }
     }
 
     @MainActor
     @objc
     func didReceiveSessionWasInterruptedNotification(_ notification: Notification) {
-        sessionWasRunning = state == .running
+        sessionWasRunning = state == .running && UIApplication.shared.applicationState != .background
+        
         if state == .running {
             pauseSession()
         }
@@ -779,25 +780,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     await didReceiveError(error.localizedDescription)
                 }
             }
-        }
-    }
-
-    private func receivedRuntimeError(_ error: AVError) {
-        if [.sessionConfigurationChanged, .sessionNotRunning].contains(error.code), state == .running {
-            if !captureSession.isRunning {
-                captureSession.startRunning()
-            }
-        }
-    }
-
-    private func receivedSessionWasInterrupted(_ reason: AVCaptureSession.InterruptionReason) async {
-        if [
-            .audioDeviceInUseByAnotherClient,
-            .videoDeviceInUseByAnotherClient,
-            .videoDeviceNotAvailableDueToSystemPressure,
-            .videoDeviceNotAvailableWithMultipleForegroundApps,
-        ].contains(reason) {
-            pauseSession()
         }
     }
 
