@@ -99,15 +99,13 @@ extension AuthenticatableClient {
     ///    - apiKey: The API key that identifies your application
     ///    - context: Device and system information for authentication
     ///    - signature: Cryptographic signature of the context data
-    ///    - externalId: Optional identifier for multi-tenant scenarios
     /// - Throws: An error if the authentication process fails.
     public func authenticate(
         apiKey: String,
         context: Context,
-        signature: String,
-        externalId: String? = nil
+        signature: String
     ) async throws(UtilityError) {
-        try await authenticate(apiKey: apiKey, context: context, signature: signature, externalId: externalId)
+        try await authenticate(apiKey: apiKey, context: context, signature: signature, externalId: nil)
     }
 }
 

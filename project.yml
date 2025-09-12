@@ -582,7 +582,7 @@ targets:
       - target: Registry
       - target: StorageKit
       - target: Telemetry
-      - target: TruVideoApi
+      - target: TruVideoApi      
       - target: Utilities
       - package: Common
       - package: KeychainAccess
@@ -832,10 +832,16 @@ schemes:
     build:
       targets:
         TruvideoSdk: all
+        TruvideoSdkTesting: all
 
     test:
       targets: [TruvideoSdkTests]
 
+  TruvideoSdkTesting:
+    build:
+      targets:
+        TruvideoSdk: all
+        
   # Plugins Schemes
   TruvideoSdkCamera:
     build:

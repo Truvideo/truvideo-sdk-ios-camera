@@ -229,7 +229,12 @@ public final class TruVideoApp: TruVideoSDK {
     ///  - Parameters:
     ///     - legacyStorage: A type that defines the interface for storing authentication data in legacy storage systems.
     ///     - migrator: A type that defines the interface for performing data migrations.
-    init(legacyStorage: LegacyStorage = LegacySessionStorage(), migrator: Migrator = SDKMigrator(), pathMonitor: some NetworkPathMonitor = NWPathMonitor()) {
+    init(
+        legacyStorage: LegacyStorage = LegacySessionStorage(),
+        migrator: Migrator = SDKMigrator(),
+        pathMonitor: some NetworkPathMonitor = NWPathMonitor()
+    ) {
+
         self.legacyStorage = legacyStorage
         self.migrator = migrator
         self.pathMonitor = pathMonitor
@@ -331,11 +336,14 @@ public final class TruVideoApp: TruVideoSDK {
     /// - Throws: `TruVideoSdkError.alreadyConfigured` if the SDK has already been configured.
     public func configure(with options: TruVideoOptions) {
         if !hasBeenConfigured {
-            try? migrator.migrate()
-            
             self.options = options
+            
             LibraryRegistry.configureAll()
+            DependencyValues.current.apiEnvironment = .beta
+            
+            try? migrator.migrate()
             retrieveDeviceSettings()
+            
             hasBeenConfigured = true
         }
     }
@@ -343,13 +351,14 @@ public final class TruVideoApp: TruVideoSDK {
     // MARK: - Private methods
 
     private func retrieveDeviceSettings() {
-        guard authenticatableClient.currentSession != nil else { return }
-
-        Task {
-            do {
-                cloudStorageProvider.deviceSetting = try await deviceSettingResource.retrieve()
-            } catch {
-                // log could be added here
+        if authenticatableClient.currentSession != nil {
+            Task {
+                do {
+                    let deviceSetting = try await deviceSettingResource.retrieve()
+                    /// Create s3 uploader for telemetry
+                } catch {
+                    // log could be added here
+                }
             }
         }
     }

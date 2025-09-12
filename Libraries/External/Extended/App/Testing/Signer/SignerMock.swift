@@ -22,8 +22,9 @@ public final class SignerMock: Signer {
     /// Error to throw from `sign(_:, secretKey:)` if set.
     public var error: Error?
 
-    // MARK: - Init
+    // MARK: - Initializer
 
+    /// Creates a new instance of the `SignerMock`.
     public init() {}
 
     // MARK: - Signer

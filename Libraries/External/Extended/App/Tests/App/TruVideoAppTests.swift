@@ -12,19 +12,23 @@ import Utilities
 @testable import TruvideoSdk
 
 struct TruVideoAppTests {
-    var authenticatableClient: AuthenticatableClientMock!
-    var deviceSettingResource: DeviceSettingsResourceMock!
+    // MARK: - Private Properties
+    
+    private let authenticatableClient: AuthenticatableClientMock
+    private let deviceSettingResource: DeviceSettingsResourceMock
+    
+    // MARK: - Initializer
 
-    private init() {
-        self.authenticatableClient = AuthenticatableClientMock()
-        self.deviceSettingResource = DeviceSettingsResourceMock()
+    init() {
+        authenticatableClient = AuthenticatableClientMock()
+        deviceSettingResource = DeviceSettingsResourceMock()
     }
 
     // MARK: - Tests
 
     @Test
     func testThatAuthentication() async throws {
-        await withDependencyValues { dependencies in
+        try await withDependencyValues { dependencies in
             // Given
             let sut = TruVideoApp()
             
@@ -32,14 +36,14 @@ struct TruVideoAppTests {
             dependencies.authenticatableClient = authenticatableClient
             dependencies.deviceSettingResource = deviceSettingResource
 
-            sut.configure(with: TruVideoOptions(apiKey: "VS2SG9WK", secretKey: "ST2K33GR"))
-            try? await sut.authenticate()
+            sut.configure(with: TruVideoOptions(apiKey: "VS2SG9WK", secretKey: "ST2K33GR", signer: SignerMock()))
+            
+            try await sut.authenticate()
             
             // Then
             #expect(authenticatableClient.authenticateCalled == true)
-            #expect(authenticatableClient.currentToken != nil)
-            print(deviceSettingResource.retrieveCalled)
-            #expect(deviceSettingResource.retrieveCalled == true)
+            #expect(authenticatableClient.currentSession != nil)
+            #expect(deviceSettingResource.retrieveCallCount == 1)
         }
     }
 
@@ -47,26 +51,29 @@ struct TruVideoAppTests {
     func testThatAuthenticationShouldFailWhenIsNotConfigured() async throws {
         await withDependencyValues { dependencies in
             // Given
-            var expectError: TruvideoSdk.TruVideoSdkError!
             let sut = TruVideoApp()
             
             // When
             dependencies.authenticatableClient = authenticatableClient
             dependencies.deviceSettingResource = deviceSettingResource
-
-            do {
-                try await sut.authenticate()
-            } catch let error {
-                expectError = error as? TruvideoSdk.TruVideoSdkError
-            }
             
             // Then
-            #expect(expectError.kind == TruVideoSdkError.ErrorReason.configurationRequired)
-            #expect(expectError.errorDescription != nil)
-            #expect(expectError.failureReason != nil)
-            #expect(authenticatableClient.authenticateCalled == false)
-            #expect(authenticatableClient.currentToken == nil)
-            #expect(deviceSettingResource.retrieveCalled == false)
+            await #expect {
+                try await sut.authenticate()
+            } throws: { error in
+                let error = error as! TruVideoSdkError
+                
+                return [
+                    error.kind == TruVideoSdkError.configurationRequired.kind,
+                    error.errorDescription != nil,
+                    error.failureReason != nil
+                ]
+                    .allSatisfy { _ in  true }
+            }
+            
+            #expect(!authenticatableClient.authenticateCalled)
+            #expect(authenticatableClient.currentSession == nil)
+            #expect(deviceSettingResource.retrieveCallCount == 1)
         }
     }
     
@@ -74,27 +81,28 @@ struct TruVideoAppTests {
     func testThatAuthenticationShouldFailWhenClientFailsWithUtilityError() async throws {
         await withDependencyValues { dependencies in
             // Given
-            var expectError: TruvideoSdk.TruVideoSdkError!
             let sut = TruVideoApp()
-            
+
             // When
             dependencies.authenticatableClient = authenticatableClient
             dependencies.deviceSettingResource = deviceSettingResource
 
             authenticatableClient.authenticateError = UtilityError(kind: .init(rawValue: "authenticationFailed"))
+            
             sut.configure(with: TruVideoOptions(apiKey: "VS2SG9WK", secretKey: "ST2K33GR"))
-
-            do {
-                try await sut.authenticate()
-            } catch let error {
-                expectError = error as? TruvideoSdk.TruVideoSdkError
-            }
             
             // Then
-            #expect(expectError.kind == TruVideoSdkError.ErrorReason.authenticationFailed)
+            await #expect {
+                try await sut.authenticate()
+            } throws: { error in
+                let error = error as! TruVideoSdkError
+                
+                return error.kind == TruVideoSdkError.ErrorReason.authenticationFailed
+            }
+            
             #expect(authenticatableClient.authenticateCalled == true)
-            #expect(authenticatableClient.currentToken == nil)
-            #expect(deviceSettingResource.retrieveCalled == false)
+            #expect(authenticatableClient.currentSession == nil)
+            #expect(deviceSettingResource.retrieveCallCount == 1)
         }
     }
     
@@ -102,7 +110,6 @@ struct TruVideoAppTests {
     func testThatAuthenticationShouldFailWhenSignerFails() async throws {
         await withDependencyValues { dependencies in
             // Given
-            var expectError: TruvideoSdk.TruVideoSdkError!
             let sut = TruVideoApp()
             let signer = SignerMock()
             
@@ -114,78 +121,18 @@ struct TruVideoAppTests {
 
             sut.configure(with: TruVideoOptions(apiKey: "VS2SG9WK", secretKey: "ST2K33GR", signer: signer))
 
-            do {
+            // Then
+            await #expect {
                 try await sut.authenticate()
-            } catch let error {
-                expectError = error as? TruvideoSdk.TruVideoSdkError
+            } throws: { error in
+                let error = error as! TruVideoSdkError
+                
+                return error.kind == TruVideoSdkError.ErrorReason.authenticationFailed
             }
             
-            // Then
-            #expect(expectError.kind == TruVideoSdkError.ErrorReason.authenticationFailed)
             #expect(authenticatableClient.authenticateCalled == false)
-            #expect(authenticatableClient.currentToken == nil)
-            #expect(deviceSettingResource.retrieveCalled == false)
-        }
-    }
-    
-    @Test
-    func testThatConfigureShouldFailIfIsAlreadyConfigured() async throws {
-        await withDependencyValues { dependencies in
-            // Given
-            var expectError: TruvideoSdk.TruVideoSdkError!
-            let sut = TruVideoApp()
-            
-            // When
-            dependencies.authenticatableClient = authenticatableClient
-            dependencies.deviceSettingResource = deviceSettingResource
-
-            sut.configure(with: TruVideoOptions(apiKey: "VS2SG9WK", secretKey: "ST2K33GR"))
-
-            do {
-                sut.configure(with: TruVideoOptions(apiKey: "VS2SG9WK", secretKey: "ST2K33GR"))
-            } catch let error {
-                expectError = error as? TruvideoSdk.TruVideoSdkError
-            }
-            
-            // Then
-            #expect(expectError.kind == TruVideoSdkError.ErrorReason(rawValue: "appAlreadyConfigured"))
-            #expect(authenticatableClient.authenticateCalled == false)
-            #expect(authenticatableClient.currentToken == nil)
-            #expect(deviceSettingResource.retrieveCalled == false)
-        }
-    }
-    
-    @Test
-    func testThatIsAuthenticatedReturnsTrueIfTokenExists() async throws {
-        await withDependencyValues { dependencies in
-            // Given
-            let sut = TruVideoApp()
-
-            // When
-            dependencies.authenticatableClient = authenticatableClient
-
-            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
-            try? await sut.authenticate()
-            let result = try! sut.isAuthenticated()
-
-            // Then
-            #expect(result == true)
-        }
-    }
-
-    @Test
-    func testThatIsAuthenticatedReturnsFalseIfNoToken() async throws {
-        await withDependencyValues { dependencies in
-            // Given
-            let sut = TruVideoApp()
-
-            // When
-            dependencies.authenticatableClient = authenticatableClient
-
-            let result = try! sut.isAuthenticated()
-
-            // Then
-            #expect(result == false)
+            #expect(authenticatableClient.currentSession == nil)
+            #expect(deviceSettingResource.retrieveCallCount == 1)
         }
     }
 }

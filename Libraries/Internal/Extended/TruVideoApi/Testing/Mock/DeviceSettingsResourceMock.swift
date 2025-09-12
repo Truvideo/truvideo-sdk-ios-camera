@@ -8,33 +8,47 @@ import Utilities
 @testable import TruVideoApi
 
 /// Mock implementation of `DeviceSettingsResource` for unit testing.
-public final class DeviceSettingsResourceMock: DeviceSettingsResource {
+public final class DeviceSettingsResourceMock: DeviceSettingsResource, @unchecked Sendable {
     // MARK: - Properties
 
     /// The stubbed settings to return when `retrieve()` is called.
     public var stubDeviceSetting: DeviceSetting?
 
     /// Records whether `retrieve()` was called.
-    public private(set) var retrieveCalled = false
+    public private(set) var retrieveCallCount = 0
 
     /// Error to throw from `retrieve()`, if set.
     public var retrieveError: UtilityError?
 
     // MARK: - Initializer
 
+    /// Creates a new instance of the `DeviceSettingsResourceMock`.
     public init() {}
 
     // MARK: - DeviceSettingsResource
 
+    /// Retrieves the current device settings from the TruVideo API.
+    ///
+    /// This method fetches device-specific configuration and settings that are
+    /// associated with the authenticated device. The settings may include
+    /// feature flags, configuration parameters, and device-specific preferences.
+    ///
+    /// ## Prerequisites
+    ///
+    /// - The user must be authenticated before calling this method
+    /// - A valid authentication session must be available
+    ///
+    /// - Returns: The device settings for the authenticated device
+    /// - Throws: An error if the request fails or the user is not authenticated
     public func retrieve() async throws(UtilityError) -> DeviceSetting {
-        retrieveCalled = true
+        retrieveCallCount += 1
 
-        if let error = retrieveError {
-            throw error
+        if let retrieveError {
+            throw UtilityError(kind: .unknown, underlyingError: retrieveError)
         }
 
-        if let setting = stubDeviceSetting {
-            return setting
+        if let stubDeviceSetting {
+            return stubDeviceSetting
         }
 
         return DeviceSetting(
