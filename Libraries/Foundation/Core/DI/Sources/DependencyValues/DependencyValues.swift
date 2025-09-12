@@ -12,8 +12,7 @@ import Foundation
 public final class DependencyValues: @unchecked Sendable {
     // MARK: - Private Properties
 
-    private let lock = NSLock()
-    private var storage: [ObjectIdentifier: any Sendable] = [:]
+    @Protected private var storage: [ObjectIdentifier: any Sendable] = [:]
 
     // MARK: - Properties
 
@@ -28,19 +27,18 @@ public final class DependencyValues: @unchecked Sendable {
     /// - Returns: The value associated with the given key.
     public subscript<Key: DependencyKey>(key: Key.Type) -> Key.Value {
         get {
-            lock.lock()
-            defer { lock.unlock() }
-
-            if let dependency = storage[ObjectIdentifier(key)] as? Key.Value {
+            if let dependency = _storage.read()[ObjectIdentifier(key)] as? Key.Value {
                 return dependency
             }
 
             return key.defaultValue
         }
+
         set {
-            lock.lock()
+            var storage = _storage.read()
             storage[ObjectIdentifier(key)] = newValue
-            lock.unlock()
+
+            _storage.write(storage)
         }
     }
 
@@ -51,13 +49,10 @@ public final class DependencyValues: @unchecked Sendable {
     /// - Parameter other: Another `DependencyValues` instance to merge with.
     /// - Returns: A new `DependencyValues` instance with merged dependencies.
     func merging(_ other: DependencyValues) -> Self {
-        lock.lock()
+        let storage = _storage.read().merging(other._storage.read(), uniquingKeysWith: { $1 })
+        _storage.write(storage)
 
-        defer { lock.unlock() }
-
-        let values = self
-        values.storage.merge(other.storage, uniquingKeysWith: { $1 })
-        return values
+        return self
     }
 }
 

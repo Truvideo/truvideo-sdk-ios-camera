@@ -62,6 +62,20 @@ public struct Context: Codable, Sendable {
 
             /// The current battery charging state (e.g., "charging", "full", "unplugged").
             public let state: String
+
+            // MARK: - Initializer
+
+            /// Creates a new instance of `Battery`.
+            ///
+            /// - Parameters:
+            ///   - isLowPowerMode: Indicates whether Low Power Mode is currently enabled.
+            ///   - level: The current battery level as a float between 0.0 and 1.0.
+            ///   - state: The current battery charging state (e.g., "charging", "full", "unplugged").
+            public init(isLowPowerMode: Bool, level: Float, state: String) {
+                self.isLowPowerMode = isLowPowerMode
+                self.level = level
+                self.state = state
+            }
         }
 
         /// Represents the device's disk usage.
@@ -71,6 +85,18 @@ public struct Context: Codable, Sendable {
 
             /// The total disk space in bytes.
             public let total: Int
+
+            // MARK: - Initializer
+
+            /// Creates a new instance of `Disk`.
+            ///
+            /// - Parameters:
+            ///   - free: The number of bytes currently available.
+            ///   - total: The total disk space in bytes.
+            public init(free: UInt64?, total: Int) {
+                self.free = free
+                self.total = total
+            }
         }
 
         /// Represents memory usage statistics.
@@ -80,6 +106,54 @@ public struct Context: Codable, Sendable {
 
             /// The total amount of memory in bytes.
             public let total: UInt64
+
+            // MARK: - Initializer
+
+            /// Creates a new instance of `Memory`.
+            ///
+            /// - Parameters:
+            ///   - free: The number of bytes of free memory currently available.
+            ///   - total: The total amount of memory in bytes.
+            public init(free: UInt64?, total: UInt64) {
+                self.free = free
+                self.total = total
+            }
+        }
+
+        // MARK: - Initializer
+
+        /// Creates a new instance of `Device`.
+        ///
+        /// - Parameters:
+        ///   - battery: The current battery information.
+        ///   - cpuArchitecture: The CPU architecture of the device (e.g., "arm64", "x86_64").
+        ///   - disk: The disk capacity and available space.
+        ///   - manufacturer: The device manufacturer name (e.g., "Apple").
+        ///   - memory: The memory usage statistics of the device.
+        ///   - model: The specific device model identifier (e.g., "iPhone13,4").
+        ///   - processorCount: The number of logical processor cores available.
+        ///   - thermalState: A textual description of the current thermal state (e.g., "nominal", "serious").
+        ///   - uptimeSeconds: System uptime in seconds since the last boot.
+        public init(
+            battery: Battery,
+            cpuArchitecture: String,
+            disk: Disk,
+            manufacturer: String,
+            memory: Memory,
+            model: String,
+            processorCount: Int,
+            thermalState: String,
+            uptimeSeconds: Double
+        ) {
+            self.battery = battery
+            self.cpuArchitecture = cpuArchitecture
+            self.disk = disk
+            self.manufacturer = manufacturer
+            self.memory = memory
+            self.model = model
+            self.processorCount = processorCount
+            self.thermalState = thermalState
+            self.uptimeSeconds = uptimeSeconds
         }
     }
 
@@ -90,5 +164,31 @@ public struct Context: Codable, Sendable {
 
         /// The version of the operating system (e.g., "17.5.1").
         public let version: String
+
+        // MARK: - Initializer
+
+        /// Creates a new instance of `OsInfo`.
+        ///
+        /// - Parameters:
+        ///   - name: The name of the operating system (e.g., "iOS", "macOS").
+        ///   - version: The version of the operating system (e.g., "17.5.1").
+        public init(name: String, version: String) {
+            self.name = name
+            self.version = version
+        }
+    }
+
+    // MARK: - Initializer
+
+    /// Creates a new instance of `Context`.
+    ///
+    /// - Parameters:
+    ///   - device: Information about the current device's hardware and state.
+    ///   - osInfo: Information about the operating system running on the device.
+    ///   - sdks: Contains all the registered versions of the installed sdks.
+    public init(device: Device, osInfo: OsInfo, sdks: [String: String]) {
+        self.device = device
+        self.osInfo = osInfo
+        self.sdks = sdks
     }
 }

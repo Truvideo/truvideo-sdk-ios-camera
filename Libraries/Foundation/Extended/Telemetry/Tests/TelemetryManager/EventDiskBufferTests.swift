@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+import Utilities
 import Testing
 
 @testable import Telemetry

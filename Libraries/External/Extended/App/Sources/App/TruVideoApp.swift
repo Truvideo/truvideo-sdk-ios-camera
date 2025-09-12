@@ -4,8 +4,10 @@
 
 internal import DI
 import Foundation
+import Network
 internal import Registry
 internal import StorageKit
+internal import Telemetry
 internal import TruVideoApi
 internal import Utilities
 
@@ -193,9 +195,12 @@ public protocol TruVideoSDK {
 public final class TruVideoApp: TruVideoSDK {
     // MARK: - Private Properties
 
+    private let cloudStorageProvider = S3CloudStorageProvider()
     private var hasBeenConfigured = false
     private let legacyStorage: LegacyStorage
     private let migrator: Migrator
+    private let pathMonitor: any NetworkPathMonitor
+    private let queue = DispatchQueue(label: "com.app.pathMonitor.queue")
 
     // MARK: - Dependencies
 
@@ -205,9 +210,12 @@ public final class TruVideoApp: TruVideoSDK {
     @Dependency(\.deviceSettingResource)
     var deviceSettingResource: DeviceSettingsResource
 
-    // MARK: - Public Properties
-    
-    /// The configuration options used to initialize the TruVideo SDK.
+    @Dependency(\.telemetryManager)
+    private var telemetryManager: TelemetryManager
+
+    // MARK: - Computed Properties
+
+    /// Indicates whether the user is currently authenticated.
     ///
     /// This property provides access to the complete configuration that was set during
     /// SDK initialization. It includes all the necessary parameters such as API credentials,
@@ -221,11 +229,21 @@ public final class TruVideoApp: TruVideoSDK {
     ///  - Parameters:
     ///     - legacyStorage: A type that defines the interface for storing authentication data in legacy storage systems.
     ///     - migrator: A type that defines the interface for performing data migrations.
-    init(legacyStorage: LegacyStorage = LegacySessionStorage(), migrator: Migrator = SDKMigrator()) {
+    init(legacyStorage: LegacyStorage = LegacySessionStorage(), migrator: Migrator = SDKMigrator(), pathMonitor: some NetworkPathMonitor = NWPathMonitor()) {
         self.legacyStorage = legacyStorage
         self.migrator = migrator
+        self.pathMonitor = pathMonitor
 
         LibraryRegistry.register(TruVideoSDKLibrary())
+        telemetryManager.add(UploadProcessor(cloudStorageProvider: cloudStorageProvider))
+
+        pathMonitor.pathUpdateHandler = { [weak self] path in
+            if let self, cloudStorageProvider.deviceSetting == nil, path.status == .satisfied {
+                retrieveDeviceSettings()
+            }
+        }
+
+        pathMonitor.start(queue: queue)
     }
 
     // MARK: - TruVideoSDK
@@ -329,8 +347,7 @@ public final class TruVideoApp: TruVideoSDK {
 
         Task {
             do {
-                let deviceSetting = try await deviceSettingResource.retrieve()
-                /// Create s3 uploader for telemetry
+                cloudStorageProvider.deviceSetting = try await deviceSettingResource.retrieve()
             } catch {
                 // log could be added here
             }

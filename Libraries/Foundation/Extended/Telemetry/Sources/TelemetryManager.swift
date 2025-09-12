@@ -5,6 +5,7 @@
 import DI
 import Foundation
 import StorageKit
+import Utilities
 
 /// A central manager for collecting, buffering, and dispatching telemetry data throughout the application.
 ///

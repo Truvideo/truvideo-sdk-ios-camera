@@ -4,6 +4,7 @@
 
 import DI
 import StorageKit
+import Utilities
 
 /// Provides a `DependencyKey` for injecting a `ContextProvider` dependency.
 ///
@@ -18,9 +19,9 @@ struct ContextProviderKey: DependencyKey {
 ///
 /// This key enables access to a shared `FileWriter` instance via Swift's dependency injection system.
 /// If no custom implementation is provided, the default is `SystemFileWriter`, which writes directly to the file system.
-struct FileWriterDependencyKey: DependencyKey {
+public struct FileWriterDependencyKey: DependencyKey {
     /// The default file writer used if none is explicitly injected.
-    static let defaultValue: any FileWriter = SystemFileWriter()
+    public static let defaultValue: any FileWriter = SystemFileWriter()
 }
 
 /// Provides a `DependencyKey` for injecting a `Storage` dependency.
@@ -41,6 +42,14 @@ struct TelemetryInstallationDependencyKey: DependencyKey {
     static let defaultValue: any TelemetryInstallation = InstallationProvider()
 }
 
+/// Provides a `DependencyKey` for injecting a `DependencyKey` dependency.
+///
+/// This key enables access to a shared `TelemetryManager` instance via Swift's dependency injection system.
+public struct TelemetryDependencyKey: DependencyKey {
+    /// The default telemetry manager used if none is explicitly injected.
+    public static let defaultValue = TelemetryManager()
+}
+
 extension DependencyValues {
     /// Accessor for resolving or overriding the current `ContextProvider`.
     var contextProvider: any ContextProvider {
@@ -49,7 +58,7 @@ extension DependencyValues {
     }
 
     /// Accessor for resolving or overriding the current `FileWriter`.
-    var fileWriter: any FileWriter {
+    public var fileWriter: any FileWriter {
         get { self[FileWriterDependencyKey.self] }
         set { self[FileWriterDependencyKey.self] = newValue }
     }
@@ -64,5 +73,11 @@ extension DependencyValues {
     var storage: any Storage {
         get { self[StorageDependencyKey.self] }
         set { self[StorageDependencyKey.self] = newValue }
+    }
+
+    /// Accessor for resolving or overriding the current `TelemetryManager` implementation.
+    public var telemetryManager: TelemetryManager {
+        get { self[TelemetryDependencyKey.self] }
+        set { self[TelemetryDependencyKey.self] = newValue }
     }
 }

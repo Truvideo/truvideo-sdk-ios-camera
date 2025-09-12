@@ -14,25 +14,25 @@ import Utilities
 /// so that tests can manually simulate success or failure scenarios.
 public final class S3TransferUtilityProtocolMock: S3TransferUtilityProtocol {
     // MARK: - Properties
-    
+
     /// The data provided in the `uploadData` call.
     public private(set) var data: Data?
-    
+
     /// The S3 bucket name provided in the `uploadData` call.
     public private(set) var bucket: String?
-    
+
     /// The object key (path) provided in the `uploadData` call.
     public private(set) var key: String?
-    
+
     /// The content type of the uploaded object.
     public private(set) var contentType: String?
-    
+
     /// The upload expression used in the call (contains configuration and progress blocks).
     public private(set) var expression: AWSS3TransferUtilityUploadExpression?
-    
+
     /// The completion handler provided in the `uploadData` call.
     public var completionHandler: AWSS3TransferUtilityUploadCompletionHandlerBlock?
-    
+
     /// The task result that will be returned when `uploadData` is invoked.
     public var result: AWSTask<AWSS3TransferUtilityUploadTask>?
 
@@ -41,7 +41,7 @@ public final class S3TransferUtilityProtocolMock: S3TransferUtilityProtocol {
     public init() {}
 
     // MARK: - S3TransferUtilityProtocol
-    
+
     /// Simulates the S3 upload operation.
     ///
     /// Instead of actually uploading to AWS S3, this method:

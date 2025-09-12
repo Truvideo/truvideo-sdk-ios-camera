@@ -29,7 +29,7 @@ actor S3UploadTaskActor {
 /// This class conforms to `UploadTask` and provides functionality for controlling
 /// and monitoring the upload process, as well as retrieving the final result
 /// once the upload completes.
-public class S3UploadTask: UploadTask, Identifiable {
+public class S3UploadTask: UploadDataTask, Identifiable {
     // MARK: - Typealias
 
     /// Represents the result of an upload operation.
@@ -160,27 +160,29 @@ public class S3UploadTask: UploadTask, Identifiable {
     /// - Parameter task: The `AWSS3TransferUtilityUploadTask` that was created.
     @S3UploadTaskActor
     func didCreate(task: AWSS3TransferUtilityUploadTask) {
-        self.task = task
-        monitor?.upload(self, didCreateTask: task)
+        if self.task == nil {
+            self.task = task
+            monitor?.upload(self, didCreateTask: task)
 
-        switch state {
-        case .initialized, .finished:
-            break
+            switch state {
+            case .initialized, .finished:
+                break
 
-        case .cancelled:
-            task.cancel()
+            case .cancelled:
+                task.cancel()
 
-            didCancel(task: task)
+                didCancel(task: task)
 
-        case .resumed:
-            task.resume()
+            case .resumed:
+                task.resume()
 
-            didResume(task: task)
+                didResume(task: task)
 
-        case .suspended:
-            task.suspend()
+            case .suspended:
+                task.suspend()
 
-            didSuspend(task: task)
+                didSuspend(task: task)
+            }
         }
     }
 
@@ -303,36 +305,6 @@ public class S3UploadTask: UploadTask, Identifiable {
         return self
     }
 
-    /// Sets a completion callback to be invoked when the upload operation has finished.
-    ///
-    /// This callback is triggered once the upload process completes, regardless of
-    /// whether it ended successfully or with an error. It provides the final outcome
-    /// of the operation so that you can handle post-upload actions such as updating
-    /// the UI, notifying the user, or performing cleanup tasks.
-    ///
-    /// - Parameter completion: A closure that will be called when the upload finishes.
-    /// - Returns: The upload task instance for method chaining.
-    @discardableResult
-    public func onComplete(_ completion: @escaping (Result<URL, UtilityError>) -> Void) -> Self {
-        completions.append(completion)
-        return self
-    }
-
-    /// Sets a progress callback for monitoring upload progress and returns the task instance.
-    ///
-    /// This method allows you to monitor the upload progress in real-time by providing
-    /// a callback that will be invoked whenever the upload progress changes. The progress
-    /// callback provides detailed information about the current upload status, including
-    /// bytes uploaded, total bytes, and completion percentage.
-    ///
-    /// - Parameter progress: A closure that receives progress updates during the upload operation
-    /// - Returns: The upload task instance for method chaining
-    @discardableResult
-    public func onProgress(_ progress: @escaping (Progress) -> Void) -> Self {
-        progresses.append(progress)
-        return self
-    }
-
     /// Pauses the upload operation and returns the task instance.
     ///
     /// This method temporarily suspends the upload operation, allowing it to
@@ -381,6 +353,38 @@ public class S3UploadTask: UploadTask, Identifiable {
             }
         }
 
+        return self
+    }
+
+    // MARK: - UploadDataTask
+
+    /// Sets a completion callback to be invoked when the upload operation has finished.
+    ///
+    /// This callback is triggered once the upload process completes, regardless of
+    /// whether it ended successfully or with an error. It provides the final outcome
+    /// of the operation so that you can handle post-upload actions such as updating
+    /// the UI, notifying the user, or performing cleanup tasks.
+    ///
+    /// - Parameter completion: A closure that will be called when the upload finishes.
+    /// - Returns: The upload task instance for method chaining.
+    @discardableResult
+    public func onComplete(_ completion: @escaping (Result<URL, UtilityError>) -> Void) -> Self {
+        completions.append(completion)
+        return self
+    }
+
+    /// Sets a progress callback for monitoring upload progress and returns the task instance.
+    ///
+    /// This method allows you to monitor the upload progress in real-time by providing
+    /// a callback that will be invoked whenever the upload progress changes. The progress
+    /// callback provides detailed information about the current upload status, including
+    /// bytes uploaded, total bytes, and completion percentage.
+    ///
+    /// - Parameter progress: A closure that receives progress updates during the upload operation
+    /// - Returns: The upload task instance for method chaining
+    @discardableResult
+    public func onProgress(_ progress: @escaping (Progress) -> Void) -> Self {
+        progresses.append(progress)
         return self
     }
 

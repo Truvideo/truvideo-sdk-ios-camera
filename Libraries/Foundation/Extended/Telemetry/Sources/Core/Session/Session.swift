@@ -55,7 +55,7 @@ public struct Session: Codable, Equatable, Identifiable, Sendable {
     ///   - id: A unique identifier for the session. Defaults to a new UUID.
     ///   - installationId: The identifier of the installation the session belongs to.
     ///   - startedAt: The timestamp when the session started. Defaults to the current date.
-    init(id: UUID = UUID(), installationId: UUID, startedAt: Date = Date()) {
+    public init(id: UUID = UUID(), installationId: UUID, startedAt: Date = Date()) {
         self.id = id
         self.errors = 0
         self.installationId = installationId

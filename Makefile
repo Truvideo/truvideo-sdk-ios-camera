@@ -31,6 +31,7 @@ build:
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme StorageKit -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme StorageKitTesting -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Utilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme UtilitiesTesting -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme CoreDataUtilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Telemetry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Networking -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
@@ -38,6 +39,7 @@ build:
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruVideoApi -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruvideoSdkCamera -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruvideoSdk -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme TruvideoSdkTesting -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	@echo "All frameworks built successfully!"
 
 # Build specific framework by scheme

@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import Utilities
 
 @testable import TruVideoApi
 
@@ -17,7 +18,7 @@ public final class DeviceSettingsResourceMock: DeviceSettingsResource {
     public private(set) var retrieveCalled = false
 
     /// Error to throw from `retrieve()`, if set.
-    public var retrieveError: Error?
+    public var retrieveError: UtilityError?
 
     // MARK: - Initializer
 
@@ -25,7 +26,7 @@ public final class DeviceSettingsResourceMock: DeviceSettingsResource {
 
     // MARK: - DeviceSettingsResource
 
-    public func retrieve() async throws -> DeviceSetting {
+    public func retrieve() async throws(UtilityError) -> DeviceSetting {
         retrieveCalled = true
 
         if let error = retrieveError {

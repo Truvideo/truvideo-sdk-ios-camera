@@ -14,6 +14,12 @@ public final class AuthenticatableClientMock: AuthenticatableClient {
     /// Records whether `authenticate(apiKey:context:signature:externalId:)` was called.
     public private(set) var authenticateCalled = false
 
+    /// Error to throw from `authenticate`, if set.
+    public var authenticateError: UtilityError?
+
+    /// The currently stored authentication session, if any.
+    public var currentSession: TruVideoApi.AuthSession?
+
     /// Captures the parameters passed to `authenticate(...)`.
     public private(set) var lastAuthenticateParams:
         (
@@ -26,11 +32,8 @@ public final class AuthenticatableClientMock: AuthenticatableClient {
     /// Records whether `signOut()` was called.
     public private(set) var signOutCalled = false
 
-    /// Error to throw from `authenticate`, if set.
-    public var authenticateError: UtilityError?
-
     /// Error to throw from `signOut()`, if set.
-    public var signOutError: Error?
+    public var signOutError: UtilityError?
 
     // MARK: - AuthenticatableClient
 
@@ -58,7 +61,7 @@ public final class AuthenticatableClientMock: AuthenticatableClient {
         )
     }
 
-    public func signOut() throws {
+    public func signOut() throws(Utilities.UtilityError) {
         signOutCalled = true
 
         if let error = signOutError {

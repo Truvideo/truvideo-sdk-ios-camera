@@ -13,7 +13,7 @@ extension FileManager {
     /// to persist telemetry events, sessions, and diagnostics.
     ///
     /// - Returns: A `URL` pointing to the telemetry storage directory.
-    var telemetryDirectory: URL {
+    public var telemetryDirectory: URL {
         let fileManager = FileManager.default
         let url = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first ?? fileManager.temporaryDirectory
 

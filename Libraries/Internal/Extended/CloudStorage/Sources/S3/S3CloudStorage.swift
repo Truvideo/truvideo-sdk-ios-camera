@@ -213,7 +213,7 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     /// Uploads data to cloud storage and returns an upload task for monitoring and control.
     ///
     /// This method initiates an upload operation to the cloud storage service and returns
-    /// an `UploadTask` that provides full control over the upload process. The upload
+    /// an `UploadDataTask` that provides full control over the upload process. The upload
     /// task allows you to monitor progress, control the upload lifecycle, and handle
     /// completion or errors.
     ///
@@ -221,8 +221,8 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     ///   - data: The data to upload to cloud storage
     ///   - fileName: The name under which the file will be stored in cloud storage
     ///   - contentType: The MIME type of the data being uploaded
-    /// - Returns: An `UploadTask` that provides control and monitoring capabilities for the upload operation
-    public func upload(_ data: Data, fileName: String, contentType: ContentType) -> any UploadTask {
+    /// - Returns: An `UploadDataTask` that provides control and monitoring capabilities for the upload operation
+    public func upload(_ data: Data, fileName: String, contentType: ContentType) -> any UploadDataTask {
         let payload = S3DataPayload(bucket: bucketName, contentType: contentType, data: data, path: fileName)
         let uploadTask = S3UploadTask(monitor: monitor, payload: payload)
 
@@ -271,18 +271,31 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
         }
     }
 
-    private func didCreate(awsTask: AWSTask<AWSS3TransferUtilityUploadTask>, for task: S3UploadTask) async {
-        guard let uploadTask = awsTask.result else {
-            let error = UtilityError(
-                kind: .CloudStorageErrorReason.uploadTaskCreationFailed,
-                failureReason: "Unable to create the S3 upload task.",
-                underlyingError: awsTask.error
-            )
+    private func didCreate(
+        awsTask: AWSTask<AWSS3TransferUtilityUploadTask>,
+        for task: S3UploadTask
+    ) async {
+        awsTask.continueWith { awsTask in
+            guard let uploadTask = awsTask.result else {
+                let error = UtilityError(
+                    kind: .CloudStorageErrorReason.uploadTaskCreationFailed,
+                    failureReason: "Unable to create the S3 upload task.",
+                    underlyingError: awsTask.error
+                )
 
-            await task.didFailToCreateUploadTask(with: error)
-            return
+                Task {
+                    await task.didFailToCreateUploadTask(with: error)
+                }
+
+                return nil
+            }
+
+            uploadTask.suspend()
+            Task {
+                await task.didCreate(task: uploadTask)
+            }
+
+            return nil
         }
-
-        await task.didCreate(task: uploadTask)
     }
 }

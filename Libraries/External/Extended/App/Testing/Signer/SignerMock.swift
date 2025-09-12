@@ -28,6 +28,13 @@ public final class SignerMock: Signer {
 
     // MARK: - Signer
 
+    /// Simulates the signing operation.
+    ///
+    /// - Parameters:
+    ///   - context: The `Context` containing the data to sign.
+    ///   - secretKey: The secret key used for signing.
+    /// - Returns: A mock signature string. Defaults to `"mock-signature"`.
+    /// - Throws: The configured `error` if set.
     public func sign(_ context: Context, secretKey: String) async throws -> String {
         signCalled = true
         lastSignParams = (context, secretKey)

@@ -9,7 +9,7 @@ import Network
 /// The `NetworPathkMonitor` protocol defines methods and properties to start monitoring network changes,
 /// handle path updates when the network status changes, and cancel monitoring. The conforming types
 /// should provide the ability to monitor network paths and handle updates asynchronously on a specified queue.
-protocol NetworkPathMonitor: AnyObject {
+public protocol NetworkPathMonitor: AnyObject {
     associatedtype Path: NetworkPath
 
     /// Access the current network path tracked by the monitor

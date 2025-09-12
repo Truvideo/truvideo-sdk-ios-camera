@@ -108,6 +108,38 @@ public enum ContentType: String, CaseIterable, Sendable {
     /// ```
     case jpeg = "image/jpeg"
 
+    /// JSON content type for structured data interchange.
+    ///
+    /// This content type is used for JSON (JavaScript Object Notation) data,
+    /// a lightweight format commonly used for transmitting structured data
+    /// between a server and a client. It's widely adopted due to its simplicity,
+    /// readability, and compatibility with most programming languages.
+    ///
+    /// ## Common Uses
+    /// - REST API requests and responses
+    /// - Configuration files
+    /// - Data serialization
+    /// - Web applications
+    /// - Mobile applications
+    ///
+    /// ## File Extensions
+    /// - `.json`
+    ///
+    /// ## Characteristics
+    /// - Human-readable text format
+    /// - Lightweight and language-independent
+    /// - Easy to parse and generate
+    /// - Supports objects, arrays, strings, numbers, booleans, and null
+    ///
+    /// ## Example Usage
+    /// ```swift
+    /// let payload: [String: Any] = ["id": 123, "name": "Darien"]
+    /// let jsonData = try? JSONSerialization.data(withJSONObject: payload)
+    /// cloudStorage.upload(jsonData!, fileName: "data.json", contentType: .json)
+    /// ```
+    ///
+    case json = "application/json"
+
     /// PNG image content type for lossless compressed images.
     ///
     /// This content type is used for PNG images that use lossless compression
@@ -489,7 +521,7 @@ public protocol CloudStorage {
     /// Uploads data to cloud storage and returns an upload task for monitoring and control.
     ///
     /// This method initiates an upload operation to the cloud storage service and returns
-    /// an `UploadTask` that provides full control over the upload process. The upload
+    /// an `UploadDataTask` that provides full control over the upload process. The upload
     /// task allows you to monitor progress, control the upload lifecycle, and handle
     /// completion or errors.
     ///
@@ -497,6 +529,6 @@ public protocol CloudStorage {
     ///   - data: The data to upload to cloud storage
     ///   - fileName: The name under which the file will be stored in cloud storage
     ///   - contentType: The MIME type of the data being uploaded
-    /// - Returns: An `UploadTask` that provides control and monitoring capabilities for the upload operation
-    func upload(_ data: Data, fileName: String, contentType: ContentType) -> any UploadTask
+    /// - Returns: An `UploadDataTask` that provides control and monitoring capabilities for the upload operation
+    func upload(_ data: Data, fileName: String, contentType: ContentType) -> any UploadDataTask
 }

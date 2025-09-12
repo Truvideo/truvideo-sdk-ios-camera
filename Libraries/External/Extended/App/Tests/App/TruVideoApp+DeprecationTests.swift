@@ -3,7 +3,6 @@
 //
 
 import DI
-import ExternalUtilities
 import TruVideoApi
 import TruVideoApiTesting
 import TruvideoSdkTesting
@@ -34,7 +33,7 @@ struct TruVideoAppDeprecatedTests {
             dependencies.authenticatableClient = authenticatableClient
             dependencies.deviceSettingResource = deviceSettingResource
 
-            try? sut.configure(with: TruVideoOptions(apiKey: expectedKey, secretKey: "SECRET"))
+            sut.configure(with: TruVideoOptions(apiKey: expectedKey, secretKey: "SECRET"))
             let key = try? sut.apiKey()
             
             // Then
@@ -46,18 +45,18 @@ struct TruVideoAppDeprecatedTests {
     func testThatApiKeyThrowsIfNotConfigured() async throws {
         await withDependencyValues { _ in
             // Given
-            var expectError: TruVideoSdkError!
+            var expectError: TruvideoSdk.TruVideoSdkError!
             let sut = TruVideoApp()
             
             // When
             do {
                 _ = try sut.apiKey()
             } catch let error {
-                expectError = error as? TruVideoSdkError
+                expectError = error as? TruvideoSdk.TruVideoSdkError
             }
 
             // Then
-            #expect(expectError.kind == ExternalUtilities.TruVideoSdkError.configurationRequired.kind)
+            #expect(expectError.kind == TruVideoSdkError.ErrorReason.configurationRequired)
             #expect(expectError.errorDescription != nil)
             #expect(expectError.failureReason != nil)
         }
@@ -65,15 +64,15 @@ struct TruVideoAppDeprecatedTests {
 
     @Test
     func testThatAuthenticateCallsAuthenticate() async throws {
-        await withDependencyValues { dependencies in
+        try await withDependencyValues { dependencies in
             // Given
             let sut = TruVideoApp()
 
             // When
             dependencies.authenticatableClient = authenticatableClient
             dependencies.deviceSettingResource = deviceSettingResource
-            try? sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
-            try? await sut.authenticate(apiKey: "KEY", payload: "payload", signature: "sig", externalId: "ext")
+            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
+            try await sut.authenticate(apiKey: "KEY", payload: "payload", signature: "sig", externalId: "ext")
             
             // Then
             #expect(authenticatableClient.authenticateCalled == true)
@@ -92,7 +91,7 @@ struct TruVideoAppDeprecatedTests {
             // When
             dependencies.authenticatableClient = authenticatableClient
 
-            try? sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
+            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
             try? await sut.authenticate(apiKey: "KEY", payload: "payload", signature: "sig", externalId: "ext")
             try? sut.clearAuthentication()
 
@@ -152,7 +151,7 @@ struct TruVideoAppDeprecatedTests {
             // When
             dependencies.authenticatableClient = authenticatableClient
 
-            try? sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
+            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
             try? await sut.authenticate()
             let result = try! sut.isAuthenticationExpired()
             

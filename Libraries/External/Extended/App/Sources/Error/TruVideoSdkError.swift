@@ -53,6 +53,12 @@ public struct TruVideoSdkError: LocalizedError {
         failureReason: "SDK configuration is required before authentication."
     )
 
+    public static let makeCloudStorageFailed = TruVideoSdkError(
+        kind: .makeCloudStorageFailed,
+        errorDescription: "An unexpected error occurred. Please try again later.",
+        failureReason: "Invalid response format from the server"
+    )
+
     /// An unknown error that occurred during SDK operation.
     ///
     /// This error is used when an unexpected or unclassified error occurs
@@ -103,6 +109,14 @@ public struct TruVideoSdkError: LocalizedError {
         /// because the cryptographic signature of the device context data is invalid,
         /// malformed, or cannot be verified by the server.
         public static let invalidSignature = ErrorReason(rawValue: "invalidSignature")
+
+        /// Error indicating that the creation of a cloud storage instance has failed.
+        ///
+        /// This error reason is used when the system is unable to initialize or obtain
+        /// a valid cloud storage provider. Possible causes include misconfiguration,
+        /// missing credentials, or internal initialization errors. It provides a general
+        /// failure indicator for handling cloud storage creation issues.
+        public static let makeCloudStorageFailed = ErrorReason(rawValue: "makeCloudStorageFailed")
         
         /// Unknown error.
         public static let unknown = ErrorReason(rawValue: "unknown")

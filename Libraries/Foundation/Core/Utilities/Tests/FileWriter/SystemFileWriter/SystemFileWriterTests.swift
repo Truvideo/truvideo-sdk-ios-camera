@@ -4,12 +4,44 @@
 
 import Foundation
 import Testing
-import Utilities
+import Telemetry
 
-@testable import Telemetry
+@testable import Utilities
 
 struct SystemFileWriterTests {
     // MARK: - Tests
+    
+    @Test
+    func testThatRemoveShouldSucceedsDeletesWhenExistingFile() throws {
+        // Given
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("file_to_delete.json")
+        try "Test".write(to: tempURL, atomically: true, encoding: .utf8)
+        let sut = SystemFileWriter()
+
+        // When
+        try sut.remove(at: tempURL)
+
+        // Then
+        #expect(!FileManager.default.fileExists(atPath: tempURL.path))
+    }
+    
+    @Test
+    func testThatRemoveURLShouldFailsWhenThrowsAnyError() throws {
+        // Given
+        var expectedError: UtilityError?
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("protected.json")
+        let sut = SystemFileWriter(fileManager: FileManagerMock())
+        
+        // When
+        do {
+            try sut.remove(at: tempURL)
+        } catch let error as UtilityError? {
+            expectedError = error
+        }
+
+        // Then
+        #expect(expectedError?.kind == .FileWriterErrorReason.removeAtURLFailed)
+    }
     
     @Test
     func testThatWriteCreatesFileAndWritesContent() throws {
@@ -66,7 +98,7 @@ struct SystemFileWriterTests {
     @Test
     func testThatWriteShouldFail() throws {
         // Given
-        var writeError: UtilityError!
+        var expectedError: UtilityError!
         let invalidURL = URL(fileURLWithPath: "/invalid/path/that/does/not/exist/file.json")
         let sut = SystemFileWriter()
         let testContent = TestCodable(id: 1, name: "Test", isActive: true)
@@ -74,13 +106,13 @@ struct SystemFileWriterTests {
         // When
         do {
             try sut.write(testContent, to: invalidURL)
-        } catch let error as UtilityError {
-            writeError = error
+        } catch let error as UtilityError? {
+            expectedError = error
         }
         
         // Then
         #expect(
-            writeError.kind == .TelemetryErrorReason.writeToFileFailed,
+            expectedError.kind == .FileWriterErrorReason.writeToFileFailed,
             "Should have writeToFileFailed error reason"
         )
     }
@@ -109,6 +141,13 @@ struct SystemFileWriterTests {
         #expect(fileContent == expectedJSON + "\n", "File content should use custom encoder formatting")
         
         try? FileManager.default.removeItem(at: tempURL)
+    }
+}
+
+
+private final class FileManagerMock: FileManager {
+    override func removeItem(at URL: URL) throws {
+        throw NSError(domain: NSCocoaErrorDomain, code: 513, userInfo: nil)
     }
 }
 

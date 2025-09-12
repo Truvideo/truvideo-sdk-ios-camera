@@ -81,7 +81,7 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
         ///   - exception: An optional exception if the event involves an error.
         ///   - timestamp: The time the event occurred. Defaults to the current time.
         ///   - metadata: Optional metadata associated with the event.
-        init(
+        public init(
             name: String,
             severity: Severity,
             source: String,
@@ -111,7 +111,7 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
     ///   - event: The list of telemetry events being reported.
     ///   - context: The context of the device and OS at the time of the event.
     ///   - session: The information of the current user session.
-    init(events: [Event], context: Context, session: Session) {
+    public init(events: [Event], context: Context, session: Session) {
         self.id = UUID()
         self.context = context
         self.events = events

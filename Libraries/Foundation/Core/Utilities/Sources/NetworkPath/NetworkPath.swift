@@ -11,7 +11,7 @@ import Network
 /// interface type is being used in the current network path.
 ///
 /// This protocol is useful for detecting and responding to changes in the type of network connection.
-protocol NetworkPath: Sendable {
+public protocol NetworkPath: Sendable {
     /// Returns the current network connectivity type as a string representation.
     var connectivityType: String { get }
 

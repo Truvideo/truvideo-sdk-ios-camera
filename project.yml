@@ -216,6 +216,37 @@ targets:
       - target: Utilities
     settings:
       GENERATE_INFOPLIST_FILE: YES
+      
+  UtilitiesTesting:
+    type: library.static
+    platform: iOS
+    sources:
+      Libraries/Foundation/Core/Utilities/Testing
+    info:
+      path: Libraries/Foundation/Core/Utilities/Testing/Info.plist
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: UtilitiesTesting
+    dependencies:
+      - target: Utilities
+      - target: Telemetry
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/Utilities/Testing" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
 
   # Foundation Extended (Built on Core)
   CoreDataUtilities:
@@ -545,7 +576,8 @@ targets:
     sources:
       - Libraries/External/Extended/App/Sources
     dependencies:
-      - target: DI      
+      - target: CloudStorage
+      - target: DI
       - target: Networking
       - target: Registry
       - target: StorageKit
@@ -566,6 +598,7 @@ targets:
       OTHER_LDFLAGS:
         - $(inherited)
         - -ObjC
+        - -force_load $(BUILT_PRODUCTS_DIR)/libCloudStorage.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libTruVideoApi.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libUtilities.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libRegistry.a
@@ -595,7 +628,7 @@ targets:
         basedOnDependencyAnalysis: false
 
   TruvideoSdkTesting:
-    type: framework
+    type: library.static
     platform: iOS
     sources:
       - Libraries/External/Extended/App/Testing
@@ -630,6 +663,11 @@ targets:
     sources:
       - Libraries/External/Extended/App/Tests
     dependencies:
+      - target: CloudStorage
+      - target: CloudStorageTesting
+      - target: Utilities
+      - target: UtilitiesTesting
+      - target: Telemetry
       - target: TruvideoSdk
       - target: TruVideoApiTesting
       - target: TruvideoSdkTesting

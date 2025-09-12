@@ -65,6 +65,39 @@ public struct DeviceSetting: Codable, Sendable {
             case newBucketFolderForMedia = "newBucketFolderMedia"
             case region
         }
+
+        // MARK: - Initializer
+
+        /// Creates a new instance of `S3Configuration`.
+        ///
+        /// - Parameters:
+        ///   - bucketName: The name of the S3 bucket for storing files.
+        ///   - bucketForLogs: The folder path within the bucket for log files.
+        ///   - bucketForMedia: The folder path within the bucket for media files.
+        ///   - identityId: The AWS identity ID for authentication.
+        ///   - identityPoolId: The AWS identity pool ID for authentication.
+        ///   - newBucketFolderForLogs: The new folder path within the bucket for log files.
+        ///   - newBucketFolderForMedia: The new folder path within the bucket for media files.
+        ///   - region: The AWS region where the bucket is located.
+        public init(
+            bucketName: String,
+            bucketForLogs: String,
+            bucketForMedia: String,
+            identityId: String,
+            identityPoolId: String,
+            newBucketFolderForLogs: String,
+            newBucketFolderForMedia: String,
+            region: String
+        ) {
+            self.bucketName = bucketName
+            self.bucketForLogs = bucketForLogs
+            self.bucketForMedia = bucketForMedia
+            self.identityId = identityId
+            self.identityPoolId = identityPoolId
+            self.newBucketFolderForLogs = newBucketFolderForLogs
+            self.newBucketFolderForMedia = newBucketFolderForMedia
+            self.region = region
+        }
     }
 
     // MARK: - CodingKeys
@@ -74,5 +107,19 @@ public struct DeviceSetting: Codable, Sendable {
         case isAutoPlayEnabled = "enabledAutoPlay"
         case isNoseCancellingEnabled = "noiseCancelling"
         case s3Configuration = "credentials"
+    }
+
+    // MARK: - Initializer
+
+    /// Creates a new instance of `DeviceSetting`.
+    ///
+    /// - Parameters:
+    ///   - isAutoPlayEnabled: Indicates whether auto play is enabled for the device.
+    ///   - isNoseCancellingEnabled: Indicates whether noise cancellation is enabled for the device.
+    ///   - s3Configuration: AWS S3 storage configuration for the device.
+    public init(isAutoPlayEnabled: Bool, isNoseCancellingEnabled: Bool, s3Configuration: S3Configuration) {
+        self.isAutoPlayEnabled = isAutoPlayEnabled
+        self.isNoseCancellingEnabled = isNoseCancellingEnabled
+        self.s3Configuration = s3Configuration
     }
 }

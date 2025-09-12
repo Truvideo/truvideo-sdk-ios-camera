@@ -15,78 +15,78 @@ import Utilities
 /// `S3UploadMonitor` without performing real S3 uploads.
 public final class S3UploadMonitorMock: S3UploadMonitor {
     // MARK: - Properties
-    
+
     /// Closure executed when `uploadDidCancel` is called.
     public var uploadDidCancelCallback: ((S3UploadTask) -> Void)?
-    
+
     /// Closure executed when `uploadDidFinish` is called.
     public var uploadDidFinishCallback: ((S3UploadTask) -> Void)?
-    
+
     /// Closure executed when `uploadDidResume` is called.
     public var uploadDidResumeCallback: ((S3UploadTask) -> Void)?
-    
+
     /// Closure executed when `uploadDidSuspend` is called.
     public var uploadDidSuspendCallback: ((S3UploadTask) -> Void)?
-    
+
     /// Closure executed when `upload(_:didCancelTask:)` is called.
     public var uploadDidCancelTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask) -> Void)?
-    
+
     /// Closure executed when `upload(_:didCompleteTask:with:)` is called.
     public var uploadDidCompleteTaskCallback: ((S3UploadTask, AWSS3TransferUtilityTask, UtilityError?) -> Void)?
-    
+
     /// Closure executed when `upload(_:didCreateTask:)` is called.
     public var uploadDidCreateTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask) -> Void)?
-    
+
     /// Closure executed when `upload(_:didFailTask:with:)` is called.
     public var uploadDidFailTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask, UtilityError) -> Void)?
-    
+
     /// Closure executed when `upload(_:didFailToCreateUploadTaskWith:)` is called.
     public var uploadDidFailToCreateUploadTaskCallback: ((S3UploadTask, UtilityError) -> Void)?
-    
+
     /// Closure executed when `upload(_:didResumeTask:)` is called.
     public var uploadDidResumeTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask) -> Void)?
-    
+
     /// Closure executed when `upload(_:didSuspendTask:)` is called.
     public var uploadDidSuspendTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask) -> Void)?
-    
+
     /// Number of times `uploadDidCancel` was called.
     public private(set) var uploadDidCancelCallCount = 0
-    
+
     /// Number of times `upload(_:didCancelTask:)` was called.
     public private(set) var uploadDidCancelTaskCallCount = 0
-    
+
     /// Number of times `upload(_:didCompleteTask:with:)` was called.
     public private(set) var uploadDidCompleteTaskCallCount = 0
-    
+
     /// Number of times `upload(_:didCreateTask:)` was called.
     public private(set) var uploadDidCreateTaskCallCount = 0
-    
+
     /// Number of times `upload(_:didFailTask:with:)` was called.
     public private(set) var uploadDidFailTaskCallCount = 0
-    
+
     /// Number of times `upload(_:didFailToCreateUploadTaskWith:)` was called.
     public private(set) var uploadDidFailToCreateUploadTaskCallCount = 0
-    
+
     /// Number of times `upload(_:didResumeTask:)` was called.
     public private(set) var uploadDidResumeTaskCallCount = 0
-    
+
     /// Number of times `upload(_:didSuspendTask:)` was called.
     public private(set) var uploadDidSuspendTaskCallCount = 0
-    
+
     /// Number of times `uploadDidFinish` was called.
     public private(set) var uploadDidFinishCallCount = 0
-    
+
     /// Number of times `uploadDidResume` was called.
     public private(set) var uploadDidResumeCallCount = 0
-    
+
     /// Number of times `uploadDidSuspend` was called.
     public private(set) var uploadDidSuspendCallCount = 0
 
     /// Creates a new instance of the `S3UploadMonitor` .
     public init() {}
-    
+
     // MARK: - S3UploadMonitor
-    
+
     /// Notifies that the upload process was canceled.
     ///
     /// - Parameter upload: The `S3UploadTask` instance representing the canceled upload.
@@ -94,7 +94,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidCancelCallCount += 1
         uploadDidCancelCallback?(upload)
     }
-    
+
     /// Notifies that the upload process finished successfully.
     ///
     /// - Parameter upload: The `S3UploadTask` instance representing the completed upload.
@@ -102,7 +102,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidFinishCallCount += 1
         uploadDidFinishCallback?(upload)
     }
-    
+
     /// Notifies that the upload process was resumed after being paused.
     ///
     /// - Parameter upload: The `S3UploadTask` instance representing the resumed upload.
@@ -110,7 +110,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidResumeCallCount += 1
         uploadDidResumeCallback?(upload)
     }
-    
+
     /// Notifies that the upload process was suspended (paused).
     ///
     /// - Parameter upload: The `S3UploadTask` instance representing the suspended upload.
@@ -118,7 +118,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidSuspendCallCount += 1
         uploadDidSuspendCallback?(upload)
     }
-    
+
     /// Notifies that an individual AWS S3 upload task was canceled.
     ///
     /// - Parameters:
@@ -128,7 +128,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidCancelTaskCallCount += 1
         uploadDidCancelTaskCallback?(upload, task)
     }
-    
+
     /// Notifies that an individual AWS S3 upload task completed, with or without error.
     ///
     /// - Parameters:
@@ -143,7 +143,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidCompleteTaskCallCount += 1
         uploadDidCompleteTaskCallback?(upload, task, error)
     }
-    
+
     /// Notifies that an AWS S3 upload task was successfully created.
     ///
     /// - Parameters:
@@ -153,7 +153,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidCreateTaskCallCount += 1
         uploadDidCreateTaskCallback?(upload, task)
     }
-    
+
     /// Notifies that an AWS S3 upload task failed during execution.
     ///
     /// - Parameters:
@@ -168,7 +168,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidFailTaskCallCount += 1
         uploadDidFailTaskCallback?(upload, task, error)
     }
-    
+
     /// Notifies that the upload process failed to create an AWS S3 upload task.
     ///
     /// - Parameters:
@@ -178,7 +178,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidFailToCreateUploadTaskCallCount += 1
         uploadDidFailToCreateUploadTaskCallback?(upload, error)
     }
-    
+
     /// Notifies that an AWS S3 upload task was resumed after being paused.
     ///
     /// - Parameters:
@@ -188,7 +188,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
         uploadDidResumeTaskCallCount += 1
         uploadDidResumeTaskCallback?(upload, task)
     }
-    
+
     /// Notifies that an AWS S3 upload task was suspended (paused).
     ///
     /// - Parameters:
