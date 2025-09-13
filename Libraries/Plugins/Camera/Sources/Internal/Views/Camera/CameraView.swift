@@ -72,7 +72,7 @@ private struct Camera: View {
                 RecordingFrameOverlay()
                     .hidden(viewModel.state != .running)
             }
-            .overlay(alignment: .topTrailing, content: makeContinueButton)
+            .overlay(content: makeContinueButton)
             .aspectRatio(viewModel.aspectRatio, contentMode: .fit)
             .overlay(alignment: .bottom) {
                 ToolBar()
@@ -109,9 +109,9 @@ private struct Camera: View {
 
     @ViewBuilder
     private func makeContinueButton() -> some View {
-        ContinueButton()
+        ContinueButton(onTap: viewModel.onContinue)
             .padding(.top)
-            .padding(.trailing, theme.spacingTheme.sm)
+            .padding(.horizontal, theme.spacingTheme.sm)
             .hidden(viewModel.medias.isEmpty || [.paused, .running].contains(viewModel.state))
             .animation(.linear(duration: 0.1).delay(0.7), value: viewModel.medias)
     }

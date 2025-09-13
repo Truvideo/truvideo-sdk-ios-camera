@@ -571,7 +571,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @objc
     func didReceiveSessionWasInterruptedNotification(_ notification: Notification) {
         sessionWasRunning = state == .running && UIApplication.shared.applicationState != .background
-        
+
         if state == .running {
             pauseSession()
         }

@@ -51,9 +51,9 @@ public class S3StreamUploadTask: StreamUploadTask {
     /// This property should be thread-safe and provide consistent values
     /// across multiple threads accessing the same upload task.
     public private(set) var state = UploadTaskState.initialized
-    
+
     // MARK: - Private Static Properties
-    
+
     private static let awsHeaderETag = "ETag"
     private static let awsHeaderRequestId = "x-amz-request-id"
     private static let emptyResponseCodes: Set<Int> = [200, 201, 202, 204, 205]
@@ -113,24 +113,24 @@ public class S3StreamUploadTask: StreamUploadTask {
         guard let ongoingTask = ongoingTasks.first(where: { $0.partNumber == partNumber }) else {
             return
         }
-    
+
         let result: Result<String, UtilityError> = {
             if let error {
                 return .failure(error)
             }
-            
+
             guard let eTag = ongoingTask.task.response?.allHeaderFields[Self.awsHeaderETag] as? String else {
                 let error = UtilityError(
                     kind: .CloudStorageErrorReason.missingETag,
                     failureReason: "Upload operation finished, but the expected ETag header is missing in the response"
                 )
-                
+
                 return .failure(error)
             }
-            
+
             return .success(eTag)
         }()
-        
+
         let response = UploadPartResponse(
             data: ongoingTask.partBody,
             partNumber: ongoingTask.partNumber,
@@ -139,17 +139,17 @@ public class S3StreamUploadTask: StreamUploadTask {
             statusCode: ongoingTask.task.response?.statusCode,
             url: ongoingTask.task.response?.url
         )
-        
+
         switch result {
         case .success:
             completedTasks.append(response)
-            
+
         case .failure:
             failedTasks.append(response)
         }
 
         ongoingTasks = ongoingTasks.filter { $0.partNumber != partNumber }
-        
+
         monitor?.upload(self, didCompleteTask: task, for: partNumber, with: error)
     }
 

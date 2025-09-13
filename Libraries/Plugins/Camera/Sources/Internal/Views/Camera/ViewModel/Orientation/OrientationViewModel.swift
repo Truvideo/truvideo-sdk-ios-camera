@@ -7,11 +7,15 @@ import Foundation
 import SwiftUICore
 import UIKit
 
-final class CircleButtonViewModel: ObservableObject, OrientationMonitorSubscriber {
+final class OrientationViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Dependencies
 
     @Dependency(\.orientationMonitor)
     private var orientationMonitor: OrientationMonitor
+
+    // MARK: - Private Properties
+
+    private var disableAnimations: Bool
 
     // MARK: - Properties
 
@@ -20,6 +24,12 @@ final class CircleButtonViewModel: ObservableObject, OrientationMonitorSubscribe
     /// This property stores the most recent device orientation detected by the
     /// orientation monitor.
     private(set) var deviceOrientation = UIDeviceOrientation.portrait
+
+    /// The current origin of the orientation.
+    ///
+    /// This property stores the most recent source of the orientation detected by the
+    /// orientation monitor.
+    private(set) var deviceOrientationSource: DeviceOrientation.Source = .system
 
     /// The previous device orientation before the current change.
     ///
@@ -46,8 +56,8 @@ final class CircleButtonViewModel: ObservableObject, OrientationMonitorSubscribe
     ///
     /// - Parameter orientationMonitor: The orientation monitoring service to use.
     init() {
+        disableAnimations = UIDevice.current.userInterfaceIdiom == .pad
         orientationMonitor.add(self)
-
         self.orientationMonitor.startMonitoring()
     }
 
@@ -64,14 +74,25 @@ final class CircleButtonViewModel: ObservableObject, OrientationMonitorSubscribe
     func didReceive(_ deviceOrientation: DeviceOrientation) {
         self.previousDeviceOrientation = self.deviceOrientation
         self.deviceOrientation = deviceOrientation.orientation
+        deviceOrientationSource = deviceOrientation.source
 
-        let transition = OrientationTransition(from: previousDeviceOrientation, to: deviceOrientation.orientation)
-        if deviceOrientation.source == .sensors && UIDevice.current.orientation == .portrait {
-            rotationAngle = transition.newAngle(from: rotationAngle)
-        }
+        if !disableAnimations {
+            let transition = OrientationTransition(from: previousDeviceOrientation, to: deviceOrientation.orientation)
+            if deviceOrientation.source == .sensors && UIDevice.current.orientation == .portrait {
+                withAnimation(.spring(duration: 0.3)) {
+                    rotationAngle = transition.newAngle(from: rotationAngle)
+                }
+            }
 
-        if deviceOrientation.source == .system && UIDevice.current.orientation == .portrait {
-            rotationAngle = transition.newAngle(from: rotationAngle)
+            if deviceOrientation.source == .system && UIDevice.current.orientation == .portrait {
+                withAnimation(.spring(duration: 0.3)) {
+                    rotationAngle = transition.newAngle(from: rotationAngle)
+                }
+            }
+
+            if deviceOrientation.orientation == UIDeviceOrientation.portrait {
+                self.rotationAngle = .degrees(0)
+            }
         }
     }
 }

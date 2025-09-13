@@ -21,7 +21,7 @@ import Networking
 /// - Managing retries or error handling at the task level.
 struct OngoingTask: Identifiable {
     let id: UUID
-    
+
     /// The raw binary data for the video chunk being uploaded.
     let partBody: Data
 
@@ -30,9 +30,9 @@ struct OngoingTask: Identifiable {
 
     /// The `UploadRequest` instance handling the network operation for this part.
     let task: any UploadRequest
-    
+
     // MARK: - Initializer
-    
+
     init(id: UUID = UUID(), partBody: Data, partNumber: Int, task: any UploadRequest) {
         self.id = id
         self.partBody = partBody
@@ -42,9 +42,9 @@ struct OngoingTask: Identifiable {
 }
 
 extension OngoingTask: Equatable {
-    
+
     // MARK: - Equatable
-    
+
     /// Returns a Boolean value indicating whether two values are equal.
     ///
     /// - Parameters:

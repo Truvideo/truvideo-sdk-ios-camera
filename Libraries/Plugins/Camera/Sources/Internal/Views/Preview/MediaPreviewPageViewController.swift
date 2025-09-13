@@ -78,12 +78,14 @@ final class MediaPreviewPageViewController: UIPageViewController {
     // MARK: - Actions
 
     /// Dismisses the preview when the close button is tapped.
-    @objc private func closeTapped() {
+    @objc
+    private func closeTapped() {
         presentingViewController?.dismiss(animated: true, completion: nil)
     }
 
     /// Deletes the current media item when the delete button is tapped.
-    @objc private func deleteTapped() {
+    @objc
+    private func deleteTapped() {
         guard currentIndex < medias.count else { return }
 
         mediaDelegate?.mediaPreviewPageViewController(self, didDeleteAt: currentIndex)
@@ -91,15 +93,14 @@ final class MediaPreviewPageViewController: UIPageViewController {
 
         if medias.isEmpty {
             presentingViewController?.dismiss(animated: false, completion: nil)
-            mediaDelegate?.mediaPreviewPageViewController(self, didDeleteAt: currentIndex)
             return
         }
 
-        let newIndex = max(0, currentIndex - 1)
-        currentIndex = newIndex
+        let direction = currentIndex == 0 ? UIPageViewController.NavigationDirection.forward : .reverse
+        currentIndex = max(0, min(currentIndex - 1, medias.count - 1))
 
-        if let newVC = mediaViewController(for: newIndex) {
-            setViewControllers([newVC], direction: .reverse, animated: true, completion: nil)
+        if let newViewController = mediaViewController(for: currentIndex) {
+            setViewControllers([newViewController], direction: direction, animated: true, completion: nil)
         }
     }
 
@@ -152,6 +153,7 @@ final class MediaPreviewPageViewController: UIPageViewController {
             let viewController = PhotoViewController(image: pic.image)
             viewController.index = index
             return viewController
+
         case let .clip(video):
             let viewController = ClipViewController(clip: video)
             viewController.index = index
@@ -169,6 +171,7 @@ extension MediaPreviewPageViewController: ZoomAnimatorDestinationProvider {
         } else if let current = viewControllers?.first as? ClipViewController {
             return current.clip.thumbnail
         }
+
         return nil
     }
 
@@ -178,6 +181,7 @@ extension MediaPreviewPageViewController: ZoomAnimatorDestinationProvider {
         } else if let current = viewControllers?.first as? ClipViewController {
             return current.view
         }
+
         return nil
     }
 
@@ -199,8 +203,8 @@ extension MediaPreviewPageViewController: UIPageViewControllerDataSource, UIPage
         _ pageViewController: UIPageViewController,
         viewControllerBefore viewController: UIViewController
     ) -> UIViewController? {
-
         let index: Int
+
         if let current = viewController as? PhotoViewController {
             index = current.index
         } else if let current = viewController as? ClipViewController {
