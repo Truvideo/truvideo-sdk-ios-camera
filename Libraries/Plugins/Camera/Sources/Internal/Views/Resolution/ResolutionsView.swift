@@ -5,15 +5,19 @@
 import SwiftUI
 
 struct ResolutionsView: View {
-    // MARK: - Binding Properties
-
-    @Binding var isPresented: Bool
-    @Binding var selection: VideoResolution
-
     // MARK: - Environment Properties
 
     @Environment(\.theme)
     var theme
+
+    // MARK: - State Object
+
+    @StateObject private var viewModel = OrientationViewModel()
+
+    // MARK: - Binding Properties
+
+    @Binding var isPresented: Bool
+    @Binding var selection: VideoResolution
 
     // MARK: - Body
 
@@ -30,15 +34,23 @@ struct ResolutionsView: View {
                 .selected(selection == resolution)
             }
         }
+        .if(viewModel.deviceOrientationSource == .sensors) { view in
+            view
+                .rotationEffect(viewModel.rotationAngle)
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(style: .dark)
         .overlay(alignment: .topLeading) {
             CircleButton {
                 Icon(icon: DSIcons.xmark, size: CGSize(theme.sizeTheme.lg))
             } action: {
                 isPresented.toggle()
             }
-            .padding(.horizontal, theme.spacingTheme.md)
+            .padding(theme.spacingTheme.md)
+        }
+        .background {
+            EmptyView()
+                .background(style: .dark)
+                .ignoresSafeArea()
         }
     }
 }
