@@ -5,7 +5,6 @@
 // swiftlint:disable type_body_length
 
 import AVFoundation
-import Combine
 import Foundation
 import UIKit
 internal import Utilities
@@ -14,9 +13,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Private Properties
 
     private let audioDevice = AudioDevice()
-    private var cancellables = Set<AnyCancellable>()
     private let captureSession = AVCaptureSession()
     private let configuration: TruvideoSdkCameraConfiguration
+    private var isCaptureInFlight = false
+    private var lastPhotoCaptureUptime = TimeInterval.zero
     private let orientationMonitor: OrientationMonitor
     private let movieOutputProcessor = MovieOutputProcessor()
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
@@ -251,6 +251,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
         initialize()
         configureObservers()
+
         configureSessionObservers()
         subscribeToSecondsRecorded()
 
@@ -280,11 +281,23 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 return
             }
 
+            let debounceWindow = configuration.flashMode != .off ? 0.45 : 0
+            let systemUptime = ProcessInfo.processInfo.systemUptime
+
+            if systemUptime - lastPhotoCaptureUptime < debounceWindow || isTorchEnabled, isCaptureInFlight {
+                return
+            }
+
+            isCaptureInFlight = true
+            lastPhotoCaptureUptime = systemUptime
+
+            defer { isCaptureInFlight = false }
+
             do {
-                if let photo = try await videoDevice.capturePhoto() {
-                    medias.insert(.photo(photo), at: 0)
-                    validate()
-                }
+                let photo = try await videoDevice.capturePhoto()
+
+                medias.insert(.photo(photo), at: 0)
+                validate()
             } catch {
                 didReceiveError(error.localizedDescription)
             }

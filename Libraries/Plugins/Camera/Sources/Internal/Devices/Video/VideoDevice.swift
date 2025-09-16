@@ -3,13 +3,11 @@
 //
 
 import AVFoundation
+import Combine
 import CoreImage
 import Foundation
 import UIKit
 internal import Utilities
-
-// TODO:
-// 1. We should be setting session presset instead
 
 /// A concrete video capture device that configures inputs/outputs and manages lifecycle.
 ///
@@ -22,18 +20,16 @@ class VideoDevice: NSObject, Device {
     private let identifier = UUID()
     private var captureDevice: AVCaptureDevice?
     private var captureDeviceInput: AVCaptureDeviceInput?
-    private var capturePhotoOutput: AVCapturePhotoOutput?
+    private let capturePhotoController = CapturePhotoController()
     private var captureSession: AVCaptureSession?
     private var captureVideoDataOutput: AVCaptureVideoDataOutput?
     private let context = CIContext.createDefault()
-    private var continuation: CheckedContinuation<Photo?, Error>?
     private var fileNameCount = 1
     private var focusObserver = FocusObserver()
     private var lastVideoBuffer: VideoSampleBuffer?
     private var needsConfiguration = true
     private let notificationCenter: NotificationCenter
     private var processors: [ObjectIdentifier: any VideoOutputProcessor] = [:]
-    private var supportedFormats: [AVCaptureDevice.Position: [Format]] = [:]
     private let queue = DispatchQueue(label: "com.video.device.queue")
     private var videoOrientation = AVCaptureVideoOrientation.portrait
     private lazy var availableDevices: [AVCaptureDevice.Position: [AVCaptureDevice]] = {
@@ -59,14 +55,6 @@ class VideoDevice: NSObject, Device {
     /// It can be set to different modes such as off, on, auto, or red-eye reduction
     /// to achieve the desired lighting effect for the captured image.
     var flashMode = AVCaptureDevice.FlashMode.off
-
-    /// The currently active video format for this device.
-    ///
-    /// This property stores the `VideoDevice.Format` instance that is currently
-    /// configured and active on the video capture device. It represents the
-    /// resolution, frame rate capabilities, HDR support, and other format-specific
-    /// properties that are currently in use.
-    private(set) var format: VideoDevice.Format?
 
     /// Output directory for the device.
     var outputDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -129,24 +117,6 @@ class VideoDevice: NSObject, Device {
         )
 
         return hasBuiltInUltraWideCamera ? [0.5] + Array(zoomFactors) : Array(zoomFactors)
-    }
-
-    /// Returns an array of supported video formats for the current device position.
-    ///
-    /// This computed property provides access to all available video formats that
-    /// the capture device supports at the specified position (front or back camera).
-    var formats: [Format] {
-        guard let captureDevice else {
-            return []
-        }
-
-        let formats = supportedFormats[position] ?? captureDevice.formats.map(Format.from)
-
-        if supportedFormats[position] == nil {
-            supportedFormats[position] = formats
-        }
-
-        return formats
     }
 
     /// Indicates whether the active capture device supports and currently exposes a usable torch.
@@ -274,78 +244,6 @@ class VideoDevice: NSObject, Device {
     /// or perform any necessary pre-position-change operations.
     nonisolated static let deviceWillChangePosition = Notification.Name("com.truvideo.deviceWillChangePosition")
 
-    // MARK: - Types
-
-    /// Represents a camera format with its capabilities and supported features.
-    ///
-    /// This struct encapsulates all the important properties of an `AVCaptureDevice.Format`
-    /// in a more accessible and type-safe manner. It provides easy access to resolution,
-    /// frame rates, HDR support, and various camera capabilities.
-    struct Format: Equatable {
-        /// The underlying `AVCaptureDevice.Format` that this struct represents.
-        ///
-        /// This is the original format object from AVFoundation that contains all the
-        /// low-level configuration details.
-        let format: AVCaptureDevice.Format
-
-        /// Indicates whether this format supports High Dynamic Range (HDR) recording.
-        ///
-        /// HDR formats provide better color reproduction and dynamic range compared to
-        /// standard formats. This is especially beneficial in high-contrast scenes.
-        let isVideoHDRSupported: Bool
-
-        /// The maximum frame rate supported by this format.
-        ///
-        /// This represents the highest number of frames per second that can be captured
-        /// using this format. Higher frame rates provide smoother motion but require
-        /// more processing power.
-        let maxFrameRate: Double
-
-        /// The minimum frame rate supported by this format.
-        ///
-        /// This represents the lowest number of frames per second that can be captured
-        /// using this format. Lower frame rates can help save battery and reduce
-        /// processing load.
-        let minFrameRate: Double
-
-        /// The maximum zoom factor supported by this format.
-        ///
-        /// This represents how much the camera can zoom in while maintaining quality.
-        /// Higher zoom factors allow for closer shots but may reduce image quality.
-        let maxZoomFactor: Double
-
-        /// The dimensions of this format in points.
-        ///
-        /// This represents the width and height of the video frames that will be
-        /// captured using this format. Larger sizes provide higher resolution but
-        /// require more storage and processing power.
-        let size: CGSize
-
-        // MARK: - Static methods
-
-        /// Creates a `Format` instance from an `AVCaptureDevice.Format`.
-        ///
-        /// This factory method extracts all the relevant properties from an AVFoundation
-        /// format and creates a `Format` instance with the extracted values. It provides
-        /// a convenient way to convert AVFoundation formats into the custom `Format` type
-        /// without needing to manually extract each property.
-        ///
-        /// - Parameter format: The `AVCaptureDevice.Format` to convert.
-        /// - Returns: A new `Format` instance containing the extracted properties.
-        static func from(_ format: AVCaptureDevice.Format) -> Format {
-            let dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription)
-
-            return Format(
-                format: format,
-                isVideoHDRSupported: format.isVideoHDRSupported,
-                maxFrameRate: format.videoSupportedFrameRateRanges.map(\.maxFrameRate).max() ?? 30,
-                minFrameRate: format.videoSupportedFrameRateRanges.map(\.minFrameRate).min() ?? 1,
-                maxZoomFactor: format.videoMaxZoomFactor,
-                size: CGSize(width: Int(dimensions.width), height: Int(dimensions.height))
-            )
-        }
-    }
-
     // MARK: - Initializer
 
     /// Creates a new instance of the `VideoDevice`.
@@ -386,7 +284,8 @@ class VideoDevice: NSObject, Device {
         do {
             captureDeviceInput = try session.addDeviceInput(for: videoCaptureDevice)
             captureVideoDataOutput = try session.addDeviceOutput()
-            capturePhotoOutput = try session.addPhotoOutput()
+
+            try capturePhotoController.configure(in: session)
 
             captureVideoDataOutput?.setSampleBufferDelegate(self, queue: queue)
             updateVideoOutputSettings()
@@ -506,7 +405,7 @@ class VideoDevice: NSObject, Device {
     ///
     /// - Returns: A `Photo` object containing the captured image data, or `nil` if capture fails
     /// - Throws: `UtilityError` with `.VideoDeviceErrorReason.failedToCapturePhoto` if the device needs configuration
-    func capturePhoto() async throws -> Photo? {
+    func capturePhoto() async throws -> Photo {
         guard !needsConfiguration else {
             throw UtilityError(
                 kind: .VideoDeviceErrorReason.failedToCapturePhoto,
@@ -515,22 +414,18 @@ class VideoDevice: NSObject, Device {
         }
 
         guard state == .running else {
-            return try await withCheckedThrowingContinuation { continuation in
-                Task {
-                    guard let capturePhotoOutput else {
-                        return continuation.resume(returning: nil)
-                    }
+            let configuration = CapturePhotoController.Configuration(
+                devicePosition: position,
+                flashMode: flashMode,
+                imageFormat: configuration.imageFormat,
+                isHighResolutionEnabled: configuration.isHighResolutionEnabled,
+                outputURL: nextOutputURL()
+            )
 
-                    let capturePhotoSettings = AVCapturePhotoSettings.from(configuration)
-
-                    capturePhotoOutput.isHighResolutionCaptureEnabled = configuration.isHighResolutionEnabled
-                    capturePhotoSettings.flashMode = flashMode
-
-                    self.continuation = continuation
-                    await MainActor.run {
-                        capturePhotoOutput.capturePhoto(with: capturePhotoSettings, delegate: self)
-                    }
-                }
+            do {
+                return try await capturePhotoController.capturePhoto(with: configuration)
+            } catch {
+                throw UtilityError(kind: .VideoDeviceErrorReason.failedToCapturePhoto, underlyingError: error)
             }
         }
 
@@ -591,44 +486,6 @@ class VideoDevice: NSObject, Device {
         }
     }
 
-    /// Sets the active format and frame rate for the video capture device.
-    ///
-    /// This method configures the device to use a specific video format with a consistent
-    /// frame rate. It validates that the format is supported by the device before applying
-    /// the configuration, ensuring compatibility and preventing runtime errors.
-    ///
-    /// - Parameter format: The `Format` instance containing the desired video format and frame rate capabilities.
-    /// - Throws: `UtilityError` with `.VideoDeviceErrorReason.setFormatFailed` if the
-    ///           format is not supported by the device or if the configuration fails.
-    @DeviceActor
-    func setFormat(_ format: Format) throws(UtilityError) {
-        // TODO: We should be setting session presset instead
-        if let captureDevice {
-            guard captureDevice.formats.contains(format.format) else {
-                throw UtilityError(
-                    kind: .VideoDeviceErrorReason.setFormatFailed,
-                    failureReason: "Format not supported by device."
-                )
-            }
-
-            do {
-                try captureDevice.lockForConfiguration()
-
-                defer { captureDevice.unlockForConfiguration() }
-
-                let frameDuration = CMTime(value: 1, timescale: Int32(format.maxFrameRate))
-
-                captureDevice.activeFormat = format.format
-                captureDevice.activeVideoMinFrameDuration = frameDuration
-                captureDevice.activeVideoMaxFrameDuration = frameDuration
-
-                self.format = format
-            } catch {
-                throw UtilityError(kind: .VideoDeviceErrorReason.setFormatFailed, underlyingError: error)
-            }
-        }
-    }
-
     /// Switches the active camera to the specified physical position.
     ///
     /// If the position changes and a session/device are available, the current video input
@@ -642,13 +499,7 @@ class VideoDevice: NSObject, Device {
         if position != newPosition {
             captureDevice = availableDevices[newPosition]?.first
 
-            if /// The active session.
-            let captureSession,
-
-                /// The active device.
-                let captureDevice
-            {
-
+            if let captureSession, let captureDevice {
                 let oldPosition = position
 
                 notificationCenter.post(
@@ -692,6 +543,7 @@ class VideoDevice: NSObject, Device {
     @DeviceActor
     func setStabilizationMode(_ mode: AVCaptureVideoStabilizationMode) {
         stabilizationMode = mode
+        capturePhotoController.setStabilizationMode(mode)
         updateVideoOutputSettings()
     }
 
@@ -804,12 +656,7 @@ class VideoDevice: NSObject, Device {
                 self.captureDeviceInput = nil
             }
 
-            if let capturePhotoOutput {
-                captureSession.removeOutput(capturePhotoOutput)
-
-                self.capturePhotoOutput = nil
-            }
-
+            capturePhotoController.destroy()
             captureDevice = nil
         }
     }
@@ -821,7 +668,7 @@ class VideoDevice: NSObject, Device {
         return outputDirectory.appendingPathComponent(filename)
     }
 
-    private func snapshot() throws(UtilityError) -> Photo? {
+    private func snapshot() throws(UtilityError) -> Photo {
         guard
             /// The Image context to use when capturing the photo.
             let context,
@@ -874,82 +721,12 @@ class VideoDevice: NSObject, Device {
     }
 
     private func updateVideoOutputSettings() {
-        if let capturePhotoOutputConnection = capturePhotoOutput?.connection(with: .video) {
-            capturePhotoOutputConnection.automaticallyAdjustsVideoMirroring = false
-            capturePhotoOutputConnection.isVideoMirrored = false
-
-            if capturePhotoOutputConnection.isVideoStabilizationSupported {
-                capturePhotoOutputConnection.preferredVideoStabilizationMode = stabilizationMode
-            }
-        }
-
         if let videoConnection = captureVideoDataOutput?.connection(with: .video) {
             videoConnection.automaticallyAdjustsVideoMirroring = false
             videoConnection.isVideoMirrored = false
 
             if videoConnection.isVideoStabilizationSupported {
                 videoConnection.preferredVideoStabilizationMode = stabilizationMode
-            }
-        }
-    }
-}
-
-extension VideoDevice: AVCapturePhotoCaptureDelegate {
-
-    // MARK: - AVCapturePhotoCaptureDelegate
-
-    func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        defer {
-            continuation = nil
-        }
-
-        if let continuation {
-            if let error {
-                let error = UtilityError(kind: .VideoDeviceErrorReason.failedToCapturePhoto, underlyingError: error)
-
-                continuation.resume(throwing: error)
-                return
-            }
-
-            do {
-                guard let cgImage = photo.cgImageRepresentation() else {
-                    throw UtilityError(
-                        kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                        failureReason: "Unable to get data representation of the photo."
-                    )
-                }
-
-                let orientation = CGImagePropertyOrientation(from: videoOrientation, devicePosition: position)
-                let ciiImage = CIImage(cgImage: cgImage).oriented(orientation)
-
-                guard
-                    /// The new image from the photo.
-                    let image = context?.createCGImage(ciiImage, from: ciiImage.extent),
-
-                    /// The image data representation.
-                    let data = UIImage(cgImage: image).data(with: configuration.imageFormat)
-                else {
-
-                    throw UtilityError(
-                        kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                        failureReason: "Unable to get data representation of the photo."
-                    )
-                }
-
-                let outputURL = nextOutputURL()
-                let photo = Photo(
-                    url: outputURL,
-                    format: configuration.imageFormat,
-                    lensPosition: position,
-                    orientation: UIDeviceOrientation(from: videoOrientation)
-                )
-
-                try data.write(to: outputURL, options: .atomic)
-
-                continuation.resume(returning: photo)
-            } catch {
-                let error = UtilityError(kind: .VideoDeviceErrorReason.failedToCapturePhoto, underlyingError: error)
-                continuation.resume(throwing: error)
             }
         }
     }
@@ -980,36 +757,6 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
                 processors.forEach { $0.process(sampleBuffer, with: configuration) }
             }
         }
-    }
-}
-
-extension AVCapturePhotoSettings {
-    /// Creates an `AVCapturePhotoSettings` instance from a video device configuration.
-    ///
-    /// This method converts a `VideoDeviceConfiguration` into the corresponding
-    /// `AVCapturePhotoSettings` object used by the camera capture system. It configures
-    /// the photo settings with the specified image format, quality settings, and
-    /// resolution options from the configuration object.
-    ///
-    /// - Parameter configuration: The video device configuration containing image format and quality settings
-    /// - Returns: A configured `AVCapturePhotoSettings` instance ready for photo capture
-    fileprivate static func from(_ configuration: VideoDeviceConfiguration) -> AVCapturePhotoSettings {
-        let capturePhotoSettings = AVCapturePhotoSettings(
-            rawPixelFormatType: 0,
-            rawFileType: nil,
-            processedFormat: [
-                AVVideoCodecKey: configuration.imageFormat.codec,
-                AVVideoCompressionPropertiesKey: [
-                    AVVideoQualityKey: NSNumber(value: configuration.imageFormat.quality)
-                ],
-            ],
-            processedFileType: configuration.imageFormat.fileType
-        )
-
-        capturePhotoSettings.isHighResolutionPhotoEnabled = configuration.isHighResolutionEnabled
-        capturePhotoSettings.photoQualityPrioritization = .balanced
-
-        return capturePhotoSettings
     }
 }
 
@@ -1077,60 +824,5 @@ extension AVCaptureSession {
         addOutput(captureVideoDataOutput)
 
         return captureVideoDataOutput
-    }
-
-    /// Adds a photo output to the capture session for photo capture functionality.
-    ///
-    /// This method creates and adds an `AVCapturePhotoOutput` to the capture session,
-    /// enabling photo capture capabilities. It validates that the output can be added
-    /// to the session before attempting to add it, throwing an error if the addition
-    /// fails due to session constraints or configuration issues.
-    ///
-    /// - Returns: An `AVCapturePhotoOutput` instance that has been successfully
-    ///            added to the capture session and is ready for video data processing.
-    /// - Throws: `UtilityError` with `.PhotoDeviceErrorReason.cannotAddOutput` if the photo output cannot be added to the session
-    fileprivate func addPhotoOutput() throws(UtilityError) -> AVCapturePhotoOutput {
-        let capturePhotoOutput = AVCapturePhotoOutput()
-
-        if canAddOutput(capturePhotoOutput) {
-            addOutput(capturePhotoOutput)
-        } else {
-            throw UtilityError(
-                kind: .VideoDeviceErrorReason.cannotAddOutput,
-                failureReason: "Unable to add \(capturePhotoOutput.debugDescription) to the session."
-            )
-        }
-
-        return capturePhotoOutput
-    }
-}
-
-extension UIImage {
-    /// Converts the image to the specified file format and returns the data representation.
-    ///
-    /// This function converts the UIImage to the requested file format using the
-    /// appropriate encoding method. For HEIC format, it uses the native heicData()
-    /// method on iOS 17+ and falls back to JPEG compression on older iOS versions.
-    /// JPEG format uses configurable compression quality, while PNG format uses
-    /// lossless compression without quality settings.
-    ///
-    /// - Parameter fileFormat: The desired output format for the image data
-    /// - Returns: The image data encoded in the specified format, or nil if
-    ///           the conversion process fails
-    fileprivate func data(with fileFormat: FileFormat) -> Data? {
-        switch fileFormat {
-        case .heic:
-            if #available(iOS 17.0, *) {
-                return heicData()
-            } else {
-                return jpegData(compressionQuality: fileFormat.quality)
-            }
-
-        case .jpeg:
-            return jpegData(compressionQuality: fileFormat.quality)
-
-        case .png:
-            return pngData()
-        }
     }
 }
