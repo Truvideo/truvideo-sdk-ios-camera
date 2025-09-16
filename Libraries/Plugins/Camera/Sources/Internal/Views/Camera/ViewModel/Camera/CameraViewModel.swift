@@ -2,8 +2,6 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-// swiftlint:disable type_body_length
-
 import AVFoundation
 import Foundation
 import UIKit
@@ -20,6 +18,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private let orientationMonitor: OrientationMonitor
     private let movieOutputProcessor = MovieOutputProcessor()
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
+    private var photosTaken = 0
     private var sessionWasRunning = false
     private let videoDevice = VideoDevice()
 
@@ -274,9 +273,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// in the localizedError property for user feedback.
     func capturePhoto() {
         Task { @MainActor in
-            let photos = medias.filter(\.isPhoto)
-
-            guard photos.count < maxNumberOfPhotos else {
+            guard photosTaken < maxNumberOfPhotos else {
                 didReceiveError(Localizations.maxNumberOfPicturesReached)
                 return
             }
@@ -290,6 +287,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
             isCaptureInFlight = true
             lastPhotoCaptureUptime = systemUptime
+            photosTaken += 1
 
             defer { isCaptureInFlight = false }
 
@@ -299,6 +297,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 medias.insert(.photo(photo), at: 0)
                 validate()
             } catch {
+                photosTaken -= 1
                 didReceiveError(error.localizedDescription)
             }
         }
@@ -483,12 +482,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     state = .running
 
                 case .writing:
-                    await audioDevice.pause()
-                    await videoDevice.pause()
-
-                    try await movieOutputProcessor.pause()
-
-                    state = .paused
+                    pauseSession()
 
                 default:
                     break
@@ -748,18 +742,16 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     private func pauseSession() {
-        Task { @DeviceActor in
-            audioDevice.pause()
-            videoDevice.pause()
-
+        Task { @MainActor in
             do {
                 try await movieOutputProcessor.pause()
 
-                await MainActor.run {
-                    state = .paused
-                }
+                await audioDevice.pause()
+                await videoDevice.pause()
+
+                state = .paused
             } catch {
-                await didReceiveError(error.localizedDescription)
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -831,4 +823,3 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 }
-// swiftlint:enable type_body_length

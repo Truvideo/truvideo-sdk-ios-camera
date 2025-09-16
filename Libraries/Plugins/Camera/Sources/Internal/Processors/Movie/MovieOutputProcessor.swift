@@ -375,23 +375,25 @@ final class MovieOutputProcessor {
     /// asset writer finalization, error checking, and asset management in a coordinated manner.
     @MovieOutputProcessorActor
     func pause() async throws(UtilityError) {
-        if let assetWriter, state.canTransition(to: .paused) {
+        if state.canTransition(to: .paused) {
             state = .paused
 
-            await assetWriter.finishWriting()
+            if let assetWriter, assetWriter.status == .writing {
+                await assetWriter.finishWriting()
 
-            if assetWriter.status == .failed {
-                throw UtilityError(
-                    kind: .MovieOutputProcessorErrorReason.pauseFailed,
-                    underlyingError: assetWriter.error
-                )
+                if assetWriter.status == .failed {
+                    throw UtilityError(
+                        kind: .MovieOutputProcessorErrorReason.pauseFailed,
+                        underlyingError: assetWriter.error
+                    )
+                }
+
+                currentClipDuration = CMTimeAdd(currentClipDuration, recordingDuration - currentClipDuration)
+
+                destroySession()
+
+                assetsURLs.append(assetWriter.outputURL)
             }
-
-            currentClipDuration = CMTimeAdd(currentClipDuration, recordingDuration - currentClipDuration)
-
-            destroySession()
-
-            assetsURLs.append(assetWriter.outputURL)
         }
     }
 
