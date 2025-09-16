@@ -564,14 +564,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     @MainActor
     @objc
-    func didReceiveSessionInterruptionEnded(_ notification: Notification) {
-        if sessionWasRunning {
-            resumeSession()
-        }
-    }
-
-    @MainActor
-    @objc
     func didReceiveRuntimeErrorNotification(_ notification: Notification) {
         if let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError, state == .running {
             if [.sessionConfigurationChanged, .sessionNotRunning].contains(error.code), !captureSession.isRunning {
@@ -590,9 +582,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    @MainActor
     @objc
     func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
-        if sessionWasRunning {
+        if sessionWasRunning, !captureSession.isRunning {
             Task {
                 captureSession.startRunning()
             }
@@ -639,13 +632,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             self,
             selector: #selector(didReceiveMediaServicesWereResetNotification(_:)),
             name: AVAudioSession.mediaServicesWereResetNotification,
-            object: nil
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveSessionInterruptionEnded(_:)),
-            name: AVCaptureSession.interruptionEndedNotification,
             object: nil
         )
 
@@ -802,25 +788,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private func requestDeviceAccess() async {
         await audioDevice.requestAccess()
         await videoDevice.requestAccess()
-    }
-
-    private func resumeSession() {
-        Task { @DeviceActor in
-            if state.canTransition(to: .running) {
-                do {
-                    try audioDevice.startCapturing()
-                    try videoDevice.startCapturing()
-
-                    captureSession.startRunning()
-
-                    await MainActor.run {
-                        state = .running
-                    }
-                } catch {
-                    await didReceiveError(error.localizedDescription)
-                }
-            }
-        }
     }
 
     private func subscribeToSecondsRecorded() {
