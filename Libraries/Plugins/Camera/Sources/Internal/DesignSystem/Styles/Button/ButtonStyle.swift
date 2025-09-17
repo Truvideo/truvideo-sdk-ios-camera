@@ -126,20 +126,14 @@ public struct PrimaryButtonStyle: ButtonStyle {
         }
 
         private var effectiveTextStyle: TextStyle {
-            let textStyle =
-                theme.buttonTheme.textStyle
-                ?? DSStateProperty { state in
-                    let color =
-                        state.contains(.disabled)
-                        ? theme.colorScheme.onPrimary.opacity(0.78) : theme.colorScheme.onPrimary
-
-                    return theme.textTheme.callout.copyWith(color: color, weight: .semiBold)
-                }
+            let textColor = textColor ?? theme.colorScheme.onPrimary
+            let fallbackTextStyle = theme.textTheme.callout.copyWith(color: textColor, weight: .semiBold)
+            let textStyle = theme.buttonTheme.textStyle ?? DSStateProperty.all(fallbackTextStyle)
 
             return
                 textStyle
                 .resolve(state)
-                .copyWith(color: state.contains(.disabled) ? textColor?.opacity(0.78) : textColor)
+                .copyWith(color: state.contains(.disabled) ? textColor.opacity(0.5) : textColor)
         }
 
         private var state: DSState {

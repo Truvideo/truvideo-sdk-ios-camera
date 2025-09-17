@@ -18,6 +18,9 @@ import SwiftUI
 struct MediaCounterView: View {
     // MARK: - Environment Properties
 
+    @Environment(\.isEnabled)
+    var isEnabled
+
     @Environment(\.theme)
     var theme
 
@@ -29,6 +32,10 @@ struct MediaCounterView: View {
 
     var isHidden: Bool {
         viewModel.numberOfClips.isEmpty && viewModel.numberOfPhotos.isEmpty && viewModel.numberOfMedias.isEmpty
+    }
+
+    var textColor: Color {
+        isEnabled ? theme.colorScheme.onSurface : theme.colorScheme.onSurface.opacity(0.5)
     }
 
     // MARK: - Body
@@ -57,21 +64,21 @@ struct MediaCounterView: View {
     @ViewBuilder
     private func makeContent() -> some View {
         Text(viewModel.numberOfMedias)
-            .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface, kerning: 1.3))
+            .style(theme.textTheme.footnote.copyWith(color: textColor, kerning: 1.3))
             .padding(.bottom, theme.spacingTheme.xs)
             .hidden(viewModel.numberOfMedias.isEmpty)
 
         VStack(spacing: theme.spacingTheme.xxs) {
             Icon(icon: DSIcons.video, size: CGSize(width: theme.spacingTheme.lg, height: theme.spacingTheme.md))
             Text(viewModel.numberOfClips)
-                .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface, kerning: 1.3))
+                .style(theme.textTheme.footnote.copyWith(color: textColor, kerning: 1.3))
         }
         .hidden(viewModel.numberOfClips.isEmpty || !viewModel.numberOfMedias.isEmpty)
 
         VStack(spacing: theme.spacingTheme.xxs) {
             Icon(icon: DSIcons.photo, size: CGSize(width: theme.spacingTheme.lg, height: theme.spacingTheme.md))
             Text(viewModel.numberOfPhotos)
-                .style(theme.textTheme.footnote.copyWith(color: theme.colorScheme.onSurface, kerning: 1.3))
+                .style(theme.textTheme.footnote.copyWith(color: textColor, kerning: 1.3))
         }
         .hidden(viewModel.numberOfPhotos.isEmpty || !viewModel.numberOfMedias.isEmpty)
     }

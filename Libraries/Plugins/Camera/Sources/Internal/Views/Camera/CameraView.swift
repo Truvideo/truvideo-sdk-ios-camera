@@ -155,15 +155,15 @@ private struct RecordingFrameOverlay: View {
                     path.addLine(to: CGPoint(x: size.width - inset, y: inset))
                     path.addLine(to: CGPoint(x: size.width - inset, y: lineLength))
 
-                    // BOTTOM-RIGHT
-                    path.move(to: CGPoint(x: size.width - inset, y: size.height - lineLength))
-                    path.addLine(to: CGPoint(x: size.width - inset, y: size.height - inset))
-                    path.addLine(to: CGPoint(x: size.width - lineLength, y: size.height - inset))
-
                     // BOTTOM-LEFT
                     path.move(to: CGPoint(x: lineLength, y: size.height - inset))
                     path.addLine(to: CGPoint(x: inset, y: size.height - inset))
                     path.addLine(to: CGPoint(x: inset, y: size.height - lineLength))
+
+                    // BOTTOM-RIGHT
+                    path.move(to: CGPoint(x: size.width - inset, y: size.height - lineLength))
+                    path.addLine(to: CGPoint(x: size.width - inset, y: size.height - inset))
+                    path.addLine(to: CGPoint(x: size.width - lineLength, y: size.height - inset))
                 }
                 .stroke(theme.colorScheme.error, lineWidth: lineWidth)
             }
@@ -205,6 +205,7 @@ private struct ToolBar: View {
                     makeSwitchCameraButton()
                 }
             }
+            .allowsHitTesting(viewModel.allowsHitTesting)
         } else if viewModel.deviceOrientation.isLandscape {
             HStack {
                 ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor)
@@ -215,6 +216,7 @@ private struct ToolBar: View {
                     makeTakePhotoButton()
                 }
             }
+            .allowsHitTesting(viewModel.allowsHitTesting)
         }
     }
 
@@ -228,6 +230,7 @@ private struct ToolBar: View {
             viewModel.togglePause()
         }
         .hidden([.finished, .initialized].contains(viewModel.state))
+        .allowsHitTesting(viewModel.allowsHitTesting)
     }
 
     private func makeSwitchCameraButton() -> some View {
@@ -247,6 +250,7 @@ private struct ToolBar: View {
         } action: {
             viewModel.capturePhoto()
         }
+        .allowsHitTesting(viewModel.allowsHitTesting)
     }
 }
 
@@ -314,15 +318,10 @@ private struct TopBar: View {
         } label: {
             MediaCounterView()
         }
-        .overlay {
-            GeometryReader { geometryProxy in
-                ScaledTransitionView(isPresented: $isPresented) {
-                    GalleryView(medias: $viewModel.medias, isPresented: $isPresented)
-                }
-                .startingFrame(geometryProxy.frame(in: .global))
-                .hidden(!isPresented)
-            }
-        }
         .allowsHitTesting(!viewModel.medias.isEmpty)
+        .disabled(viewModel.state == .running)
+        .scaledFullScreenCover(isPresented: $isPresented) {
+            GalleryView(medias: $viewModel.medias, isPresented: $isPresented)
+        }
     }
 }

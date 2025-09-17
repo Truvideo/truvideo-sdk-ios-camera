@@ -66,6 +66,44 @@ extension View {
         }
     }
 
+    /// Presents content as a full-screen cover with a scale transition animation from the current view's frame.
+    ///
+    /// This function creates a custom presentation overlay that animates content from the current view's
+    /// frame to full screen using a smooth scale transition. It uses a `ScaledTransitionView` to provide
+    /// a native iOS-style presentation animation that scales from the originating view's position and size
+    /// to cover the entire screen.
+    ///
+    /// ## Usage Example
+    ///
+    /// ```swift
+    /// Button("Show Gallery") {
+    ///     isPresented.toggle()
+    /// }
+    /// .scaledFullScreenCover(isPresented: $isPresented) {
+    ///     GalleryView(isPresented: $isPresented)
+    /// }
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - isPresented: A binding that controls whether the content is currently presented
+    ///   - content: A view builder closure that returns the content to be presented
+    /// - Returns: A modified view with the scaled full-screen cover overlay
+    func scaledFullScreenCover<Content: View>(
+        isPresented: Binding<Bool>,
+        @ViewBuilder content: @escaping () -> Content
+    ) -> some View {
+
+        overlay {
+            GeometryReader { geometryProxy in
+                ScaledTransitionView(isPresented: isPresented) {
+                    content()
+                }
+                .startingFrame(geometryProxy.frame(in: .global))
+                .hidden(!isPresented.wrappedValue)
+            }
+        }
+    }
+
     /// Displays a snackbar with a specified label, position, duration, and vertical offset.
     ///
     /// This method creates a snackbar with the provided label and binds its presentation state to a given `Binding<Bool>`.

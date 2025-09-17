@@ -23,24 +23,28 @@ struct PresetButton: View {
 
     @State var isPresented = false
 
+    // MARK: - Computed Properties
+
+    var textColor: Color {
+        let textColor = theme.colorScheme.onSurface
+
+        return [.paused, .running].contains(viewModel.state) ? textColor.opacity(0.5) : textColor
+    }
+
     // MARK: - Body
 
     var body: some View {
         CircleButton {
             Text(viewModel.selectedResolution.title)
-                .style(theme.textTheme.caption1.copyWith(color: theme.colorScheme.onSurface))
+                .style(theme.textTheme.caption1.copyWith(color: textColor))
                 .padding(theme.spacingTheme.xxs)
         } action: {
             isPresented.toggle()
         }
-        .overlay {
-            GeometryReader { geometryProxy in
-                ScaledTransitionView(isPresented: $isPresented) {
-                    ResolutionsView(isPresented: $isPresented, selection: $viewModel.selectedResolution)
-                }
-                .startingFrame(geometryProxy.frame(in: .global))
-                .hidden(!isPresented)
-            }
+        .allowsHitTesting(viewModel.allowsHitTesting)
+        .disabled([.paused, .running].contains(viewModel.state))
+        .scaledFullScreenCover(isPresented: $isPresented) {
+            ResolutionsView(isPresented: $isPresented, selection: $viewModel.selectedResolution)
         }
     }
 }

@@ -7,6 +7,28 @@ import Foundation
 import UIKit
 internal import Utilities
 
+/// A global actor that serializes access to capture session operations and media services.
+///
+/// The `SessionActor` provides a centralized execution context for managing capture session
+/// lifecycle operations, media service notifications, and related state management. This actor
+/// ensures that all session-related operations occur on a single, well-defined executor,
+/// preventing data races and ensuring consistent state when working with capture sessions,
+/// media service resets, and session coordination.
+///
+/// This actor is particularly important for handling media service reset notifications and
+/// ensuring that capture session operations are properly synchronized. It prevents conflicts
+/// between different parts of the system that might be trying to start, stop, or configure
+/// capture sessions simultaneously.
+@globalActor
+actor SessionActor {
+    /// The shared global actor instance used to isolate session operations.
+    ///
+    /// This static property provides access to the singleton instance of the SessionActor,
+    /// which is used throughout the application to ensure consistent execution context
+    /// for all session-related operations.
+    static let shared = SessionActor()
+}
+
 final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Private Properties
 
@@ -19,7 +41,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private let movieOutputProcessor = MovieOutputProcessor()
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
     private var photosTaken = 0
-    private var sessionWasRunning = false
     private let videoDevice = VideoDevice()
 
     // MARK: - Properties
@@ -39,6 +60,13 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     let previewLayer = AVCaptureVideoPreviewLayer()
 
     // MARK: - Published Properties
+
+    /// Controls whether user interactions are enabled for camera UI components.
+    ///
+    /// This property manages the interactive state of camera interface elements to prevent
+    /// user input during critical operations such as camera switching, recording state changes,
+    /// or other asynchronous operations that could cause conflicts or unexpected behavior.
+    @Published private(set) var allowsHitTesting = true
 
     /// The current aspect ratio of the camera preview, expressed as height divided by width.
     ///
@@ -246,6 +274,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
         self.isTorchEnabled = configuration.flashMode == .on
 
+        movieOutputProcessor.delegate = self
+        movieOutputProcessor.maxRecordingDuration = configuration.mode.maxVideoDuration
         movieOutputProcessor.outputDirectory = outputDirectory
 
         initialize()
@@ -417,6 +447,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// and updates the error state if the operation fails.
     func switchCamera() {
         Task { @MainActor in
+            allowsHitTesting = false
+            defer { allowsHitTesting = true }
+
             do {
                 let position = await videoDevice.position == .back ? AVCaptureDevice.Position.front : .back
 
@@ -424,6 +457,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                 isTorchAvailable = await videoDevice.isTorchAvailable
                 zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
+
                 zoomFactor = 1
             } catch {
                 didReceiveError(error.localizedDescription)
@@ -469,26 +503,26 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// is currently running, it pauses the recording by pausing the movie processing.
     func togglePause() {
         Task { @MainActor in
-            do {
-                switch movieOutputProcessor.state {
-                case .paused:
+            switch movieOutputProcessor.state {
+            case .paused:
+                do {
                     await ensureTorchCompatibility()
-
+                    
                     try await audioDevice.startCapturing()
                     try await videoDevice.startCapturing()
-
+                    
                     await movieOutputProcessor.startProcessing()
-
+                    
                     state = .running
-
-                case .writing:
-                    pauseSession()
-
-                default:
-                    break
+                } catch {
+                    didReceiveError(error.localizedDescription)
                 }
-            } catch {
-                didReceiveError(error.localizedDescription)
+                
+            case .writing:
+                pauseSession()
+                
+            default:
+                break
             }
         }
     }
@@ -561,7 +595,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     func didReceiveRuntimeErrorNotification(_ notification: Notification) {
         if let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError, state == .running {
             if [.sessionConfigurationChanged, .sessionNotRunning].contains(error.code), !captureSession.isRunning {
-                captureSession.startRunning()
+                Task { @SessionActor in
+                    captureSession.startRunning()
+                }
             }
         }
     }
@@ -569,8 +605,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @MainActor
     @objc
     func didReceiveSessionWasInterruptedNotification(_ notification: Notification) {
-        sessionWasRunning = state == .running && UIApplication.shared.applicationState != .background
-
         if state == .running {
             pauseSession()
         }
@@ -579,8 +613,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @MainActor
     @objc
     func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
-        if sessionWasRunning, !captureSession.isRunning {
-            Task {
+        if !captureSession.isRunning {
+            Task { @SessionActor in
                 captureSession.startRunning()
             }
         }
@@ -741,8 +775,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         updatePreviewOrientation()
     }
 
+    @MainActor
     private func pauseSession() {
-        Task { @MainActor in
+        Task {
             do {
                 try await movieOutputProcessor.pause()
 
@@ -755,20 +790,20 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             }
         }
     }
-
+    
     private func receivedMediaServicesWereResetNotification() {
-        if !captureSession.isRunning {
-            captureSession.startRunning()
-        }
+        Task { @SessionActor in
+            if !captureSession.isRunning {
+                captureSession.startRunning()
+            }
 
-        if state == .running {
-            Task { @DeviceActor in
-                videoDevice.endCapturing(in: captureSession)
-                audioDevice.endCapturing(in: captureSession)
+            if state == .running {
+                await videoDevice.endCapturing(in: captureSession)
+                await audioDevice.endCapturing(in: captureSession)
 
                 do {
-                    try audioDevice.startCapturing()
-                    try videoDevice.startCapturing()
+                    try await audioDevice.startCapturing()
+                    try await videoDevice.startCapturing()
                 } catch {
                     await didReceiveError(error.localizedDescription)
                 }
@@ -783,19 +818,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     private func subscribeToSecondsRecorded() {
-        let maxVideoDuration = configuration.mode.maxVideoDuration
-
         movieOutputProcessor.$recordingDuration
             .filter(\.isValid)
             .receive(on: RunLoop.main)
-            .handleEvents(receiveOutput: { [weak self] recordingDuration in
-                if let self, recordingDuration.seconds >= maxVideoDuration {
-                    Task {
-                        await self.didReceiveError(Localizations.maxClipDurationReached)
-                        try await self.endRecording()
-                    }
-                }
-            })
             .map { $0.seconds.toHMS() }
             .assign(to: &$secondsRecorded)
     }
@@ -819,6 +844,41 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                 previewLayer.connection?.videoOrientation = videoOrientation
                 await videoDevice.setVideoOrientation(videoOrientation)
+            }
+        }
+    }
+}
+
+extension CameraViewModel: MovieOutputProcessorDelegate {
+
+    // MARK: - MovieOutputProcessorDelegate
+
+    /// Notifies the delegate when the movie output processor reaches the maximum recording duration.
+    ///
+    /// This method is called when the `MovieOutputProcessor` has reached its configured
+    /// maximum recording duration and has completed processing the current video segment.
+    /// The processor automatically stops recording and finalizes the video clip before
+    /// calling this delegate method.
+    ///
+    /// The result parameter contains either a successfully created `VideoClip` object
+    /// with metadata about the recorded video, or an `Error` if the processing failed.
+    /// The delegate should handle both cases appropriately, such as updating the UI
+    /// or managing the application's state.
+    ///
+    /// - Parameters:
+    ///   - output: The movie output processor that reached the maximum duration
+    ///   - result: A result containing either a `VideoClip` on success or an `Error` on failure
+    func movieOutputProcessor(_ output: MovieOutputProcessor, didReachMaxDuration result: Result<VideoClip, Error>) {
+        Task { @MainActor in
+            state = .finished
+
+            switch result {
+            case .failure(let error):
+                didReceiveError(error.localizedDescription)
+
+            case .success(let clip):
+                medias.insert(.clip(clip), at: 0)
+                didReceiveError(Localizations.maxClipDurationReached)
             }
         }
     }

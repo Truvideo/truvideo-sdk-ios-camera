@@ -99,6 +99,7 @@ struct VideoPreview: UIViewRepresentable {
 
         // MARK: - Notification methods
 
+        @MainActor
         @objc
         func didReceiveDidBecomeActiveNotification(_ notification: Notification) {
             if let overlayViewPropertyAnimator {
@@ -108,11 +109,16 @@ struct VideoPreview: UIViewRepresentable {
             overlayViewPropertyAnimator = overlayView.animate(\.alpha, to: 0, duration: 0.25)
         }
 
+        @MainActor
         @objc
         func didReceiveDeviceDidChangeFocusPoint(_ notification: Notification) {
             if let focusPoint = notification.userInfo?[VideoDevice.newFocusPoint] as? CGPoint {
                 let layerPoint = previewLayer.layerPointConverted(fromCaptureDevicePoint: focusPoint)
                 let newCenter = layer.convert(layerPoint, from: previewLayer)
+
+                guard newCenter.x.isFinite, newCenter.y.isFinite else {
+                    return
+                }
 
                 if focusIndicatorView.center != newCenter {
                     focusIndicatorView.alpha = 0
@@ -125,25 +131,31 @@ struct VideoPreview: UIViewRepresentable {
             }
         }
 
+        @MainActor
         @objc
         func didReceiveDeviceDidChangePosition(_ notification: Notification) {
-            let position = notification.userInfo?[VideoDevice.newPosition] as? AVCaptureDevice.Position
-
             Task.delayed(milliseconds: 900) { @MainActor in
                 blurView.animate(\.alpha, to: 0, duration: 0.5)
             }
         }
 
+        @MainActor
         @objc
         func didReceiveDeviceWillChangeFocusPoint(_ notification: Notification) {
             if let focusPoint = notification.userInfo?[VideoDevice.newFocusPoint] as? CGPoint {
                 let layerPoint = previewLayer.layerPointConverted(fromCaptureDevicePoint: focusPoint)
+                let newCenter = layer.convert(layerPoint, from: previewLayer)
+
+                guard newCenter.x.isFinite, newCenter.y.isFinite else {
+                    return
+                }
 
                 focusIndicatorView.center = layer.convert(layerPoint, from: previewLayer)
                 focusIndicatorView.show()
             }
         }
 
+        @MainActor
         @objc
         func didReceiveDeviceWillChangePosition(_ notification: Notification) {
             blurView.animate(\.alpha, to: 1, duration: 0.25)
@@ -153,11 +165,13 @@ struct VideoPreview: UIViewRepresentable {
                 }
         }
 
+        @MainActor
         @objc
         func didReceiveDidEnterBackgroundNotification(_ notification: Notification) {
             previewLayer.removeFromSuperlayer()
         }
 
+        @MainActor
         @objc
         func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
             layer.insertSublayer(previewLayer, at: 0)
@@ -165,6 +179,7 @@ struct VideoPreview: UIViewRepresentable {
             overlayView.animate(\.alpha, to: 0, duration: 0.25, delay: 0.8)
         }
 
+        @MainActor
         @objc
         func didReceiveWillResignActiveNotification(_ notification: Notification) {
             overlayViewPropertyAnimator = overlayView.animate(\.alpha, to: 1, duration: 0.25, delay: 1)

@@ -62,5 +62,6 @@ struct RecordButton: View {
         .frame(width: size, height: size)
         .contentShape(.rect)
         .onTapGesture(perform: viewModel.toggleRecord)
+        .allowsHitTesting(viewModel.allowsHitTesting)
     }
 }

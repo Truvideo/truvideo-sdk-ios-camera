@@ -19,6 +19,54 @@ actor MovieOutputProcessorActor {
     static let shared = MovieOutputProcessorActor()
 }
 
+/// A delegate protocol for handling movie output processing events and completion notifications.
+///
+/// The `MovieOutputProcessorDelegate` protocol defines the interface for receiving notifications
+/// about movie processing operations, particularly when the maximum recording duration has been
+/// reached. This protocol enables the delegate to respond to processing events and handle the
+/// results appropriately, whether successful or failed.
+///
+/// The protocol is designed to work with the `MovieOutputProcessor` class, which handles
+/// the recording of video and audio streams. When the processor reaches the configured
+/// maximum duration limit, it automatically stops recording and notifies the delegate
+/// with the completed video clip or any errors that occurred during processing.
+///
+/// ## Usage Example
+///
+/// ```swift
+/// class CameraViewController: MovieOutputProcessorDelegate {
+///     func movieOutputProcessor(_ output: MovieOutputProcessor, didReachMaxDuration result: Result<VideoClip, Error>) {
+///         switch result {
+///         case .success(let videoClip):
+///             // Handle successful video clip creation
+///             print("Video clip created: \(videoClip.url)")
+///
+///         case .failure(let error):
+///             // Handle processing error
+///             print("Error creating video clip: \(error.localizedDescription)")
+///         }
+///     }
+/// }
+/// ```
+protocol MovieOutputProcessorDelegate: AnyObject {
+    /// Notifies the delegate when the movie output processor reaches the maximum recording duration.
+    ///
+    /// This method is called when the `MovieOutputProcessor` has reached its configured
+    /// maximum recording duration and has completed processing the current video segment.
+    /// The processor automatically stops recording and finalizes the video clip before
+    /// calling this delegate method.
+    ///
+    /// The result parameter contains either a successfully created `VideoClip` object
+    /// with metadata about the recorded video, or an `Error` if the processing failed.
+    /// The delegate should handle both cases appropriately, such as updating the UI
+    /// or managing the application's state.
+    ///
+    /// - Parameters:
+    ///   - output: The movie output processor that reached the maximum duration
+    ///   - result: A result containing either a `VideoClip` on success or an `Error` on failure
+    func movieOutputProcessor(_ output: MovieOutputProcessor, didReachMaxDuration result: Result<VideoClip, Error>)
+}
+
 /// A processor that handles movie output generation from audio and video sample buffers.
 ///
 /// This class manages the creation and writing of movie files using AVAssetWriter,
@@ -41,7 +89,6 @@ final class MovieOutputProcessor {
     private var clipFilenameCount = 1
     private var currentClipDuration = CMTime.zero
     private let mediaComposer: MediaComposer
-    private var mediaProcessingOptions: MediaProcessingOptions = []
     private var pixelBufferAdapter: AVAssetWriterInputPixelBufferAdaptor?
     private var skippedAudioBuffers: [AudioSampleBuffer] = []
     private var startTimestamp = CMTime.invalid
@@ -49,11 +96,16 @@ final class MovieOutputProcessor {
 
     // MARK: - Properties
 
+    weak var delegate: MovieOutputProcessorDelegate?
+
     /// The underliying error.
     private(set) var error: UtilityError?
 
     /// Output file type for the session.
     var fileType = FileType.mp4
+
+    /// The maximum duration in seconds for each video recording.
+    var maxRecordingDuration: TimeInterval = 5 * 24 * 60 * 60
 
     /// Output directory for the session.
     var outputDirectory = URL(fileURLWithPath: NSTemporaryDirectory())
@@ -71,7 +123,7 @@ final class MovieOutputProcessor {
     /// real-time feedback on the current recording or processing progress.
     @Published private(set) var recordingDuration = CMTime.invalid
 
-    // MARK: - Computed Properties
+    // MARK: - Private Computed Properties
 
     /// Whether the session has configured the audio
     private var hasConfiguredAudio: Bool {
@@ -81,6 +133,11 @@ final class MovieOutputProcessor {
     /// Whether the session has configured the video
     private var hasConfiguredVideo: Bool {
         videoInput != nil
+    }
+
+    /// The maximum duration in `CMTime` for each video recording.
+    private var maxDuration: CMTime {
+        CMTime(seconds: maxRecordingDuration, preferredTimescale: 600)
     }
 
     /// Returns the default metadata for an `AVAssetWriter`
@@ -232,42 +289,6 @@ final class MovieOutputProcessor {
         }
     }
 
-    /// Option set defining media processing configuration options for audio and video streams.
-    ///
-    /// The MediaProcessingOptions struct provides a type-safe way to configure which media streams
-    /// should be processed during media operations. This option set allows developers to specify
-    /// whether to process audio, video, or both streams, enabling flexible configuration of media
-    /// processing pipelines. The options can be combined using set operations to create complex
-    /// processing configurations while maintaining clear and readable code.
-    struct MediaProcessingOptions: OptionSet {
-        // MARK: - Properties
-
-        /// The raw integer value representing the option set's bit flags.
-        ///
-        /// This property stores the underlying bit pattern that represents the combination
-        /// of selected options. Each bit position corresponds to a specific media processing
-        /// option, allowing efficient bitwise operations for option combination and checking.
-        let rawValue: Int
-
-        // MARK: - Static Properties
-
-        /// Option to process audio streams during media operations.
-        ///
-        /// When this option is selected, audio processing will be enabled for the media
-        /// operation. This includes audio capture, processing, encoding, and output
-        /// generation. Audio processing can be combined with video processing or used
-        /// independently for audio-only operations.
-        static let audio = MediaProcessingOptions(rawValue: 1 << 0)
-
-        /// Option to process video streams during media operations.
-        ///
-        /// When this option is selected, video processing will be enabled for the media
-        /// operation. This includes video capture, processing, encoding, and output
-        /// generation. Video processing can be combined with audio processing or used
-        /// independently for video-only operations.
-        static let video = MediaProcessingOptions(rawValue: 1 << 1)
-    }
-
     // MARK: - Initializer
 
     /// Creates a new instance with a media composer and sets up background/foreground notifications.
@@ -323,6 +344,7 @@ final class MovieOutputProcessor {
                     await assetWriter.finishWriting()
 
                     if assetWriter.status == .failed {
+                        state = .failed
                         throw UtilityError(
                             kind: .MovieOutputProcessorErrorReason.endProcessingFailed,
                             underlyingError: assetWriter.error
@@ -352,6 +374,7 @@ final class MovieOutputProcessor {
 
                     return clip
                 } catch {
+                    state = .failed
                     throw UtilityError(
                         kind: .MovieOutputProcessorErrorReason.endProcessingFailed,
                         underlyingError: error
@@ -428,24 +451,31 @@ final class MovieOutputProcessor {
     // MARK: - Private methods
 
     private func appendAudio(buffer: AudioSampleBuffer) {
+        guard let assetWriter, assetWriter.status == .writing, buffer.timestamp.isValid else {
+            return
+        }
+
         let buffers = skippedAudioBuffers + [buffer]
         var failedBuffers: [AudioSampleBuffer] = []
 
         skippedAudioBuffers = []
 
         for buffer in buffers {
-            if let adjustedBuffer = buffer.sampleBuffer.offset(by: buffer.timestamp, duration: buffer.duration) {
-                if let audioInput, audioInput.isReadyForMoreMediaData, audioInput.append(adjustedBuffer) {
-                    mediaProcessingOptions.insert(.audio)
+            if /// The current audio input.
+            let audioInput,
 
-                    if !mediaProcessingOptions.contains(.video) {
-                        let timestamp = buffer.timestamp - startTimestamp
+                /// The adjusted audio buffer.
+                let adjustedBuffer = buffer.sampleBuffer.offset(by: buffer.timestamp, duration: buffer.duration),
 
-                        recordingDuration = CMTimeAdd(currentClipDuration, timestamp)
-                    }
-                } else {
+                /// A value that indicates whether the input is ready to accept media data.
+                audioInput.isReadyForMoreMediaData
+            {
+
+                if !audioInput.append(adjustedBuffer) {
                     failedBuffers.append(buffer)
                 }
+            } else {
+                failedBuffers.append(buffer)
             }
         }
 
@@ -453,28 +483,29 @@ final class MovieOutputProcessor {
     }
 
     private func appendVideo(buffer: VideoSampleBuffer) {
+        guard let assetWriter, assetWriter.status == .writing, buffer.timestamp.isValid else {
+            return
+        }
+
+        let currentDuration = CMTimeAdd(currentClipDuration, buffer.timestamp - startTimestamp)
+
+        recordingDuration = min(currentDuration, maxDuration)
+
+        guard isWithinMaxDuration() else {
+            return
+        }
+
         if /// The active video input.
         let videoInput,
 
             /// The prixel buffer adapter.
-            let pixelBufferAdapter, videoInput.isReadyForMoreMediaData
-        {
+            let pixelBufferAdapter,
 
             /// Current buffer to process.
-            if let bufferToProcess = buffer.imageBuffer,
+            let bufferToProcess = buffer.imageBuffer, videoInput.isReadyForMoreMediaData
+        {
 
-                /// Whether the current timespamp is valid for processing.
-                buffer.timestamp.isValid,
-
-                /// Whether the buffer can be appened to the adapter.
-                pixelBufferAdapter.append(bufferToProcess, withPresentationTime: buffer.timestamp - startTimestamp)
-            {
-
-                let timestamp = buffer.timestamp - startTimestamp
-
-                recordingDuration = CMTimeAdd(currentClipDuration, timestamp)
-                mediaProcessingOptions.insert(.video)
-            }
+            pixelBufferAdapter.append(bufferToProcess, withPresentationTime: buffer.timestamp - startTimestamp)
         }
     }
 
@@ -566,6 +597,23 @@ final class MovieOutputProcessor {
         try await mediaComposer.compose(assetsURLs, into: outputURL)
 
         return AVURLAsset(url: outputURL)
+    }
+
+    private func isWithinMaxDuration() -> Bool {
+        guard recordingDuration >= maxDuration else {
+            return true
+        }
+
+        Task { @MovieOutputProcessorActor in
+            do {
+                let clip = try await endProcessing()
+                delegate?.movieOutputProcessor(self, didReachMaxDuration: .success(clip))
+            } catch {
+                delegate?.movieOutputProcessor(self, didReachMaxDuration: .failure(error))
+            }
+        }
+
+        return false
     }
 
     private func nextOutputURL() -> URL {

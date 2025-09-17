@@ -211,7 +211,7 @@ public final class TruVideoApp: TruVideoSDK {
     var deviceSettingResource: DeviceSettingsResource
 
     @Dependency(\.telemetryManager)
-    private var telemetryManager: TelemetryManager
+    var telemetryManager: TelemetryManager
 
     // MARK: - Computed Properties
 
@@ -229,6 +229,7 @@ public final class TruVideoApp: TruVideoSDK {
     ///  - Parameters:
     ///     - legacyStorage: A type that defines the interface for storing authentication data in legacy storage systems.
     ///     - migrator: A type that defines the interface for performing data migrations.
+    ///     - pathMonitor: A type that defines the behavior of a network path monitor.
     init(
         legacyStorage: LegacyStorage = LegacySessionStorage(),
         migrator: Migrator = SDKMigrator(),
