@@ -3,7 +3,6 @@
 //
 
 import AVFoundation
-import Combine
 import CoreImage
 import Foundation
 import UIKit
@@ -42,15 +41,13 @@ extension ErrorReason {
 final class CapturePhotoController: NSObject {
     // MARK: - Private Properties
 
-    private var cancellables = Set<AnyCancellable>()
     private var capturePhotoOutput: AVCapturePhotoOutput?
     private var captureSession: AVCaptureSession?
     private let context = CIContext.createDefault()
     private var lastPhotoCaptureDate = Date.distantFuture
-    private var photoContinuations: [PhotoContinuation] = []
+    private var photoContinuations: [Int64: PhotoContinuation] = [:]
     private var photoQualityPrioritization = AVCapturePhotoOutput.QualityPrioritization.balanced
     private let speedQualityThreshold = 0.28
-    private let shutterSubject = PassthroughSubject<Void, Never>()
 
     // MARK: - Types
 
@@ -61,7 +58,7 @@ final class CapturePhotoController: NSObject {
     /// image format, resolution settings, and output location. This configuration is
     /// used throughout the photo capture pipeline to ensure consistent behavior and
     /// proper image processing.
-    struct Configuration {
+    struct Configuration: Hashable {
         /// The device orientation during photo capture.
         ///
         /// This property specifies the orientation of the device when the photo is captured,
@@ -120,24 +117,6 @@ final class CapturePhotoController: NSObject {
         let continuation: CheckedContinuation<Photo, Error>
     }
 
-    // MARK: - Initializer
-
-    /// Creates a new photo controller instance.
-    override init() {
-        super.init()
-
-        shutterSubject.sink { [weak self] in
-            if let self {
-                let date = Date()
-                let timeInterval = date.timeIntervalSince(lastPhotoCaptureDate)
-
-                self.photoQualityPrioritization = timeInterval <= self.speedQualityThreshold ? .speed : .balanced
-                self.lastPhotoCaptureDate = date
-            }
-        }
-        .store(in: &cancellables)
-    }
-
     // MARK: - Instance methods
 
     /// Captures a photo using the specified configuration settings.
@@ -159,23 +138,21 @@ final class CapturePhotoController: NSObject {
             )
         }
 
-        shutterSubject.send(())
+        let date = Date()
+        let timeInterval = date.timeIntervalSince(lastPhotoCaptureDate)
+
+        photoQualityPrioritization = timeInterval <= speedQualityThreshold ? .speed : .balanced
+        lastPhotoCaptureDate = date
 
         return try await withCheckedThrowingContinuation { continuation in
-            Task {
+            Task { @MainActor in
                 let capturePhotoSettings = AVCapturePhotoSettings.from(configuration)
-
-                capturePhotoOutput.isHighResolutionCaptureEnabled = configuration.isHighResolutionEnabled
-                capturePhotoSettings.flashMode = configuration.flashMode
-                capturePhotoSettings.photoQualityPrioritization = photoQualityPrioritization
-
                 let photoContinuation = PhotoContinuation(configuration: configuration, continuation: continuation)
 
-                photoContinuations.append(photoContinuation)
-                await MainActor.run {
-                    capturePhotoOutput.setPreparedPhotoSettingsArray([capturePhotoSettings], completionHandler: nil)
-                    capturePhotoOutput.capturePhoto(with: capturePhotoSettings, delegate: self)
-                }
+                photoContinuations[capturePhotoSettings.uniqueID] = photoContinuation
+
+                capturePhotoSettings.photoQualityPrioritization = photoQualityPrioritization
+                capturePhotoOutput.capturePhoto(with: capturePhotoSettings, delegate: self)
             }
         }
     }
@@ -247,11 +224,9 @@ extension CapturePhotoController: AVCapturePhotoCaptureDelegate {
     // MARK: - AVCapturePhotoCaptureDelegate
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
-        guard !photoContinuations.isEmpty else {
+        guard let photoContinuation = photoContinuations.removeValue(forKey: photo.resolvedSettings.uniqueID) else {
             return
         }
-
-        let photoContinuation = photoContinuations.removeFirst()
 
         if let error {
             let error = UtilityError(
@@ -263,29 +238,34 @@ extension CapturePhotoController: AVCapturePhotoCaptureDelegate {
             return
         }
 
-        do {
-            guard
-                /// Extracts and returns the captured photo's primary image.
-                let cgImage = photo.cgImageRepresentation(),
+        Task.detached(priority: .userInitiated) {
+            do {
+                guard
+                    /// Extracts and returns the captured photo's primary image.
+                    let cgImage = photo.cgImageRepresentation(),
 
-                /// The Photo representation of the image.
-                let photo = try context?.createImage(from: cgImage, configuration: photoContinuation.configuration)
-            else {
+                    /// The Photo representation of the image.
+                    let photo = try self.context?.createImage(
+                        from: cgImage,
+                        configuration: photoContinuation.configuration
+                    )
+                else {
 
-                throw UtilityError(
-                    kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                    failureReason: "Unable to get data representation of the photo."
+                    throw UtilityError(
+                        kind: .VideoDeviceErrorReason.failedToCapturePhoto,
+                        failureReason: "Unable to get data representation of the photo."
+                    )
+                }
+
+                photoContinuation.continuation.resume(returning: photo)
+            } catch {
+                let error = UtilityError(
+                    kind: .CapturePhotoControllerErrorReason.failedToCapturePhoto,
+                    underlyingError: error
                 )
+
+                photoContinuation.continuation.resume(throwing: error)
             }
-
-            photoContinuation.continuation.resume(returning: photo)
-        } catch {
-            let error = UtilityError(
-                kind: .CapturePhotoControllerErrorReason.failedToCapturePhoto,
-                underlyingError: error
-            )
-
-            photoContinuation.continuation.resume(throwing: error)
         }
     }
 }
@@ -313,6 +293,7 @@ extension AVCapturePhotoSettings {
             processedFileType: configuration.imageFormat.fileType
         )
 
+        capturePhotoSettings.flashMode = configuration.flashMode
         capturePhotoSettings.isHighResolutionPhotoEnabled = configuration.isHighResolutionEnabled
 
         return capturePhotoSettings
