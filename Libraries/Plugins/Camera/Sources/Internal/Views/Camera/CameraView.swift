@@ -241,6 +241,7 @@ private struct ToolBar: View {
             viewModel.switchCamera()
         }
         .hidden([.running, .paused].contains(viewModel.state))
+        .allowsHitTesting(viewModel.allowsHitTesting)
     }
 
     private func makeTakePhotoButton() -> some View {

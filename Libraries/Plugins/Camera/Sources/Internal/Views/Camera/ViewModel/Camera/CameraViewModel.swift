@@ -38,6 +38,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private var isCaptureInFlight = false
     private var lastPhotoCaptureUptime = TimeInterval.zero
     private let orientationMonitor: OrientationMonitor
+    private var mediasTaken = 0
     private let movieOutputProcessor = MovieOutputProcessor()
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
     private var photosTaken = 0
@@ -66,7 +67,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// This property manages the interactive state of camera interface elements to prevent
     /// user input during critical operations such as camera switching, recording state changes,
     /// or other asynchronous operations that could cause conflicts or unexpected behavior.
-    @Published private(set) var allowsHitTesting = true
+    @Published private(set) var allowsHitTesting = false
 
     /// The current aspect ratio of the camera preview, expressed as height divided by width.
     ///
@@ -91,12 +92,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     /// The last zoom factor applied to the camera preview.
     @Published var lastZoomFactor: CGFloat = 1
-
-    /// The collection of media items displayed in the gallery.
-    ///
-    /// This published property contains all media items (both video clips and photos)
-    /// that are currently displayed in the gallery.
-    @Published var medias: [Media] = []
 
     /// Whether the user must confirm before leaving or performing a potentially
     /// destructive action.
@@ -135,26 +130,46 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// This property represents the magnification level of the camera view.
     @Published private(set) var zoomFactor: CGFloat = 1
 
-    // MARK: - Private Computed Properties
+    /// The collection of media items displayed in the gallery.
+    ///
+    /// This published property contains all media items (both video clips and photos)
+    /// that are currently displayed in the gallery.
+    @Published var medias: [Media] = [] {
+        didSet {
+            let photoCount = medias.filter(\.isPhoto).count
 
-    private var maxNumberOfClips: Int {
-        let mode = configuration.mode
+            /// If the new array is less than the previous one we assume that medias
+            /// were deleted
+            if medias.count < oldValue.count {
+                mediasTaken = medias.count
 
-        guard mode.maxPictureCount == 0, mode.maxVideoCount == 0, mode.maxMediaCount > 0 else {
-            return mode.maxVideoCount
+                if photoCount < oldValue.filter(\.isPhoto).count {
+                    photosTaken = photoCount
+                }
+            }
         }
-
-        return mode.maxMediaCount
     }
 
-    private var maxNumberOfPhotos: Int {
+    // MARK: - Private Computed Properties
+
+    private var canTakeMoreClips: Bool {
         let mode = configuration.mode
 
         guard mode.maxPictureCount == 0, mode.maxVideoCount == 0, mode.maxMediaCount > 0 else {
-            return mode.maxPictureCount
+            return medias.lazy.filter(\.isClip).count < mode.maxVideoCount
         }
 
-        return mode.maxMediaCount
+        return mediasTaken < mode.maxMediaCount
+    }
+
+    private var canTakeMorePhotos: Bool {
+        let mode = configuration.mode
+
+        guard mode.maxPictureCount == 0, mode.maxVideoCount == 0, mode.maxMediaCount > 0 else {
+            return photosTaken < mode.maxPictureCount
+        }
+
+        return mediasTaken < mode.maxMediaCount
     }
 
     // MARK: - Computed Properties
@@ -224,7 +239,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         /// The element type of the option set.
         let rawValue: Int
 
-        // MARK: - Private Properties
+        // MARK: - Static Properties
 
         /// The initial state when no validation has been performed.
         static let initial = ValidationState([])
@@ -303,7 +318,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// in the localizedError property for user feedback.
     func capturePhoto() {
         Task { @MainActor in
-            guard photosTaken < maxNumberOfPhotos else {
+            guard canTakeMorePhotos else {
                 didReceiveError(Localizations.maxNumberOfPicturesReached)
                 return
             }
@@ -317,6 +332,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
             isCaptureInFlight = true
             lastPhotoCaptureUptime = systemUptime
+            mediasTaken += 1
             photosTaken += 1
 
             defer { isCaptureInFlight = false }
@@ -327,6 +343,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 medias.insert(.photo(photo), at: 0)
                 validate()
             } catch {
+                mediasTaken -= 1
                 photosTaken -= 1
                 didReceiveError(error.localizedDescription)
             }
@@ -448,7 +465,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     func switchCamera() {
         Task { @MainActor in
             allowsHitTesting = false
-            defer { allowsHitTesting = true }
 
             do {
                 let position = await videoDevice.position == .back ? AVCaptureDevice.Position.front : .back
@@ -459,8 +475,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
 
                 zoomFactor = 1
+                Task.delayed(milliseconds: 600) {
+                    allowsHitTesting = true
+                }
             } catch {
                 didReceiveError(error.localizedDescription)
+                allowsHitTesting = true
             }
         }
     }
@@ -478,10 +498,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
 
             do {
-                if await videoDevice.isTorchAvailable {
-                    try await videoDevice.setTorchMode(torchMode)
-                }
-
                 if await videoDevice.isTorchAvailable {
                     try await videoDevice.setTorchMode(torchMode)
                 }
@@ -507,20 +523,20 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             case .paused:
                 do {
                     await ensureTorchCompatibility()
-                    
+
                     try await audioDevice.startCapturing()
                     try await videoDevice.startCapturing()
-                    
+
                     await movieOutputProcessor.startProcessing()
-                    
+
                     state = .running
                 } catch {
                     didReceiveError(error.localizedDescription)
                 }
-                
+
             case .writing:
                 pauseSession()
-                
+
             default:
                 break
             }
@@ -544,12 +560,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             do {
                 switch movieOutputProcessor.state {
                 case .initialized, .finished, .failed:
-                    let clips = medias.filter(\.isClip)
-
-                    guard clips.count < maxNumberOfClips else {
+                    guard canTakeMoreClips else {
                         didReceiveError(Localizations.maxNumberOfClipsReached)
                         return
                     }
+
+                    mediasTaken += 1
 
                     await ensureTorchCompatibility()
 
@@ -569,6 +585,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     break
                 }
             } catch {
+                mediasTaken -= 1
                 didReceiveError(error.localizedDescription)
             }
         }
@@ -594,9 +611,11 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @objc
     func didReceiveRuntimeErrorNotification(_ notification: Notification) {
         if let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError, state == .running {
-            if [.sessionConfigurationChanged, .sessionNotRunning].contains(error.code), !captureSession.isRunning {
+            if [.sessionConfigurationChanged, .sessionNotRunning].contains(error.code) {
                 Task { @SessionActor in
-                    captureSession.startRunning()
+                    if !captureSession.isRunning {
+                        captureSession.startRunning()
+                    }
                 }
             }
         }
@@ -613,8 +632,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     @MainActor
     @objc
     func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
-        if !captureSession.isRunning {
-            Task { @SessionActor in
+        Task { @SessionActor in
+            if !captureSession.isRunning {
                 captureSession.startRunning()
             }
         }
@@ -712,10 +731,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             }
 
             guard audioDevice.authorizationStatus == .authorized, videoDevice.authorizationStatus == .authorized else {
-                await MainActor.run {
-                    isAuthorized = false
-                }
-
+                await MainActor.run { isAuthorized = false }
                 return
             }
 
@@ -726,31 +742,33 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 audioDevice.add(movieOutputProcessor)
                 videoDevice.add(movieOutputProcessor)
 
+                let position = configuration.lensFacing == .front ? AVCaptureDevice.Position.front : .back
                 let torchMode = configuration.flashMode == .on ? AVCaptureDevice.TorchMode.on : .off
                 let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
                 let zoomFactors = videoDevice.displayVideoZoomFactors
 
                 isTorchAvailable = videoDevice.isTorchAvailable
 
-                try videoDevice.setTorchMode(torchMode)
-
                 videoDevice.configuration.isHighResolutionEnabled = configuration.isHighResolutionPhotoEnabled
                 videoDevice.configuration.imageFormat = configuration.imageFormat.value
+
                 videoDevice.flashMode = configuration.flashMode.value
 
-                if configuration.lensFacing == .front {
-                    try videoDevice.setPosition(.front)
-                }
-
+                try videoDevice.setPosition(position)
+                try videoDevice.setTorchMode(torchMode)
+                
                 videoDevice.setVideoOrientation(videoOrientation)
                 updatePreviewOrientation()
 
                 captureSession.startRunning()
 
-                await MainActor.run {
-                    self.zoomFactors = zoomFactors
+                Task.delayed(milliseconds: 1_200) { @MainActor in
+                    allowsHitTesting = true
                 }
+
+                await MainActor.run { self.zoomFactors = zoomFactors }
             } catch {
+                await MainActor.run { allowsHitTesting = true }
                 await didReceiveError(error.localizedDescription)
             }
         }
@@ -790,7 +808,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             }
         }
     }
-    
+
     private func receivedMediaServicesWereResetNotification() {
         Task { @SessionActor in
             if !captureSession.isRunning {
@@ -874,6 +892,7 @@ extension CameraViewModel: MovieOutputProcessorDelegate {
 
             switch result {
             case .failure(let error):
+                mediasTaken -= 1
                 didReceiveError(error.localizedDescription)
 
             case .success(let clip):
