@@ -77,6 +77,7 @@ struct VideoPreview: UIViewRepresentable {
             configureConstraints()
             configureDeviceObservers()
             configureObservers()
+            configureSessionObservers()
         }
 
         @available(*, unavailable)
@@ -133,14 +134,6 @@ struct VideoPreview: UIViewRepresentable {
 
         @MainActor
         @objc
-        func didReceiveDeviceDidChangePosition(_ notification: Notification) {
-            Task.delayed(milliseconds: 900) { @MainActor in
-                blurView.animate(\.alpha, to: 0, duration: 0.5)
-            }
-        }
-
-        @MainActor
-        @objc
         func didReceiveDeviceWillChangeFocusPoint(_ notification: Notification) {
             if let focusPoint = notification.userInfo?[VideoDevice.newFocusPoint] as? CGPoint {
                 let layerPoint = previewLayer.layerPointConverted(fromCaptureDevicePoint: focusPoint)
@@ -158,17 +151,29 @@ struct VideoPreview: UIViewRepresentable {
         @MainActor
         @objc
         func didReceiveDeviceWillChangePosition(_ notification: Notification) {
-            blurView.animate(\.alpha, to: 1, duration: 0.25)
-                .addCompletion { [weak self] _ in
-                    let position = notification.userInfo?[VideoDevice.devicePosition] as? AVCaptureDevice.Position
-                    self?.flip(from: position ?? .back)
-                }
+            if let position = notification.userInfo?[VideoDevice.devicePosition] as? AVCaptureDevice.Position {
+                flip(from: position)
+            }
         }
 
         @MainActor
         @objc
         func didReceiveDidEnterBackgroundNotification(_ notification: Notification) {
             previewLayer.removeFromSuperlayer()
+        }
+
+        @MainActor
+        @objc
+        func didReceiveSessionDidEndUpdates(_ notification: Notification) {
+            Task.delayed(milliseconds: 300) { @MainActor in
+                blurView.animate(\.alpha, to: 0, duration: 0.5)
+            }
+        }
+
+        @MainActor
+        @objc
+        func didReceiveSessionWillBeginUpdates(_ notification: Notification) {
+            blurView.animate(\.alpha, to: 1, duration: 0.25)
         }
 
         @MainActor
@@ -202,13 +207,6 @@ struct VideoPreview: UIViewRepresentable {
         }
 
         private func configureDeviceObservers() {
-            NotificationCenter.default.addObserver(
-                self,
-                selector: #selector(didReceiveDeviceDidChangePosition(_:)),
-                name: VideoDevice.deviceDidChangePosition,
-                object: nil
-            )
-
             NotificationCenter.default.addObserver(
                 self,
                 selector: #selector(didReceiveDeviceDidChangeFocusPoint(_:)),
@@ -257,6 +255,22 @@ struct VideoPreview: UIViewRepresentable {
                 self,
                 selector: #selector(didReceiveWillResignActiveNotification(_:)),
                 name: UIApplication.willResignActiveNotification,
+                object: nil
+            )
+        }
+
+        private func configureSessionObservers() {
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(didReceiveSessionDidEndUpdates(_:)),
+                name: AVCaptureSession.didEndUpdates,
+                object: nil
+            )
+
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(didReceiveSessionWillBeginUpdates(_:)),
+                name: AVCaptureSession.willBeginUpdates,
                 object: nil
             )
         }

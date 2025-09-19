@@ -32,8 +32,6 @@ actor SessionActor {
 final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Private Properties
 
-    private let audioDevice = AudioDevice()
-    private let captureSession = AVCaptureSession()
     private let configuration: TruvideoSdkCameraConfiguration
     private var isCaptureInFlight = false
     private var lastPhotoCaptureUptime = TimeInterval.zero
@@ -42,9 +40,24 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private let movieOutputProcessor = MovieOutputProcessor()
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
     private var photosTaken = 0
-    private let videoDevice = VideoDevice()
 
     // MARK: - Properties
+
+    /// The audio capture device that manages microphone operations and lifecycle.
+    ///
+    /// This property provides access to the audio capture device responsible for
+    /// microphone operations including audio recording, permission management,
+    /// and audio session coordination. The device encapsulates all audio-related
+    /// functionality and provides a high-level interface for audio operations.
+    let audioDevice = AudioDevice()
+
+    /// The core capture session that coordinates all media capture operations.
+    ///
+    /// This property provides access to the main `AVCaptureSession` that serves as
+    /// the central coordinator for all media capture operations. The session manages
+    /// the lifecycle of audio and video inputs/outputs, handles device configuration,
+    /// and provides the foundation for synchronized media capture.
+    let captureSession = AVCaptureSession()
 
     /// Indicates whether the camera device supports torch (flashlight) functionality.
     ///
@@ -59,6 +72,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     /// The video preview layer that displays the camera feed in the UI.
     let previewLayer = AVCaptureVideoPreviewLayer()
+
+    /// The video capture device that manages camera operations and lifecycle.
+    ///
+    /// This property provides access to the main video capture device responsible for
+    /// camera operations including video recording, photo capture, torch control, zoom
+    /// management, and focus handling. The device encapsulates all camera-related
+    /// functionality and provides a high-level interface for camera operations.
+    let videoDevice = VideoDevice()
 
     // MARK: - Published Properties
 
@@ -136,11 +157,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// that are currently displayed in the gallery.
     @Published var medias: [Media] = [] {
         didSet {
-            let photoCount = medias.filter(\.isPhoto).count
-
             /// If the new array is less than the previous one we assume that medias
             /// were deleted
             if medias.count < oldValue.count {
+                let photoCount = medias.filter(\.isPhoto).count
                 mediasTaken = medias.count
 
                 if photoCount < oldValue.filter(\.isPhoto).count {
@@ -201,14 +221,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// the count when the mode is configured for total media limits (not individual
     /// photo or video limits).
     var numberOfMedias: String {
-        let maxPictureCount = configuration.mode.maxPictureCount
-        let maxVideoCount = configuration.mode.maxVideoCount
+        let maxMediaCount = TruvideoSdkCameraMediaMode.maxMediaCount
+        let isWithinRange = configuration.mode.maxMediaCount > 0 && configuration.mode.maxMediaCount < maxMediaCount
 
-        guard configuration.mode.maxMediaCount > 0, maxPictureCount == 0, maxVideoCount == 0 else {
+        guard configuration.mode.maxPictureCount == 0 && configuration.mode.maxVideoCount == 0, isWithinRange else {
             return ""
         }
 
-        return "\(medias.count)/\(configuration.mode.maxMediaCount)"
+        return "\(mediasTaken)/\(configuration.mode.maxMediaCount)"
     }
 
     /// Returns a formatted string representing the current photo count and limit.
@@ -522,6 +542,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             switch movieOutputProcessor.state {
             case .paused:
                 do {
+                    guard await audioDevice.isAvailable else {
+                        localizedError = Localizations.anotherAppIsUsingMicrophone
+                        isSnackbarPresented = true
+                        return
+                    }
+
                     await ensureTorchCompatibility()
 
                     try await audioDevice.startCapturing()
@@ -565,6 +591,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                         return
                     }
 
+                    guard await audioDevice.isAvailable else {
+                        localizedError = Localizations.anotherAppIsUsingMicrophone
+                        isSnackbarPresented = true
+                        return
+                    }
+
                     mediasTaken += 1
 
                     await ensureTorchCompatibility()
@@ -591,50 +623,50 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    // MARK: - Notification methods
+    // MARK: - Internal methods
 
+    /// Displays an error message to the user through the snackbar interface.
+    ///
+    /// This function provides a centralized way to handle and display error messages
+    /// to users in the camera interface. It sets the localized error message and
+    /// triggers the presentation of a snackbar to inform the user about the error
+    /// condition. This ensures consistent error handling and user feedback across
+    /// the camera application.
+    ///
+    /// The function operates on the main actor to ensure UI updates are performed
+    /// safely and synchronously. It updates both the error message and the snackbar
+    /// presentation state, providing immediate visual feedback to the user about
+    /// any issues that occur during camera operations.
     @MainActor
-    @objc
-    func didReceiveDidEnterBackgroundNotification(_ notification: Notification) {
-        if state == .running {
-            pauseSession()
-        }
+    func didReceiveError(_ error: String) {
+        localizedError = error
+        isSnackbarPresented = true
     }
 
+    /// Pauses the current recording session and all associated capture devices.
+    ///
+    /// This function safely pauses an active recording session by stopping the movie
+    /// output processor and pausing both audio and video capture devices. It performs
+    /// the pause operation asynchronously and handles any errors that occur during
+    /// the process by displaying them to the user through the error handling system.
+    ///
+    /// ## Error Handling
+    ///
+    /// Any errors that occur during the pause operation are automatically caught
+    /// and displayed to the user through the snackbar interface via `didReceiveError(_:)`,
+    /// ensuring that users are informed of any issues that prevent proper session pausing.
     @MainActor
-    @objc
-    func didReceiveMediaServicesWereResetNotification(_ notification: Notification) {
-        receivedMediaServicesWereResetNotification()
-    }
+    func pauseSession() {
+        Task {
+            do {
+                try await movieOutputProcessor.pause()
 
-    @MainActor
-    @objc
-    func didReceiveRuntimeErrorNotification(_ notification: Notification) {
-        if let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError, state == .running {
-            if [.sessionConfigurationChanged, .sessionNotRunning].contains(error.code) {
-                Task { @SessionActor in
-                    if !captureSession.isRunning {
-                        captureSession.startRunning()
-                    }
-                }
-            }
-        }
-    }
+                await audioDevice.pause()
+                await videoDevice.pause()
 
-    @MainActor
-    @objc
-    func didReceiveSessionWasInterruptedNotification(_ notification: Notification) {
-        if state == .running {
-            pauseSession()
-        }
-    }
-
-    @MainActor
-    @objc
-    func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
-        Task { @SessionActor in
-            if !captureSession.isRunning {
-                captureSession.startRunning()
+                state = .paused
+            } catch {
+                didReceiveError(error.localizedDescription)
             }
         }
     }
@@ -657,51 +689,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     // MARK: - Private methods
-
-    private func configureObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveDidEnterBackgroundNotification(_:)),
-            name: UIApplication.didEnterBackgroundNotification,
-            object: nil
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveWillEnterForegroundNotification(_:)),
-            name: UIApplication.willEnterForegroundNotification,
-            object: nil
-        )
-    }
-
-    private func configureSessionObservers() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveMediaServicesWereResetNotification(_:)),
-            name: AVAudioSession.mediaServicesWereResetNotification,
-            object: nil
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveRuntimeErrorNotification(_:)),
-            name: AVCaptureSession.runtimeErrorNotification,
-            object: nil
-        )
-
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveSessionWasInterruptedNotification(_:)),
-            name: AVCaptureSession.wasInterruptedNotification,
-            object: nil
-        )
-    }
-
-    @MainActor
-    private func didReceiveError(_ error: String) {
-        localizedError = error
-        isSnackbarPresented = true
-    }
 
     @MainActor
     private func endRecording() async throws {
@@ -737,7 +724,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
             do {
                 try videoDevice.configure(in: captureSession)
-                try audioDevice.configure(in: captureSession)
+                if audioDevice.isAvailable {
+                    try audioDevice.configure(in: captureSession)
+                }
 
                 audioDevice.add(movieOutputProcessor)
                 videoDevice.add(movieOutputProcessor)
@@ -756,7 +745,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                 try videoDevice.setPosition(position)
                 try videoDevice.setTorchMode(torchMode)
-                
+
                 videoDevice.setVideoOrientation(videoOrientation)
                 updatePreviewOrientation()
 
@@ -791,42 +780,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
 
         updatePreviewOrientation()
-    }
-
-    @MainActor
-    private func pauseSession() {
-        Task {
-            do {
-                try await movieOutputProcessor.pause()
-
-                await audioDevice.pause()
-                await videoDevice.pause()
-
-                state = .paused
-            } catch {
-                didReceiveError(error.localizedDescription)
-            }
-        }
-    }
-
-    private func receivedMediaServicesWereResetNotification() {
-        Task { @SessionActor in
-            if !captureSession.isRunning {
-                captureSession.startRunning()
-            }
-
-            if state == .running {
-                await videoDevice.endCapturing(in: captureSession)
-                await audioDevice.endCapturing(in: captureSession)
-
-                do {
-                    try await audioDevice.startCapturing()
-                    try await videoDevice.startCapturing()
-                } catch {
-                    await didReceiveError(error.localizedDescription)
-                }
-            }
-        }
     }
 
     @MainActor

@@ -277,9 +277,9 @@ class VideoDevice: NSObject, Device {
             )
         }
 
-        session.beginConfiguration()
+        session.beginUpdates()
 
-        defer { session.commitConfiguration() }
+        defer { session.endUpdates() }
 
         do {
             captureDeviceInput = try session.addDeviceInput(for: videoCaptureDevice)
@@ -311,10 +311,10 @@ class VideoDevice: NSObject, Device {
     /// - Parameter session: The `AVCaptureSession` from which to remove this device’s input/output.
     @DeviceActor
     func endCapturing(in session: AVCaptureSession) {
-        session.beginConfiguration()
-        defer { session.commitConfiguration() }
-
         if state.canTransition(to: .finished) {
+            session.beginUpdates()
+            defer { session.endUpdates() }
+
             destroyDevice()
             state = .finished
         }
@@ -496,41 +496,39 @@ class VideoDevice: NSObject, Device {
     /// - Throws: An error  if the new input cannot be added.
     @DeviceActor
     func setPosition(_ newPosition: AVCaptureDevice.Position) throws(UtilityError) {
-        if position != newPosition {
-            captureDevice = availableDevices[newPosition]?.first
+        if position != newPosition, let captureSession, let captureDevice = availableDevices[newPosition]?.first {
+            self.captureDevice = captureDevice
 
-            if let captureSession, let captureDevice {
-                let oldPosition = position
+            let oldPosition = position
 
-                notificationCenter.post(
-                    Self.deviceWillChangePosition,
-                    object: self,
-                    userInfo: [Self.devicePosition: oldPosition, Self.newPosition: newPosition]
-                )
+            notificationCenter.post(
+                Self.deviceWillChangePosition,
+                object: self,
+                userInfo: [Self.devicePosition: oldPosition, Self.newPosition: newPosition]
+            )
 
-                captureSession.beginConfiguration()
+            captureSession.beginUpdates()
 
-                defer { captureSession.commitConfiguration() }
+            defer { captureSession.endUpdates() }
 
-                captureDeviceInput = try captureSession.addDeviceInput(for: captureDevice)
+            captureDeviceInput = try captureSession.addDeviceInput(for: captureDevice)
 
-                if /// The zoom factor of the next constituent device.
-                let zoomFactor = captureDevice.virtualDeviceSwitchOverVideoZoomFactors.first,
+            if /// The zoom factor of the next constituent device.
+            let zoomFactor = captureDevice.virtualDeviceSwitchOverVideoZoomFactors.first,
 
-                    /// Whether the device is virtual and the position is back, since the back position resets the zoom factor.
-                    captureDevice.isVirtualDevice, position == .back
-                {
+                /// Whether the device is virtual and the position is back, since the back position resets the zoom factor.
+                captureDevice.isVirtualDevice, position == .back
+            {
 
-                    captureDevice.videoZoomFactor = zoomFactor.doubleValue
-                }
-
-                updateVideoOutputSettings()
-                notificationCenter.post(
-                    Self.deviceDidChangePosition,
-                    object: self,
-                    userInfo: [Self.newPosition: newPosition, Self.oldPosition: oldPosition]
-                )
+                captureDevice.videoZoomFactor = zoomFactor.doubleValue
             }
+
+            updateVideoOutputSettings()
+            notificationCenter.post(
+                Self.deviceDidChangePosition,
+                object: self,
+                userInfo: [Self.newPosition: newPosition, Self.oldPosition: oldPosition]
+            )
         }
     }
 
@@ -658,6 +656,7 @@ class VideoDevice: NSObject, Device {
 
             capturePhotoController.destroy()
             captureDevice = nil
+            needsConfiguration = true
         }
     }
 

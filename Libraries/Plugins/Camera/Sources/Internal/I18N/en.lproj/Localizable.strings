@@ -1,4 +1,6 @@
 // A
+"AnotherAppIsUsingMicrophone" = "Recording is not available because another app is using the microphone. Please close it and try again.";
+
 // B
 // C
 "Cancel" = "Cancel";

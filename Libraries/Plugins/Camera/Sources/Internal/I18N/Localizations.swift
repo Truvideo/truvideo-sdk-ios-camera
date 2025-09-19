@@ -10,6 +10,21 @@ import Foundation
 /// that need to be localized. Each property represents a specific UI element or
 /// message that users will see in the camera interface.
 struct Localizations {
+    // MARK: - A
+
+    /// Error message when another app is using the audio copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* Recording is not available because another app is using the microphone. Please close it and try again. */
+    ///
+    /// - Returns: A localized string.
+    static let anotherAppIsUsingMicrophone = NSLocalizedString(
+        "AnotherAppIsUsingMicrophone",
+        bundle: .module,
+        comment: ""
+    )
+
     // MARK: - C
 
     /// Cancel copy.

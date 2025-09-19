@@ -71,6 +71,7 @@ enum RecordingState: Sendable {
     func canTransition(to newState: RecordingState) -> Bool {
         switch (self, newState) {
         case (.initialized, .failed),
+            (.initialized, .finished),
             (.initialized, .running),
             (.failed, .running),
             (.failed, .initialized),

@@ -73,7 +73,6 @@ final class AudioDevice: NSObject, Device {
     private var captureAudioDataOutput: AVCaptureAudioDataOutput?
     private var captureDeviceInput: AVCaptureDeviceInput?
     private var captureSession: AVCaptureSession?
-    private var needsConfiguration = true
     private var processors: [ObjectIdentifier: any AudioOutputProcessor] = [:]
     private let queue = DispatchQueue(label: "com.audio.device.queue")
 
@@ -86,6 +85,13 @@ final class AudioDevice: NSObject, Device {
     /// without hopping onto `DeviceActor`.
     let configuration = AudioDeviceConfiguration()
 
+    /// Indicates whether the audio device is ready for capture operations.
+    ///
+    /// This property tracks the initialization state of the audio device, determining
+    /// whether it has been properly configured and is ready to perform audio capture
+    /// operations.
+    private(set) var isReady = false
+
     /// The current lifecycle state of the audio device.
     ///
     /// Starts as `.initialized` and transitions through `running`, `finished`, or `failed`
@@ -95,8 +101,23 @@ final class AudioDevice: NSObject, Device {
 
     // MARK: - Computed Properties
 
+    /// The current authorization status for audio capture permissions.
+    ///
+    /// This computed property returns the current authorization status for audio capture
+    /// permissions from the system. It provides a convenient way to check whether the app
+    /// has permission to access the device's microphone for audio recording and processing.
     var authorizationStatus: AVAuthorizationStatus {
         AVCaptureDevice.authorizationStatus(for: .audio)
+    }
+
+    /// Indicates whether the audio device is currently available for capture operations.
+    ///
+    /// This computed property determines if the audio device can be used for recording
+    /// by checking whether another app is currently using the microphone or if the
+    /// system has silenced secondary audio. It provides real-time availability status
+    /// that helps prevent conflicts and ensures proper audio capture behavior.
+    var isAvailable: Bool {
+        !AVAudioSession.sharedInstance().secondaryAudioShouldBeSilencedHint
     }
 
     // MARK: - Initializer
@@ -124,9 +145,9 @@ final class AudioDevice: NSObject, Device {
         }
 
         do {
-            session.beginConfiguration()
+            session.beginUpdates()
 
-            defer { session.commitConfiguration() }
+            defer { session.endUpdates() }
 
             captureDeviceInput = try session.addDeviceInput()
             captureAudioDataOutput = try session.addDeviceOutput()
@@ -134,7 +155,7 @@ final class AudioDevice: NSObject, Device {
             captureAudioDataOutput?.setSampleBufferDelegate(self, queue: queue)
 
             captureSession = session
-            needsConfiguration = false
+            isReady = true
         } catch {
             destroyDevice()
             state = .failed
@@ -196,7 +217,7 @@ final class AudioDevice: NSObject, Device {
     @DeviceActor
     func startCapturing() throws(UtilityError) {
         if state.canTransition(to: .running) {
-            guard !needsConfiguration else {
+            guard isReady else {
                 state = .failed
                 throw UtilityError(
                     kind: .AudioDeviceErrorReason.needsConfiguration,
@@ -246,9 +267,9 @@ final class AudioDevice: NSObject, Device {
 
     private func destroyDevice() {
         if let captureSession {
-            captureSession.beginConfiguration()
+            captureSession.beginUpdates()
 
-            defer { captureSession.commitConfiguration() }
+            defer { captureSession.endUpdates() }
 
             if let captureAudioDataOutput {
                 captureAudioDataOutput.setSampleBufferDelegate(nil, queue: nil)
@@ -262,6 +283,8 @@ final class AudioDevice: NSObject, Device {
 
                 self.captureDeviceInput = nil
             }
+
+            isReady = false
         }
     }
 }
