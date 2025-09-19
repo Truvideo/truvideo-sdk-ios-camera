@@ -340,7 +340,7 @@ public final class TruVideoApp: TruVideoSDK {
             self.options = options
             
             LibraryRegistry.configureAll()
-            DependencyValues.current.apiEnvironment = .beta
+            DependencyValues.current.apiEnvironment = .rc
             
             try? migrator.migrate()
             retrieveDeviceSettings()
@@ -355,8 +355,7 @@ public final class TruVideoApp: TruVideoSDK {
         if authenticatableClient.currentSession != nil {
             Task {
                 do {
-                    let deviceSetting = try await deviceSettingResource.retrieve()
-                    /// Create s3 uploader for telemetry
+                    let deviceSetting = try await deviceSettingResource.retrieve()                    
                 } catch {
                     // log could be added here
                 }

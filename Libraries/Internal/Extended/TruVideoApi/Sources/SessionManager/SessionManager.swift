@@ -31,7 +31,10 @@ public struct AuthSession: Codable, Sendable {
 /// This protocol provides a centralized way to store and retrieve authentication sessions
 /// across the application. It ensures thread-safe access to session data and provides
 /// a consistent interface for session management operations.
-protocol SessionManager: Sendable {
+///
+/// Note: This has been made temporary public to allow migrations from the old
+/// versions to the new one.
+public protocol SessionManager: Sendable {
     /// The currently stored authentication session, if any.
     ///
     /// This property provides access to the authentication session that was most recently

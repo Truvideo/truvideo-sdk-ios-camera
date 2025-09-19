@@ -31,9 +31,9 @@ struct SessionDependencyKey: DependencyKey {
 ///
 /// `StorageDependencyKey` allows consumers to override the default storage
 /// mechanism used in the system. By default, this uses `KeychainStorage`.
-struct SessionManagerDependencyKey: DependencyKey {
+public struct SessionManagerDependencyKey: DependencyKey {
     /// The default file-based storage used if none is explicitly provided.
-    static let defaultValue: any SessionManager = SessionManagerImpl()
+    public static let defaultValue: any SessionManager = SessionManagerImpl()
 }
 
 extension DependencyValues {
@@ -49,7 +49,7 @@ extension DependencyValues {
         set { self[SessionDependencyKey.self] = newValue }
     }
     /// Accessor for resolving or overriding the current `SessionManager` implementation.
-    var sessionManager: any SessionManager {
+    public var sessionManager: any SessionManager {
         get { self[SessionManagerDependencyKey.self] }
         set { self[SessionManagerDependencyKey.self] = newValue }
     }

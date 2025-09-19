@@ -42,21 +42,7 @@ struct SDKMigrator: Migrator {
     private let storage: Storage
     
     // MARK: - Types
-    
-    /// A storage key for managing `AuthSession` dependencies in the dependency injection system.
-    ///
-    /// `AuthSessionStorageKey` provides a type-safe way to store and retrieve `AuthSession`
-    /// instances within the dependency injection container. This key is used to manage authentication
-    /// tokens across the application lifecycle, ensuring consistent access to authentication state.
-    struct AuthSessionStorageKey: StorageKey {
-        /// The associated value type that will be stored and retrieved using this key.
-        ///
-        /// This typealias defines that this storage key manages `AuthSession` instances.
-        /// The storage system uses this type information to ensure type safety
-        /// when storing and retrieving authentication tokens.
-        typealias Value = AuthSession
-    }
-    
+
     /// A storage key for managing migration state in the storage system.
     ///
     /// The `MigrationStorageKey` struct implements the `StorageKey` protocol to provide
@@ -108,10 +94,12 @@ struct SDKMigrator: Migrator {
     ///
     /// - Throws: An error if migration fails or legacy data is invalid
     func migrate() throws {
-        guard let hasBeenMigrated = try storage.readValue(for: MigrationStorageKey.self), !hasBeenMigrated else {
+        let hasBeenMigrated = try storage.readValue(for: MigrationStorageKey.self) ?? false        
+        
+        guard !hasBeenMigrated else {
             return
         }
-        
+                
         if
             /// The stored api key used for authentication.
             let apiKey = legacyStorage.string(forKey: "truvideo-sdk-api-key"),
@@ -126,9 +114,9 @@ struct SDKMigrator: Migrator {
                 ]
                 
                 let rawSession = try JSONSerialization.data(withJSONObject: jsonDictionary)
-                let authToken = try JSONDecoder().decode(AuthSession.self, from: rawSession)
+                let authSession = try JSONDecoder().decode(AuthSession.self, from: rawSession)
                 
-                try storage.write(authToken, forKey: AuthSessionStorageKey.self)
+                try DependencyValues.current.sessionManager.set(authSession)
                 try storage.write(true, forKey: MigrationStorageKey.self)
             } else {
                 throw UtilityError(kind: .unknown, failureReason: "Unable to perform the migration.")
