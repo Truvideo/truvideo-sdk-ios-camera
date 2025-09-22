@@ -3,7 +3,9 @@
 //
 
 import AVFoundation
+internal import DI
 import Foundation
+internal import TruVideoApi
 import UIKit
 internal import Utilities
 
@@ -40,6 +42,11 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private let movieOutputProcessor = MovieOutputProcessor()
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
     private var photosTaken = 0
+
+    // MARK: - Dependencies
+
+    @Dependency(\.authenticatableClient)
+    var authenticatableClient: AuthenticatableClient
 
     // MARK: - Properties
 
@@ -100,6 +107,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// This property tracks the device's orientation and is used to adjust the camera
     /// interface layout and behavior accordingly.
     @Published private(set) var deviceOrientation = UIDeviceOrientation.portrait
+
+    /// Indicates whether the user is currently authenticated with the TruVideo service.
+    ///
+    /// This property tracks the authentication state of the user and determines whether
+    /// the camera functionality should be available. When `true`, the user has been
+    /// successfully authenticated and can access camera features. When `false`, the
+    /// user is not authenticated and camera functionality should be restricted.
+    @Published private(set) var isAuthenticated = false
 
     /// Combined authorization status for both audio and video devices.
     /// `true` when both camera and microphone access are granted, `false` when either is denied.
@@ -307,6 +322,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         self.orientationMonitor.add(self)
         self.orientationMonitor.startMonitoring()
 
+        self.isAuthenticated = authenticatableClient.currentSession != nil
         self.isTorchEnabled = configuration.flashMode == .on
 
         movieOutputProcessor.delegate = self

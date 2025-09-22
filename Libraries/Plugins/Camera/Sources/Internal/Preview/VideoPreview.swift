@@ -53,10 +53,10 @@ struct VideoPreview: UIViewRepresentable {
         ///
         /// - Parameter previewLayer: The preview layer instance that provides video.
         init(previewLayer: AVCaptureVideoPreviewLayer) {
-            let blurEffect = UIBlurEffect(style: .systemThinMaterialDark)
+            let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
 
             self.previewLayer = previewLayer
-            self.previewLayer.videoGravity = .resizeAspect
+            self.previewLayer.videoGravity = .resizeAspectFill
 
             self.blurView = UIVisualEffectView(effect: blurEffect)
             self.blurView.alpha = 0
@@ -397,7 +397,7 @@ extension UIView {
         delay: TimeInterval = 0
     ) -> UIViewPropertyAnimator {
 
-        let propertyViewAnimator = UIViewPropertyAnimator(duration: duration, curve: .easeOut) { [weak self] in
+        let propertyViewAnimator = UIViewPropertyAnimator(duration: duration, curve: .easeInOut) { [weak self] in
             if var self {
                 self[keyPath: key] = value
             }

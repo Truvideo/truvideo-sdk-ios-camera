@@ -15,7 +15,7 @@ import UIKit
 ///
 /// The struct provides a convenient way to access video metadata without
 /// needing to load the entire video file or parse complex format descriptions.
-final class VideoClip {
+struct VideoClip {
     /// The frame rate at which the video was recorded, measured in frames per second.
     ///
     /// This property indicates how smooth the video playback will be. Higher
@@ -53,25 +53,18 @@ final class VideoClip {
     /// and managing available storage space.
     let size: Int64
 
+    /// The URL of the thumbnail image representing this video.
+    ///
+    /// This property provides a reference to a preview-sized image used for
+    /// displaying the video in lists, grids, or galleries.
+    let thumbnailURL: URL
+
     /// The file system location where the video clip is stored.
     ///
     /// This property provides the URL path to the video file, allowing the
     /// application to access, play, or process the video content. The URL
     /// can be used with AVPlayer, AVAsset, or other video processing APIs.
     let url: URL
-
-    // MARK: - Lazy Properties
-
-    /// A lazy-loaded thumbnail image from the beginning of the video.
-    ///
-    /// This property generates a thumbnail image from the first frame of the video
-    /// using the video's URL. The thumbnail is created lazily to optimize performance
-    /// and memory usage, only generating the image when first accessed.
-    lazy var thumbnail: UIImage? = {
-        let asset = AVAsset(url: url)
-
-        return try? asset.snapshot(at: CMTime(seconds: 1, preferredTimescale: 1), actualTime: nil)
-    }()
 
     // MARK: - Initializer
 
@@ -87,6 +80,7 @@ final class VideoClip {
     ///   - lensPosition: The camera lens position used for recording (front or back)
     ///   - orientation: The device orientation when the video was recorded
     ///   - size: The file size of the video in bytes
+    ///   - thumbnailURL: The file URL of the thumbnail image representing the video
     ///   - url: The file URL where the video is stored
     init(
         bitRate: Int,
@@ -94,6 +88,7 @@ final class VideoClip {
         lensPosition: AVCaptureDevice.Position,
         orientation: UIDeviceOrientation,
         size: Int64,
+        thumbnailURL: URL,
         url: URL
     ) {
 
@@ -102,6 +97,7 @@ final class VideoClip {
         self.lensPosition = lensPosition
         self.orientation = orientation
         self.size = size
+        self.thumbnailURL = thumbnailURL
         self.url = url
     }
 }

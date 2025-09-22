@@ -327,7 +327,13 @@ extension CIContext {
             let image = createCGImage(ciiImage, from: ciiImage.extent).map(UIImage.init(cgImage:)),
 
             /// The image data representation.
-            let data = image.data(with: configuration.imageFormat)
+            let data = image.data(with: configuration.imageFormat),
+
+            /// The thumbnail image.
+            let thumbnailImage = image.thumbnail(compressionQuality: configuration.imageFormat.quality),
+
+            /// The data for the thumbnail image.
+            let thumbData = thumbnailImage.data(with: configuration.imageFormat)
         else {
 
             throw UtilityError(
@@ -336,10 +342,16 @@ extension CIContext {
             )
         }
 
+        let thumbnailURL = configuration.outputURL
+            .deletingPathExtension()
+            .appendingPathExtension("_thumb.\(configuration.imageFormat.rawValue)")
+
         try data.write(to: configuration.outputURL, options: .atomic)
+        try thumbData.write(to: thumbnailURL, options: .atomic)
 
         return Photo(
             url: configuration.outputURL,
+            thumbnailURL: thumbnailURL,
             format: configuration.imageFormat,
             lensPosition: configuration.devicePosition,
             orientation: UIDeviceOrientation(from: configuration.deviceOrientation)

@@ -16,7 +16,7 @@ import UIKit
 /// The photo provides access to the underlying image through a lazy property
 /// that loads the image data from the file URL when first accessed, making it
 /// efficient for displaying thumbnails or full-size images as needed.
-final class Photo {
+struct Photo {
     /// The timestamp when the photo was captured.
     ///
     /// This value represents the time interval since the Unix epoch (January 1, 1970)
@@ -44,6 +44,14 @@ final class Photo {
     /// the photo's context and applying appropriate processing.
     let lensPosition: AVCaptureDevice.Position
 
+    /// The URL of the thumbnail image representing this photo.
+    ///
+    /// This property provides a reference to a preview-sized image used for
+    /// displaying the photo in lists, grids, or galleries. The thumbnail is
+    /// optimized for quick loading and reduced memory usage compared to
+    /// loading the full-resolution photo.
+    let thumbnailURL: URL
+
     /// The file URL where the photo is stored.
     ///
     /// This property provides the location of the photo file on the device's
@@ -51,45 +59,30 @@ final class Photo {
     /// operations.
     let url: URL
 
-    // MARK: - Lazy Properties
-
-    /// The loaded image data from the photo file.
-    ///
-    /// This lazy property loads the actual image data from the file URL when
-    /// first accessed. It returns `nil` if the file cannot be read or the
-    /// data is corrupted. The lazy loading optimizes memory usage by only
-    /// loading the image when needed.
-    lazy var image: UIImage? = {
-        guard let data = try? Data(contentsOf: url) else {
-            return nil
-        }
-
-        return UIImage(data: data)
-    }()
-
     // MARK: - Initializer
 
     /// Creates a new photo instance with the specified metadata and file location.
     ///
     /// - Parameters:
-    ///   - url: The file URL where the photo is stored
+    ///   - url: The file URL where the full-resolution photo is stored
+    ///   - thumbnailURL: The file URL of the thumbnail image representing the photo
     ///   - format: The file format of the captured photo
     ///   - lensPosition: The camera lens position used for capture
     ///   - orientation: The device orientation when the photo was captured
     ///   - createdAt: The timestamp when the photo was captured (defaults to current time)
-    /// - Throws: None
     init(
         url: URL,
+        thumbnailURL: URL,
         format: FileFormat,
         lensPosition: AVCaptureDevice.Position,
         orientation: UIDeviceOrientation,
         createdAt: TimeInterval = Date().timeIntervalSince1970
     ) {
-
         self.createdAt = createdAt
         self.format = format
         self.lensPosition = lensPosition
         self.orientation = orientation
+        self.thumbnailURL = thumbnailURL
         self.url = url
     }
 }

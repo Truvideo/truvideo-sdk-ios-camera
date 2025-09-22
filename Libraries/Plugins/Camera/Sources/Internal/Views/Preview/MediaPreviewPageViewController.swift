@@ -149,14 +149,16 @@ final class MediaPreviewPageViewController: UIPageViewController {
         let media = medias[index]
 
         switch media {
-        case let .photo(pic):
-            let viewController = PhotoViewController(image: pic.image)
+        case .clip(let clip):
+            let viewController = ClipViewController(clip: clip)
             viewController.index = index
+
             return viewController
 
-        case let .clip(video):
-            let viewController = ClipViewController(clip: video)
+        case .photo(let photo):
+            let viewController = PhotoViewController(photo: photo)
             viewController.index = index
+
             return viewController
         }
     }
@@ -169,7 +171,7 @@ extension MediaPreviewPageViewController: ZoomAnimatorDestinationProvider {
         if let current = viewControllers?.first as? PhotoViewController {
             return current.imageView.image
         } else if let current = viewControllers?.first as? ClipViewController {
-            return current.clip.thumbnail
+            return current.imageView.image
         }
 
         return nil
@@ -221,6 +223,7 @@ extension MediaPreviewPageViewController: UIPageViewControllerDataSource, UIPage
         viewControllerAfter viewController: UIViewController
     ) -> UIViewController? {
         let index: Int
+
         if let current = viewController as? PhotoViewController {
             index = current.index
         } else if let current = viewController as? ClipViewController {

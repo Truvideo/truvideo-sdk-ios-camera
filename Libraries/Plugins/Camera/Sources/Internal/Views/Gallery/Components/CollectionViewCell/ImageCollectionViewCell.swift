@@ -2,6 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+internal import Kingfisher
 import SwiftUI
 import UIKit
 
@@ -53,14 +54,16 @@ final class ImageCollectionViewCell: UICollectionViewCell {
         ])
     }
 
+    @available(*, unavailable)
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        imageView.image = nil
+
         durationLabel.isHidden = true
+        imageView.image = nil
     }
 
     // MARK: - Instance Methods
@@ -78,7 +81,7 @@ final class ImageCollectionViewCell: UICollectionViewCell {
         switch media {
         case let .clip(clip):
             imageView.isHidden = false
-            imageView.image = clip.thumbnail ?? UIImage()
+            imageView.kf.setImage(with: clip.thumbnailURL)
 
             durationLabel.textColor = UIColor(theme.colorScheme.onSurface)
             durationLabel.backgroundColor = .clear
@@ -90,7 +93,7 @@ final class ImageCollectionViewCell: UICollectionViewCell {
             )
 
         case let .photo(photo):
-            imageView.image = photo.image
+            imageView.kf.setImage(with: photo.thumbnailURL)
         }
     }
 }

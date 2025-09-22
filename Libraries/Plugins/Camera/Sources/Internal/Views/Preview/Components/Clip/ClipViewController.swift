@@ -12,11 +12,14 @@ import UIKit
 final class ClipViewController: UIViewController {
     // MARK: - Properties
 
-    /// The index of the clip in the media array.
-    var index: Int = 0
-
     /// The video clip to display.
     let clip: VideoClip
+
+    /// The image view used to present the video.
+    let imageView = UIImageView()
+
+    /// The index of the clip in the media array.
+    var index = 0
 
     // MARK: - Private Properties
 
@@ -76,9 +79,10 @@ final class ClipViewController: UIViewController {
 
     /// Initializes the view controller with a video clip.
     ///
-    /// - Parameter clip: The video clip to display.
+    /// - Parameter clip: The video to display.
     init(clip: VideoClip) {
         self.clip = clip
+        imageView.kf.setImage(with: clip.thumbnailURL)
         playerView = PlayerView(url: clip.url)
 
         super.init(nibName: nil, bundle: nil)

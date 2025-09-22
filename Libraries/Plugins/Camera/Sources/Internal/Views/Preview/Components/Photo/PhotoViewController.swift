@@ -11,22 +11,22 @@ import UIKit
 final class PhotoViewController: UIViewController {
     // MARK: - Properties
 
-    /// The image to display in this view controller.
-    var image: UIImage?
-
     /// The image view used to present the photo.
     let imageView = UIImageView()
 
     /// The index of the photo in the media array.
-    var index: Int = 0
+    var index = 0
+
+    /// The photo to display.
+    let photo: Photo
 
     // MARK: - Initializer
 
     /// Initializes the view controller with an optional image.
     ///
-    /// - Parameter image: The image to display. Defaults to `nil`.
-    init(image: UIImage? = nil) {
-        self.image = image
+    /// - Parameter photo: The photo to display.
+    init(photo: Photo) {
+        self.photo = photo
 
         super.init(nibName: nil, bundle: nil)
     }
@@ -41,10 +41,11 @@ final class PhotoViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        imageView.contentMode = .scaleAspectFit
-        imageView.image = image
-        imageView.frame = view.bounds
         imageView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        imageView.contentMode = .scaleAspectFit
+
+        imageView.kf.setImage(with: photo.url, options: [.memoryCacheExpiration(.expired)])
+        imageView.frame = view.bounds
 
         view.addSubview(imageView)
     }

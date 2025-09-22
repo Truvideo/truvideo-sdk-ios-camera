@@ -252,7 +252,7 @@ extension GalleryGridViewController: UICollectionViewDataSource, UICollectionVie
         collectionView.scrollToItem(at: indexPath, at: .centeredVertically, animated: true)
 
         selectedIndex = indexPath.item
-        selectedThumbnail = medias[indexPath.item].thumbnail
+        selectedThumbnail = cell.imageView.image
         selectedCellFrameInWindow = cell.imageView.convert(cell.imageView.bounds, to: nil)
 
         let pageViewController = MediaPreviewPageViewController(medias: medias, startIndex: indexPath.item)

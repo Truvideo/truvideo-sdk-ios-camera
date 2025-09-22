@@ -88,14 +88,22 @@ final class MovieOutputProcessor {
     private var backgroundTaskIdentifier = UIBackgroundTaskIdentifier.invalid
     private var clipFilenameCount = 1
     private var currentClipDuration = CMTime.zero
+    private var firstVideoSampleBuffer: VideoSampleBuffer?
     private let mediaComposer: MediaComposer
     private var pixelBufferAdapter: AVAssetWriterInputPixelBufferAdaptor?
     private var skippedAudioBuffers: [AudioSampleBuffer] = []
     private var startTimestamp = CMTime.invalid
+    private var videoConfiguration = VideoDeviceConfiguration()
     private var videoInput: AVAssetWriterInput?
 
     // MARK: - Properties
 
+    /// The delegate object that receives movie output processing events and notifications.
+    ///
+    /// This property holds a weak reference to an object that conforms to the
+    /// `MovieOutputProcessorDelegate` protocol. The delegate is notified when
+    /// important events occur during movie processing, particularly when the
+    /// maximum recording duration is reached and processing completes.
     weak var delegate: MovieOutputProcessorDelegate?
 
     /// The underliying error.
@@ -356,19 +364,11 @@ final class MovieOutputProcessor {
                 }
 
                 do {
-                    let bitRate = videoInput?.outputSettings?[AVVideoAverageBitRateKey] as? Int
-                    let asset = try await exportAsset()
-                    let clip = try await VideoClip(
-                        bitRate: bitRate ?? VideoDeviceConfiguration.defaultVideoBitRate,
-                        duration: asset.load(.duration).seconds,
-                        lensPosition: asset.isMirrored() ? .front : .back,
-                        orientation: asset.orientation(),
-                        size: FileManager.default.sizeOfItem(at: asset.url.path),
-                        url: asset.url
-                    )
+                    let clip = try await exportClip()
 
                     assetsURLs.removeAll()
                     currentClipDuration = .zero
+                    firstVideoSampleBuffer = nil
                     recordingDuration = .zero
                     state = .finished
 
@@ -491,7 +491,17 @@ final class MovieOutputProcessor {
 
         recordingDuration = min(currentDuration, maxDuration)
 
-        guard isWithinMaxDuration() else {
+        guard recordingDuration < maxDuration else {
+            Task {
+                do {
+                    let clip = try await endProcessing()
+
+                    delegate?.movieOutputProcessor(self, didReachMaxDuration: .success(clip))
+                } catch {
+                    delegate?.movieOutputProcessor(self, didReachMaxDuration: .failure(error))
+                }
+            }
+
             return
         }
 
@@ -506,6 +516,10 @@ final class MovieOutputProcessor {
         {
 
             pixelBufferAdapter.append(bufferToProcess, withPresentationTime: buffer.timestamp - startTimestamp)
+
+            if firstVideoSampleBuffer == nil {
+                firstVideoSampleBuffer = buffer
+            }
         }
     }
 
@@ -552,11 +566,13 @@ final class MovieOutputProcessor {
             }
 
             videoInput = AVAssetWriterInput(mediaType: .video, outputSettings: settings)
+            videoConfiguration = configuration
 
             if let videoInput {
                 videoInput.expectsMediaDataInRealTime = true
                 videoInput.transform = buffer.preferredTransform
 
+                videoConfiguration = configuration
                 pixelBufferAdapter = AVAssetWriterInputPixelBufferAdaptor(
                     assetWriterInput: videoInput,
                     sourcePixelBufferAttributes: pixelBufferAttibutes
@@ -599,21 +615,32 @@ final class MovieOutputProcessor {
         return AVURLAsset(url: outputURL)
     }
 
-    private func isWithinMaxDuration() -> Bool {
-        guard recordingDuration >= maxDuration else {
-            return true
+    private func exportClip() async throws -> VideoClip {
+        guard let firstVideoSampleBuffer else {
+            throw UtilityError(kind: .unknown, failureReason: "Unable to create thumbnail of the video.")
         }
 
-        Task { @MovieOutputProcessorActor in
-            do {
-                let clip = try await endProcessing()
-                delegate?.movieOutputProcessor(self, didReachMaxDuration: .success(clip))
-            } catch {
-                delegate?.movieOutputProcessor(self, didReachMaxDuration: .failure(error))
-            }
+        let asset = try await exportAsset()
+        let thumbnail = try asset.snapshot(at: CMTime(seconds: 1, preferredTimescale: 1), actualTime: nil)
+        let thumbnailURL = asset.url
+            .deletingPathExtension()
+            .appendingPathExtension("_thumb.\(videoConfiguration.imageFormat.rawValue)")
+
+        guard let data = thumbnail?.data(with: videoConfiguration.imageFormat) else {
+            throw UtilityError(kind: .unknown, failureReason: "Unable to create thumbnail of the video.")
         }
 
-        return false
+        try data.write(to: thumbnailURL, options: .atomic)
+
+        return try await VideoClip(
+            bitRate: firstVideoSampleBuffer.bitRate,
+            duration: asset.load(.duration).seconds,
+            lensPosition: firstVideoSampleBuffer.isMirrored ? .front : .back,
+            orientation: UIDeviceOrientation(from: firstVideoSampleBuffer.orientation),
+            size: FileManager.default.sizeOfItem(at: asset.url.path),
+            thumbnailURL: thumbnailURL,
+            url: asset.url
+        )
     }
 
     private func nextOutputURL() -> URL {

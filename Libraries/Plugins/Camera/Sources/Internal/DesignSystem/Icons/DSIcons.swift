@@ -46,6 +46,9 @@ public struct DSIcons {
     /// Represents the rear iPhone camera, typically used for device-specific camera indicators or settings related to camera hardware.
     static let iphoneCamera = Image(systemName: "iphone.rear.camera")
 
+    /// Represents a lock icon for security and authentication-related actions.
+    static let lock = Image(systemName: "lock")
+
     /// Represents the pause action, typically used for media playback controls.
     static let pause = Image(systemName: "pause.fill")
 

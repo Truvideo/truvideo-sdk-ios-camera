@@ -23,6 +23,9 @@ struct CameraView: View {
 
             PermissionsView()
                 .hidden(viewModel.isAuthorized)
+
+            AuthenticationRequiredView()
+                .hidden(viewModel.isAuthenticated)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.colorScheme.surfaceContainer)

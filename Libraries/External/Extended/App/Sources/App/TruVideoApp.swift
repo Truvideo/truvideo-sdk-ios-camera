@@ -200,7 +200,7 @@ public final class TruVideoApp: TruVideoSDK {
     private let legacyStorage: LegacyStorage
     private let migrator: Migrator
     private let pathMonitor: any NetworkPathMonitor
-    private let queue = DispatchQueue(label: "com.app.pathMonitor.queue")
+    private let queue = DispatchQueue(label: "com.truvideo.app.pathMonitor.queue")
 
     // MARK: - Dependencies
 
@@ -208,10 +208,10 @@ public final class TruVideoApp: TruVideoSDK {
     var authenticatableClient: AuthenticatableClient
 
     @Dependency(\.deviceSettingResource)
-    var deviceSettingResource: DeviceSettingsResource
+    private var deviceSettingResource: DeviceSettingsResource
 
     @Dependency(\.telemetryManager)
-    var telemetryManager: TelemetryManager
+    private var telemetryManager: TelemetryManager
 
     // MARK: - Computed Properties
 
@@ -355,7 +355,9 @@ public final class TruVideoApp: TruVideoSDK {
         if authenticatableClient.currentSession != nil {
             Task {
                 do {
-                    let deviceSetting = try await deviceSettingResource.retrieve()                    
+                    let deviceSetting = try await deviceSettingResource.retrieve()
+                    
+                    try legacyStorage.set(deviceSetting)
                 } catch {
                     // log could be added here
                 }

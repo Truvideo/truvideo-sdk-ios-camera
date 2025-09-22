@@ -3,7 +3,6 @@
 //
 
 import Foundation
-import UIKit
 
 /// Represents a media item that can be either a video clip or a photo.
 ///
@@ -45,10 +44,35 @@ enum Media: Equatable {
         }
     }
 
+    /// The URL of the thumbnail image representing this media item.
+    ///
+    /// This computed property provides a preview image location for the
+    /// media, whether it is a video clip or photo. For videos, it usually
+    /// points to a generated still image that represents the clip.
+    /// For photos, it points to the image itself or a downscaled preview.
+    ///
+    /// - Returns: A `URL` pointing to the thumbnail image for this media item
+    var thumbnailURL: URL {
+        switch self {
+        case let .clip(clip):
+            clip.thumbnailURL
+
+        case let .photo(photo):
+            photo.thumbnailURL
+        }
+    }
+
+    /// The file URL of the underlying media content.
+    ///
+    /// This computed property provides direct access to the stored file
+    /// associated with this media item. For video clips, it points to the
+    /// video file; for photos, it points to the image file.
+    ///
+    /// - Returns: A `URL` pointing to the underlying media file
     var url: URL {
         switch self {
-        case let .clip(videoClip):
-            videoClip.url
+        case let .clip(clip):
+            clip.url
 
         case let .photo(photo):
             photo.url
@@ -88,19 +112,6 @@ enum Media: Equatable {
 
         case .photo:
             return true
-        }
-    }
-
-    /// A thumbnail image representing this media item.
-    ///
-    /// Returns either the video clip thumbnail or the photo image.
-    var thumbnail: UIImage? {
-        switch self {
-        case let .clip(video):
-            return video.thumbnail
-
-        case let .photo(image):
-            return image.image
         }
     }
 }

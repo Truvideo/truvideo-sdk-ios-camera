@@ -85,10 +85,7 @@ private struct MessageView: View {
 
     var body: some View {
         VStack(spacing: viewModel.deviceOrientation.isPortrait ? theme.spacingTheme.xxxxl : theme.spacingTheme.lg) {
-            Icon(
-                icon: DSIcons.iphoneCamera,
-                size: CGSize(width: theme.sizeTheme.x(30), height: theme.sizeTheme.x(40))
-            )
+            Icon(icon: DSIcons.iphoneCamera, size: CGSize(width: theme.sizeTheme.x(30), height: theme.sizeTheme.x(40)))
 
             Text(Localizations.permissionMessage)
                 .style(theme.textTheme.headline.copyWith(color: theme.colorScheme.onSurface, weight: .bold))

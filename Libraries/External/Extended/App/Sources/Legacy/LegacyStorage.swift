@@ -29,6 +29,17 @@ protocol LegacyStorage {
     ///   - apiKey: The API key to be stored alongside the token
     /// - Throws: Various errors depending on the specific storage implementation
     func set(_ token: AuthToken, apiKey: String) throws
+    
+    /// Stores the device setting in the legacy storage system.
+    ///
+    /// This function persists device-specific configuration and settings to the legacy
+    /// storage system by encoding the `DeviceSetting` object to JSON format and storing
+    /// it as a string in UserDefaults. The function handles the complete serialization
+    /// process and provides error handling for encoding failures.
+    ///
+    /// - Parameter deviceSetting: The authentication token to be stored
+    /// - Throws: Various errors depending on the specific storage implementation
+    func set(_ deviceSetting: DeviceSetting) throws
 }
 
 /// A concrete implementation of `LegacyStorage` that uses UserDefaults for persistence.
@@ -72,6 +83,25 @@ struct LegacySessionStorage: LegacyStorage {
             userDefaults.set(rawToken, forKey: "truvideo-sdk-authentication")
         } else {
             throw UtilityError(kind: .unknown, failureReason: "Unable to create string representation of the token.")
+        }
+    }
+    
+    /// Stores the device setting in the legacy storage system.
+    ///
+    /// This function persists device-specific configuration and settings to the legacy
+    /// storage system by encoding the `DeviceSetting` object to JSON format and storing
+    /// it as a string in UserDefaults. The function handles the complete serialization
+    /// process and provides error handling for encoding failures.
+    ///
+    /// - Parameter deviceSetting: The authentication token to be stored
+    /// - Throws: Various errors depending on the specific storage implementation
+    func set(_ deviceSetting: DeviceSetting) throws {
+        let rawData = try JSONEncoder().encode(deviceSetting)
+        
+        if let rawSettings = String(data: rawData, encoding: .utf8) {
+            userDefaults.set(rawSettings, forKey: "truvideo-sdk-settings")
+        } else {
+            throw UtilityError(kind: .unknown, failureReason: "Unable to create string representation of the settings.")
         }
     }
 }

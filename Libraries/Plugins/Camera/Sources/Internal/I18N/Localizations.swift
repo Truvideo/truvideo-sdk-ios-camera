@@ -191,4 +191,22 @@ struct Localizations {
     ///
     /// - Returns: A localized string.
     static let resolutionSd = NSLocalizedString("SD", bundle: .module, comment: "")
+
+    /// Sign in to continue copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* Sign in to continue */
+    ///
+    /// - Returns: A localized string.
+    static let signInToContinue = NSLocalizedString("SignInToContinue", bundle: .module, comment: "")
+
+    /// Sign in to use camera copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* Sign in to use the camera and microphone to take photos and record videos */
+    ///
+    /// - Returns: A localized string.
+    static let signInToUseCamera = NSLocalizedString("SignInToUseCamera", bundle: .module, comment: "")
 }

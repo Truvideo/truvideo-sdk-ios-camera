@@ -11,12 +11,18 @@ import Foundation
 /// timestamp, avoiding repeated queries to the buffer’s timing info. The underlying buffer
 /// is not copied; this struct only stores a reference.
 struct VideoSampleBuffer {
-    // MARK: - Private Properties
-
-    private let isMirrored: Bool
-    private let orientation: AVCaptureVideoOrientation
-
     // MARK: - Properties
+
+    /// The average video bit rate (bits per second).
+    let bitRate: Int
+
+    /// Indicates whether the video frame should be horizontally mirrored when displayed.
+    ///
+    /// This property determines if the video frame needs to be flipped horizontally
+    /// to appear correctly oriented to the user. It's typically set to `true` for
+    /// front-facing camera captures to provide a natural mirror-like experience,
+    /// where users see themselves as they would in a mirror rather than flipped.
+    let isMirrored: Bool
 
     /// The nominal frame duration for the capture source.
     ///
@@ -24,6 +30,14 @@ struct VideoSampleBuffer {
     /// compute scaled frame durations, and maintain continuous timestamps. For variable‑frame‑rate
     /// streams this is a baseline reference and individual samples may deviate.
     let minFrameDuration: CMTime
+
+    /// The video orientation indicating how the captured frame should be rotated for display.
+    ///
+    /// This property specifies the orientation of the video frame as captured by the
+    /// camera system. It indicates how the frame should be rotated to appear correctly
+    /// oriented when displayed to the user, taking into account the device's physical
+    /// orientation during capture.
+    let orientation: AVCaptureVideoOrientation
 
     /// The underlying captured/decoded media sample.
     ///
@@ -95,6 +109,9 @@ struct VideoSampleBuffer {
     /// for passing video samples through processing pipelines.
     ///
     /// - Parameters:
+    ///   - bitRate: The average video bit rate in bits per second, used for encoding
+    ///     configuration and quality control. This value typically comes from the
+    ///     video device configuration and affects the final video quality and file size.
     ///   - isMirrored: Whether the video frame should be horizontally mirrored when displayed.
     ///     This is typically true for front-facing camera captures to provide a natural
     ///     mirror-like experience for users.
@@ -106,12 +123,14 @@ struct VideoSampleBuffer {
     ///   - sampleBuffer: The underlying captured or decoded media sample containing the pixel
     ///     data and timing/format metadata for this frame.
     init(
+        bitRate: Int,
         isMirrored: Bool,
         orientation: AVCaptureVideoOrientation,
         minFrameDuration: CMTime,
         sampleBuffer: CMSampleBuffer
     ) {
 
+        self.bitRate = bitRate
         self.orientation = orientation
         self.isMirrored = isMirrored
         self.minFrameDuration = minFrameDuration

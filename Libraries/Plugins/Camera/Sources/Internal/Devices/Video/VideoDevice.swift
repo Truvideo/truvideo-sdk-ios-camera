@@ -668,17 +668,7 @@ class VideoDevice: NSObject, Device {
     }
 
     private func snapshot() throws(UtilityError) -> Photo {
-        guard
-            /// The Image context to use when capturing the photo.
-            let context,
-
-            /// The current video connection.
-            let captureVideoConnection = captureVideoDataOutput?.connection(with: .video),
-
-            /// The last captured video buffer.
-            let sampleBuffer = lastVideoBuffer?.sampleBuffer
-        else {
-
+        guard let context, let sampleBuffer = lastVideoBuffer?.sampleBuffer else {
             throw UtilityError(
                 kind: .VideoDeviceErrorReason.failedToCapturePhoto,
                 failureReason: "Unable to get data representation of the photo."
@@ -694,7 +684,13 @@ class VideoDevice: NSObject, Device {
             let image = context.createImage(from: sampleBuffer, orientation: orientation),
 
             /// The data representation of the image in the specified format.
-            let data = image.data(with: configuration.imageFormat)
+            let data = image.data(with: configuration.imageFormat),
+
+            /// The thumbnail image.
+            let thumbnailImage = image.thumbnail(compressionQuality: configuration.imageFormat.quality),
+
+            /// The data for the thumbnail image.
+            let thumbData = thumbnailImage.data(with: configuration.imageFormat)
         else {
 
             throw UtilityError(
@@ -705,12 +701,21 @@ class VideoDevice: NSObject, Device {
 
         do {
             let outputURL = nextOutputURL()
-            let orientation = UIDeviceOrientation(from: captureVideoConnection.videoOrientation)
-            let format = configuration.imageFormat
+            let thumbnailURL =
+                outputURL
+                .deletingPathExtension()
+                .appendingPathExtension("_thumb.\(configuration.imageFormat.rawValue)")
 
             try data.write(to: outputURL, options: .atomic)
+            try thumbData.write(to: thumbnailURL, options: .atomic)
 
-            return Photo(url: outputURL, format: format, lensPosition: position, orientation: orientation)
+            return Photo(
+                url: outputURL,
+                thumbnailURL: thumbnailURL,
+                format: configuration.imageFormat,
+                lensPosition: position,
+                orientation: UIDeviceOrientation(from: videoOrientation)
+            )
         } catch {
             throw UtilityError(
                 kind: .VideoDeviceErrorReason.failedToCapturePhoto,
@@ -743,6 +748,7 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
 
         if let captureDevice, state == .running {
             let sampleBuffer = VideoSampleBuffer(
+                bitRate: configuration.bitRate,
                 isMirrored: position == .front,
                 orientation: videoOrientation,
                 minFrameDuration: captureDevice.activeVideoMinFrameDuration,
