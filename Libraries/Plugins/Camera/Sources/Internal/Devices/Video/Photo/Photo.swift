@@ -31,18 +31,25 @@ struct Photo {
     /// and display.
     let format: FileFormat
 
-    /// The device orientation when the photo was captured.
-    ///
-    /// This value indicates how the device was oriented when the photo was taken,
-    /// which is important for proper image display and rotation handling.
-    let orientation: UIDeviceOrientation
-
     /// The camera lens position used for capture.
     ///
     /// This property specifies which camera lens was used to capture the photo,
     /// such as front-facing or back-facing camera. It's useful for determining
     /// the photo's context and applying appropriate processing.
     let lensPosition: AVCaptureDevice.Position
+
+    /// The device orientation when the photo was captured.
+    ///
+    /// This value indicates how the device was oriented when the photo was taken,
+    /// which is important for proper image display and rotation handling.
+    let orientation: UIDeviceOrientation
+
+    /// The capture session preset used when recording this video clip.
+    ///
+    /// This property stores the `AVCaptureSession.Preset` that was active during
+    /// the recording of this video clip. It preserves the resolution and quality
+    /// settings that were used at the time of capture, which is important for:
+    let preset: AVCaptureSession.Preset
 
     /// The URL of the thumbnail image representing this photo.
     ///
@@ -69,6 +76,7 @@ struct Photo {
     ///   - format: The file format of the captured photo
     ///   - lensPosition: The camera lens position used for capture
     ///   - orientation: The device orientation when the photo was captured
+    ///   - preset: The capture session preset used when recording this video clip.
     ///   - createdAt: The timestamp when the photo was captured (defaults to current time)
     init(
         url: URL,
@@ -76,12 +84,15 @@ struct Photo {
         format: FileFormat,
         lensPosition: AVCaptureDevice.Position,
         orientation: UIDeviceOrientation,
+        preset: AVCaptureSession.Preset,
         createdAt: TimeInterval = Date().timeIntervalSince1970
     ) {
+
         self.createdAt = createdAt
         self.format = format
         self.lensPosition = lensPosition
         self.orientation = orientation
+        self.preset = preset
         self.thumbnailURL = thumbnailURL
         self.url = url
     }

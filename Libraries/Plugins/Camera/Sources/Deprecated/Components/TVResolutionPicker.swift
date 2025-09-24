@@ -92,12 +92,6 @@ struct TVResolutionPicker: View {
                         Text("\(resolution.width)x\(resolution.height)")
                             .font(.body)
                             .foregroundStyle(viewModel.selectedResolution == resolution ? .black : .white)
-
-                        if viewModel.preset.isHighResolutionPhotoEnabled, resolution.supportsHighResolutionPhotos {
-                            Text("HRP: \(resolution.highResolutionPhotoWidth)x\(resolution.highResolutionPhotoHeight)")
-                                .font(.body)
-                                .foregroundStyle(viewModel.selectedResolution == resolution ? .black : .white)
-                        }
                     }
                     .frame(height: viewModel.preset.isHighResolutionPhotoEnabled ? 48 : 32)
                     .frame(maxWidth: .infinity)

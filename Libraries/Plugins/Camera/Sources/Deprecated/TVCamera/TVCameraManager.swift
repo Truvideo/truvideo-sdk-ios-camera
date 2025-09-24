@@ -146,8 +146,8 @@ class TVCameraManager: NSObject, TVCameraManagerProtocol {
         self.resolutionsManager = .init(
             backResolutions: [],
             frontResolutions: [],
-            backResolution: .defaultResolution,
-            frontResolution: .defaultResolution
+            backResolution: .init(width: 1_280, height: 720),
+            frontResolution: .init(width: 1_280, height: 720)
         )
         self.cameraLensFacing = preset.lensFacing
         self.isFlashOn = preset.flashMode == .on
@@ -519,21 +519,11 @@ class TVCameraManager: NSObject, TVCameraManagerProtocol {
     }
 
     private var mediaWidth: Int32 {
-        if isHighResolutionPhotoEnabled {
-            return currentOrientation.isLandscape
-                ? selectedResolution.highResolutionPhotoWidth : selectedResolution.highResolutionPhotoHeight
-        } else {
-            return currentOrientation.isLandscape ? selectedResolution.width : selectedResolution.height
-        }
+        currentOrientation.isLandscape ? selectedResolution.width : selectedResolution.height
     }
 
     private var mediaHeight: Int32 {
-        if isHighResolutionPhotoEnabled {
-            return currentOrientation.isLandscape
-                ? selectedResolution.highResolutionPhotoHeight : selectedResolution.highResolutionPhotoWidth
-        } else {
-            return currentOrientation.isLandscape ? selectedResolution.height : selectedResolution.width
-        }
+        currentOrientation.isLandscape ? selectedResolution.height : selectedResolution.width
     }
 
     // - MARK: Private methods

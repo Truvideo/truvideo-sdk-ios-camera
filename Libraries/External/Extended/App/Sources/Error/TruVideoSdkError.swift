@@ -53,10 +53,26 @@ public struct TruVideoSdkError: LocalizedError {
         failureReason: "SDK configuration is required before authentication."
     )
 
+    /// An error that occurs when cloud storage initialization fails.
+    ///
+    /// This error is thrown when the SDK encounters issues while attempting to
+    /// create or configure cloud storage services. This typically happens when
+    /// the server returns an invalid or unexpected response format that cannot
+    /// be processed by the cloud storage initialization logic.
     public static let makeCloudStorageFailed = TruVideoSdkError(
         kind: .makeCloudStorageFailed,
         errorDescription: "An unexpected error occurred. Please try again later.",
         failureReason: "Invalid response format from the server"
+    )
+    
+    /// Sign-out operation failed.
+    ///
+    /// This error occurs when the SDK is unable to successfully complete the sign-out process.
+    /// Possible causes include network failures, internal state issues, or server errors.
+    public static let signOutFailed = TruVideoSdkError(
+        kind: TruVideoSdkError.ErrorReason(rawValue: "signOutFailed"),
+        errorDescription: "Sign-out failed.",
+        failureReason: "An error occurred during the sign-out process. Please try again."
     )
 
     /// An unknown error that occurred during SDK operation.

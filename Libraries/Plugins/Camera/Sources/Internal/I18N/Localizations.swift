@@ -78,6 +78,15 @@ struct Localizations {
 
     // MARK: - F
 
+    /// Failed to set preset copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* Failed to set preset. Try a lower resolution or frame rate */
+    ///
+    /// - Returns: A localized string.
+    static let failedToSetPreset = NSLocalizedString("FailedToSetPreset", bundle: .module, comment: "")
+
     /// FHD copy.
     ///
     /// In en, this message translates to:
@@ -85,10 +94,11 @@ struct Localizations {
     ///     /* FHD */
     ///
     /// - Returns: A localized string.
-    static let resolutionFhd = NSLocalizedString("FHD", bundle: .module, comment: "")
+    static let fhd = NSLocalizedString("FHD", bundle: .module, comment: "")
 
     // MARK: - H
 
+    // swiftlint:disable identifier_name
     /// HD copy.
     ///
     /// In en, this message translates to:
@@ -96,7 +106,8 @@ struct Localizations {
     ///     /* HD */
     ///
     /// - Returns: A localized string.
-    static let resolutionHd = NSLocalizedString("HD", bundle: .module, comment: "")
+    static let hd = NSLocalizedString("HD", bundle: .module, comment: "")
+    // swiftlint:enable identifier_name
 
     // MARK: - M
 
@@ -170,6 +181,15 @@ struct Localizations {
     /// - Returns: A localized string.
     static let permissionMessage = NSLocalizedString("PermissionMessage", bundle: .module, comment: "")
 
+    /// Preset not supported copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /*  Preset not supported on this device */
+    ///
+    /// - Returns: A localized string.
+    static let presetNotSupported = NSLocalizedString("PresetNotSupported", bundle: .module, comment: "")
+
     // MARK: - R
 
     /// Resolutions copy.
@@ -183,6 +203,7 @@ struct Localizations {
 
     // MARK: - S
 
+    // swiftlint:disable identifier_name
     /// SD copy.
     ///
     /// In en, this message translates to:
@@ -190,7 +211,8 @@ struct Localizations {
     ///     /* SD */
     ///
     /// - Returns: A localized string.
-    static let resolutionSd = NSLocalizedString("SD", bundle: .module, comment: "")
+    static let sd = NSLocalizedString("SD", bundle: .module, comment: "")
+    // swiftlint:enable identifier_name
 
     /// Sign in to continue copy.
     ///
@@ -209,4 +231,15 @@ struct Localizations {
     ///
     /// - Returns: A localized string.
     static let signInToUseCamera = NSLocalizedString("SignInToUseCamera", bundle: .module, comment: "")
+
+    // MARK: - U
+
+    /// SD copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* Unknown */
+    ///
+    /// - Returns: A localized string.
+    static let unknown = NSLocalizedString("Unknown", bundle: .module, comment: "")
 }

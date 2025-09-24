@@ -77,6 +77,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// Localized error message for display to users. Empty string when no error.
     private(set) var localizedError = ""
 
+    /// Collection of all available video capture presets ordered by quality (highest to lowest).
+    ///
+    /// This property provides access to all supported video resolution presets in order
+    /// of quality, from highest to lowest resolution. It serves as the definitive list
+    /// of available capture presets that can be selected by the user or applied
+    /// programmatically to the capture session.
+    let presets = [AVCaptureSession.Preset.hd1920x1080, .hd1280x720, .vga640x480]
+
     /// The video preview layer that displays the camera feed in the UI.
     let previewLayer = AVCaptureVideoPreviewLayer()
 
@@ -138,12 +146,13 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// This property displays the cumulative recording time in a human-readable format.
     @Published var secondsRecorded = 0.toHMS()
 
-    /// The currently selected video resolution.
+    /// The currently selected video capture resolution preset.
     ///
-    /// Defaults to `.sd` (Standard Definition).
-    /// Use this property to track or update the active resolution
-    /// chosen by the user or the application.
-    @Published var selectedResolution = VideoResolution.highDefinition
+    /// This property tracks the active video resolution setting for the camera session.
+    /// It determines the capture resolution and quality level used for video recording
+    /// and photo capture operations. The preset is applied to the underlying
+    /// `AVCaptureSession` to configure the appropriate resolution settings.
+    @Published private(set) var selectedPreset = AVCaptureSession.Preset.hd1280x720
 
     /// The current lifecycle state of the recording process.
     @Published private(set) var state = RecordingState.initialized
@@ -172,10 +181,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// that are currently displayed in the gallery.
     @Published var medias: [Media] = [] {
         didSet {
-            /// If the new array is less than the previous one we assume that medias
-            /// were deleted
+            /// Detect media deletion when the array count decreases
             if medias.count < oldValue.count {
-                let photoCount = medias.filter(\.isPhoto).count
+                let photoCount = medias.lazy.filter(\.isPhoto).count
                 mediasTaken = medias.count
 
                 if photoCount < oldValue.filter(\.isPhoto).count {
@@ -335,8 +343,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         configureSessionObservers()
         subscribeToSecondsRecorded()
 
-        if captureSession.canSetSessionPreset(.hd4K3840x2160) {
-            captureSession.sessionPreset = .hd4K3840x2160
+        if captureSession.canSetSessionPreset(selectedPreset) {
+            captureSession.sessionPreset = selectedPreset
         }
     }
 
@@ -493,6 +501,41 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
+    /// Sets the capture session resolution to the specified preset.
+    ///
+    /// This method attempts to update the `AVCaptureSession` resolution.
+    /// If the session supports the given preset, the configuration is applied
+    /// within a begin/commit configuration block to ensure consistency.
+    ///
+    /// - Parameter preset: The `AVCaptureSession.Preset` to apply (e.g., `.hd720`, `.hd1080`).
+    @MainActor
+    func setPreset(_ preset: AVCaptureSession.Preset) {
+        guard captureSession.canSetSessionPreset(preset) else {
+            didReceiveError(Localizations.presetNotSupported)
+            return
+        }
+
+        Task { @SessionActor in
+            captureSession.beginUpdates()
+            defer { captureSession.endUpdates() }
+
+            captureSession.sessionPreset = preset
+
+            Task { @DeviceActor in
+                do {
+                    try videoDevice.setZoomFactor(zoomFactor, rate: 0)
+
+                    videoDevice.configuration.preset = preset
+
+                    await MainActor.run { selectedPreset = preset }
+                } catch {
+                    await didReceiveError(Localizations.failedToSetPreset)
+                    captureSession.sessionPreset = selectedPreset
+                }
+            }
+        }
+    }
+
     /// Switches between the front and back camera positions.
     ///
     /// This function toggles the camera position between the front-facing camera (selfie camera)
@@ -511,9 +554,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
 
                 zoomFactor = 1
-                Task.delayed(milliseconds: 600) {
-                    allowsHitTesting = true
-                }
+                Task.delayed(milliseconds: 600) { allowsHitTesting = true }
             } catch {
                 didReceiveError(error.localizedDescription)
                 allowsHitTesting = true

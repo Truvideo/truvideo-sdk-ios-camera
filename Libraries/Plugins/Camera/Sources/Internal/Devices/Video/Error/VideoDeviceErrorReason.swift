@@ -86,13 +86,5 @@ extension ErrorReason {
         /// - Most front cameras lack a torch
         /// - Some formats/presets may disable torch availability
         static let torchNotSupported = ErrorReason(rawValue: "TORCH_NOT_SUPPORTED")
-
-        /// The device could not be locked for configuration.
-        ///
-        /// Typical causes:
-        /// - Another client holds the configuration lock
-        /// - The device is busy (e.g., starting/stopping session)
-        /// - System interruptions (backgrounding, media services reset)
-        static let unableToLockDevice = ErrorReason(rawValue: "UNABLE_TO_LOCK_DEVICE_FOR_CONFIGURATION")
     }
 }

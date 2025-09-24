@@ -68,6 +68,29 @@ internal import Utilities
 /// - Important: Always configure the SDK before attempting authentication.
 /// - Warning: Authentication is required to use most SDK features.
 public protocol TruVideoSDK {
+    /// Indicates whether the user is currently authenticated with the TruVideo service.
+    ///
+    /// This property provides a convenient way to check authentication status without throwing errors.
+    /// It returns `true` if the user has been successfully authenticated and can access SDK features;
+    /// `false` if the user is not authenticated and authentication is required.
+    ///
+    /// ## Usage
+    ///
+    /// This property is commonly used to check authentication status before performing
+    /// operations that require authentication:
+    ///
+    /// ```swift
+    /// // Check authentication status
+    /// if TruvideoSdk.isAuthenticated {
+    ///     // User is authenticated, proceed with operations
+    ///     performAuthenticatedOperation()
+    /// } else {
+    ///     // User needs to authenticate first
+    ///     try await TruvideoSdk.authenticate()
+    /// }
+    /// ```
+    var isAuthenticated: Bool { get }
+    
     /// The configuration options used to initialize the TruVideo SDK.
     ///
     /// This property provides access to the complete configuration that was set during
@@ -127,11 +150,34 @@ public protocol TruVideoSDK {
     /// - Parameter options: The configuration options containing API credentials, signing configuration, and other SDK settings
     /// - Throws: `TruVideoSdkError.alreadyConfigured` if the SDK has already been configured.
     func configure(with options: TruVideoOptions)
-
-    /// Indicates if the client is authenticated.
+    
+    /// Signs out the current authenticated session and clears stored credentials.
     ///
-    /// - Returns: `true` if the client is authenticated; otherwise, `false`.
-    func isAuthenticated() throws -> Bool
+    /// This method terminates the current authentication session by clearing all stored
+    /// authentication data from secure storage. After calling this method, the user
+    /// will be logged out and must authenticate again to access protected features.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// do {
+    ///     try TruvideoSdk.signOut()
+    ///     print("Successfully signed out")
+    ///     // User is now logged out
+    /// } catch {
+    ///     print("Sign out failed: \(error)")
+    ///     // Handle sign-out error
+    /// }
+    /// ```
+    ///
+    /// ## Thread Safety
+    ///
+    /// This method is thread-safe and can be called from any thread.
+    /// It performs the sign-out operation synchronously.
+    ///
+    /// - Throws: An error if the session cannot be cleared from storage or if the
+    ///   authentication client encounters issues during the sign-out process.
+    func signOut() throws
 
     // MARK: - Deprecated
 
@@ -156,7 +202,7 @@ public protocol TruVideoSDK {
     /// Clears the current authentication session.
     ///
     /// - Throws: An error if sign-out fails.
-    @available(*, deprecated)
+    @available(*, deprecated, message: "This method is no longer needed. Use TruVideoSDK.signOut() instead.")
     func clearAuthentication() throws
 
     /// Generates a JSON string from the current device context.
@@ -213,7 +259,7 @@ public final class TruVideoApp: TruVideoSDK {
     @Dependency(\.telemetryManager)
     private var telemetryManager: TelemetryManager
 
-    // MARK: - Computed Properties
+    // MARK: - Properties
 
     /// Indicates whether the user is currently authenticated.
     ///
@@ -221,6 +267,33 @@ public final class TruVideoApp: TruVideoSDK {
     /// SDK initialization. It includes all the necessary parameters such as API credentials,
     /// signing configuration, external identifiers, and other SDK settings.
     public private(set) var options = TruVideoOptions(apiKey: "", secretKey: "", externalId: nil)
+    
+    // MARK: - Computed Properties
+    
+    /// Indicates whether the user is currently authenticated with the TruVideo service.
+    ///
+    /// This property provides a convenient way to check authentication status without throwing errors.
+    /// It returns `true` if the user has been successfully authenticated and can access SDK features;
+    /// `false` if the user is not authenticated and authentication is required.
+    ///
+    /// ## Usage
+    ///
+    /// This property is commonly used to check authentication status before performing
+    /// operations that require authentication:
+    ///
+    /// ```swift
+    /// // Check authentication status
+    /// if TruvideoSdk.isAuthenticated {
+    ///     // User is authenticated, proceed with operations
+    ///     performAuthenticatedOperation()
+    /// } else {
+    ///     // User needs to authenticate first
+    ///     try await TruvideoSdk.authenticate()
+    /// }
+    /// ```
+    public var isAuthenticated: Bool {
+        authenticatableClient.currentSession != nil
+    }
 
     // MARK: - Initializer
 
@@ -346,6 +419,41 @@ public final class TruVideoApp: TruVideoSDK {
             retrieveDeviceSettings()
             
             hasBeenConfigured = true
+        }
+    }
+    
+    /// Signs out the current authenticated session and clears stored credentials.
+    ///
+    /// This method terminates the current authentication session by clearing all stored
+    /// authentication data from secure storage. After calling this method, the user
+    /// will be logged out and must authenticate again to access protected features.
+    ///
+    /// ## Usage
+    ///
+    /// ```swift
+    /// do {
+    ///     try TruvideoSdk.signOut()
+    ///     print("Successfully signed out")
+    ///     // User is now logged out
+    /// } catch {
+    ///     print("Sign out failed: \(error)")
+    ///     // Handle sign-out error
+    /// }
+    /// ```
+    ///
+    /// ## Thread Safety
+    ///
+    /// This method is thread-safe and can be called from any thread.
+    /// It performs the sign-out operation synchronously.
+    ///
+    /// - Throws: An error if the session cannot be cleared from storage or if the
+    ///   authentication client encounters issues during the sign-out process.
+    public func signOut() throws {
+        do {
+            try authenticatableClient.signOut()
+            legacyStorage.clear()
+        } catch {
+            throw TruVideoSdkError.signOutFailed
         }
     }
 

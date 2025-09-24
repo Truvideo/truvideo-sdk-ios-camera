@@ -14,6 +14,7 @@
 "Exit" = "Exit";
 
 // F
+"FailedToSetPreset" = "Failed to set preset. Try a lower resolution or frame rate";
 "FHD" = "FHD";
 
 // G
@@ -37,6 +38,7 @@
 // P
 "PermissionMessage" = "Allow the App to access your camera and microphone";
 "PermissionDisclaimer" = "This lets you use the camera and microphone to take photos and record videos seamlessly.";
+"PresetNotSupported" = "Preset not supported on this device";
 
 // Q
 // R
@@ -49,6 +51,7 @@
 
 // T
 // U
+"Unknown" = "Unknown";
 // V
 // W
 // X

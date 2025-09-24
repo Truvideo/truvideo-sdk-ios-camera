@@ -2,6 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+import AVFoundation
 import AVKit
 import Foundation
 import UIKit
@@ -35,14 +36,14 @@ public class TruvideoSdkCameraConfiguration: NSObject {
     /// This property specifies the file format used for saving captured
     /// images. Common formats include JPEG, PNG, and HEIC. The format
     /// affects file size, quality, and compatibility with different systems.
-    public var imageFormat = TruvideoSdkCameraImageFormat.jpeg
+    public let imageFormat: TruvideoSdkCameraImageFormat
 
     /// Indicates whether high-resolution photo capture is enabled.
     ///
     /// When enabled, the camera will capture photos at the highest
     /// available resolution for the selected camera lens. This may
     /// impact performance and file size but provides maximum image quality.
-    public var isHighResolutionPhotoEnabled = false
+    public let isHighResolutionPhotoEnabled = false
 
     /// The camera lens to use for capture.
     ///
@@ -88,6 +89,12 @@ public class TruvideoSdkCameraConfiguration: NSObject {
     ///   - outputPath: The directory path for saved media (default: empty string)
     ///   - backResolution: Specific resolution for back camera (default: nil = auto-select)
     ///   - frontResolution: Specific resolution for front camera (default: nil = auto-select)
+    @available(
+        *,
+        deprecated,
+        message:
+            "Use init(flashMode:imageFormat:lensFacing:mode:outputPath:) instead. Resolution handling is now internal."
+    )
     public init(
         backResolution: TruvideoSdkCameraResolution? = nil,
         backResolutions: [TruvideoSdkCameraResolution] = [],
@@ -100,11 +107,73 @@ public class TruvideoSdkCameraConfiguration: NSObject {
         outputPath: String = ""
     ) {
 
-        self.lensFacing = lensFacing
         self.flashMode = flashMode
-        self.outputPath = outputPath
-        self.mode = mode
         self.imageFormat = imageFormat
+        self.lensFacing = lensFacing
+        self.mode = mode
+        self.outputPath = outputPath
+    }
+
+    /// Creates a new camera configuration with essential settings.
+    ///
+    /// This initializer provides a simplified way to configure the camera with the most
+    /// commonly used settings. It offers sensible defaults for all parameters while still
+    /// allowing customization when needed. This is the recommended initializer for most
+    /// use cases as it focuses on the core camera functionality without the complexity
+    /// of resolution-specific configurations.
+    ///
+    /// ## Usage Examples
+    ///
+    /// ```swift
+    /// // Basic configuration with defaults
+    /// let config = TruvideoSdkCameraConfiguration()
+    ///
+    /// // Custom flash and lens settings
+    /// let config = TruvideoSdkCameraConfiguration(
+    ///     flashMode: .auto,
+    ///     lensFacing: .front
+    /// )
+    ///
+    /// // Photo-only mode with specific format
+    /// let config = TruvideoSdkCameraConfiguration(
+    ///     imageFormat: .heic,
+    ///     mode: .pictureOnly(maxCount: 10)
+    /// )
+    ///
+    /// // Video-only mode with custom output path
+    /// let config = TruvideoSdkCameraConfiguration(
+    ///     mode: .videoOnly(maxDuration: 60),
+    ///     outputPath: "/Documents/Videos"
+    /// )
+    /// ```
+    ///
+    /// ## Parameter Details
+    ///
+    /// - **Flash Mode**: Controls camera flash behavior during capture
+    /// - **Image Format**: Determines the file format for captured photos
+    /// - **Lens Facing**: Specifies which camera (front or back) to use
+    /// - **Media Mode**: Defines what can be captured and any limits
+    /// - **Output Path**: Sets where captured media will be saved
+    ///
+    /// - Parameters:
+    ///   - flashMode: The flash mode setting for photo capture (default: `.off`)
+    ///   - imageFormat: The file format for captured images (default: `.jpeg`)
+    ///   - lensFacing: The camera lens to use for capture (default: `.back`)
+    ///   - mode: The media capture mode and limits (default: `.videoAndPicture()`)
+    ///   - outputPath: The directory path for saved media (default: `""`)
+    public init(
+        flashMode: TruvideoSdkCameraFlashMode = .off,
+        imageFormat: TruvideoSdkCameraImageFormat = .jpeg,
+        lensFacing: TruvideoSdkCameraLensFacing = .back,
+        mode: TruvideoSdkCameraMediaMode = .videoAndPicture(),
+        outputPath: String = ""
+    ) {
+
+        self.flashMode = flashMode
+        self.imageFormat = imageFormat
+        self.lensFacing = lensFacing
+        self.mode = mode
+        self.outputPath = outputPath
     }
 }
 
@@ -436,5 +505,190 @@ public enum TruvideoSdkCameraImageFormat: Int, RawRepresentable {
         default:
             return nil
         }
+    }
+}
+
+/// Represents video quality presets for camera recording with predefined resolutions and aspect ratios.
+///
+/// `TruvideoSdkCameraPreset` defines the available video recording quality levels supported by the
+/// TruVideo SDK camera functionality. Each preset corresponds to a specific resolution and provides
+/// direct mapping to AVFoundation's capture session presets for seamless integration with
+/// `AVCaptureSession` configuration.
+///
+/// ## Supported Presets
+///
+/// The class provides three predefined video quality options:
+/// - **Standard Definition** (`.sd640x480`): 640×480 resolution with 4:3 aspect ratio
+/// - **High Definition** (`.hd1280x720`): 1280×720 resolution with 16:9 aspect ratio
+/// - **Full High Definition** (`.hd1920x1080`): 1920×1080 resolution with 16:9 aspect ratio
+///
+/// ## Usage
+///
+/// ```swift
+/// // Create a preset instance
+/// let preset = TruvideoSdkCameraPreset.hd1920x1080
+///
+/// // Configure capture session
+/// captureSession.sessionPreset = preset.preset
+///
+/// // Check available presets
+/// for preset in TruvideoSdkCameraPreset.allCases {
+///     print("Available: \(preset.rawValue)")
+/// }
+/// ```
+///
+/// ## Protocol Conformance
+///
+/// - `RawRepresentable`: Provides string-based raw value representation
+/// - `CaseIterable`: Enables iteration over all available presets
+/// - `Encodable`: Supports JSON serialization for configuration storage
+/// - `Hashable`: Enables use in collections and dictionary keys
+///
+/// ## Objective-C Compatibility
+///
+/// The class is marked with `@objcMembers` for full Objective-C interoperability,
+/// allowing seamless integration with existing Objective-C codebases.
+///
+/// ## Thread Safety
+///
+/// This class is thread-safe and can be used concurrently across multiple threads.
+/// All properties are immutable once initialized.
+///
+/// - Note: The default fallback preset is `.hd1280x720` when invalid raw values are provided.
+/// - Important: Always validate preset compatibility using `canSetSessionPreset(_:)` before applying to capture sessions.
+@objcMembers
+public final class TruvideoSdkCameraPreset: RawRepresentable, CaseIterable, Codable, Hashable {
+    // MARK: - Properties
+
+    /// The raw type that can be used to represent all values of the conforming
+    /// type.
+    public let rawValue: String
+
+    // MARK: - Computed Properties
+
+    /// Maps the camera preset to its corresponding `AVCaptureSession.Preset` value.
+    ///
+    /// This computed property provides a bridge between the custom `TruvideoSdkCameraPreset`
+    /// types and the native `AVCaptureSession.Preset` values required by AVFoundation.
+    /// It ensures that each custom preset is correctly mapped to the appropriate
+    /// capture session configuration for video recording.
+    ///
+    /// ## Mapping Details
+    ///
+    /// The property maps custom presets to AVFoundation presets as follows:
+    /// - `.sd640x480` → `.vga640x480` (640×480, 4:3 aspect ratio)
+    /// - `.hd1920x1080` → `.hd1920x1080` (1920×1080, 16:9 aspect ratio)
+    /// - `.hd1280x720` → `.hd1280x720` (1280×720, 16:9 aspect ratio, default)
+    ///
+    /// ## Usage
+    ///
+    /// This property is typically used when configuring an `AVCaptureSession` to
+    /// set the appropriate session preset based on the selected video quality:
+    ///
+    /// ```swift
+    /// let cameraPreset = TruvideoSdkCameraPreset.hd1920x1080
+    /// captureSession.sessionPreset = cameraPreset.preset
+    /// ```
+    var preset: AVCaptureSession.Preset {
+        switch self {
+        case .sd640x480:
+            .vga640x480
+
+        case .hd1920x1080:
+            .hd1920x1080
+
+        default:
+            .hd1280x720
+        }
+    }
+
+    // MARK: - Static Properties
+
+    /// All available preset types.
+    public static let allCases: [TruvideoSdkCameraPreset] = [.sd640x480, .hd1280x720, .hd1920x1080]
+
+    /// Standard Definition video preset with 640x480 resolution.
+    ///
+    /// This preset provides the lowest quality option with 4:3 aspect ratio,
+    /// suitable for basic recording or when storage space is limited.
+    public static let sd640x480 = TruvideoSdkCameraPreset(rawValue: "sd640x480")
+
+    /// High Definition video preset with 1280x720 resolution.
+    ///
+    /// This preset offers a good balance between quality and file size,
+    /// providing HD quality with 16:9 aspect ratio.
+    public static let hd1280x720 = TruvideoSdkCameraPreset(rawValue: "hd1280x720")
+
+    /// Full High Definition video preset with 1920x1080 resolution.
+    ///
+    /// This preset provides the highest quality option with full HD resolution
+    /// and 16:9 aspect ratio, ideal for high-quality video recording.
+    public static let hd1920x1080 = TruvideoSdkCameraPreset(rawValue: "hd1920x1080")
+
+    // MARK: - Types
+
+    /// Allowable keys for the model
+    enum CodingKeys: String, CodingKey {
+        case rawValue
+    }
+
+    // MARK: - Static Properties
+
+    /// Converts an `AVCaptureSession.Preset` to its corresponding `TruvideoSdkCameraPreset`.
+    ///
+    /// This static method provides a bridge from native AVFoundation presets to the custom
+    /// `TruvideoSdkCameraPreset` types used by the TruVideo SDK. It ensures proper mapping
+    /// between the two preset systems and handles unsupported presets with a sensible default.
+    ///
+    /// - Parameter preset: The `AVCaptureSession.Preset` to convert
+    /// - Returns: The corresponding `TruvideoSdkCameraPreset`, or `.hd1280x720` as default
+    static func from(_ preset: AVCaptureSession.Preset) -> TruvideoSdkCameraPreset {
+        switch preset {
+        case .vga640x480:
+            .sd640x480
+
+        case .hd1920x1080:
+            .hd1920x1080
+
+        default:
+            .hd1280x720
+        }
+    }
+
+    // MARK: - Initializers
+
+    /// Creates a new preset type with the specified raw value.
+    ///
+    /// - Parameter rawValue: The string value of the preset.
+    public init(rawValue: String) {
+        self.rawValue = rawValue
+    }
+
+    /// Encodes this value into the given encoder.
+    ///
+    /// If the value fails to encode anything, `encoder` will encode an empty
+    /// keyed container in its place.
+    ///
+    /// - Parameter encoder: The encoder to write data to.
+    public required init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.rawValue = try container.decode(String.self, forKey: .rawValue)
+    }
+
+    // MARK: - Encodable
+
+    /// Encodes this value into the given encoder.
+    ///
+    /// This method supports JSON serialization by encoding the string raw
+    /// value of the orientation enum case. The encoded value can be used
+    /// for configuration storage, API communication, or cross-platform
+    /// data exchange.
+    ///
+    /// - Parameter encoder: The encoder to write data to
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+
+        try container.encode(rawValue)
     }
 }

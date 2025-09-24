@@ -78,8 +78,6 @@ extension [TruvideoSdkCameraResolution] {
         for uniqueResolution in self {
             if !uniqueResolutions.contains(where: {
                 $0.width == uniqueResolution.width && $0.height == uniqueResolution.height
-                    && $0.highResolutionPhotoWidth == uniqueResolution.highResolutionPhotoWidth
-                    && $0.highResolutionPhotoHeight == uniqueResolution.highResolutionPhotoHeight
             }) {
                 uniqueResolutions.append(uniqueResolution)
             }

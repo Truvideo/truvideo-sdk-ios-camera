@@ -624,7 +624,7 @@ final class MovieOutputProcessor {
         let thumbnail = try asset.snapshot(at: CMTime(seconds: 1, preferredTimescale: 1), actualTime: nil)
         let thumbnailURL = asset.url
             .deletingPathExtension()
-            .appendingPathExtension("_thumb.\(videoConfiguration.imageFormat.rawValue)")
+            .appendingPathExtension("-TV-clip-thumb.\(videoConfiguration.imageFormat.rawValue)")
 
         guard let data = thumbnail?.data(with: videoConfiguration.imageFormat) else {
             throw UtilityError(kind: .unknown, failureReason: "Unable to create thumbnail of the video.")
@@ -633,10 +633,10 @@ final class MovieOutputProcessor {
         try data.write(to: thumbnailURL, options: .atomic)
 
         return try await VideoClip(
-            bitRate: firstVideoSampleBuffer.bitRate,
             duration: asset.load(.duration).seconds,
             lensPosition: firstVideoSampleBuffer.isMirrored ? .front : .back,
             orientation: UIDeviceOrientation(from: firstVideoSampleBuffer.orientation),
+            preset: videoConfiguration.preset,
             size: FileManager.default.sizeOfItem(at: asset.url.path),
             thumbnailURL: thumbnailURL,
             url: asset.url

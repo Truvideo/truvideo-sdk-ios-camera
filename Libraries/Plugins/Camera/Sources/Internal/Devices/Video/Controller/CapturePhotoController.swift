@@ -3,7 +3,6 @@
 //
 
 import AVFoundation
-import CoreImage
 import Foundation
 import UIKit
 internal import Utilities
@@ -38,12 +37,12 @@ extension ErrorReason {
 /// using the AVFoundation framework. It encapsulates the complexity of managing photo
 /// capture sessions, handling asynchronous capture operations, and processing captured
 /// images with proper orientation and formatting.
-final class CapturePhotoController: NSObject {
+final class CapturePhotoController: NSObject, @unchecked Sendable {
     // MARK: - Private Properties
 
     private var capturePhotoOutput: AVCapturePhotoOutput?
     private var captureSession: AVCaptureSession?
-    private let context = CIContext.createDefault()
+    private let imageExporting: ImageExporting
     private var lastPhotoCaptureDate = Date.distantFuture
     private var photoContinuations: [Int64: PhotoContinuation] = [:]
     private var photoQualityPrioritization = AVCapturePhotoOutput.QualityPrioritization.balanced
@@ -101,6 +100,13 @@ final class CapturePhotoController: NSObject {
         /// captured photos will be stored. The URL must be writable and accessible
         /// to the application. The default value points to the temporary directory.
         let outputURL: URL
+
+        /// The capture session preset used when recording this video clip.
+        ///
+        /// This property stores the `AVCaptureSession.Preset` that was active during
+        /// the recording of this video clip. It preserves the resolution and quality
+        /// settings that were used at the time of capture.
+        let preset: AVCaptureSession.Preset
     }
 
     /// A wrapper that associates a photo capture configuration with its completion continuation.
@@ -115,6 +121,20 @@ final class CapturePhotoController: NSObject {
 
         /// The continuation that will be resumed when the photo capture completes.
         let continuation: CheckedContinuation<Photo, Error>
+    }
+
+    // MARK: - Initializer
+
+    /// Creates a new photo capture controller with notification center and thumbnail exporter.
+    ///
+    /// This initializer sets up the photo capture controller with configurable notification
+    /// center and thumbnail exporting systems. The notification center is used for handling
+    /// system notifications related to photo capture events, while the thumbnail exporter
+    /// is responsible for generating thumbnail images from captured photos.
+    ///
+    /// - Parameter imageExporting: The image exporter to use for generating thumbnail images.
+    init(imageExporting: ImageExporting = ImageExporter()) {
+        self.imageExporting = imageExporting
     }
 
     // MARK: - Instance methods
@@ -238,24 +258,11 @@ extension CapturePhotoController: AVCapturePhotoCaptureDelegate {
             return
         }
 
-        Task.detached(priority: .userInitiated) {
+        Task.detached(priority: .userInitiated) { [weak self] in
+            guard let self else { return }
+
             do {
-                guard
-                    /// Extracts and returns the captured photo's primary image.
-                    let cgImage = photo.cgImageRepresentation(),
-
-                    /// The Photo representation of the image.
-                    let photo = try self.context?.createImage(
-                        from: cgImage,
-                        configuration: photoContinuation.configuration
-                    )
-                else {
-
-                    throw UtilityError(
-                        kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                        failureReason: "Unable to get data representation of the photo."
-                    )
-                }
+                let photo = try imageExporting.export(photo, using: photoContinuation.configuration)
 
                 photoContinuation.continuation.resume(returning: photo)
             } catch {
@@ -267,6 +274,51 @@ extension CapturePhotoController: AVCapturePhotoCaptureDelegate {
                 photoContinuation.continuation.resume(throwing: error)
             }
         }
+    }
+}
+
+extension ImageExporting {
+
+    fileprivate func export(
+        _ photo: AVCapturePhoto,
+        using configuration: CapturePhotoController.Configuration
+    ) throws -> Photo {
+        guard let data = photo.fileDataRepresentation() else {
+            throw UtilityError(
+                kind: .CapturePhotoControllerErrorReason.failedToCapturePhoto,
+                failureReason: "Unable to get data representation of the photo."
+            )
+        }
+
+        let outputURL = configuration.outputURL
+        let orientation = CGImagePropertyOrientation(
+            from: configuration.deviceOrientation,
+            devicePosition: configuration.devicePosition
+        )
+
+        let thumbnailURL =
+            outputURL
+            .deletingPathExtension()
+            .appendingPathExtension("TV-photo-thumb.jpeg")
+
+        try export(
+            data,
+            to: outputURL,
+            constrainedTo: configuration.preset.size,
+            format: configuration.imageFormat,
+            preferedOrientation: orientation
+        )
+
+        try createThumbnail(from: configuration.outputURL, to: thumbnailURL)
+
+        return Photo(
+            url: configuration.outputURL,
+            thumbnailURL: thumbnailURL,
+            format: configuration.imageFormat,
+            lensPosition: configuration.devicePosition,
+            orientation: UIDeviceOrientation(from: configuration.deviceOrientation),
+            preset: configuration.preset
+        )
     }
 }
 
@@ -297,64 +349,5 @@ extension AVCapturePhotoSettings {
         capturePhotoSettings.isHighResolutionPhotoEnabled = configuration.isHighResolutionEnabled
 
         return capturePhotoSettings
-    }
-}
-
-extension CIContext {
-    /// Creates a Photo object from a Core Graphics image with proper orientation and formatting.
-    ///
-    /// This function processes a raw CGImage by applying the correct orientation based on device
-    /// position and orientation, converts it to the specified image format, and saves it to
-    /// the configured output URL. The function handles the complete pipeline from raw image
-    /// data to a fully-formed Photo object with metadata.
-    ///
-    /// - Parameters:
-    ///   - cgImage: The raw Core Graphics image to process
-    ///   - configuration: The capture configuration containing device orientation, position, image format,
-    ///                    and output URL settings
-    /// - Returns: A Photo object containing the processed image with metadata
-    /// - Throws: An error if image processing or data conversion fails
-    func createImage(from cgImage: CGImage, configuration: CapturePhotoController.Configuration) throws -> Photo {
-        let orientation = CGImagePropertyOrientation(
-            from: configuration.deviceOrientation,
-            devicePosition: configuration.devicePosition
-        )
-
-        let ciiImage = CIImage(cgImage: cgImage).oriented(orientation)
-
-        guard
-            /// The new image from the photo.
-            let image = createCGImage(ciiImage, from: ciiImage.extent).map(UIImage.init(cgImage:)),
-
-            /// The image data representation.
-            let data = image.data(with: configuration.imageFormat),
-
-            /// The thumbnail image.
-            let thumbnailImage = image.thumbnail(compressionQuality: configuration.imageFormat.quality),
-
-            /// The data for the thumbnail image.
-            let thumbData = thumbnailImage.data(with: configuration.imageFormat)
-        else {
-
-            throw UtilityError(
-                kind: .CapturePhotoControllerErrorReason.failedToCapturePhoto,
-                failureReason: "Unable to get data representation of the photo."
-            )
-        }
-
-        let thumbnailURL = configuration.outputURL
-            .deletingPathExtension()
-            .appendingPathExtension("_thumb.\(configuration.imageFormat.rawValue)")
-
-        try data.write(to: configuration.outputURL, options: .atomic)
-        try thumbData.write(to: thumbnailURL, options: .atomic)
-
-        return Photo(
-            url: configuration.outputURL,
-            thumbnailURL: thumbnailURL,
-            format: configuration.imageFormat,
-            lensPosition: configuration.devicePosition,
-            orientation: UIDeviceOrientation(from: configuration.deviceOrientation)
-        )
     }
 }

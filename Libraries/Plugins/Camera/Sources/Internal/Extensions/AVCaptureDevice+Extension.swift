@@ -5,7 +5,25 @@
 import AVFoundation
 internal import Utilities
 
+extension ErrorReason {
+    /// A collection of error reasons related to the video device operations.
+    ///
+    /// The `CaptureDeviceErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// during interactions with the external devices.
+    struct CaptureDeviceErrorReason: Sendable {
+        /// The device could not be locked for configuration.
+        ///
+        /// Typical causes:
+        /// - Another client holds the configuration lock
+        /// - The device is busy (e.g., starting/stopping session)
+        /// - System interruptions (backgrounding, media services reset)
+        static let unableToLockDevice = ErrorReason(rawValue: "UNABLE_TO_LOCK_DEVICE_FOR_CONFIGURATION")
+    }
+}
+
 extension AVCaptureDevice {
+    // MARK: - Static Properties
+
     /// Returns the preferred device types for camera selection in priority order.
     ///
     /// This static property defines the priority hierarchy for selecting camera devices,
@@ -28,6 +46,8 @@ extension AVCaptureDevice {
             .builtInWideAngleCamera,
         ]
     }
+
+    // MARK: - Static methods
 
     /// Returns the video devices capture device for the specified camera position.
     ///
@@ -134,7 +154,7 @@ extension AVCaptureDevice {
                 activeVideoMaxFrameDuration = frameDuration
             }
         } catch {
-            throw UtilityError(kind: .VideoDeviceErrorReason.unableToLockDevice, underlyingError: error)
+            throw UtilityError(kind: .CaptureDeviceErrorReason.unableToLockDevice, underlyingError: error)
         }
     }
 }

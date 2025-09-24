@@ -4,7 +4,6 @@
 
 import AVFoundation
 import Combine
-import CoreImage
 import Foundation
 import UIKit
 internal import Utilities
@@ -20,12 +19,13 @@ class VideoDevice: NSObject, Device {
     private let identifier = UUID()
     private var captureDevice: AVCaptureDevice?
     private var captureDeviceInput: AVCaptureDeviceInput?
-    private let capturePhotoController = CapturePhotoController()
+    private let capturePhotoController: CapturePhotoController
     private var captureSession: AVCaptureSession?
     private var captureVideoDataOutput: AVCaptureVideoDataOutput?
-    private let context = CIContext.createDefault()
     private var fileNameCount = 1
     private var focusObserver = FocusObserver()
+    private let frameEncoder: FrameEncoder
+    private let imageExporting: ImageExporting
     private var lastVideoBuffer: VideoSampleBuffer?
     private var needsConfiguration = true
     private let notificationCenter: NotificationCenter
@@ -158,18 +158,6 @@ class VideoDevice: NSObject, Device {
     /// captures more of the scene in a single frame.
     static let minZoomFactor: CGFloat = 1
 
-    /// Default TIFF metadata attached to photos and frame snapshots.
-    ///
-    /// Includes three standard TIFF tags:
-    /// - `kCGImagePropertyTIFFSoftware`: A human-readable app identifier (e.g., `truVideoMetadataTitle`).
-    /// - `kCGImagePropertyTIFFArtist`: The creator/author tag (e.g., `truVideoMetadataArtist`).
-    /// - `kCGImagePropertyTIFFDateTime`: An ISO-8601 timestamp string.
-    static let imageMetadata = [
-        kCGImagePropertyTIFFSoftware as String: truVideoMetadataTitle,
-        kCGImagePropertyTIFFArtist as String: truVideoMetadataArtist,
-        kCGImagePropertyTIFFDateTime as String: ISO8601DateFormatter().string(from: Date()),
-    ]
-
     // MARK: - Notification Keys
 
     /// Key for accessing device position information in notification user info dictionaries.
@@ -246,8 +234,26 @@ class VideoDevice: NSObject, Device {
 
     // MARK: - Initializer
 
-    /// Creates a new instance of the `VideoDevice`.
-    nonisolated init(notificationCenter: NotificationCenter = .default) {
+    /// Creates a new video device with notification center and thumbnail exporter.
+    ///
+    /// This initializer sets up the video device with configurable notification
+    /// center and thumbnail exporting systems. The notification center is used for handling
+    /// system notifications related to video capture events, while the thumbnail exporter
+    /// is responsible for generating thumbnail images from captured photos.
+    ///
+    /// - Parameters:
+    ///   - frameEncoder: The frame encoder to use for encoding sample buffers.
+    ///   - imageExporting: The image exporter to use for generating images.
+    ///   - notificationCenter: The notification center to use for system notifications.
+    nonisolated init(
+        frameEncoder: FrameEncoder = VideoBufferFrameEncoder(),
+        imageExporting: ImageExporting = ImageExporter(),
+        notificationCenter: NotificationCenter = .default
+    ) {
+
+        self.capturePhotoController = CapturePhotoController(imageExporting: imageExporting)
+        self.frameEncoder = frameEncoder
+        self.imageExporting = imageExporting
         self.notificationCenter = notificationCenter
     }
 
@@ -419,7 +425,8 @@ class VideoDevice: NSObject, Device {
                 flashMode: flashMode,
                 imageFormat: configuration.imageFormat,
                 isHighResolutionEnabled: configuration.isHighResolutionEnabled,
-                outputURL: nextOutputURL()
+                outputURL: nextOutputURL(),
+                preset: configuration.preset
             )
 
             do {
@@ -668,53 +675,28 @@ class VideoDevice: NSObject, Device {
     }
 
     private func snapshot() throws(UtilityError) -> Photo {
-        guard let context, let sampleBuffer = lastVideoBuffer?.sampleBuffer else {
+        guard let lastVideoBuffer else {
             throw UtilityError(
                 kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                failureReason: "Unable to get data representation of the photo."
-            )
-        }
-
-        let orientation = CGImagePropertyOrientation(from: videoOrientation, devicePosition: position)
-
-        sampleBuffer.append(metadataAdditions: Self.imageMetadata)
-
-        guard
-            /// The image extracted from the buffer.
-            let image = context.createImage(from: sampleBuffer, orientation: orientation),
-
-            /// The data representation of the image in the specified format.
-            let data = image.data(with: configuration.imageFormat),
-
-            /// The thumbnail image.
-            let thumbnailImage = image.thumbnail(compressionQuality: configuration.imageFormat.quality),
-
-            /// The data for the thumbnail image.
-            let thumbData = thumbnailImage.data(with: configuration.imageFormat)
-        else {
-
-            throw UtilityError(
-                kind: .VideoDeviceErrorReason.failedToCapturePhoto,
-                failureReason: "Unable to get data representation of the photo."
+                failureReason: "No video buffer available for photo capture"
             )
         }
 
         do {
             let outputURL = nextOutputURL()
-            let thumbnailURL =
-                outputURL
-                .deletingPathExtension()
-                .appendingPathExtension("_thumb.\(configuration.imageFormat.rawValue)")
+            let thumbnailURL = outputURL.deletingPathExtension().appendingPathExtension("TV-photo-thumb.jpeg")
+            let data = try frameEncoder.encode(lastVideoBuffer, to: outputURL, format: configuration.imageFormat)
 
             try data.write(to: outputURL, options: .atomic)
-            try thumbData.write(to: thumbnailURL, options: .atomic)
+            try imageExporting.createThumbnail(from: outputURL, to: thumbnailURL)
 
             return Photo(
                 url: outputURL,
                 thumbnailURL: thumbnailURL,
                 format: configuration.imageFormat,
                 lensPosition: position,
-                orientation: UIDeviceOrientation(from: videoOrientation)
+                orientation: UIDeviceOrientation(from: videoOrientation),
+                preset: configuration.preset
             )
         } catch {
             throw UtilityError(
@@ -748,7 +730,7 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
 
         if let captureDevice, state == .running {
             let sampleBuffer = VideoSampleBuffer(
-                bitRate: configuration.bitRate,
+                bitRate: configuration.preset.bitRate,
                 isMirrored: position == .front,
                 orientation: videoOrientation,
                 minFrameDuration: captureDevice.activeVideoMinFrameDuration,

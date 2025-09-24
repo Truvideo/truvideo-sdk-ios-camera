@@ -102,6 +102,7 @@ struct TruVideoPhoto {
             filePath: filePath,
             lensFacing: lensFacing,
             orientation: orientation,
+            preset: .hd1280x720,
             resolution: resolution,
             type: type
         )

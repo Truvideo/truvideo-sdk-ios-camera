@@ -20,12 +20,20 @@ struct VideoDeviceConfiguration: Sendable {
     /// are derived when building encoder settings if explicit `dimensions` are not provided.
     var aspectRatio = AspectRatio.active
 
-    /// Target average video bitrate, in bits per second.
+    /// The preferred video capture resolution preset for the video device.
     ///
-    /// This maps to `AVVideoAverageBitRateKey` in the compression properties dictionary.
-    /// Higher bitrates improve quality at the cost of larger files and bandwidth.
-    /// Typical mobile values range from 2–8 Mbps depending on resolution and content.
-    var bitRate = defaultVideoBitRate
+    /// This property specifies the default resolution setting used when configuring
+    /// the video capture device. It determines the capture resolution and quality
+    /// level for video recording operations. The preset is applied to the underlying
+    /// `AVCaptureSession` to configure the appropriate resolution settings.
+    ///
+    /// ## Supported Presets
+    ///
+    /// The property supports standard AVFoundation presets:
+    /// - `.hd1280x720`: High Definition 720p (1280×720, 16:9 aspect ratio) - Default
+    /// - `.hd1920x1080`: Full High Definition 1080p (1920×1080, 16:9 aspect ratio)
+    /// - `.vga640x480`: Standard Definition (640×480, 4:3 aspect ratio)
+    var preset = AVCaptureSession.Preset.hd1280x720
 
     /// The codec used to encode video frames.
     ///
@@ -84,14 +92,6 @@ struct VideoDeviceConfiguration: Sendable {
     /// - `AVVideoScalingModeResize`
     /// - `AVVideoScalingModeFit`
     var scalingMode = AVVideoScalingModeResizeAspectFill
-
-    // MARK: - Static Properties
-
-    /// The default average video bitrate (2 Mbps).
-    ///
-    /// A balanced mobile default suitable for 720p–1080p with moderate motion. Adjust upward
-    /// for complex scenes or higher resolutions; reduce for bandwidth‑constrained scenarios.
-    static let defaultVideoBitRate = 2_000_000
 
     // MARK: - Types
 
@@ -233,7 +233,7 @@ struct VideoDeviceConfiguration: Sendable {
         config[AVVideoScalingModeKey] = scalingMode
 
         var compressionDict: [String: Any] = [:]
-        compressionDict[AVVideoAverageBitRateKey] = bitRate
+        compressionDict[AVVideoAverageBitRateKey] = preset.bitRate
         compressionDict[AVVideoAllowFrameReorderingKey] = false
         compressionDict[AVVideoMaxKeyFrameIntervalKey] = maxKeyFrameInterval
         compressionDict[AVVideoMaxKeyFrameIntervalDurationKey] = maxKeyFrameIntervalDuration

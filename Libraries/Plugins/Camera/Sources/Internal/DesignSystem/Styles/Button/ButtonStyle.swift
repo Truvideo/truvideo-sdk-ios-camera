@@ -125,15 +125,24 @@ public struct PrimaryButtonStyle: ButtonStyle {
             }
         }
 
-        private var effectiveTextStyle: TextStyle {
-            let textColor = textColor ?? theme.colorScheme.onPrimary
-            let fallbackTextStyle = theme.textTheme.callout.copyWith(color: textColor, weight: .semiBold)
-            let textStyle = theme.buttonTheme.textStyle ?? DSStateProperty.all(fallbackTextStyle)
+        private var effectiveTextStyle: DSStateProperty<TextStyle> {
+            guard let textStyle = theme.buttonTheme.textStyle else {
+                return DSStateProperty { state in
+                    let textStyle = theme.textTheme.callout.copyWith(weight: .semiBold)
 
-            return
-                textStyle
-                .resolve(state)
-                .copyWith(color: state.contains(.disabled) ? textColor.opacity(0.5) : textColor)
+                    if state.contains(.disabled) {
+                        return textStyle.copyWith(color: theme.colorScheme.primary.opacity(0.78))
+                    }
+
+                    if state.contains(.selected) {
+                        return textStyle.copyWith(color: theme.colorScheme.onSecondary)
+                    }
+
+                    return textStyle.copyWith(color: theme.colorScheme.onPrimary)
+                }
+            }
+
+            return textStyle
         }
 
         private var state: DSState {
@@ -159,10 +168,13 @@ public struct PrimaryButtonStyle: ButtonStyle {
                     minHeight: theme.buttonTheme.minimunSize?.height,
                     alignment: theme.buttonTheme.alignment
                 )
-                .textStyle(effectiveTextStyle)
                 .opacity(configuration.isPressed ? 0.5 : 1)
                 .background(effectiveBackgroundColor.resolve(state))
                 .clipShape(.rect(cornerRadius: theme.buttonTheme.cornerRadius ?? theme.radiusTheme.sm))
+                .textStyle(
+                    effectiveTextStyle.resolve(state)
+                        .copyWith(color: textColor?.opacity(state.contains(.disabled) ? 0.78 : 1))
+                )
         }
     }
 

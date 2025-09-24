@@ -52,7 +52,7 @@ struct TruvideoSdkScannerCameraView: View {
         onComplete: @escaping TruvideoSdkScannerCameraViewCallback
     ) {
         let viewModelPreset: TruvideoSdkCameraConfiguration = .init(
-            backResolution: TruvideoSdkCameraResolution.defaultResolution,
+            backResolution: TruvideoSdkCameraResolution(width: 1_280, height: 720),
             backResolutions: [],
             flashMode: preset.flashMode,
             frontResolution: nil,

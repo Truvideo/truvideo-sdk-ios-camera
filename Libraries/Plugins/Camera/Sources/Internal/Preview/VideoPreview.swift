@@ -85,13 +85,13 @@ struct VideoPreview: UIViewRepresentable {
             fatalError("init(coder:) has not been implemented")
         }
 
-        // MARK: Overriden methods
+        // MARK: Overridden methods
 
         override func layoutSubviews() {
             super.layoutSubviews()
 
-            overlayView.frame = frame
-            previewLayer.frame = frame
+            overlayView.frame = bounds
+            previewLayer.frame = bounds
         }
 
         deinit {
@@ -179,7 +179,6 @@ struct VideoPreview: UIViewRepresentable {
         @MainActor
         @objc
         func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
-            layer.insertSublayer(previewLayer, at: 0)
             overlayView.alpha = 1
             overlayView.animate(\.alpha, to: 0, duration: 0.25, delay: 0.8)
         }

@@ -16,7 +16,7 @@ import UIKit
 /// file path for access, and detailed capture metadata such as
 /// camera lens, orientation, resolution, and media type.
 @objcMembers
-public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
+public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
     /// A unique identifier for the media item.
     public let id: UUID
 
@@ -35,6 +35,9 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
     /// The device orientation when the media was captured.
     public let orientation: TruvideoSdkCameraOrientation
 
+    /// The preset of the captured media.
+    public let preset: TruvideoSdkCameraPreset
+
     /// The resolution of the captured media.
     public let resolution: TruvideoSdkCameraResolution
 
@@ -51,6 +54,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
         case type
         case lensFacing
         case orientation
+        case preset
         case resolution
         case duration
     }
@@ -90,7 +94,8 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
             filePath: clip.url.path,
             lensFacing: TruvideoSdkCameraLensFacing(position: clip.lensPosition),
             orientation: TruvideoSdkCameraOrientation(orientation: clip.orientation),
-            resolution: .init(width: 0, height: 0),
+            preset: TruvideoSdkCameraPreset.from(clip.preset),
+            resolution: .init(width: Int32(clip.preset.size.width), height: Int32(clip.preset.size.height)),
             type: .clip
         )
     }
@@ -110,7 +115,8 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
             filePath: photo.url.path,
             lensFacing: TruvideoSdkCameraLensFacing(position: photo.lensPosition),
             orientation: TruvideoSdkCameraOrientation(orientation: photo.orientation),
-            resolution: .init(width: 0, height: 0),
+            preset: TruvideoSdkCameraPreset.from(photo.preset),
+            resolution: .init(width: Int32(photo.preset.size.width), height: Int32(photo.preset.size.height)),
             type: .photo
         )
     }
@@ -131,6 +137,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
     ///   - filePath: The file system path where the media is stored
     ///   - lensFacing: The camera lens used for capture
     ///   - orientation: The device orientation during capture
+    ///   - preset: The preset of the captured media
     ///   - resolution: The resolution of the captured media
     ///   - type: The type of media that was captured
     public init(
@@ -140,6 +147,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
         filePath: String,
         lensFacing: TruvideoSdkCameraLensFacing,
         orientation: TruvideoSdkCameraOrientation,
+        preset: TruvideoSdkCameraPreset,
         resolution: TruvideoSdkCameraResolution,
         type: TruvideoSdkCameraMediaType
     ) {
@@ -150,8 +158,32 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
         self.filePath = filePath
         self.lensFacing = lensFacing
         self.orientation = orientation
+        self.preset = preset
         self.resolution = resolution
         self.type = type
+    }
+
+    /// Creates a new instance by decoding from the given decoder.
+    ///
+    /// This initializer supports JSON deserialization by decoding the string
+    /// raw value and converting it to the appropriate orientation enum case.
+    /// If the decoded string doesn't match any valid raw value, a DecodingError
+    /// is thrown to indicate data corruption.
+    ///
+    /// - Parameter decoder: The decoder to read data from
+    /// - Throws: DecodingError.dataCorrupted if the raw value is invalid
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.id = try container.decode(UUID.self, forKey: .id)
+        self.createdAt = try container.decode(TimeInterval.self, forKey: .createdAt)
+        self.duration = try container.decode(TimeInterval.self, forKey: .duration)
+        self.filePath = try container.decode(String.self, forKey: .filePath)
+        self.lensFacing = try container.decode(TruvideoSdkCameraLensFacing.self, forKey: .lensFacing)
+        self.orientation = try container.decode(TruvideoSdkCameraOrientation.self, forKey: .orientation)
+        self.preset = try container.decode(TruvideoSdkCameraPreset.self, forKey: .preset)
+        self.resolution = try container.decode(TruvideoSdkCameraResolution.self, forKey: .resolution)
+        self.type = try container.decode(TruvideoSdkCameraMediaType.self, forKey: .type)
     }
 
     // MARK: - Encoding
@@ -169,6 +201,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
         try container.encode(filePath, forKey: .filePath)
         try container.encode(lensFacing, forKey: .lensFacing)
         try container.encode(orientation, forKey: .orientation)
+        try container.encode(preset, forKey: .preset)
         try container.encode(resolution, forKey: .resolution)
         try container.encode(type, forKey: .type)
     }
@@ -186,7 +219,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Encodable, Identifiable {
 /// conventions. It includes utility properties for converting between
 /// different orientation representations and retrieving current device state.
 @objc
-public enum TruvideoSdkCameraOrientation: Int, Encodable, RawRepresentable {
+public enum TruvideoSdkCameraOrientation: Int, Codable, RawRepresentable {
     /// Upright portrait mode.
     ///
     /// This case represents the standard portrait orientation where the device
@@ -325,7 +358,7 @@ public enum TruvideoSdkCameraOrientation: Int, Encodable, RawRepresentable {
         }
     }
 
-    // MARK: - Encoder
+    // MARK: - Encodable
 
     /// Encodes this value into the given encoder.
     ///
@@ -339,5 +372,124 @@ public enum TruvideoSdkCameraOrientation: Int, Encodable, RawRepresentable {
         var container = encoder.singleValueContainer()
 
         try container.encode(rawValue)
+    }
+}
+
+/// Represents a camera resolution with width and height dimensions.
+///
+/// `TruvideoSdkCameraResolution` defines a camera resolution using integer width and height values.
+/// This class provides a simple way to represent video capture resolutions and supports
+/// JSON encoding for configuration storage and API communication.
+///
+/// ## Usage
+///
+/// ```swift
+/// // Create a 1920x1080 resolution
+/// let fullHD = TruvideoSdkCameraResolution(width: 1920, height: 1080)
+///
+/// // Create a 1280x720 resolution
+/// let hd = TruvideoSdkCameraResolution(width: 1280, height: 720)
+///
+/// // Access resolution dimensions
+/// print("Width: \(fullHD.width), Height: \(fullHD.height)")
+/// ```
+///
+/// ## Common Resolutions
+///
+/// Standard video resolutions include:
+/// - **4K**: 3840×2160 (Ultra High Definition)
+/// - **1080p**: 1920×1080 (Full High Definition)
+/// - **720p**: 1280×720 (High Definition)
+/// - **480p**: 854×480 (Standard Definition)
+/// - **360p**: 640×360 (Low Definition)
+///
+/// ## JSON Encoding
+///
+/// The class supports JSON encoding for API communication:
+///
+/// ```swift
+/// let resolution = TruvideoSdkCameraResolution(width: 1920, height: 1080)
+/// let encoder = JSONEncoder()
+/// let data = try encoder.encode(resolution)
+/// // Result: {"width": 1920, "height": 1080}
+/// ```
+///
+/// ## Objective-C Compatibility
+///
+/// The class is marked with `@objcMembers` for full Objective-C interoperability,
+/// allowing seamless integration with existing Objective-C codebases.
+///
+/// ## Thread Safety
+///
+/// This class is thread-safe and can be used concurrently across multiple threads.
+/// All properties are immutable once initialized.
+///
+/// - Note: This class is deprecated. Use `AVCaptureSession.Preset` for resolution handling.
+/// - Important: Width and height values are stored as `Int32` for API compatibility.
+@objcMembers
+public class TruvideoSdkCameraResolution: NSObject, Codable {
+    /// The height of the camera resolution in pixels.
+    ///
+    /// This property represents the vertical dimension of the video capture resolution.
+    /// It's stored as an `Int32` for API compatibility and JSON encoding support.
+    public let height: Int32
+
+    /// The width of the camera resolution in pixels.
+    ///
+    /// This property represents the horizontal dimension of the video capture resolution.
+    /// It's stored as an `Int32` for API compatibility and JSON encoding support.
+    public let width: Int32
+
+    // MARK: - Types
+
+    /// Allowable keys for JSON encoding and decoding.
+    enum CodingKeys: String, CodingKey {
+        case height
+        case width
+    }
+
+    // MARK: - Initializers
+
+    /// Creates a new camera resolution with the specified width and height.
+    ///
+    /// This initializer creates a resolution object with the given dimensions.
+    /// Both width and height must be positive values representing pixel dimensions.
+    ///
+    /// - Parameters:
+    ///   - width: The horizontal dimension in pixels
+    ///   - height: The vertical dimension in pixels
+    public init(width: Int32, height: Int32) {
+        self.height = height
+        self.width = width
+    }
+
+    /// Encodes this value into the given encoder.
+    ///
+    /// If the value fails to encode anything, `encoder` will encode an empty
+    /// keyed container in its place.
+    ///
+    /// - Parameter encoder: The encoder to write data to.
+    public required init(from decoder: any Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        self.height = try container.decode(Int32.self, forKey: .height)
+        self.width = try container.decode(Int32.self, forKey: .width)
+    }
+
+    // MARK: - Encoder
+
+    /// Encodes this value into the given encoder.
+    ///
+    /// This method supports JSON serialization by encoding the string raw
+    /// value of the orientation enum case. The encoded value can be used
+    /// for configuration storage, API communication, or cross-platform
+    /// data exchange.
+    ///
+    /// - Parameter encoder: The encoder to write data to
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        try container.encode(height, forKey: .height)
+        try container.encode(width, forKey: .width)
     }
 }

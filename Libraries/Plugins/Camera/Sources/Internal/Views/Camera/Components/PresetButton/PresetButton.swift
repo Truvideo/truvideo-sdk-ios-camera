@@ -2,6 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+import AVFoundation
 import SwiftUI
 
 /// A circular button that displays the current camera preset setting with rotation animation.
@@ -23,6 +24,18 @@ struct PresetButton: View {
 
     @State var isPresented = false
 
+    // MARK: - Binding Properties
+
+    var selection: Binding<AVCaptureSession.Preset> {
+        Binding(
+            get: { viewModel.selectedPreset },
+            set: { value in
+                isPresented.toggle()
+                viewModel.setPreset(value)
+            }
+        )
+    }
+
     // MARK: - Computed Properties
 
     var textColor: Color {
@@ -35,16 +48,17 @@ struct PresetButton: View {
 
     var body: some View {
         CircleButton {
-            Text(viewModel.selectedResolution.title)
+            Text(viewModel.selectedPreset.localizedLabel)
                 .style(theme.textTheme.caption1.copyWith(color: textColor))
                 .padding(theme.spacingTheme.xxs)
+                .frame(minWidth: theme.sizeTheme.xxxl)
         } action: {
             isPresented.toggle()
         }
         .allowsHitTesting(viewModel.allowsHitTesting)
         .disabled([.paused, .running].contains(viewModel.state))
         .scaledFullScreenCover(isPresented: $isPresented) {
-            ResolutionsView(isPresented: $isPresented, selection: $viewModel.selectedResolution)
+            PresetsView(presets: viewModel.presets, isPresented: $isPresented, selection: selection)
         }
     }
 }

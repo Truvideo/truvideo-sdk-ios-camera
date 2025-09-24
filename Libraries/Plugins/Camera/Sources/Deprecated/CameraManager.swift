@@ -129,3 +129,23 @@ extension [TruvideoSdkCameraResolutionFormat] {
         return uniqueResolutions
     }
 }
+
+extension Array where Element: TruvideoSdkCameraResolutionFormat {
+    func filterStandardResolutions() -> [Element] {
+        var filteredResolutions = [Element]()
+        for element in self {
+            switch (element.width, element.height) {
+            case (640, 480):  // SD
+                filteredResolutions.append(element)
+            case (1280, 720):  // HD
+                filteredResolutions.append(element)
+            case (1920, 1080):  // FULL HD
+                filteredResolutions.append(element)
+            default:
+                continue  // No standard
+            }
+        }
+
+        return filteredResolutions
+    }
+}

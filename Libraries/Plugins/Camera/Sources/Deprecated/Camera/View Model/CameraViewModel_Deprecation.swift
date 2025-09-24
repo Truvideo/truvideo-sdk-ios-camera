@@ -370,8 +370,8 @@ class CameraViewModelDeprecation: ObservableObject {
         self.resolutionsManager = .init(
             backResolutions: [],
             frontResolutions: [],
-            backResolution: .defaultResolution,
-            frontResolution: .defaultResolution
+            backResolution: .init(width: 1_280, height: 720),
+            frontResolution: .init(width: 1_280, height: 720)
         )
         self.showResolutionPickerButton = resolutionsManager.hasMultipleResolutions(
             for: preset.lensFacing == .front ? .front : .back

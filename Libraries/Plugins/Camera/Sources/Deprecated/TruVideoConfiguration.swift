@@ -1,8 +1,5 @@
 //
-//  TruVideoConfiguration.swift
-//
-//  Created by TruVideo on 6/14/22.
-//  Copyright © 2023 TruVideo. All rights reserved.
+// Copyright © 2025 TruVideo. All rights reserved.
 //
 
 import AVFoundation

@@ -16,13 +16,6 @@ import UIKit
 /// The struct provides a convenient way to access video metadata without
 /// needing to load the entire video file or parse complex format descriptions.
 struct VideoClip {
-    /// The frame rate at which the video was recorded, measured in frames per second.
-    ///
-    /// This property indicates how smooth the video playback will be. Higher
-    /// frame rates provide smoother motion, while lower frame
-    /// rates may be more suitable for cinematic content.
-    let bitRate: Int
-
     /// The timestamp when this object was created.
     let createdAt: TimeInterval = Date().timeIntervalSince1970
 
@@ -45,6 +38,13 @@ struct VideoClip {
     /// This value indicates how the device was oriented when the video was recorded,
     /// which is important for proper video display and rotation handling.
     let orientation: UIDeviceOrientation
+
+    /// The capture session preset used when recording this video clip.
+    ///
+    /// This property stores the `AVCaptureSession.Preset` that was active during
+    /// the recording of this video clip. It preserves the resolution and quality
+    /// settings that were used at the time of capture.
+    let preset: AVCaptureSession.Preset
 
     /// The size of the video file in bytes.
     ///
@@ -75,27 +75,27 @@ struct VideoClip {
     /// the URL where the video file is stored.
     ///
     /// - Parameters:
-    ///   - bitRate: The bit rate of the video in bits per second
     ///   - duration: The duration of the video in seconds
     ///   - lensPosition: The camera lens position used for recording (front or back)
     ///   - orientation: The device orientation when the video was recorded
+    ///   - preset: The capture session preset used when recording this video clip.
     ///   - size: The file size of the video in bytes
     ///   - thumbnailURL: The file URL of the thumbnail image representing the video
     ///   - url: The file URL where the video is stored
     init(
-        bitRate: Int,
         duration: TimeInterval,
         lensPosition: AVCaptureDevice.Position,
         orientation: UIDeviceOrientation,
+        preset: AVCaptureSession.Preset,
         size: Int64,
         thumbnailURL: URL,
         url: URL
     ) {
 
-        self.bitRate = bitRate
         self.duration = duration
         self.lensPosition = lensPosition
         self.orientation = orientation
+        self.preset = preset
         self.size = size
         self.thumbnailURL = thumbnailURL
         self.url = url

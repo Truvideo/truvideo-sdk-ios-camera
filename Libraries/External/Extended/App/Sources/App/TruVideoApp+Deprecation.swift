@@ -27,16 +27,6 @@ extension TruVideoSdkError {
         errorDescription: "Unable to generate request payload.",
         failureReason: "The data provided could not be encoded or was invalid."
     )
-
-    /// Sign-out operation failed.
-    ///
-    /// This error occurs when the SDK is unable to successfully complete the sign-out process.
-    /// Possible causes include network failures, internal state issues, or server errors.
-    public static let signOutFailed = TruVideoSdkError(
-        kind: TruVideoSdkError.ErrorReason(rawValue: "signOutFailed"),        
-        errorDescription: "Sign-out failed.",
-        failureReason: "An error occurred during the sign-out process. Please try again."
-    )
 }
 
 extension TruVideoApp {
@@ -71,7 +61,7 @@ extension TruVideoApp {
     ///
     /// - Throws: An error if sign-out fails.
     public func clearAuthentication() throws {
-        try authenticatableClient.signOut()
+        try signOut()
     }
 
     /// Generates a JSON string from the current device context.
@@ -97,13 +87,6 @@ extension TruVideoApp {
     ///
     /// This function was a placeholder for starting authentication. It is now deprecated.
     public func initAuthentication() async throws {}
-
-    /// Indicates if the client is authenticated.
-    ///
-    /// - Returns: `true` if the client is authenticated; otherwise, `false`.
-    public func isAuthenticated() throws -> Bool {
-        authenticatableClient.currentSession != nil
-    }
 
     /// Checks if the current authentication token is expired.
     ///
