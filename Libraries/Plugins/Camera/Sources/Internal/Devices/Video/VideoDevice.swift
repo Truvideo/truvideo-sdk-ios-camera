@@ -421,6 +421,7 @@ class VideoDevice: NSObject, Device {
 
         guard state == .running else {
             let configuration = CapturePhotoController.Configuration(
+                deviceOrientation: videoOrientation,
                 devicePosition: position,
                 flashMode: flashMode,
                 imageFormat: configuration.imageFormat,

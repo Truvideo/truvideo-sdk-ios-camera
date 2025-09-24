@@ -63,7 +63,7 @@ final class CapturePhotoController: NSObject, @unchecked Sendable {
         /// This property specifies the orientation of the device when the photo is captured,
         /// which affects how the image is processed and displayed. The default value is
         /// portrait orientation, which is the most common use case for photo capture.
-        let deviceOrientation = AVCaptureVideoOrientation.portrait
+        let deviceOrientation: AVCaptureVideoOrientation
 
         /// The camera lens position used for photo capture.
         ///

@@ -90,7 +90,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
     static func from(_ clip: VideoClip) -> TruvideoSdkCameraMedia {
         TruvideoSdkCameraMedia(
             createdAt: clip.createdAt,
-            duration: clip.duration,
+            duration: clip.duration * 1_000,
             filePath: clip.url.path,
             lensFacing: TruvideoSdkCameraLensFacing(position: clip.lensPosition),
             orientation: TruvideoSdkCameraOrientation(orientation: clip.orientation),
