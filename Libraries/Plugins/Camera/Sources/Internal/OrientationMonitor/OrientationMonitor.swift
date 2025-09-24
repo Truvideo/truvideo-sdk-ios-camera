@@ -123,7 +123,7 @@ final class DeviceOrientationMonitor: OrientationMonitor {
 
     @objc
     func didReceiveOrientationDidChangeNotification(_ notification: Notification) {
-        if UIDevice.supportedOrientations.contains(UIDevice.current.orientation) {
+        if UIDevice.current.orientation.isSupported {
             let deviceOrientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
 
             for subscriber in subscribers.allObjects {
@@ -185,6 +185,12 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     private let motionManager = CMMotionManager()
     private let operationQueue = OperationQueue()
     private var subscribers = NSHashTable<AnyObject>.weakObjects()
+    private var supportedOrientations: [UIDeviceOrientation] = [
+        .landscapeLeft,
+        .landscapeRight,
+        .portrait,
+        .portraitUpsideDown,
+    ]
 
     // MARK: - Initializer
 
@@ -206,10 +212,10 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
 
     @objc
     func didReceiveOrientationDidChangeNotification(_ notification: Notification) {
-        if isRunning, UIDevice.supportedOrientations.contains(UIDevice.current.orientation) {
-            let deviceOrientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
+        if isRunning, UIDevice.current.orientation.isSupported {
+            let orientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
 
-            self.deviceOrientation.send(deviceOrientation)
+            self.deviceOrientation.send(orientation)
         }
     }
 
@@ -221,7 +227,7 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     func add(_ subscriber: any OrientationMonitorSubscriber) {
         subscribers.add(subscriber)
 
-        guard UIDevice.supportedOrientations.contains(deviceOrientation.value.orientation) else { return }
+        guard supportedOrientations.contains(deviceOrientation.value.orientation) else { return }
 
         subscriber.didReceive(deviceOrientation.value)
     }
@@ -240,14 +246,11 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
                 to: operationQueue
             ) { [weak self] deviceMotion, error in
                 if let self {
+
                     guard let error else {
-                        if /// The new orientation.
-                        let orientation = deviceMotion?.gravity.orientation,
+                        let currentOrientation = deviceOrientation.value.orientation
 
-                            /// Whether the orientations are different.
-                            orientation != deviceOrientation.value.orientation
-                        {
-
+                        if let orientation = deviceMotion?.gravity.orientation, orientation != currentOrientation {
                             let deviceOrientation = DeviceOrientation(orientation: orientation, source: .sensors)
 
                             self.deviceOrientation.send(deviceOrientation)
@@ -282,15 +285,15 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .receive(on: RunLoop.main)
             .filter { _ in UIApplication.shared.applicationState == .active }
-            .filter { UIDevice.supportedOrientations.contains($0.orientation) }
+            .filter { self.supportedOrientations.contains($0.orientation) }
             .collect(.byTime(RunLoop.main, .milliseconds(10)))
             .compactMap { $0.first { $0.source == .system } ?? $0.first }
             .sink { [weak self] orientation in
-                if let self {
-                    for subscriber in subscribers.allObjects {
-                        if let subscriber = subscriber as? OrientationMonitorSubscriber {
-                            subscriber.didReceive(orientation)
-                        }
+                guard let self else { return }
+
+                for subscriber in subscribers.allObjects {
+                    if let subscriber = subscriber as? OrientationMonitorSubscriber {
+                        subscriber.didReceive(orientation)
                     }
                 }
             }
@@ -343,16 +346,38 @@ extension CMAcceleration {
     }
 }
 
-extension UIDevice {
-    /// The collection of device orientations that are supported by the application.
+extension UIDeviceOrientation {
+    /// Determines whether the current device orientation is supported by the application.
     ///
-    /// This static property defines the set of device orientations that the app
-    /// can handle and display content in. It includes all four primary orientations:
-    /// landscape left, landscape right, portrait, and portrait upside down.
-    fileprivate static var supportedOrientations: [UIDeviceOrientation] = [
-        .landscapeLeft,
-        .landscapeRight,
-        .portrait,
-        .portraitUpsideDown,
-    ]
+    /// This computed property checks if the current `UIDeviceOrientation` is supported by the
+    /// application by comparing it against the supported interface orientations. It uses a
+    /// sophisticated approach to determine the supported orientations by first checking the
+    /// active window scene, and falling back to the bundle's Info.plist configuration.
+    fileprivate var isSupported: Bool {
+        let supportedOrientations: UIInterfaceOrientationMask
+        let scene = UIApplication.shared
+            .connectedScenes
+            .compactMap { $0 as? UIWindowScene }
+            .first { $0.activationState == .foregroundActive }
+
+        if let window = scene?.windows.first {
+            supportedOrientations = UIApplication.shared.supportedInterfaceOrientations(for: window)
+        } else {
+            supportedOrientations = Bundle.main.supportedOrientations
+        }
+
+        return switch self {
+        case .landscapeLeft:
+            supportedOrientations.contains(.landscapeRight)
+
+        case .landscapeRight:
+            supportedOrientations.contains(.landscapeLeft)
+
+        case .portrait:
+            supportedOrientations.contains(.portrait)
+
+        default:
+            false
+        }
+    }
 }
