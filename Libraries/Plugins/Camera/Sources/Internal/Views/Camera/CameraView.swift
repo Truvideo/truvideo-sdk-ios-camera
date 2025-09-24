@@ -19,7 +19,7 @@ struct CameraView: View {
     var body: some View {
         ZStack {
             Camera()
-                .hidden(!viewModel.isAuthorized)
+              .hidden(!viewModel.isAuthorized || !viewModel.isAuthenticated)
 
             PermissionsView()
                 .hidden(viewModel.isAuthorized)
