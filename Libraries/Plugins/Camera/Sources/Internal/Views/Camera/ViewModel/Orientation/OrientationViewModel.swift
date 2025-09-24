@@ -13,10 +13,6 @@ final class OrientationViewModel: ObservableObject, OrientationMonitorSubscriber
     @Dependency(\.orientationMonitor)
     private var orientationMonitor: OrientationMonitor
 
-    // MARK: - Private Properties
-
-    private var disableAnimations: Bool
-
     // MARK: - Properties
 
     /// The current device orientation being tracked.
@@ -48,17 +44,10 @@ final class OrientationViewModel: ObservableObject, OrientationMonitorSubscriber
 
     // MARK: - Initializer
 
-    /// Creates a new circle button view model with the specified orientation monitor.
-    ///
-    /// This initializer sets up the orientation monitoring system and configures
-    /// the update handler to respond to device orientation changes. It starts
-    /// monitoring immediately upon initialization.
-    ///
-    /// - Parameter orientationMonitor: The orientation monitoring service to use.
+    /// Creates a new instance of the `OrientationViewModel`.
     init() {
-        disableAnimations = UIDevice.current.userInterfaceIdiom == .pad
         orientationMonitor.add(self)
-        self.orientationMonitor.startMonitoring()
+        orientationMonitor.startMonitoring()
     }
 
     /// Handles a new device orientation update and applies the corresponding rotation angle.
@@ -72,19 +61,15 @@ final class OrientationViewModel: ObservableObject, OrientationMonitorSubscriber
     /// - Parameter deviceOrientation: The latest orientation information, including its
     ///   source (e.g., system or sensors) and value.
     func didReceive(_ deviceOrientation: DeviceOrientation) {
-        self.previousDeviceOrientation = self.deviceOrientation
-        self.deviceOrientation = deviceOrientation.orientation
+        previousDeviceOrientation = self.deviceOrientation
         deviceOrientationSource = deviceOrientation.source
 
-        if !disableAnimations {
-            let transition = OrientationTransition(from: previousDeviceOrientation, to: deviceOrientation.orientation)
-            if deviceOrientation.source == .sensors && UIDevice.current.orientation == .portrait {
-                withAnimation(.spring(duration: 0.3)) {
-                    rotationAngle = transition.newAngle(from: rotationAngle)
-                }
-            }
+        self.deviceOrientation = deviceOrientation.orientation
 
-            if deviceOrientation.source == .system && UIDevice.current.orientation == .portrait {
+        if UIDevice.current.userInterfaceIdiom != .pad {
+            let transition = OrientationTransition(from: previousDeviceOrientation, to: deviceOrientation.orientation)
+
+            if UIDevice.current.orientation == .portrait {
                 withAnimation(.spring(duration: 0.3)) {
                     rotationAngle = transition.newAngle(from: rotationAngle)
                 }

@@ -179,6 +179,7 @@ struct VideoPreview: UIViewRepresentable {
         @MainActor
         @objc
         func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
+            layer.insertSublayer(previewLayer, at: 0)
             overlayView.alpha = 1
             overlayView.animate(\.alpha, to: 0, duration: 0.25, delay: 0.8)
         }
