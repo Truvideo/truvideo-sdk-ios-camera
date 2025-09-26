@@ -119,6 +119,7 @@ private struct Camera: View {
             .padding(.horizontal, theme.spacingTheme.sm)
             .hidden(viewModel.medias.isEmpty || [.paused, .running].contains(viewModel.state))
             .animation(.linear(duration: 0.1).delay(0.7), value: viewModel.medias)
+            .id(viewModel.deviceOrientation)
     }
 
     private func makeMagnificationGesture() -> some Gesture {

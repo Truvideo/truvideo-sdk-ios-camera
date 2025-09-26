@@ -26,12 +26,6 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
     /// It serves as the minimum or fixed size whenever the mask is not expanded.
     let size: CGFloat = 44
 
-    /// The current device orientation being tracked.
-    ///
-    /// This property stores the most recent device orientation detected by the
-    /// orientation monitor.
-    private(set) var deviceOrientation = DeviceOrientation(orientation: .portrait, source: .system)
-
     // MARK: - Published Properties
 
     /// The current rotation angle for the collapsible.
@@ -39,6 +33,12 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
     /// This published property contains the calculated rotation angle that should
     /// be applied to the collapsible.
     @Published var collapsibleAngle = Angle.zero
+    
+    /// The current device orientation being tracked.
+    ///
+    /// This property stores the most recent device orientation detected by the
+    /// orientation monitor.
+    @Published private(set) var deviceOrientation = DeviceOrientation(orientation: .portrait, source: .system)
 
     /// The maximum available size for the zoom picker UI component.
     ///

@@ -121,6 +121,7 @@ final class DeviceOrientationMonitor: OrientationMonitor {
 
     // MARK: - Notification methods
 
+    @MainActor
     @objc
     func didReceiveOrientationDidChangeNotification(_ notification: Notification) {
         if UIDevice.current.orientation.isSupported {
@@ -140,10 +141,16 @@ final class DeviceOrientationMonitor: OrientationMonitor {
     ///
     /// - Parameter subscriber: An object conforming to `OrientationMonitorSubscriber`.
     func add(_ subscriber: any OrientationMonitorSubscriber) {
-        let deviceOrientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
+        Task { @MainActor in
+            let orientation = UIDevice.current.orientation
+            subscribers.add(subscriber)
 
-        subscribers.add(subscriber)
-        subscriber.didReceive(deviceOrientation)
+            if orientation.isSupported {
+                let deviceOrientation = DeviceOrientation(orientation: orientation, source: .system)
+
+                subscriber.didReceive(deviceOrientation)
+            }
+        }
     }
 
     /// Begins monitoring device orientation changes.
@@ -181,24 +188,22 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
 
     private var cancellables = Set<AnyCancellable>()
     private let deviceOrientation = CurrentValueSubject<DeviceOrientation, Never>(.unknown)
+    private var lastOrientation = UIDeviceOrientation.unknown
     private var isRunning = false
     private let motionManager = CMMotionManager()
+    private let notificationDelay: UInt64 = 700_000_000
     private let operationQueue = OperationQueue()
     private var subscribers = NSHashTable<AnyObject>.weakObjects()
-    private var supportedOrientations: [UIDeviceOrientation] = [
-        .landscapeLeft,
-        .landscapeRight,
-        .portrait,
-        .portraitUpsideDown,
-    ]
 
     // MARK: - Initializer
 
     init() {
         motionManager.deviceMotionUpdateInterval = 1 / 30
 
-        if [.landscapeLeft, .landscapeRight, .portraitUpsideDown].contains(UIDevice.current.orientation) {
-            deviceOrientation.value = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
+        Task(priority: .userInitiated) { @MainActor in
+            if UIDevice.current.orientation.isSupported {
+                deviceOrientation.value = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
+            }
         }
 
         startObserving()
@@ -210,12 +215,15 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
 
     // MARK: - Notification methods
 
+    @MainActor
     @objc
     func didReceiveOrientationDidChangeNotification(_ notification: Notification) {
-        if isRunning, UIDevice.current.orientation.isSupported {
-            let orientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
+        let orientation = UIDevice.current.orientation
 
-            self.deviceOrientation.send(orientation)
+        if isRunning, orientation.isSupported {
+            let deviceOrientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
+
+            self.deviceOrientation.send(deviceOrientation)
         }
     }
 
@@ -227,9 +235,11 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     func add(_ subscriber: any OrientationMonitorSubscriber) {
         subscribers.add(subscriber)
 
-        guard supportedOrientations.contains(deviceOrientation.value.orientation) else { return }
+        Task { @MainActor in
+            guard deviceOrientation.value.orientation.isSupported else { return }
 
-        subscriber.didReceive(deviceOrientation.value)
+            subscriber.didReceive(deviceOrientation.value)
+        }
     }
 
     /// Begins monitoring device orientation changes.
@@ -248,12 +258,18 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
                 if let self {
 
                     guard let error else {
-                        let currentOrientation = deviceOrientation.value.orientation
+                        Task { @MainActor in
+                            let currentOrientation = self.deviceOrientation.value.orientation
+                            
+                            if let orientation = deviceMotion?.gravity.orientation,
+                                orientation != currentOrientation,
+                                orientation.isSupported
+                            {
+                                let deviceOrientation = DeviceOrientation(orientation: orientation, source: .sensors)
 
-                        if let orientation = deviceMotion?.gravity.orientation, orientation != currentOrientation {
-                            let deviceOrientation = DeviceOrientation(orientation: orientation, source: .sensors)
-
-                            self.deviceOrientation.send(deviceOrientation)
+                                try await Task.sleep(nanoseconds: self.notificationDelay)
+                                self.deviceOrientation.send(deviceOrientation)
+                            }
                         }
 
                         return
@@ -282,18 +298,19 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
 
     private func startObserving() {
         deviceOrientation.removeDuplicates()
-            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+            .collect(.byTime(RunLoop.main, .milliseconds(1_000)))
             .receive(on: RunLoop.main)
             .filter { _ in UIApplication.shared.applicationState == .active }
-            .filter { self.supportedOrientations.contains($0.orientation) }
-            .collect(.byTime(RunLoop.main, .milliseconds(10)))
-            .compactMap { $0.first { $0.source == .system } ?? $0.first }
+            .compactMap { $0.last(where: { $0.source == .system }) ?? $0.last }
             .sink { [weak self] orientation in
-                guard let self else { return }
+                guard let self, lastOrientation != orientation.orientation else { return }
 
-                for subscriber in subscribers.allObjects {
-                    if let subscriber = subscriber as? OrientationMonitorSubscriber {
-                        subscriber.didReceive(orientation)
+                if lastOrientation != orientation.orientation || orientation.source == .system {
+                    for subscriber in subscribers.allObjects {
+                        if let subscriber = subscriber as? OrientationMonitorSubscriber {
+                            lastOrientation = orientation.orientation
+                            subscriber.didReceive(orientation)
+                        }
                     }
                 }
             }
@@ -320,6 +337,7 @@ extension CMAcceleration {
     fileprivate var orientation: UIDeviceOrientation {
         let faceUpZThreshold = -0.7
         let faceUpPortraitThreshold = 0.6
+        let landscapeThreshold = 0.9
         let threshold = 0.82
 
         if z < faceUpZThreshold {
@@ -335,7 +353,11 @@ extension CMAcceleration {
         }
 
         if abs(x) > abs(y), abs(x) > abs(z), abs(x) > threshold {
-            return x > 0 ? .landscapeRight : .landscapeLeft
+            if abs(x) > landscapeThreshold {
+                return x > 0 ? .landscapeRight : .landscapeLeft
+            }
+
+            return .unknown
         }
 
         if abs(y) > abs(x), abs(y) > abs(z), abs(y) > threshold {
@@ -353,7 +375,7 @@ extension UIDeviceOrientation {
     /// application by comparing it against the supported interface orientations. It uses a
     /// sophisticated approach to determine the supported orientations by first checking the
     /// active window scene, and falling back to the bundle's Info.plist configuration.
-    fileprivate var isSupported: Bool {
+    @MainActor fileprivate var isSupported: Bool {
         let supportedOrientations: UIInterfaceOrientationMask
         let scene = UIApplication.shared
             .connectedScenes

@@ -62,10 +62,10 @@ extension Bundle {
                 supportedOrientations.insert(.portraitUpsideDown)
 
             case "UIInterfaceOrientationLandscapeLeft":
-                supportedOrientations.insert(.landscapeRight)
+                supportedOrientations.insert(.landscapeLeft)
 
             case "UIInterfaceOrientationLandscapeRight":
-                supportedOrientations.insert(.landscapeLeft)
+                supportedOrientations.insert(.landscapeRight)
 
             default:
                 continue
