@@ -535,7 +535,12 @@ targets:
       - Libraries/Internal/Extended/TruVideoApi/Tests
     dependencies:
       - target: NetworkingTesting
+      - target: Networking
+      - target: StorageKit
+      - target: Utilities
+      - target: DI
       - target: TruVideoApi
+      - package: KeychainAccess
     settings:
       GENERATE_INFOPLIST_FILE: YES
 

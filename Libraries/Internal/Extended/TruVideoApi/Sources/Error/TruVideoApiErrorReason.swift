@@ -68,5 +68,39 @@ extension ErrorReason {
         /// operations that require authentication, but no valid authentication session
         /// is available. The user needs to authenticate before proceeding.
         public static let unauthenticated = ErrorReason(rawValue: "unauthenticated")
+
+        /// Error indicating that the multipart media upload could not be completed.
+        ///
+        /// This error occurs when the `complete` request for an upload session fails.
+        ///
+        /// Use this error to detect and handle failures when attempting to complete
+        /// an upload and produce the final `Media` object.
+        public static let uploadCompletionFailed = ErrorReason(rawValue: "UploadCompletionFailed")
+
+        /// Error indicating that the initialization of a multipart media upload has failed.
+        ///
+        /// This error occurs when the TruVideo API cannot create a new upload session.
+        /// Possible causes include invalid request parameters (`amountOfParts`, `fileType`),
+        /// network connectivity issues, or an invalid authentication session.
+        public static let uploadInitializationFailed = ErrorReason(rawValue: "UploadInitializationFailed")
+
+        /// Error indicating that an uploaded part could not be registered for a multipart session.
+        ///
+        /// This error occurs when the client attempts to register a chunk
+        /// (identified by its `partNumber` and `eTag`) under a given `uploadId`
+        /// and the request fails.
+        ///
+        /// Use this error to detect and handle failures when confirming that
+        /// uploaded chunks are ready to be assembled during `complete(...)`.
+        public static let uploadPartRegistrationFailed = ErrorReason(rawValue: "UploadPartRegistrationFailed")
+
+        /// Error indicating that upload parts could not be retrieved for a multipart session.
+        ///
+        /// This error occurs when the attempt to fetch presigned URLs for upload parts fails.
+        ///
+        /// Use this error to detect and handle failures when progressively retrieving
+        /// upload parts for streaming or multipart uploads.
+        public static let uploadPartsRetrievalFailed = ErrorReason(rawValue: "UploadPartsRetrievalFailed")
+
     }
 }

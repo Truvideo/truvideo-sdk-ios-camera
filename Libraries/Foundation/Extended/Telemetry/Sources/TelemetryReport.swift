@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import Utilities
 
 /// Represents a structured telemetry report used to capture diagnostic, performance,
 /// and contextual data during the application's runtime.

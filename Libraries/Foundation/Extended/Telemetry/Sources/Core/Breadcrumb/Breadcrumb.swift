@@ -3,6 +3,7 @@
 //
 
 import Foundation
+import Utilities
 
 /// Represents a lightweight, timestamped log entry used to capture relevant contextual events
 /// leading up to a telemetry report.
