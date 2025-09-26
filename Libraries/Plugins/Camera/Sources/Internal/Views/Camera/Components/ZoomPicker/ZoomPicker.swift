@@ -81,8 +81,8 @@ struct ZoomPicker: View {
     // MARK: - Body
 
     var body: some View {
-        let maxSizeForCollapsibleMask = viewModel.maxSizeForCollapsibleMask(isExpanded: isExpanded)
-        let maxSizeForAnimatableMask = viewModel.maxSizeForAnimatableMask(isExpanded: isExpanded)
+        let maxSizeForCollapsibleMask = viewModel.maxSizeForCollapsibleMask(isExpanded: binding.wrappedValue)
+        let maxSizeForAnimatableMask = viewModel.maxSizeForAnimatableMask(isExpanded: binding.wrappedValue)
 
         LayoutThatFits {
             ForEach(options, id: \.self) { option in
@@ -97,18 +97,18 @@ struct ZoomPicker: View {
                 .allowsHitTesting(selection != option)
             }
         }
-        .opacity(isExpanded ? 1 : 0)
+        .opacity(binding.wrappedValue ? 1 : 0)
         .padding(.horizontal, theme.spacingTheme.sm)
         .mask(
             Rectangle()
                 .frame(maxWidth: maxSizeForCollapsibleMask.width, maxHeight: maxSizeForCollapsibleMask.height)
-                .animation(.spring(response: 0.25, dampingFraction: 1.0, blendDuration: 0), value: isExpanded)
+                .animation(.spring(response: 0.25, dampingFraction: 1.0, blendDuration: 0), value: binding.wrappedValue)
         )
         .background(theme.colorScheme.surfaceContainer.opacity(0.4))
         .mask(
             RoundedRectangle(cornerRadius: theme.radiusTheme.xxl)
                 .frame(maxWidth: maxSizeForAnimatableMask.width, maxHeight: maxSizeForAnimatableMask.height)
-                .animation(.interpolatingSpring(mass: 1, stiffness: 200, damping: 22), value: isExpanded)
+                .animation(.interpolatingSpring(mass: 1, stiffness: 200, damping: 22), value: binding.wrappedValue)
         )
         .overlay(content: makeSelectedZoomChip)
         .hidden(options.isEmpty)

@@ -67,6 +67,10 @@ private struct Camera: View {
 
     @EnvironmentObject var viewModel: CameraViewModel
 
+    // MARK: - State Properties
+
+    @State var isZoomPickerExpanded = false
+
     // MARK: - Body
 
     var body: some View {
@@ -80,13 +84,13 @@ private struct Camera: View {
             .overlay(content: makeContinueButton)
             .aspectRatio(viewModel.aspectRatio, contentMode: .fit)
             .overlay(alignment: .bottom) {
-                ToolBar()
+                ToolBar(isZoomPickerExpanded: $isZoomPickerExpanded)
                     .padding(.bottom, theme.spacingTheme.sm)
                     .hidden(viewModel.deviceOrientation.isLandscape)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.top, theme.spacingTheme.xxxl)
-            .onTapGesture(perform: viewModel.setFocusPoint(at:))
+            .onTapGesture(perform: onTap(at:))
             .onChange(of: viewModel.validationState) { validationState in
                 if validationState == .valid {
                     dismiss()
@@ -101,7 +105,7 @@ private struct Camera: View {
                     .padding(.horizontal, theme.spacingTheme.md)
             }
             .overlay(alignment: .trailing) {
-                ToolBar()
+                ToolBar(isZoomPickerExpanded: $isZoomPickerExpanded)
                     .hidden(viewModel.deviceOrientation.isPortrait)
             }
             .overlay {
@@ -128,6 +132,11 @@ private struct Camera: View {
             .onEnded { _ in
                 viewModel.lastZoomFactor = viewModel.zoomFactor
             }
+    }
+
+    private func onTap(at point: CGPoint) {
+        viewModel.setFocusPoint(at: point)
+        isZoomPickerExpanded = false
     }
 }
 
@@ -190,6 +199,7 @@ private struct ToolBar: View {
 
     // MARK: - Binding Properties
 
+    @Binding var isZoomPickerExpanded: Bool
     var zoomFactor: Binding<CGFloat> {
         Binding {
             viewModel.zoomFactor
@@ -203,7 +213,7 @@ private struct ToolBar: View {
     var body: some View {
         if viewModel.deviceOrientation.isPortrait {
             VStack {
-                ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor)
+                ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor, isExpanded: $isZoomPickerExpanded)
                 HStack {
                     makeTakePhotoButton()
                     RecordButton()
@@ -214,7 +224,7 @@ private struct ToolBar: View {
             .allowsHitTesting(viewModel.allowsHitTesting)
         } else if viewModel.deviceOrientation.isLandscape {
             HStack {
-                ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor)
+                ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor, isExpanded: $isZoomPickerExpanded)
                 VStack {
                     makeSwitchCameraButton()
                     makePlayPauseButton()
