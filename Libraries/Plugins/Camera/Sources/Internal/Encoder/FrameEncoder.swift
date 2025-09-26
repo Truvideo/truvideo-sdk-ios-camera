@@ -53,7 +53,6 @@ internal import Utilities
 ///
 /// All components in this module are thread-safe and can be used concurrently across
 /// multiple threads without additional synchronization.
-
 extension ErrorReason {
     /// A collection of error reasons related to the frame encoder operations.
     ///
@@ -98,7 +97,6 @@ protocol FrameEncoder: Sendable {
     /// let frameEncoder = VideoBufferFrameEncoder()
     /// let imageData = try frameEncoder.encode(
     ///     buffer,
-    ///     to: destinationURL,
     ///     format: .jpeg
     /// )
     /// ```
@@ -110,11 +108,10 @@ protocol FrameEncoder: Sendable {
     ///
     /// - Parameters:
     ///   - buffer: The video sample buffer to encode
-    ///   - destinationURL: The file URL where the encoded data will be saved
     ///   - format: The target image format for encoding
     /// - Returns: The encoded image data
     /// - Throws: `UtilityError` if encoding fails
-    func encode(_ buffer: VideoSampleBuffer, to destinationURL: URL, format: FileFormat) throws(UtilityError) -> Data
+    func encode(_ buffer: VideoSampleBuffer, format: FileFormat) throws(UtilityError) -> Data
 }
 
 /// A concrete implementation of `FrameEncoder` that uses Core Image for video buffer encoding.
@@ -200,7 +197,6 @@ struct VideoBufferFrameEncoder: FrameEncoder, @unchecked Sendable {
     /// let encoder = VideoBufferFrameEncoder()
     /// let imageData = try encoder.encode(
     ///     videoBuffer,
-    ///     to: outputURL,
     ///     format: .jpeg
     /// )
     /// ```
@@ -221,11 +217,10 @@ struct VideoBufferFrameEncoder: FrameEncoder, @unchecked Sendable {
     ///
     /// - Parameters:
     ///   - buffer: The video sample buffer containing the image data to encode
-    ///   - destinationURL: The file URL where the encoded data will be saved
     ///   - format: The target image format (JPEG, PNG, or HEIC)
     /// - Returns: The encoded image data as a `Data` object
     /// - Throws: `UtilityError` if any step of the encoding process fails
-    func encode(_ buffer: VideoSampleBuffer, to destinationURL: URL, format: FileFormat) throws(UtilityError) -> Data {
+    func encode(_ buffer: VideoSampleBuffer, format: FileFormat) throws(UtilityError) -> Data {
         let devicePosition = buffer.isMirrored ? AVCaptureDevice.Position.front : .back
         let sampleBuffer = buffer.sampleBuffer
 
@@ -246,105 +241,12 @@ struct VideoBufferFrameEncoder: FrameEncoder, @unchecked Sendable {
                 .cropped(to: cIImage.extent.integral)
                 .applyingFilter("CILanczosScaleTransform", parameters: [kCIInputAspectRatioKey: 1])
 
-            return try context.dataRepresentation(of: cIImage, format: format, colorSpace: colorSpace)
+            return try context.dataRepresentation(of: cIImage, for: format, colorSpace: colorSpace)
         }
 
         throw UtilityError(
             kind: .FrameEncoderErrorReason.failedToEncodeBuffer,
             failureReason: "Unable to extract image buffer from sample buffer or Core Image context is unavailable"
         )
-    }
-}
-
-extension CIContext {
-
-    /// Converts a Core Image representation to data in the specified format.
-    ///
-    /// This method takes a `CIImage` and converts it to binary data using the specified
-    /// file format and color space. It handles format-specific encoding options including
-    /// compression quality settings, color optimization, and ensures the image is cropped
-    /// to integral bounds for clean output.
-    ///
-    /// ## Processing Steps
-    ///
-    /// 1. Crops the image to integral bounds to eliminate fractional pixels
-    /// 2. Applies format-specific quality and optimization settings
-    /// 3. Encodes the image using the appropriate Core Image representation method
-    /// 4. Returns the encoded data or throws an error if encoding fails
-    ///
-    /// ## Encoding Options
-    ///
-    /// The method applies several optimization options:
-    /// - **Quality Control**: Uses `kCGImageDestinationLossyCompressionQuality` for lossy formats
-    /// - **Color Optimization**: Uses `kCGImageDestinationOptimizeColorForSharing` for better color reproduction
-    /// - **Format-Specific Settings**: Applies appropriate options for each format type
-    ///
-    /// ## Format Support
-    ///
-    /// - **HEIC**: Uses HEIF representation with RGBA8 format and configurable quality
-    /// - **JPEG**: Uses JPEG representation with configurable compression quality
-    /// - **PNG**: Uses PNG representation with RGBA8 format (lossless compression)
-    ///
-    /// ## Usage
-    ///
-    /// ```swift
-    /// let context = CIContext.createDefault()
-    /// let imageData = try context.dataRepresentation(
-    ///     of: cIImage,
-    ///     format: .jpeg,
-    ///     colorSpace: sRGBColorSpace
-    /// )
-    /// ```
-    ///
-    /// ## Error Handling
-    ///
-    /// This method throws `UtilityError` with `FrameEncoderErrorReason.failedToEncodeBuffer`
-    /// when the format-specific encoding operation fails. The error message includes
-    /// the specific format that failed to help identify the exact failure point.
-    ///
-    /// ## Thread Safety
-    ///
-    /// This method is thread-safe and can be called from any thread. Core Image contexts
-    /// are designed to be used concurrently.
-    ///
-    /// - Parameters:
-    ///   - cIImage: The Core Image representation to convert to data
-    ///   - format: The target file format (HEIC, JPEG, or PNG)
-    ///   - colorSpace: The color space to use for encoding
-    /// - Returns: The encoded image data as a `Data` object
-    /// - Throws: `UtilityError` if the encoding operation fails for the specified format
-    fileprivate func dataRepresentation(
-        of cIImage: CIImage,
-        format: FileFormat,
-        colorSpace: CGColorSpace
-    ) throws(UtilityError) -> Data {
-
-        let cIImage = cIImage.cropped(to: cIImage.extent.integral)
-        let options: [CIImageRepresentationOption: Any] = [
-            kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: format.quality,
-            kCGImageDestinationOptimizeColorForSharing as CIImageRepresentationOption: true,
-        ]
-
-        let data: Data?
-
-        switch format {
-        case .heic:
-            data = heifRepresentation(of: cIImage, format: .RGBA8, colorSpace: colorSpace, options: options)
-
-        case .jpeg:
-            data = jpegRepresentation(of: cIImage, colorSpace: colorSpace, options: options)
-
-        case .png:
-            data = pngRepresentation(of: cIImage, format: .RGBA8, colorSpace: colorSpace)
-        }
-
-        guard let data else {
-            throw UtilityError(
-                kind: .FrameEncoderErrorReason.failedToEncodeBuffer,
-                failureReason: "Failed to encode image data to format \(format)"
-            )
-        }
-
-        return data
     }
 }

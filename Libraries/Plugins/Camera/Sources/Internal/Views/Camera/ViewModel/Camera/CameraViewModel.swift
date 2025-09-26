@@ -553,6 +553,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 isTorchAvailable = await videoDevice.isTorchAvailable
                 zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
 
+                lastZoomFactor = 1
                 zoomFactor = 1
                 Task.delayed(milliseconds: 600) { allowsHitTesting = true }
             } catch {
@@ -747,6 +748,42 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     // MARK: - Private methods
 
+    @DeviceActor
+    private func configureDevices() async throws {
+        if audioDevice.authorizationStatus == .notDetermined, videoDevice.authorizationStatus == .notDetermined {
+            await requestDeviceAccess()
+        }
+
+        guard audioDevice.authorizationStatus == .authorized, videoDevice.authorizationStatus == .authorized else {
+            await MainActor.run { isAuthorized = false }
+            return
+        }
+
+        try videoDevice.configure(in: captureSession)
+        if audioDevice.isAvailable {
+            try audioDevice.configure(in: captureSession)
+        }
+
+        audioDevice.add(movieOutputProcessor)
+        videoDevice.add(movieOutputProcessor)
+
+        let position = configuration.lensFacing == .front ? AVCaptureDevice.Position.front : .back
+        let torchMode = configuration.flashMode == .on ? AVCaptureDevice.TorchMode.on : .off
+        let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
+
+        videoDevice.configuration.isHighResolutionEnabled = configuration.isHighResolutionPhotoEnabled
+        videoDevice.configuration.imageFormat = configuration.imageFormat.value
+
+        isTorchAvailable = videoDevice.isTorchAvailable
+        videoDevice.flashMode = configuration.flashMode.value
+
+        try videoDevice.setPosition(position)
+        try videoDevice.setTorchMode(torchMode)
+
+        videoDevice.setVideoOrientation(videoOrientation)
+        updatePreviewOrientation()
+    }
+
     @MainActor
     private func endRecording() async throws {
         state = .finished
@@ -769,42 +806,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     private func initialize() {
-        Task(priority: .userInitiated) { @DeviceActor in
-            if audioDevice.authorizationStatus == .notDetermined, videoDevice.authorizationStatus == .notDetermined {
-                await requestDeviceAccess()
-            }
-
-            guard audioDevice.authorizationStatus == .authorized, videoDevice.authorizationStatus == .authorized else {
-                await MainActor.run { isAuthorized = false }
-                return
-            }
-
+        Task(priority: .userInitiated) { @SessionActor in
             do {
-                try videoDevice.configure(in: captureSession)
-                if audioDevice.isAvailable {
-                    try audioDevice.configure(in: captureSession)
-                }
-
-                audioDevice.add(movieOutputProcessor)
-                videoDevice.add(movieOutputProcessor)
-
-                let position = configuration.lensFacing == .front ? AVCaptureDevice.Position.front : .back
-                let torchMode = configuration.flashMode == .on ? AVCaptureDevice.TorchMode.on : .off
-                let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
-                let zoomFactors = videoDevice.displayVideoZoomFactors
-
-                isTorchAvailable = videoDevice.isTorchAvailable
-
-                videoDevice.configuration.isHighResolutionEnabled = configuration.isHighResolutionPhotoEnabled
-                videoDevice.configuration.imageFormat = configuration.imageFormat.value
-
-                videoDevice.flashMode = configuration.flashMode.value
-
-                try videoDevice.setPosition(position)
-                try videoDevice.setTorchMode(torchMode)
-
-                videoDevice.setVideoOrientation(videoOrientation)
-                updatePreviewOrientation()
+                try await configureDevices()
 
                 captureSession.startRunning()
 
@@ -812,7 +816,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     allowsHitTesting = true
                 }
 
-                await MainActor.run { self.zoomFactors = zoomFactors }
+                let displayVideoZoomFactors = await videoDevice.displayVideoZoomFactors
+
+                await MainActor.run { self.zoomFactors = displayVideoZoomFactors }
             } catch {
                 await MainActor.run { allowsHitTesting = true }
                 await didReceiveError(error.localizedDescription)

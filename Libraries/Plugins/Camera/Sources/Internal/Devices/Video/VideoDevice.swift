@@ -509,15 +509,15 @@ class VideoDevice: NSObject, Device {
 
             let oldPosition = position
 
+            captureSession.beginUpdates()
+
+            defer { captureSession.endUpdates() }
+
             notificationCenter.post(
                 Self.deviceWillChangePosition,
                 object: self,
                 userInfo: [Self.devicePosition: oldPosition, Self.newPosition: newPosition]
             )
-
-            captureSession.beginUpdates()
-
-            defer { captureSession.endUpdates() }
 
             captureDeviceInput = try captureSession.addDeviceInput(for: captureDevice)
 
@@ -686,7 +686,7 @@ class VideoDevice: NSObject, Device {
         do {
             let outputURL = nextOutputURL()
             let thumbnailURL = outputURL.deletingPathExtension().appendingPathExtension("TV-photo-thumb.jpeg")
-            let data = try frameEncoder.encode(lastVideoBuffer, to: outputURL, format: configuration.imageFormat)
+            let data = try frameEncoder.encode(lastVideoBuffer, format: configuration.imageFormat)
 
             try data.write(to: outputURL, options: .atomic)
             try imageExporting.createThumbnail(from: outputURL, to: thumbnailURL)

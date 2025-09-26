@@ -4,8 +4,6 @@
 
 import SwiftUI
 
-/// A full-screen gallery view that displays a grid of media items
-/// and provides a close button to dismiss the gallery.
 struct GalleryView: View {
     // MARK: - Binding Properties
 

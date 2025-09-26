@@ -14,6 +14,7 @@ extension View {
     func background(style: UIBlurEffect.Style) -> some View {
         background(
             BlurView(style: style)
+                .ignoresSafeArea()
         )
     }
 

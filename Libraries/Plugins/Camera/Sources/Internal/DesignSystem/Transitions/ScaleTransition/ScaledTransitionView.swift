@@ -24,12 +24,74 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
 
     // MARK: - Binding Properties
 
-    /// Controls whether the gallery is currently presented.
+    /// Controls whether the view is currently presented.
     @Binding var isPresented: Bool
 
     // MARK: - Properties
 
-    @ViewBuilder let content: @MainActor () -> Content
+    /// A closure that produces the SwiftUI content to be presented.
+    @ViewBuilder let content: () -> Content
+
+    // MARK: - Types
+
+    /// A container view controller used as the presentation host.
+    final class ContainerViewController: UIViewController {
+        // MARK: - Properties
+
+        var hasAppeared = false
+        var onDidAppear: (() -> Void)?
+
+        // MARK: - Overridden methods
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+
+            hasAppeared = true
+            onDidAppear?()
+        }
+    }
+
+    /// A helper object that coordinates updates between SwiftUI and UIKit.
+    final class Coordinator {
+        // MARK: - Private Properties
+
+        private let parent: ScaledTransitionView
+        private var scaleTransitioning: ScaleTransitioningDelegate?
+
+        // MARK: - Initializer
+
+        /// Creates a coordinator for the specified parent view.
+        ///
+        /// - Parameter parent: The `ScaledTransitionView` instance that owns this coordinator.
+        init(parent: ScaledTransitionView) {
+            self.parent = parent
+        }
+
+        // MARK: - Instance methods
+
+        func update(isPresented: Bool, from controller: ContainerViewController) {
+            if isPresented {
+                if controller.presentedViewController is UIHostingController<Content> {
+                    return
+                }
+
+                self.scaleTransitioning = ScaleTransitioningDelegate(startingFrame: parent.startingFrame)
+
+                let hostingController = UIHostingController(rootView: parent.content())
+
+                hostingController.view.backgroundColor = .clear
+                hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                hostingController.modalTransitionStyle = .crossDissolve
+                hostingController.modalPresentationStyle = .custom
+                hostingController.transitioningDelegate = scaleTransitioning
+
+                controller.present(hostingController, animated: true)
+            } else if let presentedViewController = controller.presentedViewController {
+                presentedViewController.dismiss(animated: true)
+                scaleTransitioning = nil
+            }
+        }
+    }
 
     // MARK: - Initializer
 
@@ -50,57 +112,42 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
 
     // MARK: - Instance methods
 
-    /// Sets the starting frame for the gallery's scale transition animation.
+    /// Sets the starting frame for the view's scale transition animation.
     ///
-    /// This method configures the origin frame that the gallery will animate from
+    /// This method configures the origin frame that the view will animate from
     /// when it appears. The frame is used by the scale transition delegate to
     /// create a smooth animation that scales from the specified frame to full screen.
     ///
     /// - Parameter frame: The CGRect that defines the starting position and size for the scale transition animation
-    /// - Returns: A modified instance of the gallery view with the starting frame set
+    /// - Returns: A modified instance of the view with the starting frame set
     func startingFrame(_ frame: CGRect) -> Self {
-        var galleryView = self
-        galleryView.startingFrame = frame
+        var view = self
+        view.startingFrame = frame
 
-        return galleryView
+        return view
     }
 
     // MARK: - UIViewControllerRepresentable
 
-    func makeCoordinator() -> ScaleTransitioningDelegate {
-        ScaleTransitioningDelegate()
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
     }
 
-    func makeUIViewController(context: Context) -> UIViewController {
-        let viewController = UIViewController()
-        viewController.view.backgroundColor = .clear
+    func makeUIViewController(context: Context) -> ContainerViewController {
+        let containerViewController = ContainerViewController()
 
-        return viewController
+        containerViewController.onDidAppear = { [weak containerViewController] in
+            if let containerViewController, isPresented {
+                context.coordinator.update(isPresented: isPresented, from: containerViewController)
+            }
+        }
+
+        return containerViewController
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {
-        if isPresented {
-            if uiViewController.presentedViewController is UIHostingController<Content> {
-                return
-            }
-
-            let hostingController = UIHostingController(rootView: content())
-            hostingController.view.backgroundColor = .clear
-            hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            hostingController.view.bounds = uiViewController.view.bounds
-
-            context.coordinator.startingFrame = startingFrame
-            hostingController.modalPresentationStyle = .custom
-            hostingController.modalTransitionStyle = .crossDissolve
-            hostingController.transitioningDelegate = context.coordinator
-
-            DispatchQueue.main.async {
-                if uiViewController.view.window != nil {
-                    uiViewController.present(hostingController, animated: true)
-                }
-            }
-        } else if let presentedViewController = uiViewController.presentedViewController {
-            presentedViewController.dismiss(animated: true)
+    func updateUIViewController(_ uiViewController: ContainerViewController, context: Context) {
+        if uiViewController.hasAppeared {
+            context.coordinator.update(isPresented: isPresented, from: uiViewController)
         }
     }
 }

@@ -28,6 +28,7 @@ struct VideoPreview: UIViewRepresentable {
     // MARK: - Private Properties
 
     private let previewLayer: AVCaptureVideoPreviewLayer
+    private var videoOrientation = UIDeviceOrientation.portrait
 
     // MARK: - Types
 
@@ -38,10 +39,18 @@ struct VideoPreview: UIViewRepresentable {
         private let aspectRatio: CGFloat = 16 / 9
         private let blurView: UIVisualEffectView
         private var blurViewPropertyAnimator: UIViewPropertyAnimator?
-        private var focusIndicatorView = FocusIndicatorView()
-        private var overlayView = UIView()
+        private var captureVideoDataOutput = AVCaptureVideoDataOutput()
+        private let context = CIContext.createDefault()
+        private var devicePosition = AVCaptureDevice.Position.back
+        private let focusIndicatorView = FocusIndicatorView()
+        private let freezedFrameImageView = UIImageView()
+        private var isUpdating = false
+        private var lastSampleBuffer: CMSampleBuffer?
+        private let overlayView = UIView()
         private var overlayViewPropertyAnimator: UIViewPropertyAnimator?
-        private var previewLayer: AVCaptureVideoPreviewLayer
+        private let previewLayer: AVCaptureVideoPreviewLayer
+        private let queue = DispatchQueue(label: "com.truVideo.videoPreview.queue")
+        private var videoOrientation = AVCaptureVideoOrientation.portrait
 
         // MARK: - Initializers
 
@@ -63,8 +72,11 @@ struct VideoPreview: UIViewRepresentable {
 
             super.init(frame: .zero)
 
-            self.focusIndicatorView.frame.size = CGSize(width: 80, height: 80)
+            self.freezedFrameImageView.alpha = 0
+            self.freezedFrameImageView.contentMode = .scaleAspectFit
+
             self.focusIndicatorView.alpha = 0
+            self.focusIndicatorView.frame.size = CGSize(width: 80, height: 80)
 
             self.overlayView.alpha = 0
             self.overlayView.backgroundColor = .black
@@ -72,7 +84,22 @@ struct VideoPreview: UIViewRepresentable {
             clipsToBounds = true
             layer.addSublayer(previewLayer)
 
+            addSubview(freezedFrameImageView)
             addSubview(focusIndicatorView)
+
+            if let videoConnection = captureVideoDataOutput.connection(with: .video) {
+                videoConnection.automaticallyAdjustsVideoMirroring = false
+                videoConnection.isVideoMirrored = false
+            }
+
+            if let session = previewLayer.session {
+                devicePosition = session.captureDeviceInput(for: .video)?.device.position ?? devicePosition
+                captureVideoDataOutput.setSampleBufferDelegate(self, queue: queue)
+
+                if session.canAddOutput(captureVideoDataOutput) {
+                    session.addOutput(captureVideoDataOutput)
+                }
+            }
 
             configureConstraints()
             configureDeviceObservers()
@@ -90,12 +117,26 @@ struct VideoPreview: UIViewRepresentable {
         override func layoutSubviews() {
             super.layoutSubviews()
 
+            freezedFrameImageView.frame = bounds
             overlayView.frame = bounds
             previewLayer.frame = bounds
         }
 
         deinit {
             NotificationCenter.default.removeObserver(self)
+        }
+
+        // MARK: - Instance methods
+
+        /// Sets the video orientation for the preview layer.
+        ///
+        /// This method converts the device orientation to the appropriate capture video orientation
+        /// and updates the internal state. The orientation change affects how the video preview
+        /// is displayed to match the device's current orientation.
+        ///
+        /// - Parameter videoOrientation: The device orientation to set for the video preview
+        func setVideoOrientation(_ videoOrientation: UIDeviceOrientation) {
+            self.videoOrientation = AVCaptureVideoOrientation(from: videoOrientation)
         }
 
         // MARK: - Notification methods
@@ -124,6 +165,7 @@ struct VideoPreview: UIViewRepresentable {
                 if focusIndicatorView.center != newCenter {
                     focusIndicatorView.alpha = 0
                     focusIndicatorView.center = layer.convert(layerPoint, from: previewLayer)
+
                     focusIndicatorView.show()
                     focusIndicatorView.fade(to: 0, delay: 2)
                 } else {
@@ -151,7 +193,16 @@ struct VideoPreview: UIViewRepresentable {
         @MainActor
         @objc
         func didReceiveDeviceWillChangePosition(_ notification: Notification) {
-            if let position = notification.userInfo?[VideoDevice.devicePosition] as? AVCaptureDevice.Position {
+            if /// The current device position before the change
+            let position = notification.userInfo?[VideoDevice.devicePosition] as? AVCaptureDevice.Position,
+
+                /// The target device position after the change
+                let newPosition = notification.userInfo?[VideoDevice.newPosition] as? AVCaptureDevice.Position
+            {
+
+                devicePosition = newPosition
+                focusIndicatorView.alpha = 0
+
                 flip(from: position)
             }
         }
@@ -162,17 +213,33 @@ struct VideoPreview: UIViewRepresentable {
             previewLayer.removeFromSuperlayer()
         }
 
-        @MainActor
         @objc
         func didReceiveSessionDidEndUpdates(_ notification: Notification) {
+            queue.async {
+                self.isUpdating = false
+            }
+
             Task.delayed(milliseconds: 300) { @MainActor in
                 blurView.animate(\.alpha, to: 0, duration: 0.5)
+                freezedFrameImageView.animate(\.alpha, to: 0, duration: 0.25)
             }
         }
 
         @MainActor
         @objc
         func didReceiveSessionWillBeginUpdates(_ notification: Notification) {
+            let lastSampleBuffer: CMSampleBuffer? = queue.sync {
+                isUpdating = true
+                return self.lastSampleBuffer
+            }
+
+            if let context, let lastSampleBuffer {
+                let orientation = CGImagePropertyOrientation(from: videoOrientation, devicePosition: devicePosition)
+
+                freezedFrameImageView.image = context.image(from: lastSampleBuffer, preferredOrientation: orientation)
+                freezedFrameImageView.alpha = 1
+            }
+
             blurView.animate(\.alpha, to: 1, duration: 0.25)
         }
 
@@ -180,6 +247,7 @@ struct VideoPreview: UIViewRepresentable {
         @objc
         func didReceiveWillEnterForegroundNotification(_ notification: Notification) {
             layer.insertSublayer(previewLayer, at: 0)
+
             overlayView.alpha = 1
             overlayView.animate(\.alpha, to: 0, duration: 0.25, delay: 0.8)
         }
@@ -285,16 +353,56 @@ struct VideoPreview: UIViewRepresentable {
         self.previewLayer = previewLayer
     }
 
+    // MARK: - Instance methods
+
+    /// Configures the video orientation for the preview layer.
+    ///
+    /// This method sets the video orientation of the preview layer to match the device's
+    /// current orientation. It returns a new instance of `VideoPreview` with the updated
+    /// orientation, allowing for method chaining in SwiftUI view modifiers.
+    ///
+    ///
+    /// - Parameter videoOrientation: The device orientation to set for the video preview
+    /// - Returns: A new `VideoPreview` instance with the updated video orientation
+    func videoOrientation(_ videoOrientation: UIDeviceOrientation) -> Self {
+        var videoPreview = self
+        videoPreview.videoOrientation = videoOrientation
+
+        return videoPreview
+    }
+
     // MARK: - UIViewRepresentable
 
     func makeUIView(context: Context) -> UIView {
         let playerContainerView = PlayerContainerView(previewLayer: previewLayer)
+
         playerContainerView.backgroundColor = .black
+        playerContainerView.setVideoOrientation(videoOrientation)
 
         return playerContainerView
     }
 
-    func updateUIView(_ uiView: UIView, context: Context) {}
+    func updateUIView(_ uiView: UIView, context: Context) {
+        if let playerContainerView = uiView as? PlayerContainerView {
+            playerContainerView.setVideoOrientation(videoOrientation)
+        }
+    }
+}
+
+extension VideoPreview.PlayerContainerView: AVCaptureVideoDataOutputSampleBufferDelegate {
+
+    // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
+
+    func captureOutput(
+        _ output: AVCaptureOutput,
+        didOutput sampleBuffer: CMSampleBuffer,
+        from connection: AVCaptureConnection
+    ) {
+
+        if sampleBuffer.isValid, !isUpdating {
+            lastSampleBuffer = sampleBuffer
+        }
+    }
 }
 
 private final class FocusIndicatorView: UIView {

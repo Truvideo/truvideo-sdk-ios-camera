@@ -278,7 +278,18 @@ extension CapturePhotoController: AVCapturePhotoCaptureDelegate {
 }
 
 extension ImageExporting {
-
+    /// Exports a captured photo to file system with thumbnail generation.
+    ///
+    /// This method processes an `AVCapturePhoto` object and exports it to the file system
+    /// using the provided configuration settings. It handles the complete photo export
+    /// pipeline including data extraction, format conversion, size constraints, orientation
+    /// correction, and thumbnail generation.
+    ///
+    /// - Parameters:
+    ///   - photo: The captured photo to export
+    ///   - configuration: The configuration settings for export processing
+    /// - Returns: A `Photo` object containing URLs and metadata for both main image and thumbnail
+    /// - Throws: `UtilityError` if any step of the export process fails
     fileprivate func export(
         _ photo: AVCapturePhoto,
         using configuration: CapturePhotoController.Configuration

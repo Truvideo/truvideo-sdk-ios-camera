@@ -127,6 +127,15 @@ final class ScaleTransitioningDelegate: NSObject, UIViewControllerTransitioningD
     /// during the scale-in transition, and to which it should shrink back during the scale-out transition.
     var startingFrame = CGRect.zero
 
+    /// Creates a scale transitioning delegate with a specified starting frame.
+    ///
+    /// - Parameter startingFrame:
+    ///   The initial frame from which the presented view controller should expand
+    ///   during presentation, and to which it should contract during dismissal.
+    init(startingFrame: CGRect) {
+        self.startingFrame = startingFrame
+    }
+
     // MARK: - UIViewControllerTransitioningDelegate
 
     func animationController(

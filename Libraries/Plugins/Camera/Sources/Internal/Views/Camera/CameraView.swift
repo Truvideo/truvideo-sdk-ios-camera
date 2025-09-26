@@ -18,14 +18,15 @@ struct CameraView: View {
 
     var body: some View {
         ZStack {
-            Camera()
-                .hidden(!viewModel.isAuthorized || !viewModel.isAuthenticated)
+            if !viewModel.isAuthenticated {
+                AuthenticationRequiredView()
+            } else {
+                Camera()
+                    .hidden(!viewModel.isAuthorized)
 
-            PermissionsView()
-                .hidden(viewModel.isAuthorized)
-
-            AuthenticationRequiredView()
-                .hidden(viewModel.isAuthenticated)
+                PermissionsView()
+                    .hidden(viewModel.isAuthorized)
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.colorScheme.surfaceContainer)
@@ -70,6 +71,7 @@ private struct Camera: View {
 
     var body: some View {
         VideoPreview(previewLayer: viewModel.previewLayer)
+            .videoOrientation(viewModel.deviceOrientation)
             .simultaneousGesture(makeMagnificationGesture())
             .overlay {
                 RecordingFrameOverlay()
