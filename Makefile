@@ -15,7 +15,7 @@ help:
 
 	@echo "Flexible framework commands:"
 	@echo "  make framework SCHEME=DI"
-	@echo "  Available schemes: DI, Registry, CloudStorage, Storage, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, ExternalUtilities, TruvideoSdkCamera, TruVideoSdk"
+	@echo "  Available schemes: DI, Registry, CloudStorage, StorageKit, Utilities, CoreDataUtilities, Telemetry, Networking, TruVideoApi, ExternalUtilities, TruvideoSdkCamera, TruVideoSdk"
 
 # Generate Xcode project using XcodeGen
 generate:
