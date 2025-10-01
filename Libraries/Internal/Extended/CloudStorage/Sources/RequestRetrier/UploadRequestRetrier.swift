@@ -3,7 +3,7 @@
 //
 
 import Foundation
-import Networking
+internal import Networking
 
 /// An actor that handles automatic token refresh for failed authentication requests.
 ///

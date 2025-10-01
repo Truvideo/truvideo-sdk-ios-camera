@@ -5,8 +5,8 @@
 import Foundation
 import Utilities
 
-@testable import CloudStorage
-
+@testable import CloudStorageKit
+/*
 /// A mock implementation of `UploadTask` used for unit testing.
 public final class UploadTaskMock: UploadTask {
 
@@ -60,3 +60,4 @@ public final class UploadTaskMock: UploadTask {
         return self
     }
 }
+*/

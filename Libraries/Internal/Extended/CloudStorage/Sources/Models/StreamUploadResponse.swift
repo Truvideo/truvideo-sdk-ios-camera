@@ -20,10 +20,10 @@ import Foundation
 /// )
 ///
 /// ```
-public struct StreamUploadResponse<Success: Sendable> {
+public struct StreamUploadResponse {
     /// Successfully uploaded parts.
-    public let completedTasks: [UploadPartResponse<Success>]
+    public let completedTasks: [UploadPartResponse]
 
     /// Parts that failed to upload.
-    public let failedTasks: [UploadPartResponse<Success>]
+    public let failedTasks: [UploadPartResponse]
 }

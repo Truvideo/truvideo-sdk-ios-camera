@@ -3,7 +3,6 @@
 //
 
 import Foundation
-import Networking
 import Utilities
 
 /// Represents the outcome of uploading a single part in a multipart upload.
@@ -31,7 +30,7 @@ import Utilities
 /// }
 ///
 /// ```
-public struct UploadPartResponse<Success: Sendable> {
+public struct UploadPartResponse {
     /// The raw `Data` that was uploaded for this part.
     public let data: Data
 
@@ -42,7 +41,7 @@ public struct UploadPartResponse<Success: Sendable> {
     public let requestId: String?
 
     /// The result of the upload attempt, containing either success or failure.
-    public let result: Result<Success, UtilityError>
+    public let result: Result<String, UtilityError>
 
     /// The HTTP status code returned by the server.
     public let statusCode: Int?

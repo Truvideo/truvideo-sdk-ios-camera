@@ -2,10 +2,10 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-internal import CloudStorage
+internal import CloudStorageKit
 internal import DI
 import Foundation
-import Network
+internal import Network
 internal import Telemetry
 import UIKit
 internal import Utilities
@@ -25,14 +25,14 @@ final class UploadProcessor: TelemetryManagerSubscriber {
     // MARK: - Private Properties
 
     private let cloudStorageProvider: CloudStorageProvider
-    private let queue = DispatchQueue(label: "com.truVideo.uploadProcessor.queue")
-    private var storageURL: URL
+    private var fileURL: URL
+    private let queue = DispatchQueue(label: "com.truvideo.uploadProcessor.queue")
     private let pathMonitor: any NetworkPathMonitor
 
     // MARK: - Dependencies
 
     @Dependency(\.fileWriter)
-    var fileWriter: FileWriter
+    private var fileWriter: FileWriter
 
     // MARK: - Initializer
 
@@ -54,11 +54,13 @@ final class UploadProcessor: TelemetryManagerSubscriber {
     ) {
 
         self.cloudStorageProvider = cloudStorageProvider
-        self.storageURL = storageURL
+        self.fileURL = storageURL.appendingPathComponent("report.json")
         self.pathMonitor = pathMonitor
 
         pathMonitor.start(queue: queue)
     }
+    
+    // MARK: - Deinitializer
 
     deinit {
         pathMonitor.cancel()
@@ -72,8 +74,9 @@ final class UploadProcessor: TelemetryManagerSubscriber {
     func didReceive(_ report: TelemetryReport) {
         Task {
             do {
-                let fileURL = storageURL.appendingPathComponent("report.json")
-                let data = try fileWriter.write(report, to: fileURL)
+                try fileWriter.write(report, to: fileURL)
+                
+                let data = try Data(contentsOf: fileURL)
 
                 if /// `cloudStorage` must be successfully created from the `cloudStorageProvider`.
                 let cloudStorage = try cloudStorageProvider.makeStorage(),
@@ -84,20 +87,21 @@ final class UploadProcessor: TelemetryManagerSubscriber {
                     /// The `data` to be uploaded must not be empty.
                     !data.isEmpty
                 {
-
-                    cloudStorage.upload(data, fileName: "\(UUID()).json", contentType: .json)
-                        .onComplete { [weak self] result in
-                            if let self {
-                                switch result {
-                                case .success:
-                                    try? self.fileWriter.remove(at: fileURL)
-
-                                case .failure(let error):
-                                    print("❌ Upload failed with error: \(error)")
-                                }
-                            }
+                    
+                    let fileName = "\(UUID()).json"
+                    let uploadDataTask = cloudStorage.upload(data, fileName: fileName, contentType: .json)
+                    
+                    uploadDataTask.onComplete { [weak self] result in
+                        guard let self else { return }
+                                                    
+                        guard let error = result.failure else {
+                            try? self.fileWriter.remove(at: fileURL)
+                            return
                         }
-                        .resume()
+                        
+                        print("❌ Upload failed with error: \(error)")
+                    }
+                    .resume()
                 }
             } catch {
                 print("Failed to process report: \(error)")

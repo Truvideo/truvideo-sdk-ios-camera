@@ -68,9 +68,6 @@ import Utilities
 /// it provides a semantic foundation for future stream-specific extensions such as
 /// appending data chunks or finalizing the stream.
 public protocol StreamUploadTask: UploadTask {
-    /// The type representing a successful upload result.
-    associatedtype Success: Sendable
-
     /// Finalizes the stream upload, signaling that no further data will be added.
     ///
     /// This method is typically invoked once all data parts have been uploaded.
@@ -91,7 +88,7 @@ public protocol StreamUploadTask: UploadTask {
     /// - Parameter completion: A closure that will be called when the upload finishes.
     /// - Returns: The upload task instance for method chaining.
     @discardableResult
-    func onComplete(_ completion: @escaping (Result<StreamUploadResponse<Success>, UtilityError>) -> Void) -> Self
+    func onComplete(_ completion: @escaping (Result<StreamUploadResponse, UtilityError>) -> Void) -> Self
 
     /// Initiates the upload of a single data part to the specified URL using the current session.
     ///

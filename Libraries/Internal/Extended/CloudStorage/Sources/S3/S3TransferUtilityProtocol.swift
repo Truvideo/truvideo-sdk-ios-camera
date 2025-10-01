@@ -2,12 +2,12 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import AWSS3
+internal import AWSS3
 
 /// `S3TransferUtilityProtocol` defines an abstraction layer for uploading data to Amazon S3
 /// using `AWSS3TransferUtility`. This protocol allows you to decouple your code from the
 /// concrete implementation and makes testing (e.g., with mocks or stubs) easier.
-public protocol S3TransferUtilityProtocol {
+protocol S3TransferUtilityProtocol {
     /// Uploads raw `Data` to an S3 bucket.
     ///
     /// - Parameters:

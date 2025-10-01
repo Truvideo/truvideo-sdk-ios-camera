@@ -5,8 +5,8 @@
 import AWSS3
 import Utilities
 
-@testable import CloudStorage
-
+@testable import CloudStorageKit
+/*
 /// A mock implementation of `S3UploadMonitor` used for unit testing.
 ///
 /// This mock tracks how many times each upload event is invoked and allows
@@ -17,37 +17,37 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     // MARK: - Properties
 
     /// Closure executed when `uploadDidCancel` is called.
-    public var uploadDidCancelCallback: ((S3UploadTask) -> Void)?
+    public var uploadDidCancelCallback: ((S3UploadDataTask) -> Void)?
 
     /// Closure executed when `uploadDidFinish` is called.
-    public var uploadDidFinishCallback: ((S3UploadTask) -> Void)?
+    public var uploadDidFinishCallback: ((S3UploadDataTask) -> Void)?
 
     /// Closure executed when `uploadDidResume` is called.
-    public var uploadDidResumeCallback: ((S3UploadTask) -> Void)?
+    public var uploadDidResumeCallback: ((S3UploadDataTask) -> Void)?
 
     /// Closure executed when `uploadDidSuspend` is called.
-    public var uploadDidSuspendCallback: ((S3UploadTask) -> Void)?
+    public var uploadDidSuspendCallback: ((S3UploadDataTask) -> Void)?
 
     /// Closure executed when `upload(_:didCancelTask:)` is called.
-    public var uploadDidCancelTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask) -> Void)?
+    public var uploadDidCancelTaskCallback: ((S3UploadDataTask, AWSS3TransferUtilityUploadTask) -> Void)?
 
     /// Closure executed when `upload(_:didCompleteTask:with:)` is called.
-    public var uploadDidCompleteTaskCallback: ((S3UploadTask, AWSS3TransferUtilityTask, UtilityError?) -> Void)?
+    public var uploadDidCompleteTaskCallback: ((S3UploadDataTask, AWSS3TransferUtilityTask, UtilityError?) -> Void)?
 
     /// Closure executed when `upload(_:didCreateTask:)` is called.
-    public var uploadDidCreateTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask) -> Void)?
+    public var uploadDidCreateTaskCallback: ((S3UploadDataTask, AWSS3TransferUtilityUploadTask) -> Void)?
 
     /// Closure executed when `upload(_:didFailTask:with:)` is called.
-    public var uploadDidFailTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask, UtilityError) -> Void)?
+    public var uploadDidFailTaskCallback: ((S3UploadDataTask, AWSS3TransferUtilityUploadTask, UtilityError) -> Void)?
 
     /// Closure executed when `upload(_:didFailToCreateUploadTaskWith:)` is called.
-    public var uploadDidFailToCreateUploadTaskCallback: ((S3UploadTask, UtilityError) -> Void)?
+    public var uploadDidFailToCreateUploadTaskCallback: ((S3UploadDataTask, UtilityError) -> Void)?
 
     /// Closure executed when `upload(_:didResumeTask:)` is called.
-    public var uploadDidResumeTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask) -> Void)?
+    public var uploadDidResumeTaskCallback: ((S3UploadDataTask, AWSS3TransferUtilityUploadTask) -> Void)?
 
     /// Closure executed when `upload(_:didSuspendTask:)` is called.
-    public var uploadDidSuspendTaskCallback: ((S3UploadTask, AWSS3TransferUtilityUploadTask) -> Void)?
+    public var uploadDidSuspendTaskCallback: ((S3UploadDataTask, AWSS3TransferUtilityUploadTask) -> Void)?
 
     /// Number of times `uploadDidCancel` was called.
     public private(set) var uploadDidCancelCallCount = 0
@@ -90,7 +90,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// Notifies that the upload process was canceled.
     ///
     /// - Parameter upload: The `S3UploadTask` instance representing the canceled upload.
-    public func uploadDidCancel(_ upload: S3UploadTask) {
+    public func uploadDidCancel(_ upload: S3UploadDataTask) {
         uploadDidCancelCallCount += 1
         uploadDidCancelCallback?(upload)
     }
@@ -98,7 +98,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// Notifies that the upload process finished successfully.
     ///
     /// - Parameter upload: The `S3UploadTask` instance representing the completed upload.
-    public func uploadDidFinish(_ upload: S3UploadTask) {
+    public func uploadDidFinish(_ upload: S3UploadDataTask) {
         uploadDidFinishCallCount += 1
         uploadDidFinishCallback?(upload)
     }
@@ -106,7 +106,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// Notifies that the upload process was resumed after being paused.
     ///
     /// - Parameter upload: The `S3UploadTask` instance representing the resumed upload.
-    public func uploadDidResume(_ upload: S3UploadTask) {
+    public func uploadDidResume(_ upload: S3UploadDataTask) {
         uploadDidResumeCallCount += 1
         uploadDidResumeCallback?(upload)
     }
@@ -114,7 +114,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// Notifies that the upload process was suspended (paused).
     ///
     /// - Parameter upload: The `S3UploadTask` instance representing the suspended upload.
-    public func uploadDidSuspend(_ upload: S3UploadTask) {
+    public func uploadDidSuspend(_ upload: S3UploadDataTask) {
         uploadDidSuspendCallCount += 1
         uploadDidSuspendCallback?(upload)
     }
@@ -124,7 +124,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// - Parameters:
     ///   - upload: The `S3UploadTask` that owns the AWS task.
     ///   - task: The `AWSS3TransferUtilityUploadTask` that was canceled.
-    public func upload(_ upload: S3UploadTask, didCancelTask task: AWSS3TransferUtilityUploadTask) {
+    public func upload(_ upload: S3UploadDataTask, didCancelTask task: AWSS3TransferUtilityUploadTask) {
         uploadDidCancelTaskCallCount += 1
         uploadDidCancelTaskCallback?(upload, task)
     }
@@ -136,7 +136,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     ///   - task: The `AWSS3TransferUtilityUploadTask` that completed.
     ///   - error: An optional `UtilityError` if the task failed, otherwise `nil`.
     public func upload(
-        _ upload: S3UploadTask,
+        _ upload: S3UploadDataTask,
         didCompleteTask task: AWSS3TransferUtilityTask,
         with error: UtilityError?
     ) {
@@ -149,7 +149,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// - Parameters:
     ///   - upload: The `S3UploadTask` that owns the AWS task.
     ///   - task: The `AWSS3TransferUtilityUploadTask` that was created.
-    public func upload(_ upload: S3UploadTask, didCreateTask task: AWSS3TransferUtilityUploadTask) {
+    public func upload(_ upload: S3UploadDataTask, didCreateTask task: AWSS3TransferUtilityUploadTask) {
         uploadDidCreateTaskCallCount += 1
         uploadDidCreateTaskCallback?(upload, task)
     }
@@ -161,7 +161,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     ///   - task: The `AWSS3TransferUtilityUploadTask` that failed.
     ///   - error: The `UtilityError` describing the failure.
     public func upload(
-        _ upload: S3UploadTask,
+        _ upload: S3UploadDataTask,
         didFailTask task: AWSS3TransferUtilityUploadTask,
         with error: UtilityError
     ) {
@@ -174,7 +174,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// - Parameters:
     ///   - upload: The `S3UploadTask` associated with the failure.
     ///   - error: The `UtilityError` describing why the task could not be created.
-    public func upload(_ upload: S3UploadTask, didFailToCreateUploadTaskWith error: UtilityError) {
+    public func upload(_ upload: S3UploadDataTask, didFailToCreateUploadTaskWith error: UtilityError) {
         uploadDidFailToCreateUploadTaskCallCount += 1
         uploadDidFailToCreateUploadTaskCallback?(upload, error)
     }
@@ -184,7 +184,7 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// - Parameters:
     ///   - upload: The `S3UploadTask` that owns the AWS task.
     ///   - task: The `AWSS3TransferUtilityUploadTask` that was resumed.
-    public func upload(_ upload: S3UploadTask, didResumeTask task: AWSS3TransferUtilityUploadTask) {
+    public func upload(_ upload: S3UploadDataTask, didResumeTask task: AWSS3TransferUtilityUploadTask) {
         uploadDidResumeTaskCallCount += 1
         uploadDidResumeTaskCallback?(upload, task)
     }
@@ -194,8 +194,9 @@ public final class S3UploadMonitorMock: S3UploadMonitor {
     /// - Parameters:
     ///   - upload: The `S3UploadTask` that owns the AWS task.
     ///   - task: The `AWSS3TransferUtilityUploadTask` that was suspended.
-    public func upload(_ upload: S3UploadTask, didSuspendTask task: AWSS3TransferUtilityUploadTask) {
+    public func upload(_ upload: S3UploadDataTask, didSuspendTask task: AWSS3TransferUtilityUploadTask) {
         uploadDidSuspendTaskCallCount += 1
         uploadDidSuspendTaskCallback?(upload, task)
     }
 }
+*/

@@ -416,7 +416,7 @@ targets:
         basedOnDependencyAnalysis: false
 
   # Internal Extended (Business Logic)
-  CloudStorage:
+  CloudStorageKit:
     type: library.static
     platform: iOS
     sources:
@@ -425,7 +425,7 @@ targets:
       path: Libraries/Internal/Extended/CloudStorage/Sources/Info.plist
     settings:
       DEFINES_MODULE: YES
-      PRODUCT_MODULE_NAME: CloudStorage
+      PRODUCT_MODULE_NAME: CloudStorageKit
     dependencies:
       - target: DI
       - target: Networking
@@ -433,7 +433,7 @@ targets:
       - package: AWSS3
     scheme:
       testTargets:
-        - CloudStorageTests
+        - CloudStorageKitTests
     postCompileScripts:
       - script: |
           if which swift-format > /dev/null; then
@@ -452,16 +452,16 @@ targets:
         name: SwiftLint
         basedOnDependencyAnalysis: false
     
-  CloudStorageTesting:
+  CloudStorageKitTesting:
     type: library.static
     platform: iOS
     sources:
       - Libraries/Internal/Extended/CloudStorage/Testing
     settings:
       DEFINES_MODULE: YES
-      PRODUCT_MODULE_NAME: CloudStorageTesting
+      PRODUCT_MODULE_NAME: CloudStorageKitTesting
     dependencies:
-        - target: CloudStorage
+        - target: CloudStorageKit
     postCompileScripts:
       - script: |
           if which swift-format > /dev/null; then
@@ -480,14 +480,14 @@ targets:
         name: SwiftLint
         basedOnDependencyAnalysis: false
 
-  CloudStorageTests:
+  CloudStorageKitTests:
     type: bundle.unit-test
     platform: iOS
     sources:
       - Libraries/Internal/Extended/CloudStorage/Tests
     dependencies:
-      - target: CloudStorage
-      - target: CloudStorageTesting
+      - target: CloudStorageKit
+      - target: CloudStorageKitTesting
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
@@ -581,7 +581,7 @@ targets:
     sources:
       - Libraries/External/Extended/App/Sources
     dependencies:
-      - target: CloudStorage
+      - target: CloudStorageKit
       - target: DI
       - target: Networking
       - target: Registry
@@ -603,7 +603,7 @@ targets:
       OTHER_LDFLAGS:
         - $(inherited)
         - -ObjC
-        - -force_load $(BUILT_PRODUCTS_DIR)/libCloudStorage.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libCloudStorageKit.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libTruVideoApi.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libUtilities.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libRegistry.a
@@ -668,8 +668,8 @@ targets:
     sources:
       - Libraries/External/Extended/App/Tests
     dependencies:
-      - target: CloudStorage
-      - target: CloudStorageTesting
+      - target: CloudStorageKit
+      - target: CloudStorageKitTesting
       - target: Utilities
       - target: UtilitiesTesting
       - target: Telemetry
@@ -823,14 +823,13 @@ schemes:
         TruVideoApi: all
         TruVideoApiTesting: all
 
-  CloudStorage:
+  CloudStorageKit:
     build:
       targets:
         DI: all        
         Utilities: all
     test:
-      targets: [CloudStorageTests] 
-
+      targets: [CloudStorageKitTests] 
 
   # External Extended Schemes
   TruvideoSdk:

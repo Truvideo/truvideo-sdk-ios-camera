@@ -4,7 +4,7 @@
 
 internal import DI
 import Foundation
-import Network
+internal import Network
 internal import Registry
 internal import StorageKit
 internal import Telemetry
@@ -238,7 +238,7 @@ public protocol TruVideoSDK {
 /// This class provides the concrete implementation of the `TruVideoSDK` protocol,
 /// handling SDK configuration, authentication, and state management. It serves
 /// as the primary entry point for TruVideo SDK functionality in iOS applications.
-public final class TruVideoApp: TruVideoSDK {
+final class TruVideoApp: TruVideoSDK {
     // MARK: - Private Properties
 
     private let cloudStorageProvider = S3CloudStorageProvider()
@@ -266,7 +266,7 @@ public final class TruVideoApp: TruVideoSDK {
     /// This property provides access to the complete configuration that was set during
     /// SDK initialization. It includes all the necessary parameters such as API credentials,
     /// signing configuration, external identifiers, and other SDK settings.
-    public private(set) var options = TruVideoOptions(apiKey: "", secretKey: "", externalId: nil)
+    private(set) var options = TruVideoOptions(apiKey: "", secretKey: "", externalId: nil)
     
     // MARK: - Computed Properties
     
@@ -291,7 +291,7 @@ public final class TruVideoApp: TruVideoSDK {
     ///     try await TruvideoSdk.authenticate()
     /// }
     /// ```
-    public var isAuthenticated: Bool {
+    var isAuthenticated: Bool {
         authenticatableClient.currentSession != nil
     }
 
@@ -355,7 +355,7 @@ public final class TruVideoApp: TruVideoSDK {
     ///     showGenericError("Authentication failed")
     /// }
     /// ```
-    public func authenticate() async throws {
+    func authenticate() async throws {
         guard hasBeenConfigured else {
             throw TruVideoSdkError.configurationRequired
         }
@@ -408,7 +408,7 @@ public final class TruVideoApp: TruVideoSDK {
     /// ```
     /// - Parameter options: The configuration options containing API credentials, signing configuration, and other SDK settings
     /// - Throws: `TruVideoSdkError.alreadyConfigured` if the SDK has already been configured.
-    public func configure(with options: TruVideoOptions) {
+    func configure(with options: TruVideoOptions) {
         if !hasBeenConfigured {
             self.options = options
             
@@ -448,7 +448,7 @@ public final class TruVideoApp: TruVideoSDK {
     ///
     /// - Throws: An error if the session cannot be cleared from storage or if the
     ///   authentication client encounters issues during the sign-out process.
-    public func signOut() throws {
+    func signOut() throws {
         do {
             try authenticatableClient.signOut()
             legacyStorage.clear()
@@ -460,12 +460,13 @@ public final class TruVideoApp: TruVideoSDK {
     // MARK: - Private methods
 
     private func retrieveDeviceSettings() {
-        if authenticatableClient.currentSession != nil {
+        if isAuthenticated {
             Task {
                 do {
                     let deviceSetting = try await deviceSettingResource.retrieve()
                     
-                    try legacyStorage.set(deviceSetting)
+                    cloudStorageProvider.deviceSetting = deviceSetting
+                    try legacyStorage.set(deviceSetting)                    
                 } catch {
                     // log could be added here
                 }

@@ -3,7 +3,7 @@
 //
 
 import DI
-import Networking
+internal import Networking
 
 /// Provides a `DependencyKey` for injecting a `Session` dependency.
 ///

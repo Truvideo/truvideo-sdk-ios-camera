@@ -487,17 +487,7 @@ public enum ContentType: String, CaseIterable, Sendable {
 /// )
 /// ```
 ///
-public protocol CloudStorage {
-    /// Cancels all active upload tasks.
-    ///
-    /// This method asynchronously iterates through all currently active `S3UploadTask`
-    /// instances and requests their cancellation. Each task is cancelled by invoking
-    /// its `cancel()` method within a new asynchronous context.
-    ///
-    /// This is useful for stopping all ongoing uploads, for example when the user
-    /// logs out, the app is shutting down, or network conditions change.
-    func cancelAllUploads()
-
+public protocol CloudStorage: Sendable {
     /// Creates a new stream-based upload task to cloud storage.
     ///
     /// This method initializes and returns a `StreamUploadTask`, designed for uploading

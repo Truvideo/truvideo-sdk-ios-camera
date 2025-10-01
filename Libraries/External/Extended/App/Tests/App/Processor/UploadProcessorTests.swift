@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CloudStorage
-import CloudStorageTesting
+import CloudStorageKit
+import CloudStorageKitTesting
 import Foundation
 import Telemetry
 import Network

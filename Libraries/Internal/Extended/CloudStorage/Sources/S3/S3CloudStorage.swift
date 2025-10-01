@@ -2,10 +2,10 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import AWSS3
+internal import AWSS3
 import DI
 import Foundation
-import Networking
+internal import Networking
 import Utilities
 
 /// Global actor that provides thread-safe isolation for S3 cloud storage operations.
@@ -60,12 +60,6 @@ actor S3CloudStorageActor {
 /// uploadTask.cancel()  // Cancel upload
 /// ```
 public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
-
-    // MARK: - Dependencies
-
-    @Dependency(\.session)
-    private var session: Session
-
     // MARK: - Private Properties
 
     private let bucketName: String
@@ -89,6 +83,51 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     private static let s3key = "com.truvideo.cloudStorage.s3"
     private static let timeoutInterval = 15 * 60
 
+    // MARK: - Types
+
+    /// Represents an AWS S3 region for cloud storage operations.
+    ///
+    /// The `Region` struct encapsulates AWS S3 region identifiers used to specify
+    /// the geographical location where cloud storage operations should be performed.
+    /// It conforms to `RawRepresentable` to allow for easy serialization and
+    /// integration with external systems that use integer-based region identifiers.
+    ///
+    /// ## Purpose
+    ///
+    /// This struct provides a type-safe way to represent AWS S3 regions within
+    /// the TruVideo SDK's cloud storage system. It ensures that region identifiers
+    /// are properly validated and prevents invalid region values from being used
+    /// in cloud storage operations.
+    ///
+    /// ## Available Regions
+    ///
+    /// Currently supported regions:
+    /// - `usWest2`: US West (Oregon) region with raw value 4
+    public struct Region: RawRepresentable {
+        // MARK: - Public Properties
+
+        /// The corresponding value of the raw type.
+        public var rawValue: Int
+
+        // MARK: - Static Properties
+
+        /// US West (Oregon) AWS S3 region.
+        ///
+        /// This region represents the US West 2 (Oregon) AWS data center,
+        /// which provides low-latency access for users in the western United States
+        /// and serves as the primary region for TruVideo cloud storage operations.
+        public static let usWest2 = Region(rawValue: 4)
+
+        // MARK: - Initializer
+
+        /// Creates a new instance with the specified raw value.
+        ///
+        /// - Parameter rawValue: The raw value to use for the new instance
+        public init(rawValue: Int) {
+            self.rawValue = rawValue
+        }
+    }
+
     // MARK: - Initializer
 
     /// Creates an instance using an existing `AWSS3TransferUtility`.
@@ -99,12 +138,8 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     /// - Parameters:
     ///   - bucketName: The name of the S3 bucket.
     ///   - transferUtility: A pre-configured `S3TransferUtilityProtocol` instance.
-    init(
-        bucketName: String,
-        monitor: S3TaskMonitor? = nil,
-        transferUtility: S3TransferUtilityProtocol
-    ) {
-
+    ///   - monitor: A type to monitor the lifecycle of an S3 upload task.
+    init(bucketName: String, transferUtility: S3TransferUtilityProtocol, monitor: S3TaskMonitor? = nil) {
         self.bucketName = bucketName
         self.monitor = monitor
         self.transferUtility = transferUtility
@@ -117,24 +152,24 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     /// If a transfer utility with the same key already exists, it is reused.
     ///
     /// - Parameters:
-    ///   - awsRegion: The AWS region where the S3 bucket resides.
+    ///   - region: The AWS region where the S3 bucket resides.
     ///   - bucketName: The name of the S3 bucket.
     ///   - poolId: The Amazon Cognito Identity Pool ID for authentication.
     ///   - isAccelerateModeEnabled: Enables or disables S3 Transfer Acceleration.
-    ///   - monitor: An optional `S3TaskMonitor`s for observing request events.
+    ///   - monitor: A type to monitor the lifecycle of an S3 upload task.
     public convenience init(
-        awsRegion: AWSRegionType,
+        region: Region,
         bucketName: String,
         poolId: String,
         isAccelerateModeEnabled: Bool,
         monitor: S3TaskMonitor? = nil
     ) throws {
-
         var transferUtility = AWSS3TransferUtility.s3TransferUtility(forKey: Self.s3key)
 
         if transferUtility == nil {
-            let credentialsProvider = AWSCognitoCredentialsProvider(regionType: awsRegion, identityPoolId: poolId)
-            let configuration = AWSServiceConfiguration(region: awsRegion, credentialsProvider: credentialsProvider)
+            let regionType = AWSRegionType(rawValue: region.rawValue) ?? .USWest2
+            let credentialsProvider = AWSCognitoCredentialsProvider(regionType: regionType, identityPoolId: poolId)
+            let configuration = AWSServiceConfiguration(region: regionType, credentialsProvider: credentialsProvider)
 
             guard let configuration else {
                 throw UtilityError(
@@ -165,28 +200,10 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
             )
         }
 
-        self.init(
-            bucketName: bucketName,
-            monitor: monitor,
-            transferUtility: transferUtility
-        )
+        self.init(bucketName: bucketName, transferUtility: transferUtility, monitor: monitor)
     }
 
     // MARK: - CloudStorage
-
-    /// Cancels all active upload tasks.
-    ///
-    /// This method asynchronously iterates through all currently active `S3UploadTask`
-    /// instances and requests their cancellation. Each task is cancelled by invoking
-    /// its `cancel()` method within a new asynchronous context.
-    ///
-    /// This is useful for stopping all ongoing uploads, for example when the user
-    /// logs out, the app is shutting down, or network conditions change.
-    public func cancelAllUploads() {
-        Task { @S3CloudStorageActor in
-            activeUploadTasks.forEach { $0.cancel() }
-        }
-    }
 
     /// Creates a new stream-based upload task to cloud storage.
     ///
@@ -207,7 +224,7 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     /// - Returns: A `StreamUploadTask` instance that enables incremental, chunk-based
     ///   uploading with full control over the streaming lifecycle.
     public func streamUpload(with id: String, contentType: ContentType) -> any StreamUploadTask {
-        S3StreamUploadTask(id: id, contentType: contentType, monitor: monitor, session: session)
+        S3StreamUploadTask(id: id, contentType: contentType, delegate: self, monitor: monitor)
     }
 
     /// Uploads data to cloud storage and returns an upload task for monitoring and control.
@@ -224,78 +241,64 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
     /// - Returns: An `UploadDataTask` that provides control and monitoring capabilities for the upload operation
     public func upload(_ data: Data, fileName: String, contentType: ContentType) -> any UploadDataTask {
         let payload = S3DataPayload(bucket: bucketName, contentType: contentType, data: data, path: fileName)
-        let uploadTask = S3UploadTask(monitor: monitor, payload: payload)
+        let uploadDataTask = S3UploadDataTask(payload: payload, delegate: self, monitor: monitor)
 
         Task { @S3CloudStorageActor in
-            activeUploadTasks.insert(uploadTask)
+            activeUploadTasks.insert(uploadDataTask)
 
-            if uploadTask.state != .cancelled {
-                let awsTask = self.transferUtility.uploadData(
+            if uploadDataTask.state != .cancelled {
+                let awsTask = transferUtility.uploadData(
                     payload.data,
                     bucket: payload.bucket,
                     key: payload.path,
                     contentType: payload.contentType.rawValue,
-                    expression: uploadTask.expression
-                ) { [weak self] awsTask, error in
+                    expression: uploadDataTask.expression
+                ) { awsTask, error in
 
-                    self?.didComplete(awsTask, for: uploadTask, with: error)
+                    Task { @S3CloudStorageActor in
+                        var wrappedError: UtilityError?
+
+                        if let error {
+                            wrappedError = UtilityError(
+                                kind: .CloudStorageErrorReason.failedToUploadData,
+                                underlyingError: error
+                            )
+                        }
+
+                        await uploadDataTask.didComplete(task: awsTask, error: wrappedError)
+                    }
                 }
 
-                await didCreate(awsTask: awsTask, for: uploadTask)
+                awsTask.continueWith { awsTask in
+                    Task {
+                        guard let uploadTask = awsTask.result else {
+                            let errorReason = ErrorReason.CloudStorageErrorReason.uploadTaskCreationFailed
+                            let error = UtilityError(kind: errorReason, underlyingError: awsTask.error)
+
+                            await uploadDataTask.didFailToCreateUploadTask(with: error)
+
+                            return
+                        }
+
+                        uploadTask.suspend()
+
+                        await uploadDataTask.didCreate(task: uploadTask)
+                    }
+
+                    return nil
+                }
             }
         }
 
-        return uploadTask
+        return uploadDataTask
     }
+}
 
-    // MARK: - Private methods
+extension S3CloudStorage: S3UploadTaskDelegate {
 
-    private func didComplete(
-        _ awsTask: AWSS3TransferUtilityUploadTask,
-        for task: S3UploadTask,
-        with error: Error?
-    ) {
+    // MARK: - S3UploadTaskDelegate
+
+    func taskDidComplete(_ task: S3UploadTask) {
         activeUploadTasks.remove(task)
-
-        Task {
-            var wrappedError: UtilityError?
-
-            if let error {
-                wrappedError = UtilityError(
-                    kind: .CloudStorageErrorReason.failedToUploadData,
-                    underlyingError: error
-                )
-            }
-
-            await task.didComplete(task: awsTask, error: wrappedError)
-        }
-    }
-
-    private func didCreate(
-        awsTask: AWSTask<AWSS3TransferUtilityUploadTask>,
-        for task: S3UploadTask
-    ) async {
-        awsTask.continueWith { awsTask in
-            guard let uploadTask = awsTask.result else {
-                let error = UtilityError(
-                    kind: .CloudStorageErrorReason.uploadTaskCreationFailed,
-                    failureReason: "Unable to create the S3 upload task.",
-                    underlyingError: awsTask.error
-                )
-
-                Task {
-                    await task.didFailToCreateUploadTask(with: error)
-                }
-
-                return nil
-            }
-
-            uploadTask.suspend()
-            Task {
-                await task.didCreate(task: uploadTask)
-            }
-
-            return nil
-        }
     }
 }

@@ -27,7 +27,8 @@ build:
 	@echo "Building frameworks in dependency order..."
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme DI -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Registry -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
-	xcodebuild -project TruvideoSDK.xcodeproj -scheme CloudStorage -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme CloudStorageKit -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
+	xcodebuild -project TruvideoSDK.xcodeproj -scheme CloudStorageKitTesting -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme StorageKit -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme StorageKitTesting -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build
 	xcodebuild -project TruvideoSDK.xcodeproj -scheme Utilities -sdk iphonesimulator -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build

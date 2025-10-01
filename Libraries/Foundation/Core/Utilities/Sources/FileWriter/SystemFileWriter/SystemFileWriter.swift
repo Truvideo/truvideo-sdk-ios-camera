@@ -49,8 +49,7 @@ public struct SystemFileWriter: FileWriter {
     ///   - content: The object conforming to `Codable` that will be serialized and written to disk.
     ///   - url: The destination `URL` where the serialized data will be saved.
     /// - Throws: An error if the encoding fails or the data cannot be written to the file system.
-    @discardableResult
-    public func write<T: Codable>(_ content: T, to url: URL) throws(UtilityError) -> Data {
+    public func write<T: Codable>(_ content: T, to url: URL) throws(UtilityError) {
         do {
             if !fileManager.fileExists(atPath: url.path) {
                 try fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
@@ -65,7 +64,6 @@ public struct SystemFileWriter: FileWriter {
 
             try fileHandle.write(contentsOf: Data("\n".utf8))
             try fileHandle.close()
-            return data
         } catch {
             throw UtilityError(kind: .FileWriterErrorReason.writeToFileFailed, underlyingError: error)
         }

@@ -148,11 +148,7 @@ open class TelemetryManager: @unchecked Sendable {
 
         currentSession.endSession(at: date)
 
-        let event = TelemetryReport.Event(
-            name: "session_ended",
-            severity: .info,
-            source: "Telemetry"
-        )
+        let event = TelemetryReport.Event(name: "session_ended", severity: .info, source: "Telemetry")
 
         breadcrumbsBuffer.removeAll()
         eventsBuffer.add(event)
@@ -304,11 +300,7 @@ open class TelemetryManager: @unchecked Sendable {
 
             session.errors = events.count { [.critical, .error].contains($0.severity) }
 
-            let report = TelemetryReport(
-                events: events,
-                context: contextProvider.makeContext(),
-                session: session
-            )
+            let report = TelemetryReport(events: events, context: contextProvider.makeContext(), session: session)
 
             subscribers.values.forEach { $0.didReceive(report) }
 
@@ -347,7 +339,7 @@ final class EventDiskBuffer {
     // MARK: - Dependencies
 
     @Dependency(\.fileWriter)
-    var fileWriter: FileWriter
+    private var fileWriter: FileWriter
 
     // MARK: - Computed Properties
 

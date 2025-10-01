@@ -3,7 +3,7 @@
 //
 
 import Foundation
-import Networking
+internal import Networking
 
 /// Represents an ongoing upload task for a multipart stream upload.
 ///
@@ -19,7 +19,8 @@ import Networking
 /// - Reconstructing the correct multipart upload sequence.
 /// - Passing the original `Data` along to the final `UploadPartResponse`.
 /// - Managing retries or error handling at the task level.
-struct OngoingTask: Identifiable {
+struct UploadPartTask: Identifiable {
+    /// The stable identity of the entity associated with this instance.
     let id: UUID
 
     /// The raw binary data for the video chunk being uploaded.
@@ -29,21 +30,33 @@ struct OngoingTask: Identifiable {
     let partNumber: Int
 
     /// The `UploadRequest` instance handling the network operation for this part.
-    let task: any UploadRequest
+    let request: any UploadRequest
 
     // MARK: - Initializer
 
-    init(id: UUID = UUID(), partBody: Data, partNumber: Int, task: any UploadRequest) {
+    /// Creates a new ongoing upload task for multipart stream upload.
+    ///
+    /// This initializer creates an `OngoingTask` instance that represents a single
+    /// part of a multipart upload operation. It encapsulates all the necessary
+    /// information needed to track, manage, and complete the upload of a specific
+    /// data chunk within a larger file upload.
+    ///
+    /// - Parameters:
+    ///   - id: A unique identifier for this upload task (defaults to a new UUID)
+    ///   - partBody: The binary data of the video chunk to be uploaded
+    ///   - partNumber: The sequential number of this part in the multipart upload sequence
+    ///   - request: The upload request instance that handles the network operation for this part
+    init(id: UUID = UUID(), partBody: Data, partNumber: Int, request: any UploadRequest) {
         self.id = id
         self.partBody = partBody
         self.partNumber = partNumber
-        self.task = task
+        self.request = request
     }
 }
 
-extension OngoingTask: Equatable {
+extension UploadPartTask: Hashable {
 
-    // MARK: - Equatable
+    // MARK: - Hashable
 
     /// Returns a Boolean value indicating whether two values are equal.
     ///
@@ -52,5 +65,14 @@ extension OngoingTask: Equatable {
     ///   - rhs: Another value to compare.
     static func == (lhs: Self, rhs: Self) -> Bool {
         lhs.id == rhs.id
+    }
+
+    /// Hashes the essential components of this value by feeding them into the
+    /// given hasher.
+    ///
+    /// - Parameter hasher: The hasher to use when combining the components
+    ///   of this instance.
+    func hash(into hasher: inout Hasher) {
+        id.hash(into: &hasher)
     }
 }

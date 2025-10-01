@@ -168,10 +168,10 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
                 (.finishing, .finished),
                 (.finishing, .cancelled),
                 (.resumed, .cancelled),
-                (.suspended, .cancelled),
-                (.suspended, .finishing),
                 (.resumed, .finishing),
                 (.resumed, .suspended),
+                (.suspended, .cancelled),
+                (.suspended, .finishing),
                 (.suspended, .resumed),
                 (_, .finished):
 
@@ -547,6 +547,7 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
         }
     }
 
+    // swiftlint:disable unavailable_function
     /// Called when creating a `URLSessionTask` for this `Request`. Subclasses must override.
     ///
     /// - Parameters:
@@ -557,6 +558,7 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
     func task(for urlRequest: URLRequest, using session: URLSession) throws(NetworkingError) -> URLSessionTask {
         fatalError("Subclasses must override.")
     }
+    // swiftlint:enable unavailable_function
 
     // MARK: - Instance methods
 
