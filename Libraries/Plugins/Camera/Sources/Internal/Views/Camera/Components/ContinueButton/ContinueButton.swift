@@ -74,6 +74,7 @@ struct ContinueButton: View {
                         .rotationEffect(viewModel.rotationAngle)
                         .offset(x: offset.x, y: offset.y)
                 }
+                .id(viewModel.deviceOrientation)
                 .transition(.opacity.animation(.linear(duration: 0.25)))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: alignment)
