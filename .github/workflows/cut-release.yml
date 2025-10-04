@@ -71,7 +71,7 @@ jobs:
         id: scope
         shell: bash
         run: |
-          set -euo pipefail
+          set -eo pipefail
           labels="$(jq -r '.pull_request.labels[].name // empty' <<< "${{ toJson(github.event) }}" 2>/dev/null || true)"
 
           # --- CUT TYPE: prod only manual; beta/rc manual or labels ---
@@ -124,9 +124,8 @@ jobs:
       - name: Generate Xcode project
         if: ${{ steps.scope.outputs.aff != '' }}
         run: |
-          set -euo pipefail
+          set -eo pipefail
           make genbuild
-          # Prefer the known project name if present, else fallback to first .xcodeproj
           if [ -f "TruvideoSDK.xcodeproj/project.pbxproj" ]; then
             proj="TruvideoSDK.xcodeproj"
           else
@@ -143,7 +142,6 @@ jobs:
         shell: bash
         run: |
           set -eo pipefail
-          set -x
 
           cut="${{ steps.scope.outputs.cut }}"
           dry="${{ steps.scope.outputs.dry }}"
@@ -182,6 +180,7 @@ jobs:
             done < <(git tag -l "${prefix}-${base}-BETA.*")
             echo $((max+1))
           }
+
           last_beta_n () {
             local prefix="$1" base="$2" max=0
             while read -r t; do [ -z "$t" ] && continue
@@ -189,6 +188,7 @@ jobs:
             done < <(git tag -l "${prefix}-${base}-BETA.*")
             echo "$max"
           }
+
           next_rc_n () {
             local prefix="$1" base="$2" max=0
             while read -r t; do [ -z "$t" ] && continue
@@ -196,6 +196,7 @@ jobs:
             done < <(git tag -l "${prefix}-${base}-RC.*")
             echo $((max+1))
           }
+
           last_rc_n () {
             local prefix="$1" base="$2" max=0
             while read -r t; do [ -z "$t" ] && continue
@@ -203,6 +204,7 @@ jobs:
             done < <(git tag -l "${prefix}-${base}-RC.*")
             echo "$max"
           }
+
           rc_build_for_base () {
             local prefix="$1" base="$2"
             local bmax rmax
@@ -210,6 +212,7 @@ jobs:
             rmax="$(last_rc_n  "$prefix" "$base")"
             [ "$bmax" -ge "$rmax" ] && echo $((bmax + 1)) || echo $((rmax + 1))
           }
+
           latest_build_for_base () {
             local prefix="$1" base="$2" max=0
             while read -r t; do [ -z "$t" ] && continue
@@ -233,7 +236,6 @@ jobs:
           gen_changelog_md () {
             local range="$1" path="$2"
             local feats="" fixes="" perfs="" refacs="" docs="" tests="" build="" ci="" chores="" breaks=""
-
             while IFS= read -r s; do
               [ -z "$s" ] && continue
               [[ "$s" =~ BREAKING\ CHANGE|!\: ]] && breaks="${breaks}"$'\n- '"$s"
@@ -248,7 +250,6 @@ jobs:
               elif [[ "$s" =~ ^chore(\(|:|\!) ]];     then chores="${chores}"$'\n- '"$s"
               fi
             done < <(git log --pretty=format:'%s' $range -- "$path" || true)
-
             {
               echo "## Changes"
               [ -n "$breaks" ] && { echo; echo "### ⚠️ Breaking Changes"; echo "$breaks"; }
@@ -261,7 +262,7 @@ jobs:
               [ -n "$build"  ] && { echo; echo "### 🧱 Build";           echo "$build"; }
               [ -n "$ci"     ] && { echo; echo "### ⚙️ CI";              echo "$ci"; }
               [ -n "$chores" ] && { echo; echo "### 🧰 Chore";           echo "$chores"; }
-            } | sed '/^$/N;/^\n$/D'
+            } | sed '/^$/N;/^\n$/D' || true
           }
 
           cut_for () {
@@ -272,7 +273,8 @@ jobs:
               prefix="${{ env.TAGPFX_CORE }}"; path="${{ env.PATH_CORE }}"; vdir="Sources/TruvideoSdk/Generated"
             fi
 
-            last_prod=$(git tag -l "${prefix}-*.*.*" --sort=-v:refname | head -n1)
+            # only production tags for base version
+            last_prod=$(git tag -l "${prefix}-[0-9]*.[0-9]*.[0-9]*" --sort=-v:refname | head -n1)
             since_ref=""; [ -n "$last_prod" ] && since_ref="$(git rev-list -n1 "$last_prod")"
             range="${since_ref:+${since_ref}..}HEAD"
 
@@ -300,8 +302,7 @@ jobs:
               prerelease="false"
               title="Production release for **$prefix $base_ver**."
             fi
-
-            # Update Info.plist(s)
+            
             while read -r plist; do
               [ -z "$plist" ] && continue
               cur_short="$(read_short_ver "$plist")"
@@ -312,8 +313,7 @@ jobs:
 
             # Version.swift
             gen_version_swift "$vdir" "$full" "$channel" "$build_num"
-
-            # Changelog (since last prod)
+            
             chg="$(gen_changelog_md "$range" "$path")"
 
             body_header=$(printf '%s\n' \
