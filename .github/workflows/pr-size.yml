@@ -1,0 +1,77 @@
+name: PR Size Check
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  size:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR size (lines & files)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            
+            const LINES_SOFT = 600;
+            const LINES_HARD = 800;
+            const FILES_SOFT = 20;
+            const FILES_HARD = 40;
+            const BYPASS_LABEL = 'skip-size-check';
+            const SIZE_LABELS = ['size:xs','size:s','size:m','size:l','size:xl','size:xxl'];
+            
+            const labels = (pr.labels || []).map(l => l.name);
+            if (labels.includes(BYPASS_LABEL)) {
+              core.notice(`Bypassed by label: ${BYPASS_LABEL}`);
+              return;
+            }
+            
+            const totalLines = pr.additions + pr.deletions;
+            const filesChanged = pr.changed_files;
+            
+            const sizeLabel =
+              totalLines > LINES_HARD ? 'size:xxl' :
+              totalLines >= LINES_SOFT ? 'size:xl' :
+              totalLines >= 300 ? 'size:l' :
+              totalLines >= 100 ? 'size:m' :
+              totalLines >= 20 ? 'size:s' : 'size:xs';
+            
+            const issue_number = pr.number;
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+            
+            try {
+              const currentLabels = await github.rest.issues.listLabelsOnIssue({owner, repo, issue_number});
+              const toRemove = currentLabels.data
+                .map(l => l.name)
+                .filter(n => SIZE_LABELS.includes(n));
+              for (const n of toRemove) {
+                await github.rest.issues.removeLabel({owner, repo, issue_number, name: n}).catch(() => {});
+              }
+            } catch (e) { /* ignore */ }
+            
+            try {
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number,
+                labels: [sizeLabel]
+              });
+            } catch (e) { /* ignore missing label */ }
+
+            const statusEmoji =
+              (totalLines > LINES_HARD || filesChanged > FILES_HARD) ? "❌" :
+              (totalLines >= LINES_SOFT || filesChanged >= FILES_SOFT) ? "⚠️" : "✅";
+
+            const body = `${statusEmoji} **PR Size Report**
+            - Lines changed: **${totalLines}** (warn ≥ ${LINES_SOFT}, fail > ${LINES_HARD})
+            - Files changed: **${filesChanged}** (warn ≥ ${FILES_SOFT}, fail > ${FILES_HARD})
+            - Size label: \`${sizeLabel}\`
+            ${labels.includes(BYPASS_LABEL) ? `- Bypassed by \`${BYPASS_LABEL}\`` : ''}`;
+
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+
+            if (totalLines > LINES_HARD || filesChanged > FILES_HARD) {
+              core.setFailed(`PR too large (lines=${totalLines}, files=${filesChanged}). Consider splitting.`);
+            }

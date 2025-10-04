@@ -38,11 +38,82 @@ public protocol Request: Equatable, CustomDebugStringConvertible {
     func suspend() -> Self
 }
 
+/// A protocol that defines the contract for network requests that expect response data.
+///
+/// `DataRequest` extends the base `Request` protocol to provide specialized functionality
+/// for handling network requests that expect a response body. It provides comprehensive
+/// serialization capabilities, validation methods, and response processing for various
+/// data formats including JSON, raw data, and strings.
+///
+/// ## Purpose
+///
+/// This protocol enables standardized handling of HTTP requests that return data,
+/// providing a consistent interface for serialization, validation, and response processing.
+/// It supports multiple output formats and flexible validation strategies, making it
+/// suitable for a wide range of network communication scenarios.
+///
+/// ## Key Features
+///
+/// - **Multiple Serialization Formats**: Support for JSON decoding, raw data, and string responses
+/// - **Flexible Validation**: Custom and status code-based response validation
+/// - **Async/Await Support**: Modern asynchronous programming with Swift concurrency
+/// - **Error Handling**: Comprehensive error reporting with `NetworkingError`
+/// - **Response Processing**: Advanced response handling with empty response code support
+/// - **Method Chaining**: Fluent API for request configuration and validation
+///
+/// ## Serialization Support
+///
+/// The protocol supports three main serialization types:
+/// 1. **Decodable Types**: JSON decoding into Swift models
+/// 2. **Raw Data**: Direct access to response bytes
+/// 3. **String**: Text-based responses with configurable encoding
+///
+/// ## Validation Capabilities
+///
+/// - **Status Code Validation**: Automatic validation against acceptable HTTP status codes
+/// - **Custom Validation**: User-defined validation logic for complex response requirements
+/// - **Default Validation**: Standard validation for common HTTP scenarios
+///
+/// ## Usage Context
+///
+/// This protocol is typically implemented by:
+/// - HTTP client libraries
+/// - API service layers
+/// - Network abstraction layers
+/// - REST client implementations
+///
+/// ## Example Usage
+///
+/// ```swift
+/// // JSON serialization
+/// let userRequest: DataRequest = session.request("https://api.example.com/users/123")
+/// let userResponse = await userRequest.serializing(User.self)
+/// let user = try await userResponse.value
+///
+/// // Raw data serialization
+/// let dataResponse = await userRequest.serializingData()
+/// let imageData = try await dataResponse.value
+///
+/// // String serialization
+/// let textResponse = await userRequest.serializingString()
+/// let text = try await textResponse.value
+///
+/// // Validation
+/// let validatedRequest = userRequest
+///     .validate(acceptableStatusCodes: [200, 201])
+///     .validate { request, response, data in
+///         guard response.statusCode == 200 else {
+///             throw NetworkingError(kind: .responseValidationFailed, failureReason: "Unexpected status")
+///         }
+///     }
+/// ```
 public protocol DataRequest: Request {
-    /// A typealias for a validation closure.
+    /// A typealias defining the signature for custom response validation closures.
     ///
-    /// This closure takes the original `URLRequest`, `HTTPURLResponse`, and optional response `Data`,
-    /// and throws an error if validation fails.
+    /// This closure type provides a standardized way to implement custom validation logic
+    /// for network responses. It allows validation of the request, response metadata,
+    /// and response data to ensure they meet specific requirements before the response
+    /// is considered successful.
     typealias Validation = @Sendable (URLRequest?, HTTPURLResponse, Data?) throws -> Void
 
     /// Serializes the response into a `Decodable` type asynchronously.

@@ -1,8 +1,5 @@
 //
-//  TruvideoSdkCamera.h
-//  TruvideoSdkCamera
-//
-//  Created by Jorge Orjuela on 8/31/23.
+// Copyright © 2025 TruVideo. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>

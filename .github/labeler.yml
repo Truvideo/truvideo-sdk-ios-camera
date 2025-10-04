@@ -1,0 +1,36 @@
+truvideoCameraSdk:
+  - changed-files:
+      - any-glob-to-any-file: |
+          Libraries/Plugins/Camera/**          
+          Libraries/Plugins/Camera/Sources/**
+          Libraries/Plugins/Camera/Tests/**
+
+truvideoSdk:
+  - changed-files:
+      - any-glob-to-any-file: |
+          Libraries/External/Extended/App/**
+          Libraries/App/Sources/**
+          Libraries/App/Testing/**
+
+repo:
+  - changed-files:
+      - any-glob-to-any-file: |
+          .github/**
+          Scripts/**
+          Docs/**
+          README.md
+          LICENSE
+
+# Optional: internal-only labels (non-scoping; for routing/review)
+internal:core:
+  - changed-files:
+      - any-glob-to-any-file: |
+          Libraries/Internal/Core/**
+internal:extended:
+  - changed-files:
+      - any-glob-to-any-file: |
+          Libraries/Internal/Extended/**
+internal:external-core:
+  - changed-files:
+      - any-glob-to-any-file: |
+          Libraries/External/Core/**

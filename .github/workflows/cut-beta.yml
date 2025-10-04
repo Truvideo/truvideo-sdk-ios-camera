@@ -1,0 +1,371 @@
+name: Cut Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - 'release/*'
+  workflow_dispatch:
+    inputs:
+      cut:
+        description: "Release type"
+        type: choice
+        options: [beta, rc, prod]
+        required: false
+      frameworks:
+        description: "Which SDK(s) to cut"
+        type: choice
+        options: [camera, core, all]
+        required: false
+      dry_run:
+        description: "Preview only (no tag/release)"
+        type: boolean
+        default: false
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: cut-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cut_release:
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true) ||
+      (github.event_name == 'workflow_dispatch')
+    runs-on: macos-14
+
+    env:      
+      LBL_BETA: cut-beta
+      LBL_RC: cut-rc
+
+      LBL_CAM: truvideoCameraSdk
+      LBL_CORE: truvideoSdk
+      
+      PATH_CAM: 'Libraries/Plugins/Camera/'
+      PATH_CORE: 'Libraries/External/Extended/App/'
+      
+      TAGPFX_CAM: 'TruvideoSdkCamera'
+      TAGPFX_CORE: 'TruvideoSdk'
+      
+      CHANNEL_PLIST_KEY: 'TRVReleaseChannel'
+
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Tooling / Git identity
+        run: |
+          brew update >/dev/null
+          brew install jq xcodegen >/dev/null || true
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Resolve cut type and frameworks (manual > labels > paths)
+        id: scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          labels="$(jq -r '.pull_request.labels[].name // empty' <<< "${{ toJson(github.event) }}" 2>/dev/null || true)"
+
+          # --- CUT TYPE: prod only manual; beta/rc manual or labels ---
+          cut=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.cut }}" ]; then
+            cut="${{ github.event.inputs.cut }}"
+          else
+            grep -qx "${{ env.LBL_BETA }}" <<< "$labels" && cut="beta" || true
+            if grep -qx "${{ env.LBL_RC }}" <<< "$labels"; then
+              if [ -z "$cut" ]; then cut="rc"; else cut="multi"; fi
+            fi
+          fi
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            if [ "$cut" = "multi" ] || [ -z "$cut" ] || [ "$cut" = "prod" ]; then
+              echo "cut=" >> $GITHUB_OUTPUT; exit 0
+            fi
+          fi
+          if [ -z "$cut" ]; then echo "cut=" >> $GITHUB_OUTPUT; exit 0; fi
+
+          # --- FRAMEWORKS: manual > label allow-list > affected paths ---
+          allow=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.frameworks }}" ]; then
+            case "${{ github.event.inputs.frameworks }}" in
+              camera) allow="cam" ;;
+              core)   allow="core" ;;
+              all)    allow="cam core" ;;
+            esac
+          else
+            grep -qx "${{ env.LBL_CAM }}"  <<< "$labels" && allow="${allow} cam"  || true
+            grep -qx "${{ env.LBL_CORE }}" <<< "$labels" && allow="${allow} core" || true
+            allow="$(echo "$allow" | xargs)"
+          fi
+
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.merge_commit_sha }}"
+          [ -z "$head_sha" ] || [ "$head_sha" = "null" ] && head_sha="${{ github.sha }}"
+          changed="$(git diff --name-only "${base_sha:-HEAD^}" "${head_sha:-HEAD}" || true)"
+
+          aff=""
+          if echo "$changed" | grep -qE "^${{ env.PATH_CAM }}";  then aff="${aff} cam";  fi
+          if echo "$changed" | grep -qE "^${{ env.PATH_CORE }}"; then aff="${aff} core"; fi
+          aff="$(echo "$aff" | xargs -n1 | sort -u | xargs)"
+
+          final="$allow"; [ -z "$final" ] && final="$aff"; final="$(echo "$final" | xargs)"
+
+          echo "cut=$cut" >> $GITHUB_OUTPUT
+          echo "aff=$final" >> $GITHUB_OUTPUT
+          echo "dry=${{ github.event.inputs.dry_run }}" >> $GITHUB_OUTPUT
+
+      - name: Generate Xcode project (xcodegen via Makefile)
+        if: ${{ steps.scope.outputs.aff != '' }}
+        run: |
+          set -euo pipefail
+          make genbuild
+          proj=$(ls -1 *.xcodeproj 2>/dev/null | head -n1 || true)
+          if [ -z "$proj" ]; then
+            echo "No .xcodeproj found after make genbuild"; exit 1
+          fi
+          echo "PROJECT=$proj" >> $GITHUB_ENV
+
+      - name: Preflight compile (iphoneos + iphonesimulator)
+        if: ${{ steps.scope.outputs.aff != '' }}
+        shell: bash
+        env:
+          SCHEME_CAM: TruvideoSdkCamera
+          SCHEME_CORE: TruvideoSdk
+        run: |
+          set -euo pipefail
+          dd="$RUNNER_TEMP/DerivedData"
+          build_one () {
+            local scheme="$1"
+            xcodebuild -project "$PROJECT" -scheme "$scheme" -configuration Release -sdk iphoneos        -derivedDataPath "$dd" clean build
+            xcodebuild -project "$PROJECT" -scheme "$scheme" -configuration Release -sdk iphonesimulator -derivedDataPath "$dd" clean build
+          }
+          for s in ${{ steps.scope.outputs.aff }}; do
+            [ "$s" = "cam" ]  && build_one "$SCHEME_CAM"
+            [ "$s" = "core" ] && build_one "$SCHEME_CORE"
+          done
+
+      - name: Compute versions, update Info.plist, generate Version.swift, tag & release
+        if: ${{ steps.scope.outputs.cut != '' && steps.scope.outputs.aff != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cut="${{ steps.scope.outputs.cut }}"
+          dry="${{ steps.scope.outputs.dry }}"
+
+          find_plists () { git ls-files "$1" | grep -E '/Info\.plist$' || true; }
+          read_short_ver () { /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$1" 2>/dev/null || true; }
+          write_short_ver () { /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $2" "$1" || /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $2" "$1"; }
+          write_build_num () { /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $2" "$1" || /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $2" "$1"; }
+          write_channel_key () {
+            local plist="$1" val="$2" key="${{ env.CHANNEL_PLIST_KEY }}"
+            /usr/libexec/PlistBuddy -c "Set :$key $val" "$plist" \
+              || /usr/libexec/PlistBuddy -c "Add :$key string $val" "$plist"
+          }
+
+          bump_from_commits () {
+            local last_prod="$1" range="$2"
+            local bump="patch"
+            if git log --format=%B $range | grep -Eq 'BREAKING CHANGE|!:'; then bump="major"
+            elif git log --format=%s $range | grep -Eq '^feat(\(|:)|^feat!'; then bump="minor"
+            elif git log --format=%s $range | grep -Eq '^fix(\(|:)|^fix!|^perf(\(|:)|^perf!'; then bump="patch"
+            else bump="patch"; fi
+            if [ -z "$last_prod" ]; then echo "0.1.0"; return; fi
+            base="${last_prod##*-}"
+            IFS='.' read -r major minor patch <<< "$base"
+            case "$bump" in
+              major) major=$((major+1)); minor=0; patch=0 ;;
+              minor) minor=$((minor+1)); patch=0 ;;
+              patch) patch=$((patch+1)) ;;
+            esac
+            echo "${major}.${minor}.${patch}"
+          }
+
+          next_beta_n () {
+            local prefix="$1" base="$2" max=0
+            while read -r t; do [ -z "$t" ] && continue
+              n="${t##*.}"; [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$max" ] && max="$n" || true
+            done < <(git tag -l "${prefix}-${base}-BETA.*")
+            echo $((max+1))
+          }
+
+          last_beta_n () {
+            local prefix="$1" base="$2" max=0
+            while read -r t; do [ -z "$t" ] && continue
+              n="${t##*.}"; [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$max" ] && max="$n" || true
+            done < <(git tag -l "${prefix}-${base}-BETA.*")
+            echo "$max"
+          }
+
+          next_rc_n () {
+            local prefix="$1" base="$2" max=0
+            while read -r t; do [ -z "$t" ] && continue
+              n="${t##*.}"; [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$max" ] && max="$n" || true
+            done < <(git tag -l "${prefix}-${base}-RC.*")
+            echo $((max+1))
+          }
+
+          last_rc_n () {
+            local prefix="$1" base="$2" max=0
+            while read -r t; do [ -z "$t" ] && continue
+              n="${t##*.}"; [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$max" ] && max="$n" || true
+            done < <(git tag -l "${prefix}-${base}-RC.*")
+            echo "$max"
+          }
+
+          rc_build_for_base () {
+            # RC build number must be unique and increasing across beta+rc: max(beta_max, rc_max)+1
+            local prefix="$1" base="$2"
+            local bmax rmax
+            bmax="$(last_beta_n "$prefix" "$base")"
+            rmax="$(last_rc_n  "$prefix" "$base")"
+            [ "$bmax" -ge "$rmax" ] && echo $((bmax + 1)) || echo $((rmax + 1))
+          }
+
+          latest_build_for_base () {
+            local prefix="$1" base="$2" max=0
+            while read -r t; do [ -z "$t" ] && continue
+              n="${t##*.}"; [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$max" ] && max="$n" || true
+            done < <( { git tag -l "${prefix}-${base}-BETA.*"; git tag -l "${prefix}-${base}-RC.*"; } )
+            echo "$max"
+          }
+
+          gen_version_swift () {
+            local destdir="$1" full="$2" channel="$3" build="$4"
+            mkdir -p "$destdir"
+            cat > "$destdir/Version.swift" <<SWIFT
+            // Generated by CI – do not edit.
+            public static let SDKVersionNumber = "$full"
+            public static let SDKVersionChannel = "$channel"
+            public static let SDKVersionBuild = "$build"
+            SWIFT
+          }
+
+          gen_changelog_md () {
+              local range="$1" path="$2"
+              mapfile -t subs < <(git log --pretty=format:'%s' $range -- "$path")
+              feats=(); fixes=(); perfs=(); refacs=(); docs=(); tests=(); build=(); ci=(); chores=(); breaks=()
+              for s in "${subs[@]}"; do
+                [[ -z "$s" ]] && continue
+                [[ "$s" =~ BREAKING\ CHANGE|!\: ]] && breaks+=("$s")
+                if   [[ "$s" =~ ^feat(\(|\:|\!) ]];      then feats+=("$s")
+                elif [[ "$s" =~ ^fix(\(|\:|\!) ]];       then fixes+=("$s")
+                elif [[ "$s" =~ ^perf(\(|\:|\!) ]];      then perfs+=("$s")
+                elif [[ "$s" =~ ^refactor(\(|\:|\!) ]];  then refacs+=("$s")
+                elif [[ "$s" =~ ^docs(\(|\:|\!) ]];      then docs+=("$s")
+                elif [[ "$s" =~ ^test(\(|\:|\!) ]];      then tests+=("$s")
+                elif [[ "$s" =~ ^build(\(|\:|\!) ]];     then build+=("$s")
+                elif [[ "$s" =~ ^ci(\(|\:|\!) ]];        then ci+=("$s")
+                elif [[ "$s" =~ ^chore(\(|\:|\!) ]];     then chores+=("$s")
+                fi
+              done
+              {
+                echo "## Changes"
+                if ((${#breaks[@]})); then echo; echo "### ⚠️ Breaking Changes"; for x in "${breaks[@]}"; do echo "- $x"; done; fi
+                if ((${#feats[@]}));  then echo; echo "### ✨ Features";        for x in "${feats[@]}";  do echo "- $x"; done;  fi
+                if ((${#fixes[@]}));  then echo; echo "### 🐛 Fixes";           for x in "${fixes[@]}";  do echo "- $x"; done;  fi
+                if ((${#perfs[@]}));  then echo; echo "### 🚀 Performance";     for x in "${perfs[@]}";  do echo "- $x"; done;  fi
+                if ((${#refacs[@]})); then echo; echo "### 🧹 Refactors";       for x in "${refacs[@]}"; do echo "- $x"; done;  fi
+                if ((${#docs[@]}));   then echo; echo "### 📝 Docs";            for x in "${docs[@]}";   do echo "- $x"; done;  fi
+                if ((${#tests[@]}));  then echo; echo "### ✅ Tests";           for x in "${tests[@]}";  do echo "- $x"; done;  fi
+                if ((${#build[@]}));  then echo; echo "### 🧱 Build";           for x in "${build[@]}";  do echo "- $x"; done;  fi
+                if ((${#ci[@]}));     then echo; echo "### ⚙️ CI";              for x in "${ci[@]}";     do echo "- $x"; done;  fi
+                if ((${#chores[@]})); then echo; echo "### 🧰 Chore";           for x in "${chores[@]}"; do echo "- $x"; done;  fi
+              } | sed '/^$/N;/^\n$/D'
+          }
+
+          cut_for () {
+            local key="$1" prefix path vdir channel full base_ver build_num prerelease title
+            if [ "$key" = "cam" ]; then
+              prefix="${{ env.TAGPFX_CAM }}"; path="${{ env.PATH_CAM }}"; vdir="Sources/TruvideoSdkCamera/Generated"
+            else
+              prefix="${{ env.TAGPFX_CORE }}"; path="${{ env.PATH_CORE }}"; vdir="Sources/TruvideoSdk/Generated"
+            fi
+
+            last_prod=$(git tag -l "${prefix}-*.*.*" --sort=-v:refname | head -n1)
+            since_ref=""; [ -n "$last_prod" ] && since_ref="$(git rev-list -n1 "$last_prod")"
+            range="${since_ref:+${since_ref}..}HEAD"
+
+            base_ver="$(bump_from_commits "$last_prod" "${range:-HEAD}")"
+
+            if [ "$cut" = "beta" ]; then
+              channel="BETA"
+              n="$(next_beta_n "$prefix" "$base_ver")"
+              full="${base_ver}-BETA.${n}"
+              build_num="$n"
+              prerelease="true"
+              title="Internal BETA release for **$prefix $base_ver**."
+            elif [ "$cut" = "rc" ]; then
+              channel="RC"
+              n="$(next_rc_n "$prefix" "$base_ver")"
+              full="${base_ver}-RC.${n}"
+              build_num="$(rc_build_for_base "$prefix" "$base_ver")"
+              prerelease="true"
+              title="Release Candidate for **$prefix $base_ver**."
+            else
+              channel="PROD"
+              full="${base_ver}"
+              bn="$(latest_build_for_base "$prefix" "$base_ver")"
+              [ "$bn" -gt 0 ] && build_num="$bn" || build_num="1"
+              prerelease="false"
+              title="Production release for **$prefix $base_ver**."
+            fi
+
+            # Update Info.plist(s)
+            while read -r plist; do
+              [ -z "$plist" ] && continue
+              cur_short="$(read_short_ver "$plist")"
+              if [ "$cur_short" != "$base_ver" ]; then write_short_ver "$plist" "$base_ver"; fi
+              write_build_num "$plist" "$build_num"
+              write_channel_key "$plist" "$channel"
+            done < <(find_plists "$path")
+
+            # Generate Version.swift
+            gen_version_swift "$vdir" "$full" "$channel" "$build_num"
+
+            # Changelog body (since last prod)
+            chg="$(gen_changelog_md "$range" "$path")"
+
+            body="$(cat <<'MD'
+            %TITLE%
+
+            - **CFBundleShortVersionString**: %BASE%
+            - **CFBundleVersion**: %BUILD%
+            - **SdkVersionNumber**: %FULL%
+            - **Channel**: %CHANNEL%
+
+            %CHANGELOG%
+            MD
+            )"
+            body="${body//%TITLE%/$title}"
+            body="${body//%BASE%/$base_ver}"
+            body="${body//%BUILD%/$build_num}"
+            body="${body//%FULL%/$full}"
+            body="${body//%CHANNEL%/$channel}"
+            body="${body//%CHANGELOG%/$chg}"
+
+            tag="${prefix}-${full}"
+            if [ "$dry" = "true" ]; then
+              echo "[DRY RUN] Would tag: $tag"
+              echo "[DRY RUN] Would create release:"; echo "$body"
+            else
+              git tag -a "$tag" -m "$title"
+              git push origin "refs/tags/${tag}"
+              gh api repos/${{ github.repository }}/releases \
+                -f tag_name="$tag" \
+                -f name="$tag" \
+                -f body="$body" \
+                -f prerelease=$prerelease >/dev/null
+            fi
+          }
+
+          for s in ${{ steps.scope.outputs.aff }}; do
+            cut_for "$s"
+          done
