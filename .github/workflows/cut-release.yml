@@ -238,34 +238,39 @@ jobs:
 
           gen_changelog_md () {
             local range="$1" path="$2"
-            mapfile -t subs < <(git log --pretty=format:'%s' $range -- "$path")
-            feats=(); fixes=(); perfs=(); refacs=(); docs=(); tests=(); build=(); ci=(); chores=(); breaks=()
-            for s in "${subs[@]}"; do
-              [[ -z "$s" ]] && continue
-              [[ "$s" =~ BREAKING\ CHANGE|!\: ]] && breaks+=("$s")
-              if   [[ "$s" =~ ^feat(\(|\:|\!) ]];      then feats+=("$s")
-              elif [[ "$s" =~ ^fix(\(|\:|\!) ]];       then fixes+=("$s")
-              elif [[ "$s" =~ ^perf(\(|\:|\!) ]];      then perfs+=("$s")
-              elif [[ "$s" =~ ^refactor(\(|\:|\!) ]];  then refacs+=("$s")
-              elif [[ "$s" =~ ^docs(\(|\:|\!) ]];      then docs+=("$s")
-              elif [[ "$s" =~ ^test(\(|\:|\!) ]];      then tests+=("$s")
-              elif [[ "$s" =~ ^build(\(|\:|\!) ]];     then build+=("$s")
-              elif [[ "$s" =~ ^ci(\(|\:|\!) ]];        then ci+=("$s")
-              elif [[ "$s" =~ ^chore(\(|\:|\!) ]];     then chores+=("$s")
+            local feats="" fixes="" perfs="" refacs="" docs="" tests="" build="" ci="" chores="" breaks=""
+
+            while IFS= read -r s; do
+              [ -z "$s" ] && continue
+
+              if [[ "$s" =~ BREAKING\ CHANGE|!\: ]]; then
+                breaks+=$'\n- '"'"$s"'" 
               fi
-            done
+
+              if   [[ "$s" =~ ^feat(\(|:|\!) ]];      then feats+=$'\n- '"'"$s"'"
+              elif [[ "$s" =~ ^fix(\(|:|\!) ]];       then fixes+=$'\n- '"'"$s"'"
+              elif [[ "$s" =~ ^perf(\(|:|\!) ]];      then perfs+=$'\n- '"'"$s"'"
+              elif [[ "$s" =~ ^refactor(\(|:|\!) ]];  then refacs+=$'\n- '"'"$s"'"
+              elif [[ "$s" =~ ^docs(\(|:|\!) ]];      then docs+=$'\n- '"'"$s"'"
+              elif [[ "$s" =~ ^test(\(|:|\!) ]];      then tests+=$'\n- '"'"$s"'"
+              elif [[ "$s" =~ ^build(\(|:|\!) ]];     then build+=$'\n- '"'"$s"'"
+              elif [[ "$s" =~ ^ci(\(|:|\!) ]];        then ci+=$'\n- '"'"$s"'"
+              elif [[ "$s" =~ ^chore(\(|:|\!) ]];     then chores+=$'\n- '"'"$s"'"
+              fi
+            done < <(git log --pretty=format:'%s' $range -- "$path")
+
             {
               echo "## Changes"
-              if ((${#breaks[@]})); then echo; echo "### ⚠️ Breaking Changes"; for x in "${breaks[@]}"; do echo "- $x"; done; fi
-              if ((${#feats[@]}));  then echo; echo "### ✨ Features";        for x in "${feats[@]}";  do echo "- $x"; done;  fi
-              if ((${#fixes[@]}));  then echo; echo "### 🐛 Fixes";           for x in "${fixes[@]}";  do echo "- $x"; done;  fi
-              if ((${#perfs[@]}));  then echo; echo "### 🚀 Performance";     for x in "${perfs[@]}";  do echo "- $x"; done;  fi
-              if ((${#refacs[@]})); then echo; echo "### 🧹 Refactors";       for x in "${refacs[@]}"; do echo "- $x"; done;  fi
-              if ((${#docs[@]}));   then echo; echo "### 📝 Docs";            for x in "${docs[@]}";   do echo "- $x"; done;  fi
-              if ((${#tests[@]}));  then echo; echo "### ✅ Tests";           for x in "${tests[@]}";  do echo "- $x"; done;  fi
-              if ((${#build[@]}));  then echo; echo "### 🧱 Build";           for x in "${build[@]}";  do echo "- $x"; done;  fi
-              if ((${#ci[@]}));     then echo; echo "### ⚙️ CI";              for x in "${ci[@]}";     do echo "- $x"; done;  fi
-              if ((${#chores[@]})); then echo; echo "### 🧰 Chore";           for x in "${chores[@]}"; do echo "- $x"; done;  fi
+              [ -n "$breaks" ] && { echo; echo "### ⚠️ Breaking Changes"; echo "$breaks"; }
+              [ -n "$feats"  ] && { echo; echo "### ✨ Features";        echo "$feats"; }
+              [ -n "$fixes"  ] && { echo; echo "### 🐛 Fixes";           echo "$fixes"; }
+              [ -n "$perfs"  ] && { echo; echo "### 🚀 Performance";     echo "$perfs"; }
+              [ -n "$refacs" ] && { echo; echo "### 🧹 Refactors";       echo "$refacs"; }
+              [ -n "$docs"   ] && { echo; echo "### 📝 Docs";            echo "$docs"; }
+              [ -n "$tests"  ] && { echo; echo "### ✅ Tests";           echo "$tests"; }
+              [ -n "$build"  ] && { echo; echo "### 🧱 Build";           echo "$build"; }
+              [ -n "$ci"     ] && { echo; echo "### ⚙️ CI";              echo "$ci"; }
+              [ -n "$chores" ] && { echo; echo "### 🧰 Chore";           echo "$chores"; }
             } | sed '/^$/N;/^\n$/D'
           }
 
