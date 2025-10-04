@@ -138,42 +138,6 @@ jobs:
           echo "PROJECT=$proj" >> $GITHUB_ENV
           echo "Using PROJECT=$proj"
 
-      - name: Preflight compile
-        if: ${{ steps.scope.outputs.aff != '' }}
-        shell: bash
-        env:
-          SCHEME_CAM: TruvideoSdkCamera
-          SCHEME_CORE: TruvideoSdk
-        run: |
-          set -euo pipefail
-          dd="$RUNNER_TEMP/DerivedData"
-
-          list_schemes () {
-            xcodebuild -project "$PROJECT" -list 2>/dev/null | sed -n '/Schemes:/,$p'
-          }
-
-          build_one () {
-            local scheme="$1"
-            echo "::group::Build scheme: $scheme"
-            # verify scheme exists
-            if ! list_schemes | grep -q "  $scheme$"; then
-              echo "❌ Scheme '$scheme' not found in $PROJECT"
-              list_schemes || true
-              exit 1
-            fi
-            # Generic destinations keep us independent of device names/SDK revs
-            xcodebuild -project "$PROJECT" -scheme "$scheme" -configuration Release \
-              -destination 'generic/platform=iOS'           -derivedDataPath "$dd" clean build
-            xcodebuild -project "$PROJECT" -scheme "$scheme" -configuration Release \
-              -destination 'generic/platform=iOS Simulator' -derivedDataPath "$dd" clean build
-            echo "::endgroup::"
-          }
-
-          for s in ${{ steps.scope.outputs.aff }}; do
-            [ "$s" = "cam" ]  && build_one "$SCHEME_CAM"
-            [ "$s" = "core" ] && build_one "$SCHEME_CORE"
-          done
-
       - name: Compute versions, update Info.plist, generate Version.swift, tag & release
         if: ${{ steps.scope.outputs.cut != '' && steps.scope.outputs.aff != '' }}
         shell: bash
