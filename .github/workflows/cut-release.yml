@@ -273,8 +273,12 @@ jobs:
               prefix="${{ env.TAGPFX_CORE }}"; path="${{ env.PATH_CORE }}"; vdir="Sources/TruvideoSdk/Generated"
             fi
 
-            # only production tags for base version
-            last_prod=$(git tag -l "${prefix}-[0-9]*.[0-9]*.[0-9]*" --sort=-v:refname | head -n1)
+            last_prod=$(
+              git tag -l "${prefix}-*" --sort=-v:refname \
+              | grep -E "^${prefix}-[0-9]+\.[0-9]+\.[0-9]+$" \
+              | head -n1
+            )
+            
             since_ref=""; [ -n "$last_prod" ] && since_ref="$(git rev-list -n1 "$last_prod")"
             range="${since_ref:+${since_ref}..}HEAD"
 
