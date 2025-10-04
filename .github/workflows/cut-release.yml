@@ -38,19 +38,19 @@ jobs:
       (github.event_name == 'workflow_dispatch')
     runs-on: macos-15
 
-    env:      
+    env:
       LBL_BETA: cut-beta
       LBL_RC: cut-rc
 
       LBL_CAM: truvideoCameraSdk
       LBL_CORE: truvideoSdk
-      
+
       PATH_CAM: 'Libraries/Plugins/Camera/'
       PATH_CORE: 'Libraries/External/Extended/App/'
-      
+
       TAGPFX_CAM: 'TruvideoSdkCamera'
       TAGPFX_CORE: 'TruvideoSdk'
-      
+
       CHANNEL_PLIST_KEY: 'TRVReleaseChannel'
 
       GH_TOKEN: ${{ github.token }}
@@ -121,18 +121,24 @@ jobs:
           echo "aff=$final" >> $GITHUB_OUTPUT
           echo "dry=${{ github.event.inputs.dry_run }}" >> $GITHUB_OUTPUT
 
-      - name: Generate Xcode project (xcodegen via Makefile)
+      - name: Generate Xcode project
         if: ${{ steps.scope.outputs.aff != '' }}
         run: |
           set -euo pipefail
           make genbuild
-          proj=$(ls -1 *.xcodeproj 2>/dev/null | head -n1 || true)
+          # Prefer the known project name if present, else fallback to first .xcodeproj
+          if [ -f "TruvideoSDK.xcodeproj/project.pbxproj" ]; then
+            proj="TruvideoSDK.xcodeproj"
+          else
+            proj=$(ls -1 *.xcodeproj 2>/dev/null | head -n1 || true)
+          fi
           if [ -z "$proj" ]; then
             echo "No .xcodeproj found after make genbuild"; exit 1
           fi
           echo "PROJECT=$proj" >> $GITHUB_ENV
+          echo "Using PROJECT=$proj"
 
-      - name: Preflight compile (iphoneos + iphonesimulator)
+      - name: Preflight compile
         if: ${{ steps.scope.outputs.aff != '' }}
         shell: bash
         env:
@@ -141,11 +147,28 @@ jobs:
         run: |
           set -euo pipefail
           dd="$RUNNER_TEMP/DerivedData"
+
+          list_schemes () {
+            xcodebuild -project "$PROJECT" -list 2>/dev/null | sed -n '/Schemes:/,$p'
+          }
+
           build_one () {
             local scheme="$1"
-            xcodebuild -project "$PROJECT" -scheme "$scheme" -configuration Release -sdk iphoneos        -derivedDataPath "$dd" clean build
-            xcodebuild -project "$PROJECT" -scheme "$scheme" -configuration Release -sdk iphonesimulator -derivedDataPath "$dd" clean build
+            echo "::group::Build scheme: $scheme"
+            # verify scheme exists
+            if ! list_schemes | grep -q "  $scheme$"; then
+              echo "❌ Scheme '$scheme' not found in $PROJECT"
+              list_schemes || true
+              exit 1
+            fi
+            # Generic destinations keep us independent of device names/SDK revs
+            xcodebuild -project "$PROJECT" -scheme "$scheme" -configuration Release \
+              -destination 'generic/platform=iOS'           -derivedDataPath "$dd" clean build
+            xcodebuild -project "$PROJECT" -scheme "$scheme" -configuration Release \
+              -destination 'generic/platform=iOS Simulator' -derivedDataPath "$dd" clean build
+            echo "::endgroup::"
           }
+
           for s in ${{ steps.scope.outputs.aff }}; do
             [ "$s" = "cam" ]  && build_one "$SCHEME_CAM"
             [ "$s" = "core" ] && build_one "$SCHEME_CORE"
@@ -221,7 +244,7 @@ jobs:
           }
 
           rc_build_for_base () {
-            # RC build number must be unique and increasing across beta+rc: max(beta_max, rc_max)+1
+            # RC build number must be unique & increasing across beta+rc
             local prefix="$1" base="$2"
             local bmax rmax
             bmax="$(last_beta_n "$prefix" "$base")"
@@ -249,36 +272,36 @@ jobs:
           }
 
           gen_changelog_md () {
-              local range="$1" path="$2"
-              mapfile -t subs < <(git log --pretty=format:'%s' $range -- "$path")
-              feats=(); fixes=(); perfs=(); refacs=(); docs=(); tests=(); build=(); ci=(); chores=(); breaks=()
-              for s in "${subs[@]}"; do
-                [[ -z "$s" ]] && continue
-                [[ "$s" =~ BREAKING\ CHANGE|!\: ]] && breaks+=("$s")
-                if   [[ "$s" =~ ^feat(\(|\:|\!) ]];      then feats+=("$s")
-                elif [[ "$s" =~ ^fix(\(|\:|\!) ]];       then fixes+=("$s")
-                elif [[ "$s" =~ ^perf(\(|\:|\!) ]];      then perfs+=("$s")
-                elif [[ "$s" =~ ^refactor(\(|\:|\!) ]];  then refacs+=("$s")
-                elif [[ "$s" =~ ^docs(\(|\:|\!) ]];      then docs+=("$s")
-                elif [[ "$s" =~ ^test(\(|\:|\!) ]];      then tests+=("$s")
-                elif [[ "$s" =~ ^build(\(|\:|\!) ]];     then build+=("$s")
-                elif [[ "$s" =~ ^ci(\(|\:|\!) ]];        then ci+=("$s")
-                elif [[ "$s" =~ ^chore(\(|\:|\!) ]];     then chores+=("$s")
-                fi
-              done
-              {
-                echo "## Changes"
-                if ((${#breaks[@]})); then echo; echo "### ⚠️ Breaking Changes"; for x in "${breaks[@]}"; do echo "- $x"; done; fi
-                if ((${#feats[@]}));  then echo; echo "### ✨ Features";        for x in "${feats[@]}";  do echo "- $x"; done;  fi
-                if ((${#fixes[@]}));  then echo; echo "### 🐛 Fixes";           for x in "${fixes[@]}";  do echo "- $x"; done;  fi
-                if ((${#perfs[@]}));  then echo; echo "### 🚀 Performance";     for x in "${perfs[@]}";  do echo "- $x"; done;  fi
-                if ((${#refacs[@]})); then echo; echo "### 🧹 Refactors";       for x in "${refacs[@]}"; do echo "- $x"; done;  fi
-                if ((${#docs[@]}));   then echo; echo "### 📝 Docs";            for x in "${docs[@]}";   do echo "- $x"; done;  fi
-                if ((${#tests[@]}));  then echo; echo "### ✅ Tests";           for x in "${tests[@]}";  do echo "- $x"; done;  fi
-                if ((${#build[@]}));  then echo; echo "### 🧱 Build";           for x in "${build[@]}";  do echo "- $x"; done;  fi
-                if ((${#ci[@]}));     then echo; echo "### ⚙️ CI";              for x in "${ci[@]}";     do echo "- $x"; done;  fi
-                if ((${#chores[@]})); then echo; echo "### 🧰 Chore";           for x in "${chores[@]}"; do echo "- $x"; done;  fi
-              } | sed '/^$/N;/^\n$/D'
+            local range="$1" path="$2"
+            mapfile -t subs < <(git log --pretty=format:'%s' $range -- "$path")
+            feats=(); fixes=(); perfs=(); refacs=(); docs=(); tests=(); build=(); ci=(); chores=(); breaks=()
+            for s in "${subs[@]}"; do
+              [[ -z "$s" ]] && continue
+              [[ "$s" =~ BREAKING\ CHANGE|!\: ]] && breaks+=("$s")
+              if   [[ "$s" =~ ^feat(\(|\:|\!) ]];      then feats+=("$s")
+              elif [[ "$s" =~ ^fix(\(|\:|\!) ]];       then fixes+=("$s")
+              elif [[ "$s" =~ ^perf(\(|\:|\!) ]];      then perfs+=("$s")
+              elif [[ "$s" =~ ^refactor(\(|\:|\!) ]];  then refacs+=("$s")
+              elif [[ "$s" =~ ^docs(\(|\:|\!) ]];      then docs+=("$s")
+              elif [[ "$s" =~ ^test(\(|\:|\!) ]];      then tests+=("$s")
+              elif [[ "$s" =~ ^build(\(|\:|\!) ]];     then build+=("$s")
+              elif [[ "$s" =~ ^ci(\(|\:|\!) ]];        then ci+=("$s")
+              elif [[ "$s" =~ ^chore(\(|\:|\!) ]];     then chores+=("$s")
+              fi
+            done
+            {
+              echo "## Changes"
+              if ((${#breaks[@]})); then echo; echo "### ⚠️ Breaking Changes"; for x in "${breaks[@]}"; do echo "- $x"; done; fi
+              if ((${#feats[@]}));  then echo; echo "### ✨ Features";        for x in "${feats[@]}";  do echo "- $x"; done;  fi
+              if ((${#fixes[@]}));  then echo; echo "### 🐛 Fixes";           for x in "${fixes[@]}";  do echo "- $x"; done;  fi
+              if ((${#perfs[@]}));  then echo; echo "### 🚀 Performance";     for x in "${perfs[@]}";  do echo "- $x"; done;  fi
+              if ((${#refacs[@]})); then echo; echo "### 🧹 Refactors";       for x in "${refacs[@]}"; do echo "- $x"; done;  fi
+              if ((${#docs[@]}));   then echo; echo "### 📝 Docs";            for x in "${docs[@]}";   do echo "- $x"; done;  fi
+              if ((${#tests[@]}));  then echo; echo "### ✅ Tests";           for x in "${tests[@]}";  do echo "- $x"; done;  fi
+              if ((${#build[@]}));  then echo; echo "### 🧱 Build";           for x in "${build[@]}";  do echo "- $x"; done;  fi
+              if ((${#ci[@]}));     then echo; echo "### ⚙️ CI";              for x in "${ci[@]}";     do echo "- $x"; done;  fi
+              if ((${#chores[@]})); then echo; echo "### 🧰 Chore";           for x in "${chores[@]}"; do echo "- $x"; done;  fi
+            } | sed '/^$/N;/^\n$/D'
           }
 
           cut_for () {
