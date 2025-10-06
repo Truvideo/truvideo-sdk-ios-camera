@@ -222,15 +222,8 @@ extension Session {
     ///   - headers: Additional HTTP headers to be included in the request (default is `nil`).
     ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is executed (default is `nil`).
     /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
-    public func upload(
-        _ data: Data,
-        to url: URLConvertible,
-        method: HTTPMethod = .post,
-        headers: HTTPHeaders? = nil,
-        middleware: RequestMiddleware? = nil
-    ) -> any UploadRequest {
-
-        upload(data, to: url, method: method, headers: headers, middleware: middleware)
+    public func upload(_ data: Data, to url: URLConvertible, method: HTTPMethod = .post) -> any UploadRequest {
+        upload(data, to: url, method: method, headers: nil, middleware: nil)
     }
 
     /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.

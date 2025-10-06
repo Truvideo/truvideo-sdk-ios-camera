@@ -1,7 +1,7 @@
 //
 // Copyright © 2025 TruVideo. All rights reserved.
 //
-/*
+
 import AWSS3
 import Utilities
 
@@ -74,4 +74,3 @@ public final class S3TransferUtilityProtocolMock: S3TransferUtilityProtocol {
         return result!
     }
 }
-*/

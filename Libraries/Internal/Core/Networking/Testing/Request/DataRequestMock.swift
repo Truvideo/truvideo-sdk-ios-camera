@@ -32,6 +32,10 @@ public final class DataRequestMock: DataRequest {
     /// The data associated to the request.
     public var data: Data?
 
+    /// The artificial delay, in nanoseconds, that this mock request will simulate
+    /// before completing its asynchronous operations.
+    public var delay: UInt64
+
     /// The mock response object to return for data serialization.
     public var mockDataResponse: Response<Data, NetworkingError>?
 
@@ -70,7 +74,9 @@ public final class DataRequestMock: DataRequest {
     // MARK: - Initializer
 
     /// Creates a new instance of the `DataRequestMock`.
-    public init() {}
+    public init(delay: UInt64 = 0) {
+        self.delay = delay
+    }
 
     // MARK: - DataRequest
 
@@ -97,6 +103,7 @@ public final class DataRequestMock: DataRequest {
     ) async -> Response<Value, NetworkingError> where Value: Sendable {
         serializingCallCount += 1
 
+        try? await Task.sleep(nanoseconds: delay)
         return mockResponse as! Response<Value, NetworkingError>
     }
 

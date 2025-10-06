@@ -2,7 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-/*import Foundation
+import Foundation
 import Utilities
 
 @testable import CloudStorageKit
@@ -11,7 +11,7 @@ public final class UploadDataTaskMock: UploadDataTask {
     // MARK: - Properties
 
     /// Number of times `cancel()` was invoked.
-    public private(set) var cancellCallCount = 0
+    public private(set) var cancelCallCount = 0
 
     /// Number of times `onComplete(_:)` was invoked.
     public private(set) var onCompleteCallCount = 0
@@ -44,7 +44,7 @@ public final class UploadDataTaskMock: UploadDataTask {
     ///
     /// - Returns: The current `UploadTaskMock` for chaining.
     public func cancel() -> Self {
-        cancellCallCount += 1
+        cancelCallCount += 1
         state = .cancelled
 
         return self
@@ -75,7 +75,7 @@ public final class UploadDataTaskMock: UploadDataTask {
     /// Registers a completion handler to be executed when the upload finishes.
     ///
     /// - Parameter completion: A closure invoked with the upload result.
-    public func onComplete(_ completion: @escaping (Result<URL, Utilities.UtilityError>) -> Void) -> Self {
+    public func onComplete(_ completion: @escaping (Result<URL, UtilityError>) -> Void) -> Self {
         onCompleteCallCount += 1
         self.onCompleteHandler = completion
 
@@ -95,7 +95,7 @@ public final class UploadDataTaskMock: UploadDataTask {
     /// Executes the stored completion handler with the provided result.
     ///
     /// - Parameter result: The simulated result of the upload operation.
-    public func complete(with result: Result<URL, Utilities.UtilityError>) {
+    public func complete(with result: Result<URL, UtilityError>) {
         onCompleteHandler?(result)
     }
 
@@ -106,4 +106,3 @@ public final class UploadDataTaskMock: UploadDataTask {
         onProgressHandler?(progress)
     }
 }
-*/

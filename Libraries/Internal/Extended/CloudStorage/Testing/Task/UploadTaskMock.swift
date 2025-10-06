@@ -6,14 +6,14 @@ import Foundation
 import Utilities
 
 @testable import CloudStorageKit
-/*
+
 /// A mock implementation of `UploadTask` used for unit testing.
 public final class UploadTaskMock: UploadTask {
 
     // MARK: - Properties
 
     /// Number of times `cancel()` was invoked.
-    public private(set) var cancellCallCount = 0
+    public private(set) var cancelCallCount = 0
 
     /// Number of times `pause()` was invoked.
     public private(set) var pauseCallCount = 0
@@ -34,7 +34,7 @@ public final class UploadTaskMock: UploadTask {
     ///
     /// - Returns: The current `UploadTaskMock` for chaining.
     public func cancel() -> Self {
-        cancellCallCount += 1
+        cancelCallCount += 1
         state = .cancelled
 
         return self
@@ -60,4 +60,3 @@ public final class UploadTaskMock: UploadTask {
         return self
     }
 }
-*/

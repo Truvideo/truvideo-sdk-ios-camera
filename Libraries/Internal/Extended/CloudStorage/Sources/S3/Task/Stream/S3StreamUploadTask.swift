@@ -105,7 +105,7 @@ public final class S3StreamUploadTask: S3UploadTask, StreamUploadTask {
                 return .failure(error)
             }
 
-            guard let eTag = task.request.response?.allHeaderFields[Self.awsHeaderETag] as? String else {
+            guard let eTag = task.request.response?.value(forHTTPHeaderField: Self.awsHeaderETag) else {
                 let error = UtilityError(
                     kind: .CloudStorageErrorReason.missingETag,
                     failureReason: "Upload operation finished, but the expected ETag header is missing in the response"
@@ -120,7 +120,7 @@ public final class S3StreamUploadTask: S3UploadTask, StreamUploadTask {
         let response = UploadPartResponse(
             data: task.partBody,
             partNumber: task.partNumber,
-            requestId: task.request.response?.allHeaderFields[Self.awsHeaderRequestId] as? String,
+            requestId: task.request.response?.value(forHTTPHeaderField: Self.awsHeaderRequestId),
             result: result,
             statusCode: task.request.response?.statusCode,
             url: task.request.response?.url
@@ -304,14 +304,14 @@ public final class S3StreamUploadTask: S3UploadTask, StreamUploadTask {
     /// - Returns: The current instance of `Self` to allow method chaining.
     @discardableResult
     public func upload(_ data: Data, to url: URL) -> Self {
-        let headers = HTTPHeaders(array: [HTTPHeader.contentType(contentType.rawValue)])
-        let request = session.upload(data, to: url, method: .put, headers: headers)
+        let request = session.upload(data, to: url, method: .put)
 
         Task {
             let uploadTask = await uploadTask(for: request, with: data)
 
             do {
-                _ = try await request
+                _ =
+                    try await request
                     .validate()
                     .serializing(Empty.self)
                     .result
@@ -320,7 +320,10 @@ public final class S3StreamUploadTask: S3UploadTask, StreamUploadTask {
                 await didComplete(task: uploadTask)
             } catch {
                 guard state == .cancelled else {
-                    let error = UtilityError(kind: .CloudStorageErrorReason.failedToUploadData, underlyingError: error)
+                    let error = UtilityError(
+                        kind: .CloudStorageErrorReason.failedToUploadData,
+                        underlyingError: error
+                    )
 
                     await didComplete(task: uploadTask, with: error)
                     return

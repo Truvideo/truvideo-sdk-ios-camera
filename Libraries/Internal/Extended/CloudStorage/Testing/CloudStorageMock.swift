@@ -1,7 +1,7 @@
 //
 // Copyright © 2025 TruVideo. All rights reserved.
 //
-/*
+
 import Foundation
 
 @testable import CloudStorageKit
@@ -10,9 +10,6 @@ import Foundation
 public final class CloudStorageMock: CloudStorage {
 
     // MARK: - Properties
-
-    /// Number of times `cancelAllUploads()` was invoked.
-    public private(set) var cancelAllUploadsCallCount = 0
 
     /// The content type passed in the last `upload` call.
     public private(set) var contentType: ContentType?
@@ -37,11 +34,6 @@ public final class CloudStorageMock: CloudStorage {
     public init() {}
 
     // MARK: - CloudStorage
-
-    /// Simulates cancelling all ongoing uploads.
-    public func cancelAllUploads() {
-        cancelAllUploadsCallCount += 1
-    }
 
     /// Simulates stream uploading data to cloud storage.
     ///
@@ -72,4 +64,3 @@ public final class CloudStorageMock: CloudStorage {
         return uploadDataTask!
     }
 }
-*/

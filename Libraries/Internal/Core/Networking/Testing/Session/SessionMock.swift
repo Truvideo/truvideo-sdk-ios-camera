@@ -12,6 +12,12 @@ public final class SessionMock: Session, @unchecked Sendable {
     /// A mock request to be returned.
     public var dataRequest: (any DataRequest)?
 
+    /// The number of times the `upload` method has been called.
+    public private(set) var uploadCallCount = 0
+
+    /// The last data payload passed to the `upload` method.
+    public var lastUploadData: Data?
+
     /// The number of times `cancelAllRequests()` has been called.
     public private(set) var cancelAllRequestsCallCount = 0
 
@@ -50,6 +56,9 @@ public final class SessionMock: Session, @unchecked Sendable {
 
     /// The last cache policy passed to the builder-based request method.
     public private(set) var lastBuilderCachePolicy: URLCachePolicy?
+
+    /// An optional mock `UploadRequest` instance to be returned by the `upload` method.
+    public var uploadRequestMock: (any UploadRequest)?
 
     // MARK: - Initializer
 
@@ -119,5 +128,34 @@ public final class SessionMock: Session, @unchecked Sendable {
         lastBuilderCachePolicy = cachePolicy
 
         return dataRequest ?? DataRequestMock()
+    }
+
+    /// Mocks an upload request for testing purposes.
+    ///
+    /// - Parameters:
+    ///   - data: The raw data to be uploaded.
+    ///   - url: The destination URL for the upload, conforming to `Networking.URLConvertible`.
+    ///   - method: The HTTP method to use for the upload (e.g., `.put`, `.post`).
+    ///   - headers: Optional HTTP headers to include in the request.
+    ///   - middleware: Optional request middleware to apply to the upload.
+    ///
+    /// - Returns: A mock `UploadRequest` instance, either the `uploadRequestMock` provided
+    ///            or a new `UploadRequestMock` with the configured `delay`.
+    public func upload(
+        _ data: Data,
+        to url: any Networking.URLConvertible,
+        method: Networking.HTTPMethod,
+        headers: Networking.HTTPHeaders?,
+        middleware: (any Networking.RequestMiddleware)?
+    ) -> any Networking.UploadRequest {
+        uploadCallCount += 1
+
+        lastUploadData = data
+        lastRequestURL = url
+        lastRequestMethod = method
+        lastRequestHeaders = headers
+        lastRequestMiddleware = middleware
+
+        return uploadRequestMock ?? UploadRequestMock()
     }
 }

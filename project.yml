@@ -486,8 +486,13 @@ targets:
     sources:
       - Libraries/Internal/Extended/CloudStorage/Tests
     dependencies:
+      - target: DI
       - target: CloudStorageKit
       - target: CloudStorageKitTesting
+      - target: Networking
+      - target: NetworkingTesting
+      - target: Utilities
+      - package: AWSS3
     settings:
       GENERATE_INFOPLIST_FILE: YES
 

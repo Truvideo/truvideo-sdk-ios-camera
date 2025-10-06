@@ -1,9 +1,10 @@
 //
 // Copyright © 2025 TruVideo. All rights reserved.
 //
-/*
+
 import AWSS3
 import CloudStorageKitTesting
+import Foundation
 import Testing
 import Utilities
 
@@ -12,8 +13,8 @@ import Utilities
 struct S3UploadTaskTests {
     // MARK: - Properties
     
-    let id = UUID()
-    let monitor = S3UploadMonitorMock()
+    let id = "test"
+    let monitor = S3TaskMonitorMock()
     let payload = S3DataPayload(
         bucket: "bucket_test",
         contentType: .jpeg,
@@ -26,7 +27,7 @@ struct S3UploadTaskTests {
     @Test
     func testThatS3UploadTaskInitializer() async {
         // Given, When
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
 
         // Then
         #expect(await sut.state == .initialized)
@@ -35,7 +36,7 @@ struct S3UploadTaskTests {
     @Test
     func testThatProgressBlockInvokesCallbacks() async throws {
         // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
         var receivedProgress: Progress?
         let fakeProgress = Progress(totalUnitCount: 100)
         fakeProgress.completedUnitCount = 42
@@ -53,36 +54,12 @@ struct S3UploadTaskTests {
         #expect(receivedProgress?.fractionCompleted == 0.42)
         #expect(sut.state == .initialized)
     }
-
-    @Test
-    func testThatCancelShouldCallMonitor() async {
-        // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
-
-        // When
-        await sut.didCancel()
-        
-        // Then
-        #expect(monitor.uploadDidCancelCallCount == 1)
-    }
-    
-    @Test
-    func testThatDidCancelTaskCallsMonitor() async {
-        // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
-
-        // When
-        await sut.didCancel(task: AWSS3TransferUtilityUploadTask())
-
-        // Then
-        #expect(monitor.uploadDidCancelTaskCallCount == 1)
-    }
     
     @Test
     func testThatDidCompleteCallsMonitorAndSetsError() async {
         // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
-
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
+        
         // When
         await sut.didComplete(
             task: AWSS3TransferUtilityUploadTask(),
@@ -91,47 +68,37 @@ struct S3UploadTaskTests {
                 failureReason: "test"
             )
         )
-
+        
         // Then
-        #expect(monitor.uploadDidCompleteTaskCallCount == 1)
+        #expect(monitor.didFinishUploadTaskCallCount == 1)
     }
     
     @Test
-    func testThatDidCreateCallMonitor() async {
+    func testThatDidFinishCallMonitor() async throws {
         // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
 
         // When
         await sut.didCreate(task: AWSS3TransferUtilityUploadTask())
+        
+        try await Task.sleep(nanoseconds: 5_000_000)
+        
+        await sut.finish()
 
         // Then
-        #expect(monitor.uploadDidCreateTaskCallCount == 1)
+        #expect(monitor.taskDidFinishCallCount == 1)
     }
     
     @Test
-    func testThatDidFinishCallMonitor() async {
+    func testThatDidFailToCreateUploadTaskCallMonitor() async throws {
         // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
 
         // When
-        await sut.didFail(
-            task: AWSS3TransferUtilityUploadTask(),
-            with: UtilityError(
-                kind: .CloudStorageErrorReason.explicitlyCancelled,
-                failureReason: "test"
-            )
-        )
-
-        // Then
-        #expect(monitor.uploadDidFailTaskCallCount == 1)
-    }
-    
-    @Test
-    func testThatDidFailToCreateUploadTaskCallMonitor() async {
-        // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
-
-        // When
+        await sut.didCreate(task: AWSS3TransferUtilityUploadTask())
+        
+        try await Task.sleep(nanoseconds: 5_000_000)
+        
         await sut.didFailToCreateUploadTask(
             with: UtilityError(
                 kind: .CloudStorageErrorReason.explicitlyCancelled,
@@ -140,61 +107,62 @@ struct S3UploadTaskTests {
         )
 
         // Then
-        #expect(monitor.uploadDidFailToCreateUploadTaskCallCount == 1)
+        #expect(monitor.didFailToCreateUploadTaskCallCount == 1)
     }
     
     @Test
-    func testThatDidResumeCallsMonitor() async {
+    func testThatDidResumeCallsMonitor() async throws {
         // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
 
         // When
-        await sut.didResume()
+        await sut.didCreate(task: AWSS3TransferUtilityUploadTask())
+        
+        try await Task.sleep(nanoseconds: 5_000_000)
+        
+        sut.didResume()
 
         // Then
-        #expect(monitor.uploadDidResumeCallCount == 1)
+        #expect(monitor.taskDidResumeCallCount == 1)
     }
     
     @Test
-    func testThatDidResumeCallsMonitorWithoutTask() async {
+    func testThatDidResumeCallsMonitorWithoutTask() async throws {
         // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
 
         // When
-        await sut.didResume(task: AWSS3TransferUtilityUploadTask())
+        await sut.didCreate(task: AWSS3TransferUtilityUploadTask())
+        
+        try await Task.sleep(nanoseconds: 5_000_000)
+
+        sut.didResume()
 
         // Then
-        #expect(monitor.uploadDidResumeTaskCallCount == 1)
+        #expect(monitor.taskDidResumeCallCount == 1)
     }
     
     @Test
-    func testThatDidSuspendCallsMonitor() async {
+    func testThatDidSuspendCallsMonitor() async throws {
         // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
 
         // When
-        await sut.didSuspend()
+        await sut.didCreate(task: AWSS3TransferUtilityUploadTask())
+        
+        try await Task.sleep(nanoseconds: 5_000_000)
+        
+        sut.didSuspend()
 
         // Then
-        #expect(monitor.uploadDidSuspendCallCount == 1)
+        #expect(monitor.taskDidSuspendCallCount == 1)
     }
-    
-    @Test
-    func testThatDidSuspendCallsMonitorWithoutTask() async {
-        // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
 
-        // When
-        await sut.didSuspend(task: AWSS3TransferUtilityUploadTask())
-
-        // Then
-        #expect(monitor.uploadDidSuspendTaskCallCount == 1)
-    }
     
     @Test
     func testThatFinishCallsMonitor() async {
         // Given
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
 
         // When
         var completionResult: Result<URL, UtilityError>?
@@ -213,7 +181,7 @@ struct S3UploadTaskTests {
     func testThatFinishNotifiesMonitorAndCompletesSuccessfully() async throws {
         // Given
         var states: [UploadTaskState] = []
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
         let awsTask = TransferUtilityTaskMock()
         let response = HTTPURLResponse(
             url: URL(string: "https://example.com")!,
@@ -237,14 +205,14 @@ struct S3UploadTaskTests {
         // Then
         #expect(states == [.initialized, .finished])
         #expect(await awsTask.response == response)
-        #expect(monitor.uploadDidFinishCallCount == 2)
+        #expect(monitor.taskDidFinishCallCount == 1)
     }
     
     @Test
     func testThatFinishInvokesDidFailWhenTaskExistsAndNotURL() async throws {
         // Given
         var states: [UploadTaskState] = []
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
         let task = AWSS3TransferUtilityUploadTask()
 
         // When
@@ -253,13 +221,10 @@ struct S3UploadTaskTests {
     
         try await Task.sleep(nanoseconds: 5_000_000)
 
-        await sut.didFail(
-            task: AWSS3TransferUtilityUploadTask(),
-            with: UtilityError(
-                kind: .CloudStorageErrorReason.explicitlyCancelled,
-                failureReason: "test"
-            )
-        )
+        await sut.didFailToCreateUploadTask(with: UtilityError(
+            kind: .CloudStorageErrorReason.explicitlyCancelled,
+            failureReason: "test"
+        ))
         
         try await Task.sleep(nanoseconds: 5_000_000)
         
@@ -270,14 +235,14 @@ struct S3UploadTaskTests {
 
         // Then
         #expect(states == [.initialized, .finished])
-        #expect(monitor.uploadDidFailTaskCallCount == 2)
+        #expect(monitor.didFailToCreateUploadTaskCallCount == 1)
     }
     
     @Test
     func testThatCancelNotifiesMonitorAndCallbacks() async throws {
         // Given
         var states: [UploadTaskState] = []
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
         let fakeTask = AWSS3TransferUtilityUploadTask()
 
         // When
@@ -291,15 +256,15 @@ struct S3UploadTaskTests {
         states.append(sut.state)
 
         // Then
-        #expect(states == [.initialized, .finished])
-        #expect(monitor.uploadDidCancelCallCount == 1)
+        #expect(states == [.initialized, .cancelled])
+        #expect(monitor.taskDidCancelCallCount == 1)
     }
     
     @Test
     func testThatPauseCallsMonitorWhenTaskIsCreated() async throws {
         // Given
         var states: [UploadTaskState] = []
-        let sut = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
+        let sut = S3UploadDataTask(id: id, payload: payload, delegate: nil, monitor: monitor)
         let fakeTask = AWSS3TransferUtilityUploadTask()
 
         // When
@@ -314,30 +279,7 @@ struct S3UploadTaskTests {
         states.append(sut.state)
 
         // Then
-        #expect(monitor.uploadDidSuspendTaskCallCount == 1)
+        #expect(monitor.taskDidSuspendCallCount == 1)
         #expect(states == [.initialized, .suspended])
     }
-    
-    @Test
-    func testThatTwoTasksWithSameIDAreEqual() async {
-        // Given
-        let s3UploadTask1 = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
-        let s3UploadTask2 = S3UploadDataTask(id: id, payload: payload, monitor: monitor)
-
-        // Then
-        #expect(s3UploadTask1 == s3UploadTask2)
-        #expect(s3UploadTask1.hashValue == s3UploadTask2.hashValue)
-    }
-    
-    @Test
-    func testThatTwoTasksWithDifferentIDsAreNotEqual() async {
-        // Given
-        let s3UploadTask1 = S3UploadDataTask(id: UUID(), payload: payload, monitor: monitor)
-        let s3UploadTask2 = S3UploadDataTask(id: UUID(), payload: payload, monitor: monitor)
-
-        // Then
-        #expect(s3UploadTask1 != s3UploadTask2)
-        #expect(s3UploadTask1.hashValue != s3UploadTask2.hashValue)
-    }
 }
-*/
