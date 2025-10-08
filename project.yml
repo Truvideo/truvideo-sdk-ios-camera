@@ -584,10 +584,12 @@ targets:
     sources:
       - Libraries/Internal/Extended/MediaUpload/Tests
     dependencies:
+      - target: DI
+      - target: InternalUtilities
+      - target: MediaUpload
       - target: NetworkingTesting
       - target: Networking
       - target: Utilities
-      - target: DI
     settings:
       GENERATE_INFOPLIST_FILE: YES
 

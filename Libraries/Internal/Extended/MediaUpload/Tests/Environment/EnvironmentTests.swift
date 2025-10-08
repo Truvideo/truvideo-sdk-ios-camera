@@ -1,7 +1,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 
-import ApiUtilities
 import Foundation
+import InternalUtilities
 import Testing
 
 @testable import MediaUpload

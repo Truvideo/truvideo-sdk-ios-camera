@@ -209,7 +209,7 @@ public struct UploadResourceImpl: UploadResource {
     public func retrieve(for uploadId: String, count: Int) async throws(UtilityError) -> [Part] {
         do {
             return try await session.request(
-                environment.baseURL.appending("/upload/\(uploadId)/parts/\(count)"),
+                environment.baseURL.appending("/upload/\(uploadId)/parts"),
                 method: .get,
                 parameters: [
                     "count": count

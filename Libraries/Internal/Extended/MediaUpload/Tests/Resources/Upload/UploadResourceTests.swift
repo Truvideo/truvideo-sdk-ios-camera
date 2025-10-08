@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+import InternalUtilities
 import Networking
 import NetworkingTesting
 import Testing
@@ -25,15 +26,16 @@ struct UploadResourceTests {
     // MARK: - Complete
     
     @Test
-    func testThatCompleteShouldThrowUploadCompletionFailedOnRequestError() async throws {
+    func testThatCompleteShouldThrowCompleteUploadFailedOnRequestError() async throws {
         await withDependencyValues { dependencies in
             // Given
+            let parts = [UploadPart.firstPart, UploadPart.secondPart]
             let sut = UploadResourceImpl()
             
             // When
             session.dataRequest = dataRequest
-            dependencies.session = session
-            dependencies.apiEnvironment = .dev
+            dependencies.truVideoSession = session
+            dependencies.environment = .dev
             dataRequest.mockResponse = Response<Empty, NetworkingError>(
                 data: Data(),
                 metrics: nil,
@@ -45,7 +47,7 @@ struct UploadResourceTests {
             
             // Then
             await #expect {
-                try await sut.complete(for: uploadId)
+                try await sut.complete(for: uploadId, withParts: parts)
             } throws: { error in
                 return (error as? UtilityError)?.kind == .MediaUploadErrorReason.completeUploadFailed
             }
@@ -53,15 +55,16 @@ struct UploadResourceTests {
     }
     
     @Test
-    func testThatCompleteShouldUseCorrectURL() async throws {
+    func testThatCompleteShouldUseCorrectParameters() async throws {
         try await withDependencyValues { dependencies in
             // Given
+            let parts = [UploadPart.firstPart, UploadPart.secondPart]
             let sut = UploadResourceImpl()
             
             // When
             session.dataRequest = dataRequest
-            dependencies.session = session
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             dataRequest.mockResponse = Response<Empty, NetworkingError>(
                 data: nil,
                 metrics: nil,
@@ -81,7 +84,55 @@ struct UploadResourceTests {
                 type: .networkLoad
             )
             
-            _ = try await sut.complete(for: uploadId)
+            try await sut.complete(for: uploadId, withParts: parts)
+            
+            let uploadedParts = session.lastRequestParameters?["parts"] as? [[String: Any]]
+            let firstUploadedPart = uploadedParts?.first
+            let secondUploadedPart = uploadedParts?.last
+            let numOfUploadedParts = uploadedParts?.count
+            
+            // Then
+            #expect(numOfUploadedParts == 2)
+
+            #expect(firstUploadedPart?["etag"] as? String == parts.first?.eTag)
+            #expect(firstUploadedPart?["partNumber"] as? Int == parts.first?.partNumber)
+
+            #expect(secondUploadedPart?["etag"] as? String == parts.last?.eTag)
+            #expect(secondUploadedPart?["partNumber"] as? Int == parts.last?.partNumber)
+        }
+    }
+    
+    @Test
+    func testThatCompleteShouldUseCorrectURL() async throws {
+        try await withDependencyValues { dependencies in
+            // Given
+            let parts = [UploadPart.firstPart, UploadPart.secondPart]
+            let sut = UploadResourceImpl()
+            
+            // When
+            session.dataRequest = dataRequest
+            dependencies.truVideoSession = session
+            dependencies.environment = .dev
+            dataRequest.mockResponse = Response<Empty, NetworkingError>(
+                data: nil,
+                metrics: nil,
+                request: nil,
+                response: HTTPURLResponse(
+                    url: URL(string: "/upload/\(uploadId)/complete/stream")!,
+                    statusCode: 200,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: [
+                            "Content-Type": "application/json",
+                            "Date": "Thu, 25 Sep 2025 15:42:00 GMT",
+                            "Server": "TruVideoMockServer/1.0",
+                            "X-Request-ID": UUID().uuidString
+                        ]
+                ),
+                result: .success(Empty.value),
+                type: .networkLoad
+            )
+            
+            _ = try await sut.complete(for: uploadId, withParts: parts)
             let url = try session.lastRequestURL?.asURL()
             
             // Then
@@ -93,12 +144,13 @@ struct UploadResourceTests {
     func testThatCompleteShouldUseGetMethod() async throws {
         try await withDependencyValues { dependencies in
             // Given
+            let parts = [UploadPart.firstPart, UploadPart.secondPart]
             let sut = UploadResourceImpl()
             
             // When
             session.dataRequest = dataRequest
-            dependencies.session = session
-            dependencies.apiEnvironment = .dev
+            dependencies.truVideoSession = session
+            dependencies.environment = .dev
             dataRequest.mockResponse = Response<Empty, NetworkingError>(
                 data: nil,
                 metrics: nil,
@@ -118,7 +170,7 @@ struct UploadResourceTests {
                 type: .networkLoad
             )
             
-            _ = try await sut.complete(for: uploadId)
+            _ = try await sut.complete(for: uploadId, withParts: parts)
             
             // Then
             #expect(session.lastRequestMethod == .post)
@@ -128,16 +180,54 @@ struct UploadResourceTests {
     // MARK: - Register
     
     @Test
-    func testThatRegisterShouldThrowUploadPartRegistrationFailedOnRequestError() async throws {
+    func testThatRegisterShouldSucceed() async throws {
+        try await withDependencyValues { dependencies in
+            // Given
+            let sut = UploadResourceImpl()
+            
+            // When
+            session.dataRequest = dataRequest
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
+            dataRequest.mockResponse = Response<UploadPartStatus, NetworkingError>(
+                data: Data(),
+                metrics: nil,
+                request: nil,
+                response: HTTPURLResponse(
+                    url: URL(string: "/upload/\(uploadId)/part")!,
+                    statusCode: 200,
+                    httpVersion: "HTTP/1.1",
+                    headerFields: [
+                            "Content-Type": "application/json",
+                            "Date": "Thu, 25 Sep 2025 15:42:00 GMT",
+                            "Server": "TruVideoMockServer/1.0",
+                            "X-Request-ID": UUID().uuidString
+                        ]
+                ),
+                result: .success(UploadPartStatus.mock),
+                type: .networkLoad
+            )
+            
+            let result = try await sut.register(for: uploadId, withPart: UploadPart.firstPart)
+            
+            // Then
+            #expect(result.uploadId == uploadId)
+            #expect(result.partNumber == 1)
+            #expect(result.status == "PARTIAL")
+        }
+    }
+
+    @Test
+    func testThatRegisterShouldThrowPartRegistrationFailedOnRequestError() async throws {
         await withDependencyValues { dependencies in
             // Given
             let sut = UploadResourceImpl()
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
-            dataRequest.mockResponse = Response<Empty, NetworkingError>(
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
+            dataRequest.mockResponse = Response<UploadPartStatus, NetworkingError>(
                 data: nil,
                 metrics: nil,
                 request: nil,
@@ -148,7 +238,7 @@ struct UploadResourceTests {
             
             // Then
             await #expect {
-                try await sut.register(for: uploadId, partNumber: 1, withETag: "etag-part-0001")
+                _ = try await sut.register(for: uploadId, withPart: UploadPart.firstPart)
             } throws: { error in
                 return (error as? UtilityError)?.kind == .MediaUploadErrorReason.partRegistrationFailed
             }
@@ -159,18 +249,19 @@ struct UploadResourceTests {
     func testThatRegisterShouldUseCorrectParameters() async throws {
         try await withDependencyValues { dependencies in
             // Given
+            let part = UploadPart.firstPart
             let sut = UploadResourceImpl()
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
-            dataRequest.mockResponse = Response<Empty, NetworkingError>(
-                data: nil,
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
+            dataRequest.mockResponse = Response<UploadPartStatus, NetworkingError>(
+                data: Data(),
                 metrics: nil,
                 request: nil,
                 response: HTTPURLResponse(
-                    url: URL(string: "api/upload/\(uploadId)/part")!,
+                    url: URL(string: "/upload/\(uploadId)/part")!,
                     statusCode: 200,
                     httpVersion: "HTTP/1.1",
                     headerFields: [
@@ -180,17 +271,17 @@ struct UploadResourceTests {
                             "X-Request-ID": UUID().uuidString
                         ]
                 ),
-                result: .success(Empty.value),
+                result: .success(UploadPartStatus.mock),
                 type: .networkLoad
             )
             
-            try await sut.register(for: uploadId, partNumber: 1, withETag: "etag-part-0001")
+            _ = try await sut.register(for: uploadId, withPart: part)
             
             let parameters = session.lastRequestParameters
             
             // Then
-            #expect(parameters?["partNumber"] as? Int == 1)
-            #expect(parameters?["etag"] as? String == "etag-part-0001")
+            #expect(parameters?["partNumber"] as? Int == part.partNumber)
+            #expect(parameters?["etag"] as? String == part.eTag)
         }
     }
     
@@ -202,14 +293,14 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
-            dataRequest.mockResponse = Response<Empty, NetworkingError>(
-                data: nil,
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
+            dataRequest.mockResponse = Response<UploadPartStatus, NetworkingError>(
+                data: Data(),
                 metrics: nil,
                 request: nil,
                 response: HTTPURLResponse(
-                    url: URL(string: "api/upload/\(uploadId)/part")!,
+                    url: URL(string: "/upload/\(uploadId)/part")!,
                     statusCode: 200,
                     httpVersion: "HTTP/1.1",
                     headerFields: [
@@ -219,16 +310,16 @@ struct UploadResourceTests {
                             "X-Request-ID": UUID().uuidString
                         ]
                 ),
-                result: .success(Empty.value),
+                result: .success(UploadPartStatus.mock),
                 type: .networkLoad
             )
             
-            try await sut.register(for: uploadId, partNumber: 1, withETag: "etag-part-0001")
+            _ = try await sut.register(for: uploadId, withPart: UploadPart.firstPart)
             
             let url = try session.lastRequestURL?.asURL()
             
             // Then
-            #expect(url!.absoluteString.contains("api/upload/\(uploadId)/part"))
+            #expect(url!.absoluteString.contains("/upload/\(uploadId)/part"))
         }
     }
     
@@ -240,10 +331,10 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
-            dataRequest.mockResponse = Response<Empty, NetworkingError>(
-                data: nil,
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
+            dataRequest.mockResponse = Response<UploadPartStatus, NetworkingError>(
+                data: Data(),
                 metrics: nil,
                 request: nil,
                 response: HTTPURLResponse(
@@ -257,11 +348,11 @@ struct UploadResourceTests {
                             "X-Request-ID": UUID().uuidString
                         ]
                 ),
-                result: .success(Empty.value),
+                result: .success(UploadPartStatus.mock),
                 type: .networkLoad
             )
             
-            try await sut.register(for: uploadId, partNumber: 1, withETag: "etag-part-0001")
+            _ = try await sut.register(for: uploadId, withPart: UploadPart.firstPart)
             
             // Then
             #expect(session.lastRequestMethod == .post)
@@ -278,8 +369,8 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             dataRequest.mockResponse = Response<UploadPartResponse, NetworkingError>(
                 data: Data(),
                 metrics: nil,
@@ -295,24 +386,24 @@ struct UploadResourceTests {
             let secondUploadPart = result.last
             
             // Then
-            #expect(firstUploadPart?.partNumber == 1)
+            #expect(firstUploadPart?.expiresAt == "2025-10-08T16:30:00Z")
             #expect(firstUploadPart?.presignedUrl == "https://example-bucket.s3.amazonaws.com/upload-session-foo/part1?signature=abc123")
             
-            #expect(secondUploadPart?.partNumber == 2)
+            #expect(secondUploadPart?.expiresAt == "2025-10-08T16:45:00Z")
             #expect(secondUploadPart?.presignedUrl == "https://example-bucket.s3.amazonaws.com/upload-session-foo/part2?signature=def456")
         }
     }
     
     @Test
-    func testThatRetrieveShouldThrowUploadPartsRetrievalFailedOnRequestError() async throws {
+    func testThatRetrieveShouldThrowRetrieveUploadPartsFailedOnRequestError() async throws {
         await withDependencyValues { dependencies in
             // Given
             let sut = UploadResourceImpl()
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             dataRequest.mockResponse = Response<UploadPartResponse, NetworkingError>(
                 data: Data(),
                 metrics: nil,
@@ -331,6 +422,34 @@ struct UploadResourceTests {
         }
         
     }
+    
+    @Test
+    func testThatRetrieveShouldUseCorrectQueryParameters() async throws {
+        try await withDependencyValues { dependencies in
+            // Given
+            let count = 2
+            let sut = UploadResourceImpl()
+            
+            // When
+            session.dataRequest = dataRequest
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
+            dataRequest.mockResponse = Response<UploadPartResponse, NetworkingError>(
+                data: Data(),
+                metrics: nil,
+                request: nil,
+                response: nil,
+                result: .success(UploadPartResponse.mock),
+                type: .networkLoad
+            )
+            
+            _ = try await sut.retrieve(for: uploadId, count: count)
+            
+            // Then
+            #expect(session.lastRequestEncoder is URLParameterEncoder)
+            #expect(session.lastRequestParameters?["count"] as? Int == count)
+        }
+    }
         
     @Test
     func testThatRetrieveShouldUseCorrectURL() async throws {
@@ -340,8 +459,8 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             dataRequest.mockResponse = Response<UploadPartResponse, NetworkingError>(
                 data: Data(),
                 metrics: nil,
@@ -356,7 +475,7 @@ struct UploadResourceTests {
             let url = try session.lastRequestURL?.asURL()
             
             // Then
-            #expect(url!.absoluteString.contains("api/upload/parts/\(uploadId)/2"))
+            #expect(url!.absoluteString.contains("/upload/\(uploadId)/parts"))
         }
     }
     
@@ -368,8 +487,8 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             dataRequest.mockResponse = Response<UploadPartResponse, NetworkingError>(
                 data: Data(),
                 metrics: nil,
@@ -396,8 +515,8 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             
             dataRequest.mockResponse = Response<UploadSession, NetworkingError>(
                 data: Data(),
@@ -424,8 +543,8 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             
             dataRequest.mockResponse = Response<UploadSession, NetworkingError>(
                 data: Data(),
@@ -455,9 +574,8 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
-            
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             dataRequest.mockResponse = Response<UploadSession, NetworkingError>(
                 data: Data(),
                 metrics: nil,
@@ -469,8 +587,15 @@ struct UploadResourceTests {
             
             _ = try await sut.start(for: FileType.mp4)
             
+            let expected: Parameters = [
+                "media": [
+                    "fileType": fileType.rawValue
+                ]
+            ]
+            
             // Then
-            #expect(session.lastRequestParameters?["fileType"] as? String == fileType.rawValue)
+            #expect(NSDictionary(dictionary: session.lastRequestParameters!)
+                .isEqual(to: expected))
         }
     }
     
@@ -482,8 +607,8 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             
             dataRequest.mockResponse = Response<UploadSession, NetworkingError>(
                 data: Data(),
@@ -498,7 +623,7 @@ struct UploadResourceTests {
             let url = try session.lastRequestURL?.asURL()
             
             // Then
-            #expect(url!.absoluteString.contains("/api/upload/start"))
+            #expect(url!.absoluteString.contains("/upload/start/stream"))
         }
     }
     
@@ -510,8 +635,8 @@ struct UploadResourceTests {
             
             // When
             session.dataRequest = dataRequest
-            dependencies.apiEnvironment = .dev
-            dependencies.session = session
+            dependencies.environment = .dev
+            dependencies.truVideoSession = session
             
             dataRequest.mockResponse = Response<UploadSession, NetworkingError>(
                 data: Data(),
@@ -530,18 +655,48 @@ struct UploadResourceTests {
     }
 }
 
+private extension UploadPart {
+    /// A mock instance of the upload part.
+    static var firstPart: UploadPart {
+        UploadPart(
+            eTag: "etag-part-0001",
+            partNumber: 1
+        )
+    }
+    
+    /// A mock instance of the upload part.
+    static var secondPart: UploadPart {
+        UploadPart(
+            eTag: "etag-part-0002",
+            partNumber: 2
+        )
+    }
+}
+
+private extension UploadPartStatus {
+    /// A mock instance of the upload part status.
+    static var mock: UploadPartStatus {
+        UploadPartStatus(
+            uploadId: "upload-session-foo",
+            partNumber: 1,
+            status: "PARTIAL"
+        )
+    }
+}
+
 private extension UploadPartResponse {
     /// A mock instance of the upload part response.
     static var mock: UploadPartResponse {
         UploadPartResponse(
+            uploadId: "upload-session-foo",
             parts: [
                 Part(
+                    expiresAt: "2025-10-08T16:30:00Z",
                     presignedUrl: "https://example-bucket.s3.amazonaws.com/upload-session-foo/part1?signature=abc123",
-                    partNumber: 1
                 ),
                 Part(
+                    expiresAt: "2025-10-08T16:45:00Z",
                     presignedUrl: "https://example-bucket.s3.amazonaws.com/upload-session-foo/part2?signature=def456",
-                    partNumber: 2
                 )
             ]
         )

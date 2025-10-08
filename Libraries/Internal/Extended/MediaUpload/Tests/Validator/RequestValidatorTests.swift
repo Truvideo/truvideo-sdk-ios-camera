@@ -6,7 +6,7 @@ import Foundation
 import Testing
 import Utilities
 
-@testable import ApiUtilities
+@testable import MediaUpload
 
 struct RequestValidatorTests {
     // MARK: - Private Properties

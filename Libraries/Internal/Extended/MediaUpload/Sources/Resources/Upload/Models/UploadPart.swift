@@ -19,9 +19,9 @@ public struct UploadPart: Codable, Sendable {
     /// Creates a new uploaded-part descriptor.
     ///
     /// - Parameters:
-    ///   - partNumber: The 1-based index of this part within the multipart session.
     ///   - eTag: The ETag string returned by storage for this part upload.
-    public init(partNumber: Int, eTag: String) {
+    ///   - partNumber: The 1-based index of this part within the multipart session.
+    public init(eTag: String, partNumber: Int) {
         self.eTag = eTag
         self.partNumber = partNumber
     }

@@ -2,7 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import ApiUtilities
+import InternalUtilities
 import Foundation
 import Testing
 
