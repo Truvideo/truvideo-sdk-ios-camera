@@ -29,6 +29,7 @@ jobs:
             truvideoApi
             telemetry
             di
+            internalUtilities
             utilities
             cloudStorage
             coreDataUtilities
@@ -36,5 +37,6 @@ jobs:
             externalUtilities
             registry
             storage
+            mediaUpload
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

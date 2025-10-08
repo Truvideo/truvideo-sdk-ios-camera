@@ -12,7 +12,7 @@ public final class CloudStorageProviderMock: CloudStorageProvider {
     // MARK: - Properties
 
     /// The error to throw when `makeStorage()` is called.
-    private var error: TruVideoSdkError?
+    private var error: UtilityError?
 
     /// The number of times `makeStorage()` has been invoked.
     public private(set) var makeStorageCallCount = 0
@@ -31,7 +31,7 @@ public final class CloudStorageProviderMock: CloudStorageProvider {
     ///
     /// - Throws: `TruVideoSdkError` if no storage has been set.
     /// - Returns: The injected `CloudStorage` instance.
-    public func makeStorage() throws(TruVideoSdkError) -> (any CloudStorage)? {
+    public func makeStorage() throws(UtilityError) -> (any CloudStorage)? {
         makeStorageCallCount += 1
 
         if let error = error {

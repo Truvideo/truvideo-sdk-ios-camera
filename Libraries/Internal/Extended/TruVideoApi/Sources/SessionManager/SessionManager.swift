@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+internal import InternalUtilities
 import StorageKit
 
 /// Represents an authenticated session with API credentials and authentication token.
@@ -99,7 +100,7 @@ final class SessionManagerImpl: SessionManager, @unchecked Sendable {
     ///
     /// This dependency provides access to the base URL and other environment-specific
     /// configuration needed for proper storage setup and session management.
-    @Dependency(\.apiEnvironment)
+    @Dependency(\.environment)
     private var environment: Environment
 
     // MARK: - Properties

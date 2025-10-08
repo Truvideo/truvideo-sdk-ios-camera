@@ -4,7 +4,10 @@
 
 internal import DI
 import Foundation
+internal import InternalUtilities
+internal import MediaUpload
 internal import Network
+internal import Networking
 internal import Registry
 internal import StorageKit
 internal import Telemetry
@@ -413,7 +416,12 @@ final class TruVideoApp: TruVideoSDK {
             self.options = options
             
             LibraryRegistry.configureAll()
-            DependencyValues.current.apiEnvironment = .rc
+            DependencyValues.current.environment = .rc
+            DependencyValues.current.truVideoSession = HTTPURLSession(
+                cache: InMemoryURLCache(),
+                middleware: Middleware(interceptors: [AuthTokenInterceptor()], retriers: [SessionRequestRetrier()]),
+                monitors: [SessionMonitor()]
+            )
             
             try? migrator.migrate()
             retrieveDeviceSettings()

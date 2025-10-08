@@ -17,9 +17,6 @@ public final class AuthenticatableClientMock: AuthenticatableClient {
     /// Error to throw from `authenticate`, if set.
     public var authenticateError: UtilityError?
 
-    /// The currently stored authentication session, if any.
-    public var currentSession: TruVideoApi.AuthSession?
-
     /// Captures the parameters passed to `authenticate(...)`.
     public private(set) var lastAuthenticateParams:
         (

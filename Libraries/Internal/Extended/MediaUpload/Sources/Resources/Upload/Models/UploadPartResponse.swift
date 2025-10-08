@@ -10,6 +10,9 @@ import Foundation
 /// you will interact directly with the nested `Part` type, which contains the
 /// presigned URL and sequence number required to upload each chunk.
 struct UploadPartResponse: Codable, Sendable {
+    /// Remote multipart upload session ID.
+    let uploadId: String
+
     /// The collection of uploadable parts for this batch.
-    let uploadParts: [Part]
+    let parts: [Part]
 }

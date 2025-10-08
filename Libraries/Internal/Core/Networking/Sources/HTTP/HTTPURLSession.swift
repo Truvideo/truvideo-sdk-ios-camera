@@ -45,7 +45,7 @@ import Foundation
 ///   - Custom middleware can be used to handle authentication, logging, or request modification before sending.
 ///   - Use `RequestMonitor` for analytics, logging, or tracking request lifecycle events.
 ///   - All networking tasks are automatically handled on background queues to avoid blocking the main thread.
-open class HTTPURLSession: @unchecked Sendable, Session {
+public class HTTPURLSession: @unchecked Sendable, Session {
     // MARK: - Private Properties
 
     private let cache: HTTPURLCache?

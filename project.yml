@@ -341,6 +341,50 @@ targets:
       GENERATE_INFOPLIST_FILE: YES
 
   # Internal Core (Business Logic Infrastructure)
+  InternalUtilities:
+    type: library.static
+    platform: iOS
+    sources:
+      - Libraries/Internal/Core/InternalUtilities/Sources
+    info:
+      path: Libraries/Internal/Core/InternalUtilities/Sources/Info.plist
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: InternalUtilities
+    dependencies:
+      - target: Utilities
+    scheme:
+      testTargets:
+        - InternalUtilitiesTests
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Core/InternalUtilities/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+        
+  InternalUtilitiesTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Libraries/Internal/Core/InternalUtilities/Tests
+    dependencies:
+      - target: InternalUtilities
+      - target: Networking
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
+  
   Networking:
     type: library.static
     platform: iOS
@@ -495,6 +539,57 @@ targets:
       - package: AWSS3
     settings:
       GENERATE_INFOPLIST_FILE: YES
+      
+  MediaUpload:
+    type: library.static
+    platform: iOS
+    sources:
+      - Libraries/Internal/Extended/MediaUpload/Sources
+    info:
+      path: Libraries/Internal/Extended/MediaUpload/Sources/Info.plist
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: MediaUpload
+    dependencies:
+      - target: InternalUtilities
+      - target: DI
+      - target: Registry
+      - target: Utilities
+      - target: Telemetry
+      - target: Networking
+    scheme:
+      testTargets:
+        - MediaUploadTests
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Internal/Extended/MediaUpload/Sources" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
+        
+  MediaUploadTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - Libraries/Internal/Extended/MediaUpload/Tests
+    dependencies:
+      - target: NetworkingTesting
+      - target: Networking
+      - target: Utilities
+      - target: DI
+    settings:
+      GENERATE_INFOPLIST_FILE: YES
 
   TruVideoApi:
     type: library.static
@@ -507,6 +602,7 @@ targets:
       DEFINES_MODULE: YES
       PRODUCT_MODULE_NAME: TruVideoApi
     dependencies:
+      - target: InternalUtilities
       - target: DI
       - target: Registry
       - target: Utilities
@@ -588,6 +684,8 @@ targets:
     dependencies:
       - target: CloudStorageKit
       - target: DI
+      - target: InternalUtilities
+      - target: MediaUpload
       - target: Networking
       - target: Registry
       - target: StorageKit
@@ -610,12 +708,14 @@ targets:
         - -ObjC
         - -force_load $(BUILT_PRODUCTS_DIR)/libCloudStorageKit.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libTruVideoApi.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libInternalUtilities.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libUtilities.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libRegistry.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libTelemetry.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libNetworking.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libStorageKit.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libDI.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libMediaUpload.a
     scheme:
       testTargets:
         - TruvideoSdkTests
@@ -790,6 +890,12 @@ schemes:
       targets: [TelemetryTests]
   
   # Internal Core Schemes
+  InternalUtilities:
+    build:
+      targets:
+        DI: all        
+        Utilities: all         
+
   Networking:
     build:
       targets:

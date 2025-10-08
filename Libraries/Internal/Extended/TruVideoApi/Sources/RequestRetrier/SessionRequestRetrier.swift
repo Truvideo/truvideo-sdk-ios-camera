@@ -10,7 +10,7 @@ import Networking
 /// This actor implements the `RequestRetrier` protocol to automatically refresh authentication
 /// tokens when requests fail with 401 Unauthorized errors. It ensures thread-safe token refresh
 /// operations and prevents multiple concurrent refresh attempts.
-actor SessionRequestRetrier: RequestRetrier {
+public actor SessionRequestRetrier: RequestRetrier {
     // MARK: - Private Properties
 
     private let maxNumberOfRetries = 3
@@ -28,7 +28,7 @@ actor SessionRequestRetrier: RequestRetrier {
     /// with standard network session configuration.
     ///
     /// - Parameter tokenRefresher: The token refresher implementation to use.
-    init(tokenRefresher: any TokenRefresher = SessionTokenRefresher()) {
+    public init(tokenRefresher: any TokenRefresher = SessionTokenRefresher()) {
         self.tokenRefresher = tokenRefresher
     }
 
@@ -44,7 +44,11 @@ actor SessionRequestRetrier: RequestRetrier {
     ///   - request: The `Request` that failed due to the provided `Error`.
     ///   - session: The `Session` that produced the `Request`.
     ///   - error: The `Error` encountered while executing the `Request`.
-    func retry(_ request: any Request, for session: any Session, failedWith error: any Error) async -> RetryPolicy {
+    public func retry(
+        _ request: any Request,
+        for session: any Session,
+        failedWith error: any Error
+    ) async -> RetryPolicy {
         guard
             /// The request sent to the server.
             let originalRequest = request.request,

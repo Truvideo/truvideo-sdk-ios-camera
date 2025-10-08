@@ -26,7 +26,5 @@ struct TruVideoSDKLibrary: Library {
     ///
     /// This method is called during SDK initialization to set up library-specific
     /// dependencies, services, or configurations.
-    func configure() {
-        DependencyValues.current.apiEnvironment = Environment(rawValue: "$(SDK_ENVIRONMENT)")
-    }
+    func configure() {}
 }

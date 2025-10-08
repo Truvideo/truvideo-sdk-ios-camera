@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+internal import InternalUtilities
 import Networking
 import StorageKit
 import Utilities
@@ -117,7 +118,7 @@ extension AuthenticatableClient {
 public final class AuthenticationClient: AuthenticatableClient {
     // MARK: - Dependencies
 
-    @Dependency(\.apiEnvironment)
+    @Dependency(\.environment)
     private var environment: Environment
 
     @Dependency(\.sessionManager)

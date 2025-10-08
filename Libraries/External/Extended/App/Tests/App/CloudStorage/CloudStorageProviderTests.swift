@@ -2,7 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-import CloudStorage
+import CloudStorageKit
 import Foundation
 import Testing
 import TruVideoApi

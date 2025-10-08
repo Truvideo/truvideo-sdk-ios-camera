@@ -6,14 +6,6 @@ import DI
 import Networking
 import StorageKit
 
-/// Provides a `DependencyKey` for injecting a `EnvironmentDependencyKey` dependency.
-///
-/// `EnvironmentDependencyKey` is used by the dependency system to resolve the default `Environment`.
-public struct EnvironmentDependencyKey: DependencyKey {
-    /// The default configuration used if none is explicitly set.
-    public static let defaultValue = Environment.prod
-}
-
 /// Provides a `DependencyKey` for injecting a `Session` dependency.
 ///
 /// `SessionDependencyKey` allows consumers to override the default storage
@@ -31,18 +23,12 @@ struct SessionDependencyKey: DependencyKey {
 ///
 /// `StorageDependencyKey` allows consumers to override the default storage
 /// mechanism used in the system. By default, this uses `KeychainStorage`.
-public struct SessionManagerDependencyKey: DependencyKey {
+struct SessionManagerDependencyKey: DependencyKey {
     /// The default file-based storage used if none is explicitly provided.
-    public static let defaultValue: any SessionManager = SessionManagerImpl()
+    static let defaultValue: any SessionManager = SessionManagerImpl()
 }
 
 extension DependencyValues {
-    /// Accessor for resolving or overriding the current `Environment`.
-    public var apiEnvironment: Environment {
-        get { self[EnvironmentDependencyKey.self] }
-        set { self[EnvironmentDependencyKey.self] = newValue }
-    }
-
     /// Accessor for resolving or overriding the current `Session` implementation.
     var session: any Session {
         get { self[SessionDependencyKey.self] }

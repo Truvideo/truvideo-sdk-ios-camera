@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+internal import InternalUtilities
 import Networking
 import Utilities
 
@@ -37,7 +38,7 @@ public protocol DeviceSettingsResource: Sendable {
 public struct DeviceSettingsResourceImpl: DeviceSettingsResource {
     // MARK: - Dependencies
 
-    @Dependency(\.apiEnvironment)
+    @Dependency(\.environment)
     private var environment: Environment
 
     @Dependency(\.session)

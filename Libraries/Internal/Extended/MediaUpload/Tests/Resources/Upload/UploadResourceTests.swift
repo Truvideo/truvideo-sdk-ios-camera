@@ -9,7 +9,7 @@ import NetworkingTesting
 import Testing
 import Utilities
 
-@testable import TruVideoApi
+@testable import MediaUpload
 
 struct UploadResourceTests {
     // MARK: - Private Properties
@@ -19,6 +19,10 @@ struct UploadResourceTests {
     private let uploadId = "upload-session-foo"
     
     // MARK: - Tests
+    
+    
+    
+    // MARK: - Complete
     
     @Test
     func testThatCompleteShouldThrowUploadCompletionFailedOnRequestError() async throws {
@@ -43,7 +47,7 @@ struct UploadResourceTests {
             await #expect {
                 try await sut.complete(for: uploadId)
             } throws: { error in
-                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.uploadCompletionFailed
+                return (error as? UtilityError)?.kind == .MediaUploadErrorReason.completeUploadFailed
             }
         }
     }
@@ -63,7 +67,7 @@ struct UploadResourceTests {
                 metrics: nil,
                 request: nil,
                 response: HTTPURLResponse(
-                    url: URL(string: "/api/upload/\(uploadId)/complete")!,
+                    url: URL(string: "/upload/\(uploadId)/complete/stream")!,
                     statusCode: 200,
                     httpVersion: "HTTP/1.1",
                     headerFields: [
@@ -81,7 +85,7 @@ struct UploadResourceTests {
             let url = try session.lastRequestURL?.asURL()
             
             // Then
-            #expect(url!.absoluteString.contains("/api/upload/\(uploadId)/complete"))
+            #expect(url!.absoluteString.contains("/upload/\(uploadId)/complete/stream"))
         }
     }
     
@@ -121,6 +125,8 @@ struct UploadResourceTests {
         }
     }
     
+    // MARK: - Register
+    
     @Test
     func testThatRegisterShouldThrowUploadPartRegistrationFailedOnRequestError() async throws {
         await withDependencyValues { dependencies in
@@ -144,7 +150,7 @@ struct UploadResourceTests {
             await #expect {
                 try await sut.register(for: uploadId, partNumber: 1, withETag: "etag-part-0001")
             } throws: { error in
-                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.uploadPartRegistrationFailed
+                return (error as? UtilityError)?.kind == .MediaUploadErrorReason.partRegistrationFailed
             }
         }
     }
@@ -262,6 +268,8 @@ struct UploadResourceTests {
         }
     }
     
+    // MARK: - Retrieve
+    
     @Test
     func testThatRetrieveShouldSucceed() async throws {
         try await withDependencyValues { dependencies in
@@ -318,7 +326,7 @@ struct UploadResourceTests {
             await #expect {
                 try await sut.retrieve(for: uploadId, count: 2)
             } throws: { error in
-                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.uploadPartsRetrievalFailed
+                return (error as? UtilityError)?.kind == .MediaUploadErrorReason.retrieveUploadPartsFailed
             }
         }
         
@@ -378,6 +386,8 @@ struct UploadResourceTests {
         }
     }
     
+    // MARK: - Start
+    
     @Test
     func testThatStartShouldSucceed() async throws {
         try await withDependencyValues { dependencies in
@@ -430,7 +440,7 @@ struct UploadResourceTests {
            await #expect {
                try await sut.start(for: FileType.mp4)
             } throws: { error in
-                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.uploadInitializationFailed
+                return (error as? UtilityError)?.kind == .MediaUploadErrorReason.uploadInitializationFailed
             }
         }
     }

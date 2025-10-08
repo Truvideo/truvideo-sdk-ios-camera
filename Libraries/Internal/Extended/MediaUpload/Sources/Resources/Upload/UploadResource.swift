@@ -3,6 +3,7 @@
 //
 
 import DI
+internal import InternalUtilities
 import Networking
 import Utilities
 
@@ -31,10 +32,12 @@ public protocol UploadResource: Sendable {
     /// - All intended parts have been uploaded using presigned URLs obtained with
     ///   `retrieve(...)`.
     ///
-    /// - Parameter uploadId: The unique identifier of the multipart upload session.
+    /// - Parameters:
+    ///   - uploadId: The unique identifier of the multipart upload session.
+    ///   - parts: The list of uploaded parts to commit (each with `partNumber` and `eTag`).
     /// - Returns: A `Media` representing the finalized media resource.
     /// - Throws: `UtilityError` if the request fails, the session is incomplete, or the server rejects the upload.
-    func complete(for uploadId: String) async throws(UtilityError)
+    func complete(for uploadId: String, withParts parts: [UploadPart]) async throws(UtilityError)
 
     /// Registers a previously uploaded part for the multipart session.
     ///
@@ -44,10 +47,9 @@ public protocol UploadResource: Sendable {
     ///
     /// - Parameters:
     ///   - uploadId: The unique identifier of the multipart upload session.
-    ///   - partNumber: The sequence number of the uploaded chunk (starting at 1).
-    ///   - eTag: The entity tag returned by storage after uploading the chunk.
+    ///   - part: The uploaded part descriptor containing `partNumber` (1-based) and its `eTag`.
     /// - Throws: `UtilityError` if the request fails or the part cannot be registered.
-    func register(for uploadId: String, partNumber: Int, withETag eTag: String) async throws(UtilityError)
+    func register(for uploadId: String, withPart part: UploadPart) async throws(UtilityError) -> UploadPartStatus
 
     /// Retrieves presigned URLs for the next set of parts in a multipart upload session.
     ///
@@ -94,10 +96,10 @@ public protocol UploadResource: Sendable {
 public struct UploadResourceImpl: UploadResource {
     // MARK: - Dependencies
 
-    @Dependency(\.apiEnvironment)
+    @Dependency(\.environment)
     private var environment: Environment
 
-    @Dependency(\.session)
+    @Dependency(\.truVideoSession)
     private var session: any Session
 
     // MARK: - Initializer
@@ -126,20 +128,33 @@ public struct UploadResourceImpl: UploadResource {
     /// - All intended parts have been uploaded using presigned URLs obtained with
     ///   `retrieve(...)`.
     ///
-    /// - Parameter uploadId: The unique identifier of the multipart upload session.
+    /// - Parameters:
+    ///   - uploadId: The unique identifier of the multipart upload session.
+    ///   - parts: The list of uploaded parts to commit (each with `partNumber` and `eTag`).
     /// - Throws: `UtilityError` if the request fails, the session is incomplete, or the server rejects the upload.
-    public func complete(for uploadId: String) async throws(UtilityError) {
+    public func complete(for uploadId: String, withParts parts: [UploadPart]) async throws(UtilityError) {
         do {
+            let parameters = [
+                "parts": parts.map { part in
+                    [
+                        "etag": part.eTag,
+                        "partNumber": part.partNumber,
+                    ]
+                }
+            ]
+
             _ = try await session.request(
-                environment.baseURL.appending("/api/upload/\(uploadId)/complete"),
-                method: .post
+                environment.baseURL.appending("/upload/\(uploadId)/complete/stream"),
+                method: .post,
+                parameters: parameters,
+                encoder: .json
             )
             .validate()
             .serializing(Empty.self)
             .result
             .get()
         } catch {
-            throw UtilityError(kind: .TruVideoApiErrorReason.uploadCompletionFailed, underlyingError: error)
+            throw UtilityError(kind: .MediaUploadErrorReason.completeUploadFailed, underlyingError: error)
         }
     }
 
@@ -151,26 +166,28 @@ public struct UploadResourceImpl: UploadResource {
     ///
     /// - Parameters:
     ///   - uploadId: The unique identifier of the multipart upload session.
-    ///   - partNumber: The sequence number of the uploaded chunk (starting at 1).
-    ///   - eTag: The entity tag returned by storage after uploading the chunk.
+    ///   - part: The uploaded part descriptor containing `partNumber` (1-based) and its `eTag`.
     /// - Throws: `UtilityError` if the request fails or the part cannot be registered.
-    public func register(for uploadId: String, partNumber: Int, withETag eTag: String) async throws(UtilityError) {
+    public func register(
+        for uploadId: String,
+        withPart part: UploadPart
+    ) async throws(UtilityError) -> UploadPartStatus {
         do {
-            _ = try await session.request(
-                environment.baseURL.appending("/api/upload/\(uploadId)/part"),
+            return try await session.request(
+                environment.baseURL.appending("/upload/\(uploadId)/part"),
                 method: .post,
                 parameters: [
-                    "partNumber": partNumber,
-                    "etag": eTag,
+                    "partNumber": part.partNumber,
+                    "etag": part.eTag,
                 ],
                 encoder: .json
             )
             .validate()
-            .serializing(Empty.self)
+            .serializing(UploadPartStatus.self)
             .result
             .get()
         } catch {
-            throw UtilityError(kind: .TruVideoApiErrorReason.uploadPartRegistrationFailed, underlyingError: error)
+            throw UtilityError(kind: .MediaUploadErrorReason.partRegistrationFailed, underlyingError: error)
         }
     }
 
@@ -192,17 +209,20 @@ public struct UploadResourceImpl: UploadResource {
     public func retrieve(for uploadId: String, count: Int) async throws(UtilityError) -> [Part] {
         do {
             return try await session.request(
-                environment.baseURL.appending("/api/upload/parts/\(uploadId)/\(count)"),
+                environment.baseURL.appending("/upload/\(uploadId)/parts/\(count)"),
                 method: .get,
-                cachePolicy: .returnCacheDataElseLoad
+                parameters: [
+                    "count": count
+                ],
+                encoder: .url
             )
             .validate(RequestValidator.validate)
             .serializing(UploadPartResponse.self)
             .result
             .get()
-            .uploadParts
+            .parts
         } catch {
-            throw UtilityError(kind: .TruVideoApiErrorReason.uploadPartsRetrievalFailed, underlyingError: error)
+            throw UtilityError(kind: .MediaUploadErrorReason.retrieveUploadPartsFailed, underlyingError: error)
         }
     }
 
@@ -220,10 +240,12 @@ public struct UploadResourceImpl: UploadResource {
     public func start(for fileType: FileType) async throws(UtilityError) -> UploadSession {
         do {
             return try await session.request(
-                environment.baseURL.appending("/api/upload/start"),
+                environment.baseURL.appending("/upload/start/stream"),
                 method: .post,
                 parameters: [
-                    "fileType": fileType.rawValue
+                    "media": [
+                        "fileType": fileType.rawValue
+                    ]
                 ],
                 encoder: .json
             )
@@ -232,7 +254,7 @@ public struct UploadResourceImpl: UploadResource {
             .result
             .get()
         } catch {
-            throw UtilityError(kind: .TruVideoApiErrorReason.uploadInitializationFailed, underlyingError: error)
+            throw UtilityError(kind: .MediaUploadErrorReason.uploadInitializationFailed, underlyingError: error)
         }
     }
 }

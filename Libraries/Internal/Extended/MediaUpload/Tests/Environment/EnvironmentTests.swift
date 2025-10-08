@@ -1,32 +1,30 @@
-//
 // Copyright © 2025 TruVideo. All rights reserved.
-//
 
 import ApiUtilities
 import Foundation
 import Testing
 
-@testable import TruVideoApi
+@testable import MediaUpload
 
-struct EnvironmentTests {
+struct UploadEnvironmentTests {
     // MARK: - Tests
-    
+
     @Test
     func testThatEnvironmentDevShouldUseCorrectBaseURL() {
         // Given
         let environment = Environment.dev
         
         // When, Then
-        #expect(environment.baseURL == "https://sdk-mobile-api-dev.truvideo.com")
+        #expect(environment.baseURL == "https://upload-api-dev.truvideo.com")
     }
-    
+
     @Test
     func testThatEnvironmentBetaShouldUseCorrectBaseURL() {
         // Given
         let environment = Environment.beta
         
         // When, Then
-        #expect(environment.baseURL == "https://sdk-mobile-api-beta.truvideo.com")
+        #expect(environment.baseURL == "https://upload-api-beta.truvideo.com")
     }
 
     @Test
@@ -35,7 +33,7 @@ struct EnvironmentTests {
         let environment = Environment.rc
         
         // When, Then
-        #expect(environment.baseURL == "https://sdk-mobile-api-rc.truvideo.com")
+        #expect(environment.baseURL == "https://upload-api-rc.truvideo.com")
     }
 
     @Test
@@ -44,15 +42,16 @@ struct EnvironmentTests {
         let environment = Environment.prod
         
         // When, Then
-        #expect(environment.baseURL == "https://sdk-mobile-api.truvideo.com")
+        #expect(environment.baseURL == "https://upload-api.truvideo.com")
     }
-    
+
     @Test
     func testThatUnknownEnvironmentReturnsProductionBaseURLByDefault() {
         // Given
         let custom = Environment(rawValue: "STAGING")
         
         // When, Then
-        #expect(custom.baseURL == "https://sdk-mobile-api.truvideo.com")
+        #expect(custom.baseURL == "https://upload-api.truvideo.com")
     }
 }
+

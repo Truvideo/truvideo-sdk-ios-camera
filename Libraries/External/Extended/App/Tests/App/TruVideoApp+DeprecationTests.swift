@@ -30,17 +30,14 @@ struct TruVideoAppDeprecatedTests {
         try await withDependencyValues { dependencies in
             // Given
             let expectedKey = "VS2SG9WK"
+            let authenticatableClient = AuthenticatableClientMock()
             let sut = TruVideoApp()
             
-            // When
-            dependencies.authenticatableClient = authenticatableClient
-            dependencies.deviceSettingResource = deviceSettingResource
-
+            // When            
             sut.configure(with: TruVideoOptions(apiKey: expectedKey, secretKey: "ST2K33GR"))
             
             let storedApiKey = try sut.apiKey()
-            
-            
+                        
             // Then
             #expect(expectedKey == storedApiKey)
         }

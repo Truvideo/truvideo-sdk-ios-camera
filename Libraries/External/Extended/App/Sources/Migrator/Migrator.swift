@@ -4,6 +4,7 @@
 
 internal import DI
 import Foundation
+internal import InternalUtilities
 internal import StorageKit
 internal import TruVideoApi
 internal import Utilities
@@ -73,14 +74,12 @@ struct SDKMigrator: Migrator {
     ///   - storage: Optional custom storage instance for the new storage system.
     ///   - legacyStorage: Optional custom UserDefaults instance for legacy data.
     init(
-        storage: Storage? = nil,
-        legacyStorage: UserDefaults? = UserDefaults(suiteName: "truvideo-sdk-common-settings")
+        storage: Storage = UserDefaultsStorage(),
+        legacyStorage: UserDefaults = UserDefaults(suiteName: "truvideo-sdk-common-settings") ?? .standard
     ) {
         
-        let userDefaults = UserDefaults(suiteName: DependencyValues.current.apiEnvironment.baseURL) ?? .standard
-        
-        self.legacyStorage = legacyStorage ?? .standard
-        self.storage = storage ?? UserDefaultsStorage(userDefaults: userDefaults)
+        self.legacyStorage = legacyStorage
+        self.storage = storage
     }
     
     // MARK: - Migrator

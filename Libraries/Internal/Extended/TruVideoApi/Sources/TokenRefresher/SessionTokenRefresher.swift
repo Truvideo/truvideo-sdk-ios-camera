@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+internal import InternalUtilities
 import Networking
 import Utilities
 
@@ -63,10 +64,10 @@ public protocol TokenRefresher: Sendable {
 /// tokens using network requests. It integrates with the dependency injection system to access
 /// environment configuration and session management, and uses an actor to ensure thread-safe
 /// token refresh operations.
-actor SessionTokenRefresher: TokenRefresher {
+public actor SessionTokenRefresher: TokenRefresher {
     // MARK: - Dependencies
 
-    @Dependency(\.apiEnvironment)
+    @Dependency(\.environment)
     private var environment: Environment
 
     @Dependency(\.sessionManager)
@@ -85,7 +86,7 @@ actor SessionTokenRefresher: TokenRefresher {
     /// for tracking network operations.
     ///
     /// - Parameter session: The network session to use for token refresh requests. Defaults to a monitored HTTP session.
-    init(session: any Session = HTTPURLSession(monitors: [SessionMonitor()])) {
+    public init(session: any Session = HTTPURLSession(monitors: [SessionMonitor()])) {
         self.session = session
     }
 
@@ -98,7 +99,7 @@ actor SessionTokenRefresher: TokenRefresher {
     /// making a network request to the authentication server with the refresh token.
     ///
     /// - Throws: An error if the token refresh fails, including network errors, authentication failures, or missing session data
-    func refreshToken() async throws {
+    public func refreshToken() async throws {
         guard let authSession = sessionManager.currentSession else {
             throw UtilityError(
                 kind: .TruVideoApiErrorReason.refreshTokenFailed,
