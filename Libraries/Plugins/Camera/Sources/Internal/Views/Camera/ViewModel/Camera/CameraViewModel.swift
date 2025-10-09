@@ -557,7 +557,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 let isFlashAvailable = await videoDevice.isFlashAvailable
 
                 self.isTorchAvailable = isTorchAvailable || isFlashAvailable
-                
+
                 if !self.isTorchAvailable && isTorchEnabled {
                     switchTorch()
                 }
@@ -565,7 +565,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
                 lastZoomFactor = 1
                 zoomFactor = 1
-                
+
                 Task.delayed(milliseconds: 600) { allowsHitTesting = true }
             } catch {
                 didReceiveError(error.localizedDescription)
@@ -587,7 +587,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             guard videoDevice.isTorchAvailable || videoDevice.isFlashAvailable else {
                 try videoDevice.setTorchMode(.off)
                 videoDevice.flashMode = .off
-                
+
                 await didReceiveError(Localizations.torchNotAvailable)
                 return
             }
@@ -627,14 +627,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                         return
                     }
 
-                    await ensureTorchCompatibility()
-
                     try await audioDevice.startCapturing()
                     try await videoDevice.startCapturing()
 
                     await movieOutputProcessor.startProcessing()
 
                     state = .running
+
+                    await ensureTorchCompatibility()
                 } catch {
                     didReceiveError(error.localizedDescription)
                 }
@@ -678,14 +678,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                     mediasTaken += 1
 
-                    await ensureTorchCompatibility()
-
                     try await videoDevice.startCapturing()
                     try await audioDevice.startCapturing()
 
                     await movieOutputProcessor.startProcessing()
 
                     state = .running
+
+                    await ensureTorchCompatibility()
 
                 case .paused where state.canTransition(to: .finished),
                     .writing where state.canTransition(to: .finished):
@@ -744,6 +744,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 await videoDevice.pause()
 
                 state = .paused
+
+                await ensureTorchCompatibility()
             } catch {
                 didReceiveError(error.localizedDescription)
             }
@@ -824,7 +826,16 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     @DeviceActor
     private func ensureTorchCompatibility() {
-        if videoDevice.position == .front, videoDevice.flashMode == .on {
+        isTorchAvailable =
+            switch state {
+            case .running:
+                videoDevice.isTorchAvailable
+
+            default:
+                videoDevice.isTorchAvailable || videoDevice.isFlashAvailable
+            }
+
+        if !isTorchAvailable, isTorchEnabled {
             switchTorch()
         }
     }

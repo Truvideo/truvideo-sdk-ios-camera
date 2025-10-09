@@ -37,7 +37,7 @@ struct TorchButton: View {
         } action: {
             viewModel.switchTorch()
         }
-        .disabled(!viewModel.isTorchAvailable || viewModel.state == .running)
+        .disabled(!viewModel.isTorchAvailable)
         .selected(viewModel.isTorchEnabled)
         .allowsHitTesting(viewModel.allowsHitTesting)
     }
