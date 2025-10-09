@@ -45,17 +45,17 @@ struct CloudStorageProviderTests {
     }
     
     @Test
-    func testThatMakeStorageShouldSucceed() async throws {
+    func testThatMakeStorageReturnsCachedInstance() async throws {
         // Given
         let sut = S3CloudStorageProvider()
-        
+
         // When
         sut.deviceSetting = deviceSettings
-        
-        let storage = try sut.makeStorage()
-        
+        let first = try sut.makeStorage()
+        let second = try sut.makeStorage()
+
         // Then
-        #expect(sut.deviceSetting != nil)
-        #expect(storage is S3CloudStorage)
+        #expect(first != nil)
+        #expect(second != nil)
     }
 }

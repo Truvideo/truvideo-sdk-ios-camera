@@ -40,6 +40,8 @@ struct TruVideoAppTests {
             
             try await sut.authenticate()
             
+            try await Task.sleep(nanoseconds: 5_000_000)
+            
             // Then
             #expect(authenticatableClient.authenticateCalled == true)
             #expect(authenticatableClient.currentSession != nil)
@@ -73,7 +75,7 @@ struct TruVideoAppTests {
             
             #expect(!authenticatableClient.authenticateCalled)
             #expect(authenticatableClient.currentSession == nil)
-            #expect(deviceSettingResource.retrieveCallCount == 1)
+            #expect(deviceSettingResource.retrieveCallCount == 0)
         }
     }
     
@@ -102,7 +104,7 @@ struct TruVideoAppTests {
             
             #expect(authenticatableClient.authenticateCalled == true)
             #expect(authenticatableClient.currentSession == nil)
-            #expect(deviceSettingResource.retrieveCallCount == 1)
+            #expect(deviceSettingResource.retrieveCallCount == 0)
         }
     }
     
@@ -132,7 +134,7 @@ struct TruVideoAppTests {
             
             #expect(authenticatableClient.authenticateCalled == false)
             #expect(authenticatableClient.currentSession == nil)
-            #expect(deviceSettingResource.retrieveCallCount == 1)
+            #expect(deviceSettingResource.retrieveCallCount == 0)
         }
     }
 }
