@@ -213,10 +213,18 @@ private struct LayoutThatFits<Content: View>: View {
 
     let content: @MainActor () -> Content
 
+    // MARK: - Computed Properties
+
+    var isVLayout: Bool {
+        let isLandscape = viewModel.deviceOrientation.orientation.isLandscape
+
+        return (isLandscape && viewModel.deviceOrientation.source == .system) || UIDevice.current.isPad
+    }
+
     // MARK: - Body
 
     var body: some View {
-        if viewModel.deviceOrientation.orientation.isLandscape && viewModel.deviceOrientation.source == .system {
+        if isVLayout {
             VStack(spacing: theme.spacingTheme.sm) {
                 content()
             }

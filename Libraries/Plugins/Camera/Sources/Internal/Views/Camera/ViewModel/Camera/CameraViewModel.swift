@@ -382,6 +382,9 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             defer { isCaptureInFlight = false }
 
             do {
+                allowsHitTesting = false
+                Task.delayed(milliseconds: 600) { allowsHitTesting = true }
+
                 let photo = try await videoDevice.capturePhoto()
 
                 medias.insert(.photo(photo), at: 0)
@@ -550,11 +553,19 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
                 try await videoDevice.setPosition(position)
 
-                isTorchAvailable = await videoDevice.isTorchAvailable
-                zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
+                let isTorchAvailable = await videoDevice.isTorchAvailable
+                let isFlashAvailable = await videoDevice.isFlashAvailable
 
+                self.isTorchAvailable = isTorchAvailable || isFlashAvailable
+                
+                if !self.isTorchAvailable && isTorchEnabled {
+                    switchTorch()
+                }
+
+                zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
                 lastZoomFactor = 1
                 zoomFactor = 1
+                
                 Task.delayed(milliseconds: 600) { allowsHitTesting = true }
             } catch {
                 didReceiveError(error.localizedDescription)
@@ -570,22 +581,32 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// actual torch mode. If the torch operation fails, it reverts the UI state
     /// to maintain consistency between the visual state and the actual hardware state.
     func switchTorch() {
-        Task { @MainActor in
-            isTorchEnabled.toggle()
+        Task { @DeviceActor in
+            await MainActor.run { isTorchEnabled.toggle() }
 
-            let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
+            guard videoDevice.isTorchAvailable || videoDevice.isFlashAvailable else {
+                try videoDevice.setTorchMode(.off)
+                videoDevice.flashMode = .off
+                
+                await didReceiveError(Localizations.torchNotAvailable)
+                return
+            }
 
             do {
-                if await videoDevice.isTorchAvailable {
-                    try await videoDevice.setTorchMode(torchMode)
+                let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
+
+                if videoDevice.isTorchAvailable {
+                    try videoDevice.setTorchMode(torchMode)
                 }
 
-                Task { @DeviceActor in
+                if videoDevice.isFlashAvailable {
                     videoDevice.flashMode = isTorchEnabled ? .on : .off
                 }
             } catch {
-                isTorchEnabled.toggle()
-                didReceiveError(error.localizedDescription)
+                await MainActor.run {
+                    isTorchEnabled.toggle()
+                    didReceiveError(error.localizedDescription)
+                }
             }
         }
     }
@@ -774,8 +795,11 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         videoDevice.configuration.isHighResolutionEnabled = configuration.isHighResolutionPhotoEnabled
         videoDevice.configuration.imageFormat = configuration.imageFormat.value
 
-        isTorchAvailable = videoDevice.isTorchAvailable
-        videoDevice.flashMode = configuration.flashMode.value
+        isTorchAvailable = videoDevice.isTorchAvailable || videoDevice.isFlashAvailable
+
+        if videoDevice.isFlashAvailable {
+            videoDevice.flashMode = configuration.flashMode.value
+        }
 
         try videoDevice.setPosition(position)
         try videoDevice.setTorchMode(torchMode)
@@ -827,22 +851,25 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     private func orientationDidUpdate(to orientation: UIDeviceOrientation) {
-        switch orientation {
-        case .landscapeLeft,
-            .landscapeRight:
+        defer { updatePreviewOrientation() }
 
+        deviceOrientation = orientation
+
+        guard !UIDevice.current.isPad else {
+            aspectRatio = 1
+            return
+        }
+
+        switch orientation {
+        case .landscapeLeft, .landscapeRight:
             aspectRatio = 16 / 9
-            deviceOrientation = orientation
 
         case .portrait, .portraitUpsideDown:
             aspectRatio = 9 / 16
-            deviceOrientation = orientation
 
         default:
             break
         }
-
-        updatePreviewOrientation()
     }
 
     @MainActor

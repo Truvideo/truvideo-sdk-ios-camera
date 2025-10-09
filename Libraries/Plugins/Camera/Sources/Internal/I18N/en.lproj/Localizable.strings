@@ -50,6 +50,7 @@
 "SignInToUseCamera" = "Sign in to use the camera and microphone to take photos and record videos";
 
 // T
+"TorchNotAvailable" = "Torch is not available on this device";
 // U
 "Unknown" = "Unknown";
 // V

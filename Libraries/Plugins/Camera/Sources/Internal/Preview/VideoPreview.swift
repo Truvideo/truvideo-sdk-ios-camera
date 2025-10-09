@@ -36,7 +36,6 @@ struct VideoPreview: UIViewRepresentable {
     class PlayerContainerView: UIView {
         // MARK: - Private Properties
 
-        private let aspectRatio: CGFloat = 16 / 9
         private let blurView: UIVisualEffectView
         private var blurViewPropertyAnimator: UIViewPropertyAnimator?
         private var captureVideoDataOutput = AVCaptureVideoDataOutput()
@@ -73,7 +72,7 @@ struct VideoPreview: UIViewRepresentable {
             super.init(frame: .zero)
 
             self.freezedFrameImageView.alpha = 0
-            self.freezedFrameImageView.contentMode = .scaleAspectFit
+            self.freezedFrameImageView.contentMode = .scaleToFill
 
             self.focusIndicatorView.alpha = 0
             self.focusIndicatorView.frame.size = CGSize(width: 80, height: 80)

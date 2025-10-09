@@ -31,10 +31,13 @@ struct TorchButton: View {
                 color: viewModel.isTorchEnabled ? theme.colorScheme.surface : theme.colorScheme.onSurface,
                 size: CGSize(theme.sizeTheme.x(4.5))
             )
+            .if(UIDevice.current.isPad) { view in
+                view.padding(theme.spacingTheme.xs)
+            }
         } action: {
             viewModel.switchTorch()
         }
-        .disabled(!viewModel.isTorchAvailable && viewModel.state == .running)
+        .disabled(!viewModel.isTorchAvailable || viewModel.state == .running)
         .selected(viewModel.isTorchEnabled)
         .allowsHitTesting(viewModel.allowsHitTesting)
     }

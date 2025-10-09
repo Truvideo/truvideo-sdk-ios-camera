@@ -50,7 +50,7 @@ struct PresetButton: View {
         CircleButton {
             Text(viewModel.selectedPreset.localizedLabel)
                 .style(theme.textTheme.caption1.copyWith(color: textColor))
-                .padding(theme.spacingTheme.xxs)
+                .padding(UIDevice.current.isPad ? theme.spacingTheme.sm : theme.spacingTheme.xxs)
                 .frame(minWidth: theme.sizeTheme.xxxl)
         } action: {
             isPresented.toggle()

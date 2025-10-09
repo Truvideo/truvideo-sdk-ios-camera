@@ -25,7 +25,7 @@ jobs:
             revert
           scopes: |
             truvideoSdk
-            truvideoCameraSdk
+            truvideoSdkCamera
             truvideoApi
             telemetry
             di

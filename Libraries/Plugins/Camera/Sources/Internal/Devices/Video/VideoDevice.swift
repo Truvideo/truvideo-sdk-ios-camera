@@ -119,6 +119,19 @@ class VideoDevice: NSObject, Device {
         return hasBuiltInUltraWideCamera ? [0.5] + Array(zoomFactors) : Array(zoomFactors)
     }
 
+    /// Indicates whether the active capture device supports and currently exposes a usable flash.
+    ///
+    /// This computed property checks the device capabilities by combining `hasFlash` and `isFlashAvailable`
+    /// from the underlying `AVCaptureDevice`. The flash availability can depend on several factors including
+    /// the device hardware capabilities, active format settings, frame rate, and session configuration.
+    ///
+    /// Flash functionality is typically available on back-facing cameras but may not be present on
+    /// front-facing cameras or certain device models. Even when hardware flash is present, it may
+    /// become unavailable based on current camera settings or session configuration.
+    var isFlashAvailable: Bool {
+        captureDevice?.hasFlash == true && captureDevice?.isFlashAvailable == true
+    }
+
     /// Indicates whether the active capture device supports and currently exposes a usable torch.
     ///
     /// This checks the device capabilities by combining `hasTorch` and `isTorchAvailable`.
@@ -127,7 +140,7 @@ class VideoDevice: NSObject, Device {
     ///
     /// - Returns: `true` if a torch is present and available for use; otherwise, `false`.
     var isTorchAvailable: Bool {
-        captureDevice?.hasTorch == true || captureDevice?.isTorchAvailable == true
+        captureDevice?.hasTorch == true && captureDevice?.isTorchAvailable == true
     }
 
     /// The physical position of the active capture device.

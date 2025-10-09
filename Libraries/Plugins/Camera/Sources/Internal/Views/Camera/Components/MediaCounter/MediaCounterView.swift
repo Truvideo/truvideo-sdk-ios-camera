@@ -42,7 +42,7 @@ struct MediaCounterView: View {
 
     var body: some View {
         Group {
-            if viewModel.deviceOrientation.isPortrait {
+            if viewModel.deviceOrientation.isPortrait || UIDevice.current.isPad {
                 HStack(spacing: theme.spacingTheme.md) {
                     makeContent()
                 }

@@ -232,9 +232,20 @@ struct Localizations {
     /// - Returns: A localized string.
     static let signInToUseCamera = NSLocalizedString("SignInToUseCamera", bundle: .module, comment: "")
 
+    // MARK: - T
+
+    /// Torch not available copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* Torch is not available on this device */
+    ///
+    /// - Returns: A localized string.
+    static let torchNotAvailable = NSLocalizedString("TorchNotAvailable", bundle: .module, comment: "")
+
     // MARK: - U
 
-    /// SD copy.
+    /// Unknown copy.
     ///
     /// In en, this message translates to:
     ///
