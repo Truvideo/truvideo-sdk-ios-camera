@@ -54,6 +54,12 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
     /// be applied to the zoom value.
     @Published var rotationAngle = Angle.zero
 
+    // MARK: - Computed Properties
+
+    private var isSystemLandscape: Bool {
+        deviceOrientation.orientation.isLandscape && deviceOrientation.source == .system
+    }
+
     // MARK: - Initializer
 
     init() {
@@ -113,11 +119,15 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
     /// - Parameter isExpanded: A Boolean flag indicating whether the mask should be expanded (`true`) or collapsed (`false`).
     /// - Returns: A `CGSize` representing the maximum size of the animatable mask.
     func maxSizeForAnimatableMask(isExpanded: Bool) -> CGSize {
-        if deviceOrientation.orientation.isPortrait || deviceOrientation.source == .system, !UIDevice.current.isPad {
+        if UIDevice.current.isPad || isSystemLandscape {
+            return isExpanded ? CGSize(width: size, height: .infinity) : CGSize(width: size, height: size)
+        }
+
+        guard deviceOrientation.orientation.isPortrait else {
             return isExpanded ? CGSize(width: .infinity, height: size) : CGSize(width: size, height: size)
         }
 
-        return isExpanded ? CGSize(width: size, height: .infinity) : CGSize(width: size, height: size)
+        return isExpanded ? CGSize(width: .infinity, height: size) : CGSize(width: size, height: size)
     }
 
     /// Calculates the maximum size of a collapsible mask based on the device orientation and expansion state.
@@ -130,14 +140,14 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
     /// - Parameter isExpanded: A Boolean flag indicating whether the mask should be expanded (`true`) or collapsed (`false`).
     /// - Returns: A `CGSize` representing the maximum size of the collapsible mask.
     func maxSizeForCollapsibleMask(isExpanded: Bool) -> CGSize {
-        if deviceOrientation.orientation.isPortrait, !UIDevice.current.isPad {
-            return isExpanded ? CGSize(width: .infinity, height: size) : CGSize(width: 0, height: size)
+        if UIDevice.current.isPad || isSystemLandscape {
+            return isExpanded ? CGSize(width: size, height: .infinity) : CGSize(width: size, height: 0)
         }
 
-        guard deviceOrientation.source == .system || UIDevice.current.isPad else {
+        guard deviceOrientation.orientation.isPortrait else {
             return isExpanded ? CGSize(width: .infinity, height: size) : CGSize(width: size, height: 0)
         }
 
-        return isExpanded ? CGSize(width: size, height: .infinity) : CGSize(width: size, height: 0)
+        return isExpanded ? CGSize(width: .infinity, height: size) : CGSize(width: 0, height: size)
     }
 }
