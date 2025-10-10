@@ -80,7 +80,7 @@ extension CameraViewModel {
     @MainActor
     @objc
     func didReceiveDidBecomeActiveNotification(_ notification: Notification) {
-        Task { @SessionActor in
+        Task.delayed(milliseconds: 300) { @SessionActor in
             if !captureSession.isRunning {
                 captureSession.startRunning()
             }

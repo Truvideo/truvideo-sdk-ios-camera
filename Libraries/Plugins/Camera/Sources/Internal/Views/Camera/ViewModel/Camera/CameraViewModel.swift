@@ -5,7 +5,7 @@
 import AVFoundation
 internal import DI
 import Foundation
-internal import TruVideoApi
+internal import TruvideoSdk
 import UIKit
 internal import Utilities
 
@@ -42,11 +42,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     private let movieOutputProcessor = MovieOutputProcessor()
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
     private var photosTaken = 0
-
-    // MARK: - Dependencies
-
-    @Dependency(\.authenticatableClient)
-    var authenticatableClient: AuthenticatableClient
 
     // MARK: - Properties
 
@@ -315,6 +310,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     init(
         configuration: TruvideoSdkCameraConfiguration,
         orientationMonitor: OrientationMonitor = DeviceOrientationMonitor(),
+        truVideoSdk: TruVideoSDK = TruvideoSdk,
         onCompleted: @escaping (TruvideoSdkCameraResult) -> Void
     ) {
 
@@ -330,7 +326,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         self.orientationMonitor.add(self)
         self.orientationMonitor.startMonitoring()
 
-        self.isAuthenticated = authenticatableClient.currentSession != nil
+        self.isAuthenticated = truVideoSdk.isAuthenticated
         self.isTorchEnabled = configuration.flashMode == .on
 
         movieOutputProcessor.delegate = self
