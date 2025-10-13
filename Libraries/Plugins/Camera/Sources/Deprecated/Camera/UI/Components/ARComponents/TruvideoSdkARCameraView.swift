@@ -67,9 +67,7 @@ struct TruvideoSdkARCameraView: View {
     /// - Parameter onComplete: A callback to invoke when the recording session has finished.
     init(preset: TruvideoSdkCameraConfiguration, onComplete: @escaping (TruvideoSdkCameraResult) -> Void) {
         let recorder = TruVideoRecorder()
-        let viewModel = ARCameraViewModel(recorder: recorder, preset: preset) {
-            TruvideoSdkCameraEvent.events.send(.init(type: $0))
-        }
+        let viewModel = ARCameraViewModel(recorder: recorder, preset: preset) { _ in }
         self.onComplete = onComplete
         let metalView = MTKView()
         metalView.framebufferOnly = false

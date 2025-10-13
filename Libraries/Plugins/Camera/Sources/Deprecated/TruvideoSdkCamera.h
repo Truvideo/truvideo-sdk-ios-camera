@@ -11,5 +11,3 @@ FOUNDATION_EXPORT double TruvideoSdkCameraVersionNumber;
 FOUNDATION_EXPORT const unsigned char TruvideoSdkCameraVersionString[];
 
 // In this header, you should import all the public headers of your framework using statements like #import <TruvideoSdkCamera/PublicHeader.h>
-
-
