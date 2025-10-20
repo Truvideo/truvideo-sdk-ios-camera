@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+import InternalUtilities
 import StorageKit
 import Testing
 import NetworkingTesting
@@ -133,7 +134,7 @@ struct SessionRequestRetrierTests {
             
             /// Refresh token
             let sessionManager = SessionManagerMock()
-            dependencies.apiEnvironment = .rc
+            dependencies.environment = .rc
             dependencies.sessionManager = sessionManager
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
@@ -190,7 +191,7 @@ struct SessionRequestRetrierTests {
             
             /// Refresh Token
             let sessionManager = SessionManagerMock()
-            dependencies.apiEnvironment = .rc
+            dependencies.environment = .rc
             dependencies.sessionManager = sessionManager
             let responseError = RequestValidator.ResponseError(
                 detail: "Invalid refresh token",

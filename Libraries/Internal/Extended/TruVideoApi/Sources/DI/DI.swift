@@ -4,7 +4,7 @@
 
 import DI
 import Networking
-import StorageKit
+internal import StorageKit
 
 /// Provides a `DependencyKey` for injecting a `Session` dependency.
 ///
@@ -34,6 +34,7 @@ extension DependencyValues {
         get { self[SessionDependencyKey.self] }
         set { self[SessionDependencyKey.self] = newValue }
     }
+
     /// Accessor for resolving or overriding the current `SessionManager` implementation.
     public var sessionManager: any SessionManager {
         get { self[SessionManagerDependencyKey.self] }

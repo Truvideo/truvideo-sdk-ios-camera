@@ -129,7 +129,14 @@ public protocol TruVideoSDK {
     ///     showGenericError("Authentication failed")
     /// }
     /// ```
-    func authenticate() async throws
+    ///
+    /// - Parameters:
+    ///   - apiKey: The API key credential used to identify the application or client.
+    ///   - secretKey: The secret key credential used to verify the authenticity of the request.
+    ///   - externalId: An optional external identifier for the user or session. Pass `nil` if not required.
+    /// - Throws: An authentication error if the credentials are invalid, the service is unreachable,
+    ///           or the authentication process fails for any reason.
+    func authenticate(apiKey: String, secretKey: String, externalId: String?) async throws
 
     /// Configures the TruVideo SDK with the specified options.
     ///
@@ -200,7 +207,7 @@ public protocol TruVideoSDK {
     ///   - externalId: Optional identifier for multi-tenant support.
     /// - Throws: An error if authentication fails.
     @available(*, deprecated, message: "Use TruVideoSDK.authenticate() instead.")
-    func authenticate(apiKey: String, payload: String, signature: String, externalId: String) async throws
+    func authenticate(apiKey: String, payload: String, signature: String, externalId: String?) async throws
 
     /// Clears the current authentication session.
     ///
@@ -269,7 +276,7 @@ final class TruVideoApp: TruVideoSDK {
     /// This property provides access to the complete configuration that was set during
     /// SDK initialization. It includes all the necessary parameters such as API credentials,
     /// signing configuration, external identifiers, and other SDK settings.
-    private(set) var options = TruVideoOptions(apiKey: "", secretKey: "", externalId: nil)
+    private(set) var options = TruVideoOptions()
     
     // MARK: - Computed Properties
     
@@ -358,20 +365,70 @@ final class TruVideoApp: TruVideoSDK {
     ///     showGenericError("Authentication failed")
     /// }
     /// ```
-    func authenticate() async throws {
+    /// - Parameters:
+    ///   - apiKey: The API key credential used to identify the application or client.
+    ///   - secretKey: The secret key credential used to verify the authenticity of the request.
+    ///   - externalId: An optional external identifier for the user or session. Pass `nil` if not required.
+    /// - Throws: An authentication error if the credentials are invalid, the service is unreachable,
+    ///           or the authentication process fails for any reason.
+    func authenticate(apiKey: String, secretKey: String, externalId: String?) async throws {
         guard hasBeenConfigured else {
             throw TruVideoSdkError.configurationRequired
         }
 
         do {
             let context = Context()
-            let signature = try await options.signer.sign(context, secretKey: options.secretKey)
+            let signature = try await options.signer.sign(context, secretKey: secretKey)
 
             try await authenticatableClient.authenticate(
-                apiKey: options.apiKey,
+                apiKey: apiKey,
                 context: context.toContext(),
                 signature: signature,
-                externalId: options.externalId
+                externalId: externalId
+            )
+            
+            if let currentSession = authenticatableClient.currentSession {
+                try legacyStorage.set(currentSession.authToken, apiKey: currentSession.apiKey)
+            }
+            
+            retrieveDeviceSettings()
+        } catch let error as UtilityError {
+            throw TruVideoSdkError(
+                kind: .from(error.kind.rawValue),
+                errorDescription: error.errorDescription,
+                failureReason: error.failureReason
+            )
+        } catch {
+            throw TruVideoSdkError.authenticationFailed
+        }
+    }
+    
+    /// Performs client authentication using the given payload and signature.
+    ///
+    /// - Parameters:
+    ///   - apiKey: The API key for authentication.
+    ///   - payload: The signed payload (usually device context).
+    ///   - signature: The HMAC signature generated from the payload.
+    ///   - externalId: Optional identifier for multi-tenant support.
+    /// - Throws: An error if authentication fails.
+    /// - Note: This method is deprecated and needs to be removed in later versions.
+    func authenticate(apiKey: String, payload: String, signature: String, externalId: String?) async throws {
+        guard hasBeenConfigured else {
+            throw TruVideoSdkError.configurationRequired
+        }
+
+        do {
+            guard let jsonData = payload.data(using: .utf8) else {
+                throw TruVideoSdkError.configurationRequired
+            }
+
+            let context = try JSONDecoder().decode(TruVideoApi.Context.self, from: jsonData)
+            
+            try await authenticatableClient.authenticate(
+                apiKey: apiKey,
+                context: context,
+                signature: signature,
+                externalId: externalId
             )
             
             if let currentSession = authenticatableClient.currentSession {

@@ -108,7 +108,7 @@ final class MediaPreviewPageViewController: UIPageViewController {
 
     private func setupButtons() {
         let buttonSize = theme.sizeTheme.x(10)
-        let topSpacing = theme.spacingTheme.x(12.5)
+        let topSpacing = UIDevice.current.isPad ? theme.spacingTheme.x(10) : theme.spacingTheme.x(12.5)
         let closeButton = makeButton(systemName: "xmark", action: #selector(closeTapped))
         let deleteButton = makeButton(systemName: "trash", action: #selector(deleteTapped))
 
@@ -121,7 +121,8 @@ final class MediaPreviewPageViewController: UIPageViewController {
             closeButton.widthAnchor.constraint(equalToConstant: buttonSize),
             closeButton.heightAnchor.constraint(equalToConstant: buttonSize),
 
-            deleteButton.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -theme.spacingTheme.md),
+            view.trailingAnchor.constraint(equalTo: deleteButton.trailingAnchor, constant: theme.spacingTheme.md),
+
             deleteButton.topAnchor.constraint(equalTo: view.topAnchor, constant: topSpacing),
             deleteButton.widthAnchor.constraint(equalToConstant: buttonSize),
             deleteButton.heightAnchor.constraint(equalToConstant: buttonSize),

@@ -45,18 +45,6 @@ extension TruVideoApp {
         return apiKey
     }
 
-    /// Performs client authentication using the given payload and signature.
-    ///
-    /// - Parameters:
-    ///   - apiKey: The API key for authentication.
-    ///   - payload: The signed payload (usually device context).
-    ///   - signature: The HMAC signature generated from the payload.
-    ///   - externalId: Optional identifier for multi-tenant support.
-    /// - Throws: An error if authentication fails.
-    public func authenticate(apiKey: String, payload: String, signature: String, externalId: String) async throws {
-        try await authenticate()
-    }
-
     /// Clears the current authentication session.
     ///
     /// - Throws: An error if sign-out fails.
@@ -71,7 +59,10 @@ extension TruVideoApp {
     public func generatePayload() throws -> String {
         do {
             let context = Context()
-            let jsonData = try JSONEncoder().encode(context)
+            let jSONEncoder =  JSONEncoder()
+            jSONEncoder.outputFormatting = [.sortedKeys]
+
+            let jsonData = try jSONEncoder.encode(context)
 
             guard let payload = String(data: jsonData, encoding: .utf8) else {
                 throw TruVideoSdkError.payloadGenerationFailed

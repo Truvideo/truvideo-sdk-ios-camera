@@ -32,22 +32,12 @@ extension TruvideoSdkCameraConfiguration {
     @available(*, deprecated, message: "Use TruvideoSdkCameraConfiguration(...) initializer instead")
     public static func instantiate(
         with lensFacing: TruvideoSdkCameraLensFacing,
-        backResolutions: [TruvideoSdkCameraResolution],
-        flashMode: TruvideoSdkCameraFlashMode,
-        frontResolutions: [TruvideoSdkCameraResolution],
         imageFormat: TruvideoSdkCameraImageFormat = .jpeg,
         mode: TruvideoSdkCameraMediaMode,
-        outputPath: String,
-        backResolution: TruvideoSdkCameraResolution?,
-        frontResolution: TruvideoSdkCameraResolution?
+        outputPath: String
     ) -> TruvideoSdkCameraConfiguration {
 
         TruvideoSdkCameraConfiguration(
-            backResolution: backResolution,
-            backResolutions: backResolutions,
-            flashMode: flashMode,
-            frontResolution: frontResolution,
-            frontResolutions: frontResolutions,
             imageFormat: imageFormat,
             lensFacing: lensFacing,
             mode: mode,

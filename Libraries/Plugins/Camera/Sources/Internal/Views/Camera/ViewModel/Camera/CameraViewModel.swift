@@ -5,9 +5,25 @@
 import AVFoundation
 internal import DI
 import Foundation
+internal import Telemetry
+internal import TruVideoApi
 internal import TruvideoSdk
 import UIKit
 internal import Utilities
+
+extension ErrorReason {
+    /// A collection of error reasons related to the device operations.
+    ///
+    /// The `CameraViewModelErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// during interactions with the external devices.
+    struct CameraViewModelErrorReason: Sendable {
+        /// The app is not authorized to use the device.
+        ///
+        /// Meaning:
+        /// - Authorization status is `.denied` or `.restricted`
+        static let deviceNotAuthorized = ErrorReason(rawValue: "DEVICE_NOT_AUTHORIZED")
+    }
+}
 
 /// A global actor that serializes access to capture session operations and media services.
 ///
@@ -34,14 +50,50 @@ actor SessionActor {
 final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Private Properties
 
-    private let configuration: TruvideoSdkCameraConfiguration
-    private var isCaptureInFlight = false
-    private var lastPhotoCaptureUptime = TimeInterval.zero
     private let orientationMonitor: OrientationMonitor
-    private var mediasTaken = 0
-    private let movieOutputProcessor = MovieOutputProcessor()
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
-    private var photosTaken = 0
+
+    // MARK: - Internal Properties
+
+    /// Indicates whether a photo capture operation is currently in progress.
+    ///
+    /// This flag prevents multiple simultaneous photo captures and is used for
+    /// debouncing capture requests. It's set to `true` when capture starts and
+    /// reset to `false` when the capture completes or fails.
+    var isCaptureInFlight = false
+
+    /// The system uptime timestamp of the last photo capture operation.
+    ///
+    /// This property is used for debouncing photo capture requests to prevent
+    /// rapid successive captures, especially when flash is enabled. The value
+    /// represents the system uptime in seconds when the last photo was captured.
+    var lastPhotoCaptureUptime = TimeInterval.zero
+
+    /// The total count of media items (photos and videos) captured in the current session.
+    ///
+    /// This counter tracks the cumulative number of media items captured and is
+    /// used for enforcing maximum media count limits. It's incremented when capture
+    /// starts and decremented if capture fails.
+    var mediasTaken = 0
+
+    /// The movie output processor responsible for video recording operations.
+    ///
+    /// This processor handles video encoding, file writing, and recording state
+    /// management. It processes video and audio sample buffers and manages the
+    /// recording lifecycle including pause/resume functionality.
+    let movieOutputProcessor = MovieOutputProcessor()
+
+    /// The count of photos captured in the current session.
+    ///
+    /// This counter tracks the number of photos taken and is used for enforcing
+    /// maximum photo count limits. It's incremented when photo capture succeeds
+    /// and decremented if the photo is deleted.
+    var photosTaken = 0
+
+    // MARK: - Dependencies
+
+    @Dependency(\.telemetryManager)
+    var telemetryManager: TelemetryManager
 
     // MARK: - Properties
 
@@ -61,16 +113,24 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// and provides the foundation for synchronized media capture.
     let captureSession = AVCaptureSession()
 
+    /// The camera configuration containing settings and preferences for the camera session.
+    ///
+    /// This property holds the complete configuration for the camera module including
+    /// capture modes, media limits, output paths, resolution preferences, and other
+    /// settings that control camera behavior. The configuration is set during
+    /// initialization and remains constant throughout the camera session lifecycle.
+    let configuration: TruvideoSdkCameraConfiguration
+
     /// Indicates whether the camera device supports torch (flashlight) functionality.
     ///
     /// This property tracks whether the current camera device has torch capabilities.
     /// It defaults to `false` representing the initial state before torch availability
     /// has been determined. The property is updated when the camera device is configured
     /// and torch support is checked.
-    private(set) var isTorchAvailable = false
+    var isTorchAvailable = false
 
     /// Localized error message for display to users. Empty string when no error.
-    private(set) var localizedError = ""
+    var localizedError = ""
 
     /// Collection of all available video capture presets ordered by quality (highest to lowest).
     ///
@@ -98,7 +158,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// This property manages the interactive state of camera interface elements to prevent
     /// user input during critical operations such as camera switching, recording state changes,
     /// or other asynchronous operations that could cause conflicts or unexpected behavior.
-    @Published private(set) var allowsHitTesting = false
+    @Published var allowsHitTesting = false
 
     /// The current aspect ratio of the camera preview, expressed as height divided by width.
     ///
@@ -121,10 +181,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     /// Combined authorization status for both audio and video devices.
     /// `true` when both camera and microphone access are granted, `false` when either is denied.
-    @Published private(set) var isAuthorized = true
+    @Published var isAuthorized = true
 
     /// Torch/flashlight status. `true` when torch is enabled, `false` when disabled.
-    @Published private(set) var isTorchEnabled = false
+    @Published var isTorchEnabled = false
 
     /// A boolean indicating whether the snackbar should be presented.
     @Published var isSnackbarPresented = false
@@ -147,10 +207,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// It determines the capture resolution and quality level used for video recording
     /// and photo capture operations. The preset is applied to the underlying
     /// `AVCaptureSession` to configure the appropriate resolution settings.
-    @Published private(set) var selectedPreset = AVCaptureSession.Preset.hd1280x720
+    @Published var selectedPreset = AVCaptureSession.Preset.hd1280x720
 
     /// The current lifecycle state of the recording process.
-    @Published private(set) var state = RecordingState.initialized
+    @Published var state = RecordingState.initialized
 
     /// The current validation state of the view or operation.
     ///
@@ -163,12 +223,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     ///
     /// This array defines the zoom levels that are available for selection in the camera
     /// interface. Each value represents a magnification factor.
-    @Published private(set) var zoomFactors: [CGFloat] = [1]
+    @Published var zoomFactors: [CGFloat] = [1]
 
     /// The current zoom factor applied to the camera preview.
     ///
     /// This property represents the magnification level of the camera view.
-    @Published private(set) var zoomFactor: CGFloat = 1
+    @Published var zoomFactor: CGFloat = 1
 
     /// The collection of media items displayed in the gallery.
     ///
@@ -186,28 +246,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 }
             }
         }
-    }
-
-    // MARK: - Private Computed Properties
-
-    private var canTakeMoreClips: Bool {
-        let mode = configuration.mode
-
-        guard mode.maxPictureCount == 0, mode.maxVideoCount == 0, mode.maxMediaCount > 0 else {
-            return medias.lazy.filter(\.isClip).count < mode.maxVideoCount
-        }
-
-        return mediasTaken < mode.maxMediaCount
-    }
-
-    private var canTakeMorePhotos: Bool {
-        let mode = configuration.mode
-
-        guard mode.maxPictureCount == 0, mode.maxVideoCount == 0, mode.maxMediaCount > 0 else {
-            return photosTaken < mode.maxPictureCount
-        }
-
-        return mediasTaken < mode.maxMediaCount
     }
 
     // MARK: - Computed Properties
@@ -306,6 +344,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// - Parameters:
     ///   - configuration: The camera configuration containing settings and preferences.
     ///   - orientationMonitor: The orientation monitor to use for tracking device orientation .
+    ///   - truVideoSdk: The main entry point for the TruVideo SDK.
     ///   - onCompleted: Closure to be called when the operation completes with the result.
     init(
         configuration: TruvideoSdkCameraConfiguration,
@@ -319,28 +358,30 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         self.configuration = configuration
         self.onCompleted = onCompleted
         self.orientationMonitor = orientationMonitor
-
-        self.previewLayer.session = captureSession
-        self.previewLayer.videoGravity = .resizeAspectFill
-
-        self.orientationMonitor.add(self)
-        self.orientationMonitor.startMonitoring()
-
         self.isAuthenticated = truVideoSdk.isAuthenticated
-        self.isTorchEnabled = configuration.flashMode == .on
 
-        movieOutputProcessor.delegate = self
-        movieOutputProcessor.maxRecordingDuration = configuration.mode.maxVideoDuration
-        movieOutputProcessor.outputDirectory = outputDirectory
+        if isAuthenticated {
+            self.previewLayer.session = captureSession
+            self.previewLayer.videoGravity = .resizeAspectFill
 
-        initialize()
-        configureObservers()
+            self.orientationMonitor.add(self)
+            self.orientationMonitor.startMonitoring()
 
-        configureSessionObservers()
-        subscribeToSecondsRecorded()
+            self.isTorchEnabled = configuration.flashMode == .on
 
-        if captureSession.canSetSessionPreset(selectedPreset) {
-            captureSession.sessionPreset = selectedPreset
+            movieOutputProcessor.delegate = self
+            movieOutputProcessor.maxRecordingDuration = configuration.mode.maxVideoDuration
+            movieOutputProcessor.outputDirectory = outputDirectory
+
+            initialize()
+            configureObservers()
+
+            configureSessionObservers()
+            subscribeToSecondsRecorded()
+
+            if captureSession.canSetSessionPreset(selectedPreset) {
+                captureSession.sessionPreset = selectedPreset
+            }
         }
     }
 
@@ -350,75 +391,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     // MARK: - Instance methods
 
-    /// Captures a photo using the photo device and adds it to the photos collection.
-    ///
-    /// This function initiates an asynchronous photo capture operation on the main actor.
-    /// If the capture is successful, the captured photo is appended to the photos array.
-    /// If an error occurs during capture, the error's localized description is stored
-    /// in the localizedError property for user feedback.
-    func capturePhoto() {
-        Task { @MainActor in
-            guard canTakeMorePhotos else {
-                didReceiveError(Localizations.maxNumberOfPicturesReached)
-                return
-            }
-
-            let debounceWindow = configuration.flashMode != .off ? 0.45 : 0
-            let systemUptime = ProcessInfo.processInfo.systemUptime
-
-            if systemUptime - lastPhotoCaptureUptime < debounceWindow || isTorchEnabled, isCaptureInFlight {
-                return
-            }
-
-            isCaptureInFlight = true
-            lastPhotoCaptureUptime = systemUptime
-            mediasTaken += 1
-            photosTaken += 1
-
-            defer { isCaptureInFlight = false }
-
-            do {
-                allowsHitTesting = false
-                Task.delayed(milliseconds: 600) { allowsHitTesting = true }
-
-                let photo = try await videoDevice.capturePhoto()
-
-                medias.insert(.photo(photo), at: 0)
-                validate()
-            } catch {
-                mediasTaken -= 1
-                photosTaken -= 1
-                didReceiveError(error.localizedDescription)
-            }
-        }
-    }
-
-    /// Adjusts the current zoom level based on a magnification value.
-    ///
-    /// This method applies a magnification factor to the last known zoom factor
-    /// and clamps the result to the valid range of `zoomFactors`.
-    ///
-    /// - The zoom factor is always kept within the minimum and maximum supported values.
-    /// - If the calculated factor is below the minimum, the minimum zoom is applied.
-    /// - If the factor is between the first two levels, the raw factor is used.
-    /// - If the factor exceeds the second level, it is clamped to the maximum zoom.
-    ///
-    /// - Parameter value: The magnification multiplier from a gesture
-    func magnify(by value: CGFloat) {
-        if zoomFactors.count > 1 {
-            let rawFactor = max(lastZoomFactor * value, zoomFactors[0])
-
-            guard rawFactor <= zoomFactors[1] else {
-                let zoomFactor = min(rawFactor, zoomFactors[zoomFactors.count - 1])
-                rampZoomFactor(to: zoomFactor, rate: 0)
-
-                return
-            }
-
-            rampZoomFactor(to: rawFactor)
-        }
-    }
-
     /// Processes the captured media and marks the validation state as valid.
     ///
     /// This method converts all captured media items to the TruVideo SDK format
@@ -426,6 +398,16 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// is ready for further processing or submission.
     func onContinue() {
         let result = TruvideoSdkCameraResult(media: medias.map(TruvideoSdkCameraMedia.from))
+
+        telemetryManager.captureBreadcrumb(
+            severity: .info,
+            category: .cameraLifecycle,
+            message: "Camera operation completed",
+            metadata: [
+                "clipCount": .int(medias.lazy.filter(\.isClip).count),
+                "photoCount": .int(medias.lazy.filter(\.isPhoto).count),
+            ]
+        )
 
         onCompleted(result)
         validationState = .valid
@@ -436,7 +418,20 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// Sets `validationState` to `.invalid` if clips or photos are not empty (preventing dismissal),
     /// or `.valid` if clips are empty (allowing dismissal).
     func onDismiss() {
+        allowsHitTesting = false
+
         guard medias.isEmpty, ![.paused, .running].contains(state) else {
+            telemetryManager.captureBreadcrumb(
+                severity: .warning,
+                category: .cameraLifecycle,
+                message: "Camera dismissed with unsaved media",
+                metadata: [
+                    "clipCount": .int(medias.lazy.filter(\.isClip).count),
+                    "photoCount": .int(medias.lazy.filter(\.isPhoto).count),
+                ]
+            )
+
+            allowsHitTesting = true
             requiresConfirmation = true
             validationState = .invalid
             return
@@ -458,296 +453,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    /// Smoothly animates the camera to a target zoom factor.
-    ///
-    /// This method updates the published `zoomFactor` and requests the underlying
-    /// `VideoDevice` to ramp the zoom to the specified level. The zoom transition
-    /// can be performed at a configurable rate, or using the device’s default rate
-    /// if none is provided. Execution is dispatched to the main actor for UI safety,
-    /// and any errors encountered are forwarded through `didReceiveError(_:)`.
-    ///
-    /// - Parameters:
-    ///   - zoomFactor: The target zoom factor to apply to the camera.
-    ///   - rate: The optional speed of the zoom ramp, in device-specific units.
-    func rampZoomFactor(to newZoomFactor: CGFloat, rate: Float = 10) {
-        Task { @MainActor in
-            do {
-                zoomFactor = newZoomFactor
-                try await videoDevice.setZoomFactor(zoomFactor, rate: rate)
-            } catch {
-                didReceiveError(error.localizedDescription)
-            }
-        }
-    }
-
-    /// Sets the camera focus point to the specified location asynchronously.
-    ///
-    /// This method sets the focus point of the video device to the provided coordinates
-    /// and handles any errors that may occur during the operation. The focus point
-    /// change is performed on the main actor to ensure thread safety for UI updates.
-    /// If an error occurs during the focus point setting, the localized error is
-    /// cleared to prevent displaying stale error messages.
-    ///
-    /// - Parameter point: The normalized point (0.0 to 1.0) where focus should be set
-    func setFocusPoint(at point: CGPoint) {
-        Task { @MainActor in
-            do {
-                let point = previewLayer.captureDevicePointConverted(fromLayerPoint: point)
-                try await videoDevice.setFocusPoint(at: point)
-            } catch {
-                didReceiveError(error.localizedDescription)
-            }
-        }
-    }
-
-    /// Sets the capture session resolution to the specified preset.
-    ///
-    /// This method attempts to update the `AVCaptureSession` resolution.
-    /// If the session supports the given preset, the configuration is applied
-    /// within a begin/commit configuration block to ensure consistency.
-    ///
-    /// - Parameter preset: The `AVCaptureSession.Preset` to apply (e.g., `.hd720`, `.hd1080`).
-    @MainActor
-    func setPreset(_ preset: AVCaptureSession.Preset) {
-        guard captureSession.canSetSessionPreset(preset) else {
-            didReceiveError(Localizations.presetNotSupported)
-            return
-        }
-
-        Task { @SessionActor in
-            captureSession.beginUpdates()
-            defer { captureSession.endUpdates() }
-
-            captureSession.sessionPreset = preset
-
-            Task { @DeviceActor in
-                do {
-                    try videoDevice.setZoomFactor(zoomFactor, rate: 0)
-
-                    videoDevice.configuration.preset = preset
-
-                    await MainActor.run { selectedPreset = preset }
-                } catch {
-                    await didReceiveError(Localizations.failedToSetPreset)
-                    captureSession.sessionPreset = selectedPreset
-                }
-            }
-        }
-    }
-
-    /// Switches between the front and back camera positions.
-    ///
-    /// This function toggles the camera position between the front-facing camera (selfie camera)
-    /// and the back-facing camera (main camera). It attempts to change the camera position
-    /// and updates the error state if the operation fails.
-    func switchCamera() {
-        Task { @MainActor in
-            allowsHitTesting = false
-
-            do {
-                let position = await videoDevice.position == .back ? AVCaptureDevice.Position.front : .back
-
-                try await videoDevice.setPosition(position)
-
-                let isTorchAvailable = await videoDevice.isTorchAvailable
-                let isFlashAvailable = await videoDevice.isFlashAvailable
-
-                self.isTorchAvailable = isTorchAvailable || isFlashAvailable
-
-                if !self.isTorchAvailable && isTorchEnabled {
-                    switchTorch()
-                }
-
-                zoomFactors = await videoDevice.displayVideoZoomFactors.sorted()
-                lastZoomFactor = 1
-                zoomFactor = 1
-
-                Task.delayed(milliseconds: 600) { allowsHitTesting = true }
-            } catch {
-                didReceiveError(error.localizedDescription)
-                allowsHitTesting = true
-            }
-        }
-    }
-
-    /// Toggles the camera's torch on or off with error handling.
-    ///
-    /// This function switches the torch state between enabled and disabled modes.
-    /// It optimistically updates the UI state first, then attempts to change the
-    /// actual torch mode. If the torch operation fails, it reverts the UI state
-    /// to maintain consistency between the visual state and the actual hardware state.
-    func switchTorch() {
-        Task { @DeviceActor in
-            await MainActor.run { isTorchEnabled.toggle() }
-
-            guard videoDevice.isTorchAvailable || videoDevice.isFlashAvailable else {
-                try videoDevice.setTorchMode(.off)
-                videoDevice.flashMode = .off
-
-                await didReceiveError(Localizations.torchNotAvailable)
-                return
-            }
-
-            do {
-                let torchMode = isTorchEnabled ? AVCaptureDevice.TorchMode.on : .off
-
-                if videoDevice.isTorchAvailable {
-                    try videoDevice.setTorchMode(torchMode)
-                }
-
-                if videoDevice.isFlashAvailable {
-                    videoDevice.flashMode = isTorchEnabled ? .on : .off
-                }
-            } catch {
-                await MainActor.run {
-                    isTorchEnabled.toggle()
-                    didReceiveError(error.localizedDescription)
-                }
-            }
-        }
-    }
-
-    /// Toggles the recording state between pause and record.
-    ///
-    /// This function manages the recording lifecycle by checking the current state
-    /// of the video device and performing the appropriate action. If the device
-    /// is currently running, it pauses the recording by pausing the movie processing.
-    func togglePause() {
-        Task { @MainActor in
-            switch movieOutputProcessor.state {
-            case .paused:
-                do {
-                    guard await audioDevice.isAvailable else {
-                        localizedError = Localizations.anotherAppIsUsingMicrophone
-                        isSnackbarPresented = true
-                        return
-                    }
-
-                    try await audioDevice.startCapturing()
-                    try await videoDevice.startCapturing()
-
-                    await movieOutputProcessor.startProcessing()
-
-                    state = .running
-
-                    await ensureTorchCompatibility()
-                } catch {
-                    didReceiveError(error.localizedDescription)
-                }
-
-            case .writing:
-                pauseSession()
-
-            default:
-                break
-            }
-        }
-    }
-
-    /// Toggles the recording state between start and stop.
-    ///
-    /// This function manages the recording lifecycle by checking the current state
-    /// of the video device and performing the appropriate action. If the device
-    /// is currently running, it stops the recording by ending movie processing
-    /// and stopping the recorder. If the device is not running, it starts
-    /// recording by calling the recorder's record method.
-    ///
-    /// The function operates on the main actor to ensure UI updates are performed
-    /// safely and handles errors by setting the localized error description
-    /// for user feedback. It uses async/await for proper coordination between
-    /// the video device state and recorder operations.
-    func toggleRecord() {
-        Task { @MainActor in
-            do {
-                switch movieOutputProcessor.state {
-                case .initialized, .finished, .failed:
-                    guard canTakeMoreClips else {
-                        didReceiveError(Localizations.maxNumberOfClipsReached)
-                        return
-                    }
-
-                    guard await audioDevice.isAvailable else {
-                        localizedError = Localizations.anotherAppIsUsingMicrophone
-                        isSnackbarPresented = true
-                        return
-                    }
-
-                    mediasTaken += 1
-
-                    try await videoDevice.startCapturing()
-                    try await audioDevice.startCapturing()
-
-                    await movieOutputProcessor.startProcessing()
-
-                    state = .running
-
-                    await ensureTorchCompatibility()
-
-                case .paused where state.canTransition(to: .finished),
-                    .writing where state.canTransition(to: .finished):
-
-                    try await endRecording()
-
-                default:
-                    break
-                }
-            } catch {
-                mediasTaken -= 1
-                didReceiveError(error.localizedDescription)
-            }
-        }
-    }
-
-    // MARK: - Internal methods
-
-    /// Displays an error message to the user through the snackbar interface.
-    ///
-    /// This function provides a centralized way to handle and display error messages
-    /// to users in the camera interface. It sets the localized error message and
-    /// triggers the presentation of a snackbar to inform the user about the error
-    /// condition. This ensures consistent error handling and user feedback across
-    /// the camera application.
-    ///
-    /// The function operates on the main actor to ensure UI updates are performed
-    /// safely and synchronously. It updates both the error message and the snackbar
-    /// presentation state, providing immediate visual feedback to the user about
-    /// any issues that occur during camera operations.
-    @MainActor
-    func didReceiveError(_ error: String) {
-        localizedError = error
-        isSnackbarPresented = true
-    }
-
-    /// Pauses the current recording session and all associated capture devices.
-    ///
-    /// This function safely pauses an active recording session by stopping the movie
-    /// output processor and pausing both audio and video capture devices. It performs
-    /// the pause operation asynchronously and handles any errors that occur during
-    /// the process by displaying them to the user through the error handling system.
-    ///
-    /// ## Error Handling
-    ///
-    /// Any errors that occur during the pause operation are automatically caught
-    /// and displayed to the user through the snackbar interface via `didReceiveError(_:)`,
-    /// ensuring that users are informed of any issues that prevent proper session pausing.
-    @MainActor
-    func pauseSession() {
-        Task {
-            do {
-                try await movieOutputProcessor.pause()
-
-                await audioDevice.pause()
-                await videoDevice.pause()
-
-                state = .paused
-
-                await ensureTorchCompatibility()
-            } catch {
-                didReceiveError(error.localizedDescription)
-            }
-        }
-    }
-
     // MARK: - OrientationMonitorSubscriber
 
     /// Handles a new device orientation update and applies the corresponding rotation angle.
@@ -765,46 +470,57 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    // MARK: - Private methods
+    // MARK: - Internal methods
 
-    @DeviceActor
-    private func configureDevices() async throws {
-        if audioDevice.authorizationStatus == .notDetermined, videoDevice.authorizationStatus == .notDetermined {
-            await requestDeviceAccess()
-        }
-
-        guard audioDevice.authorizationStatus == .authorized, videoDevice.authorizationStatus == .authorized else {
-            await MainActor.run { isAuthorized = false }
-            return
-        }
-
-        try videoDevice.configure(in: captureSession)
-        if audioDevice.isAvailable {
-            try audioDevice.configure(in: captureSession)
-        }
-
-        audioDevice.add(movieOutputProcessor)
-        videoDevice.add(movieOutputProcessor)
-
-        let position = configuration.lensFacing == .front ? AVCaptureDevice.Position.front : .back
-        let torchMode = configuration.flashMode == .on ? AVCaptureDevice.TorchMode.on : .off
-        let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
-
-        videoDevice.configuration.isHighResolutionEnabled = configuration.isHighResolutionPhotoEnabled
-        videoDevice.configuration.imageFormat = configuration.imageFormat.value
-
-        isTorchAvailable = videoDevice.isTorchAvailable || videoDevice.isFlashAvailable
-
-        if videoDevice.isFlashAvailable {
-            videoDevice.flashMode = configuration.flashMode.value
-        }
-
-        try videoDevice.setPosition(position)
-        try videoDevice.setTorchMode(torchMode)
-
-        videoDevice.setVideoOrientation(videoOrientation)
-        updatePreviewOrientation()
+    /// Displays an error message to the user through the snackbar interface.
+    ///
+    /// This function provides a centralized way to handle and display error messages
+    /// to users in the camera interface. It sets the localized error message and
+    /// triggers the presentation of a snackbar to inform the user about the error
+    /// condition. This ensures consistent error handling and user feedback across
+    /// the camera application.
+    ///
+    /// The function operates on the main actor to ensure UI updates are performed
+    /// safely and synchronously. It updates both the error message and the snackbar
+    /// presentation state, providing immediate visual feedback to the user about
+    /// any issues that occur during camera operations.
+    ///
+    /// - Parameter error: The localized error message to display to the user
+    @MainActor
+    func didReceiveError(_ error: String) {
+        localizedError = error
+        isSnackbarPresented = true
     }
+
+    /// Updates the camera preview and video output orientation to match the device orientation.
+    ///
+    /// This method synchronizes the camera preview layer and video capture output with
+    /// the current device orientation. It ensures that the camera feed displays correctly
+    /// regardless of how the user is holding the device. The method only processes valid
+    /// orientations (landscape left/right and portrait) and ignores unsupported orientations
+    /// like portrait upside down.
+    func updatePreviewOrientation() {
+        if [.landscapeLeft, .landscapeRight, .portrait].contains(deviceOrientation) {
+            Task { @MainActor in
+                let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
+
+                previewLayer.connection?.videoOrientation = videoOrientation
+                await videoDevice.setVideoOrientation(videoOrientation)
+
+                telemetryManager.captureBreadcrumb(
+                    severity: .info,
+                    category: .cameraUI,
+                    message: "Preview orientation updated",
+                    metadata: [
+                        "orientation": .string("\(deviceOrientation)"),
+                        "videoOrientation": .string("\(videoOrientation)"),
+                    ]
+                )
+            }
+        }
+    }
+
+    // MARK: - Private methods
 
     @MainActor
     private func endRecording() async throws {
@@ -812,49 +528,22 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
         let clip = try await movieOutputProcessor.endProcessing()
 
+        await telemetryManager.captureBreadcrumb(
+            severity: .info,
+            category: .videoRecording,
+            message: "Video recording stopped",
+            metadata: [
+                "devicePosition": .int(videoDevice.position.rawValue),
+                "duration": .double(clip.duration),
+                "clipCount": .int(medias.lazy.filter(\.isClip).count + 1),
+                "zoomFactor": .double(zoomFactor),
+            ]
+        )
+
         medias.insert(.clip(clip), at: 0)
 
         await videoDevice.pause()
         await audioDevice.pause()
-
-        validate()
-    }
-
-    @DeviceActor
-    private func ensureTorchCompatibility() {
-        isTorchAvailable =
-            switch state {
-            case .running:
-                videoDevice.isTorchAvailable
-
-            default:
-                videoDevice.isTorchAvailable || videoDevice.isFlashAvailable
-            }
-
-        if !isTorchAvailable, isTorchEnabled {
-            switchTorch()
-        }
-    }
-
-    private func initialize() {
-        Task(priority: .userInitiated) { @SessionActor in
-            do {
-                try await configureDevices()
-
-                captureSession.startRunning()
-
-                Task.delayed(milliseconds: 1_200) { @MainActor in
-                    allowsHitTesting = true
-                }
-
-                let displayVideoZoomFactors = await videoDevice.displayVideoZoomFactors
-
-                await MainActor.run { self.zoomFactors = displayVideoZoomFactors }
-            } catch {
-                await MainActor.run { allowsHitTesting = true }
-                await didReceiveError(error.localizedDescription)
-            }
-        }
     }
 
     private func orientationDidUpdate(to orientation: UIDeviceOrientation) {
@@ -879,41 +568,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         }
     }
 
-    @MainActor
-    private func requestDeviceAccess() async {
-        await audioDevice.requestAccess()
-        await videoDevice.requestAccess()
-    }
-
     private func subscribeToSecondsRecorded() {
         movieOutputProcessor.$recordingDuration
             .filter(\.isValid)
             .receive(on: RunLoop.main)
             .map { $0.seconds.toHMS() }
             .assign(to: &$secondsRecorded)
-    }
-
-    private func validate() {
-        Task.delayed(milliseconds: 500) { @MainActor in
-            if medias.count == configuration.mode.maxMediaCount {
-                let medias = medias.map(TruvideoSdkCameraMedia.from)
-                let result = TruvideoSdkCameraResult(media: medias)
-
-                onCompleted(result)
-                validationState = .valid
-            }
-        }
-    }
-
-    private func updatePreviewOrientation() {
-        if [.landscapeLeft, .landscapeRight, .portrait].contains(deviceOrientation) {
-            Task { @MainActor in
-                let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
-
-                previewLayer.connection?.videoOrientation = videoOrientation
-                await videoDevice.setVideoOrientation(videoOrientation)
-            }
-        }
     }
 }
 
@@ -942,13 +602,49 @@ extension CameraViewModel: MovieOutputProcessorDelegate {
 
             switch result {
             case .failure(let error):
-                mediasTaken -= 1
+                mediasTaken = max(0, mediasTaken - 1)
                 didReceiveError(error.localizedDescription)
 
             case .success(let clip):
+                await telemetryManager.captureBreadcrumb(
+                    severity: .warning,
+                    category: .videoRecording,
+                    message: "Maximum recording duration reached",
+                    metadata: [
+                        "devicePosition": .int(videoDevice.position.rawValue),
+                        "duration": .double(clip.duration),
+                        "maxDuration": .double(configuration.mode.maxVideoDuration),
+                        "clipCount": .int(medias.lazy.filter(\.isClip).count + 1),
+                    ]
+                )
+
                 medias.insert(.clip(clip), at: 0)
                 didReceiveError(Localizations.maxClipDurationReached)
             }
         }
+    }
+}
+
+extension TruvideoSdkCameraConfiguration {
+
+    /// A dictionary of telemetry metadata representing the camera configuration settings.
+    ///
+    /// This computed property provides a structured collection of all key camera configuration
+    /// values in a format suitable for telemetry reporting. It converts configuration settings
+    /// into typed metadata values that can be tracked, logged, and analyzed for debugging,
+    /// analytics, and user behavior insights.
+    ///
+    /// - Returns: A dictionary mapping configuration keys to their typed metadata values
+    var metadata: [String: MetadataValue] {
+        [
+            "flashMode": .string(flashMode.rawValue),
+            "lensFacing": .string(lensFacing.rawValue),
+            "imageFormat": .string(imageFormat.rawValue),
+            "isHighResolutionEnabled": .bool(isHighResolutionPhotoEnabled),
+            "maxPictureCount": .int(mode.maxPictureCount),
+            "maxVideoCount": .int(mode.maxVideoCount),
+            "maxMediaCount": .int(mode.maxMediaCount),
+            "maxVideoDuration": .double(mode.maxVideoDuration),
+        ]
     }
 }

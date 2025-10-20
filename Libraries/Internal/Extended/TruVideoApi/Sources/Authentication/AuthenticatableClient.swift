@@ -6,7 +6,7 @@ import DI
 import Foundation
 internal import InternalUtilities
 import Networking
-import StorageKit
+internal import StorageKit
 import Utilities
 
 /// A protocol defining the interface for client authentication with the TruVideo API.
@@ -206,7 +206,7 @@ public final class AuthenticationClient: AuthenticatableClient {
                     "osVersion": context.osVersion,
                     "timestamp": context.timestamp,
                 ],
-                encoder: .json,
+                encoder: JSONParameterEncoder.sortedKeys,
                 headers: headers
             )
             .validate(RequestValidator.validate)

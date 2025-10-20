@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+import InternalUtilities
 import StorageKit
 import Testing
 import NetworkingTesting
@@ -35,7 +36,7 @@ struct SessionTokenRefresherTests {
             let sut = SessionTokenRefresher(session: session)
             
             // When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -70,7 +71,7 @@ struct SessionTokenRefresherTests {
             let sut = SessionTokenRefresher(session: session)
             
             // When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -102,7 +103,7 @@ struct SessionTokenRefresherTests {
             let sut = SessionTokenRefresher(session: session)
             
             // When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -134,7 +135,7 @@ struct SessionTokenRefresherTests {
             let sut = SessionTokenRefresher(session: session)
             
             // When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -179,7 +180,7 @@ struct SessionTokenRefresherTests {
             )!
             
             // When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.data = data
@@ -235,7 +236,7 @@ struct SessionTokenRefresherTests {
             )!
             
             // When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.data = data
@@ -271,7 +272,7 @@ struct SessionTokenRefresherTests {
             let sut = SessionTokenRefresher(session: session)
             
             // When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             
             // Then
@@ -299,7 +300,7 @@ struct SessionTokenRefresherTests {
             let sut = SessionTokenRefresher(session: session)
             
             // When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -342,7 +343,7 @@ struct SessionTokenRefresherTests {
             )
             
             //When
-            dependencies.apiEnvironment = .dev
+            dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(

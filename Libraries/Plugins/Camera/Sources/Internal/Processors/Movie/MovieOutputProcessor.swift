@@ -381,6 +381,7 @@ final class MovieOutputProcessor {
                     )
                 }
             } else {
+                state = .failed
                 throw UtilityError(
                     kind: .MovieOutputProcessorErrorReason.endProcessingFailed,
                     failureReason: "Cannot end processing: state transition not allowed"
@@ -495,7 +496,6 @@ final class MovieOutputProcessor {
             Task {
                 do {
                     let clip = try await endProcessing()
-
                     delegate?.movieOutputProcessor(self, didReachMaxDuration: .success(clip))
                 } catch {
                     delegate?.movieOutputProcessor(self, didReachMaxDuration: .failure(error))

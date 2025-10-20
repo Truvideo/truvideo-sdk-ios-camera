@@ -4,11 +4,13 @@
 
 import SwiftUI
 
+/// The main camera view that displays the video preview and camera controls.
+///
+/// This view provides a complete camera interface with video preview, zoom controls,
+/// recording indicators, and various overlays for camera interaction. It manages the
+/// camera UI layout and responds to user gestures including tap-to-focus and pinch-to-zoom.
 struct Camera: View {
     // MARK: - Environment Properties
-
-    @Environment(\.dismiss)
-    var dismiss
 
     @Environment(\.theme)
     var theme
@@ -40,11 +42,9 @@ struct Camera: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             .padding(.top, theme.spacingTheme.xxxl)
-            .onTapGesture(perform: onTap(at:))
-            .onChange(of: viewModel.validationState) { validationState in
-                if validationState == .valid {
-                    dismiss()
-                }
+            .onTapGesture { point in
+                viewModel.setFocusPoint(at: point)
+                isZoomPickerExpanded = false
             }
             .overlay {
                 TimerView(secondsRecorded: $viewModel.secondsRecorded)
@@ -72,8 +72,8 @@ struct Camera: View {
             .padding(.top)
             .padding(.horizontal, theme.spacingTheme.sm)
             .hidden(viewModel.medias.isEmpty || [.paused, .running].contains(viewModel.state))
+            .allowsHitTesting(viewModel.allowsHitTesting)
             .animation(.linear(duration: 0.1).delay(0.7), value: viewModel.medias)
-            .id(viewModel.deviceOrientation)
     }
 
     private func makeMagnificationGesture() -> some Gesture {
@@ -82,11 +82,6 @@ struct Camera: View {
             .onEnded { _ in
                 viewModel.lastZoomFactor = viewModel.zoomFactor
             }
-    }
-
-    private func onTap(at point: CGPoint) {
-        viewModel.setFocusPoint(at: point)
-        isZoomPickerExpanded = false
     }
 }
 

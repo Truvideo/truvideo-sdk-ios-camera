@@ -23,57 +23,8 @@ final class ClipViewController: UIViewController {
 
     // MARK: - Private Properties
 
-    private var playerView: PlayerView
-
-    // MARK: - Types
-
-    /// A UIView subclass that wraps an `AVPlayerLayer` for video playback.
-    final class PlayerView: UIView {
-        // MARK: - Private Properties
-
-        private let playerLayer: AVPlayerLayer
-
-        // MARK: - Initializers
-
-        /// Initializes the player view with a video URL.
-        ///
-        /// - Parameter url: The URL of the video to play.
-        init(url: URL) {
-            playerLayer = AVPlayerLayer(player: AVPlayer(url: url))
-
-            super.init(frame: .zero)
-
-            backgroundColor = .black
-            clipsToBounds = true
-            layer.addSublayer(playerLayer)
-        }
-
-        @available(*, unavailable)
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
-        }
-
-        // MARK: Overridden methods
-
-        override func layoutSubviews() {
-            super.layoutSubviews()
-
-            playerLayer.frame = frame
-        }
-
-        // MARK: - Instance methods
-
-        /// Starts or resumes video playback.
-        func play() {
-            playerLayer.player?.play()
-        }
-
-        /// Pauses the video and resets it to the beginning.
-        func stop() {
-            playerLayer.player?.pause()
-            playerLayer.player?.seek(to: .zero, toleranceBefore: .zero, toleranceAfter: .zero)
-        }
-    }
+    /// The player for playback control.
+    private let player: AVPlayer
 
     // MARK: - Initializer
 
@@ -82,8 +33,8 @@ final class ClipViewController: UIViewController {
     /// - Parameter clip: The video to display.
     init(clip: VideoClip) {
         self.clip = clip
+        self.player = AVPlayer(url: clip.url)
         imageView.kf.setImage(with: clip.thumbnailURL)
-        playerView = PlayerView(url: clip.url)
 
         super.init(nibName: nil, bundle: nil)
     }
@@ -98,27 +49,57 @@ final class ClipViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        let videoPlayerView = VideoPlayerView(player: player)
+        
+        let hostingController = UIHostingController(rootView: videoPlayerView)
+        hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+
+        addChild(hostingController)
+        
         view.backgroundColor = .black
-        playerView.translatesAutoresizingMaskIntoConstraints = false
-        view.addSubview(playerView)
+        view.addSubview(hostingController.view)
 
         NSLayoutConstraint.activate([
-            playerView.topAnchor.constraint(equalTo: view.topAnchor),
-            playerView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            playerView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            playerView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
+            hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+            hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
         ])
+
+        hostingController.didMove(toParent: self)
     }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
-
-        playerView.play()
+        player.play()
     }
 
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
+        player.pause()
+        player.seek(to: .zero)
+    }
+}
 
-        playerView.stop()
+/// A  view that displays a video using an `AVPlayer`.
+struct VideoPlayerView: View {
+    // MARK: - Properties
+
+    let player: AVPlayer
+
+    // MARK: - Environment Properties
+
+    @Environment(\.theme)
+    var theme
+
+    // MARK: - Body
+
+    var body: some View {
+        VideoPlayer(player: player)
+            .padding(.top, UIDevice.current.isPad ? theme.spacingTheme.x(10) : theme.spacingTheme.xxxl)
+            .background {
+                Color.black
+                    .ignoresSafeArea()
+            }
     }
 }

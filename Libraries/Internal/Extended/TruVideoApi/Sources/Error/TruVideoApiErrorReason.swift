@@ -101,6 +101,5 @@ extension ErrorReason {
         /// Use this error to detect and handle failures when progressively retrieving
         /// upload parts for streaming or multipart uploads.
         public static let uploadPartsRetrievalFailed = ErrorReason(rawValue: "UploadPartsRetrievalFailed")
-
     }
 }

@@ -13,67 +13,109 @@ See [Global Screen View & Breadcrumb Events](./screen-view.md) for details.
 ---
 
 ## 📸 Capture Photo Events
-| Event Name | Severity | Description | Metadata |
-| ---------- | -------- | ----------- | -------- |
-| **photo_capture_started** | ![Info](https://img.shields.io/badge/Info-green) | User initiated a photo capture. | **device**, **flashMode** |
-| **photo_capture_succeeded** | ![Info](https://img.shields.io/badge/Info-green) | Photo successfully captured. | **device**, **resolution**, **mediaId** |
-| **photo_capture_failed** | ![Error](https://img.shields.io/badge/Error-red) | Photo capture failed. | **device**, **error** |
+
+### Breadcrumbs
+| Category | Severity | Message | Metadata |
+| -------- | -------- | ------- | -------- |
+| **photo_capture** | ![Info](https://img.shields.io/badge/Info-green) | Photo capture started | **devicePosition**, **flashMode**, **resolution** |
+| **photo_capture** | ![Info](https://img.shields.io/badge/Info-green) | Photo captured successfully | **devicePosition**, **flashMode**, **resolution** |
+
+### Events
+| Event Name | Severity | Message | Metadata |
+| ---------- | -------- | ------- | -------- |
+| `photo_capture_failed` | ![Error](https://img.shields.io/badge/Error-red) | Photo capture failed | **devicePosition**, **flashMode**, **resolution** |
 
 ---
 
 ## 🎥 Recording Video Events
-| Event Name | Severity | Description | Metadata |
-| ---------- | -------- | ----------- | -------- |
-| **video_recording_started** | ![Info](https://img.shields.io/badge/Info-green) | User started video recording. | **device**, **resolution**, **isTorchEnabled** |
-| **video_recording_paused** | ![Info](https://img.shields.io/badge/Info-green) | User paused video recording. | **device**, **duration** |
-| **video_recording_resumed** | ![Info](https://img.shields.io/badge/Info-green) | User resumed video recording. | **device**, **duration** |
-| **video_recording_stopped** | ![Info](https://img.shields.io/badge/Info-green) | User stopped video recording. | **device**, **duration**, **mediaId** |
-| **video_recording_failed** | ![Error](https://img.shields.io/badge/Error-red) | Video recording failed. | **device**, **error** |
-| **video_recording_max_duration_reached** | ![Warning](https://img.shields.io/badge/Warning-yellow) | Maximum recording duration reached. | **device**, **duration**, **mediaId** |
+
+### Breadcrumbs
+| Category | Severity | Message | Metadata |
+| -------- | -------- | ------- | -------- |
+| **video_recording** | ![Info](https://img.shields.io/badge/Info-green) | Video recording started | **devicePosition**, **resolution**, **isTorchAvailable**, **isTorchEnabled**, **codec**, **aspectRatio**, **zoomFactor**, **stabilizationMode**, **maxDuration**, **isAudioAvailable** |
+| **video_recording** | ![Info](https://img.shields.io/badge/Info-green) | Video recording paused | **devicePosition**, **duration**, **clipCount**, **zoomFactor** |
+| **video_recording** | ![Info](https://img.shields.io/badge/Info-green) | Video recording resumed | **devicePosition**, **duration**, **clipCount**, **zoomFactor** |
+| **video_recording** | ![Info](https://img.shields.io/badge/Info-green) | Video recording stopped | **devicePosition**, **duration**, **clipCount**, **zoomFactor** |
+| **video_recording** | ![Warning](https://img.shields.io/badge/Warning-yellow) | Maximum recording duration reached | **devicePosition**, **duration**, **maxDuration**, **clipCount** |
+
+### Events
+| Event Name | Severity | Message | Metadata |
+| ---------- | -------- | ------- | -------- |
+| `video_recording_failed` | ![Error](https://img.shields.io/badge/Error-red) | Video recording failed | **devicePosition**, **resolution**, **duration**, **processorState**, **isAudioAvailable** |
 
 ---
 
 ## 🔒 Permissions & Authorization Events
-| Event Name | Severity | Description | Metadata |
-| ---------- | -------- | ----------- | -------- |
-| **authorization_requested** | ![Info](https://img.shields.io/badge/Info-green) | User prompted for camera and/or microphone permissions. | **devices** |
-| **authorization_granted** | ![Info](https://img.shields.io/badge/Info-green) | Both camera and microphone access granted. | **devices** |
-| **authorization_camera_denied** | ![Error](https://img.shields.io/badge/Error-red) | Camera permission denied. | **device**, **status** |
-| **authorization_microphone_denied** | ![Error](https://img.shields.io/badge/Error-red) | Microphone permission denied. | **device**, **status** |
+
+### Breadcrumbs
+| Category | Severity | Message | Metadata |
+| -------- | -------- | ------- | -------- |
+| **authorization** | ![Info](https://img.shields.io/badge/Info-green) | Authorization requested | **devices** |
+| **authorization** | ![Info](https://img.shields.io/badge/Info-green) | Authorization granted | **devices** |
+
+### Events
+| Event Name | Severity | Message | Metadata |
+| ---------- | -------- | ------- | -------- |
+| `camera_permission_denied` | ![Error](https://img.shields.io/badge/Error-red) | Camera permission denied | **device**, **status** |
+| `microphone_permission_denied` | ![Error](https://img.shields.io/badge/Error-red) | Microphone permission denied | **device**, **status** |
 
 ---
 
 ## 🛠️ Camera Interaction Events
-| Event Name | Severity | Description | Metadata |
-| ---------- | -------- | ----------- | -------- |
-| **camera_switched** | ![Info](https://img.shields.io/badge/Info-green) | User switched between front/back cameras. | **previousDevice**, **newDevice** |
-| **camera_torch_toggled** | ![Info](https://img.shields.io/badge/Info-green) | Torch (flashlight) turned on/off. | **device**, **isTorchEnabled** |
-| **camera_zoom_changed** | ![Info](https://img.shields.io/badge/Info-green) | Zoom factor changed. | **device**, **zoomFactor** |
-| **camera_focus_changed** | ![Info](https://img.shields.io/badge/Info-green) | User tapped to change focus. | **device**, **focusPoint** |
+
+### Breadcrumbs
+| Category | Severity | Message | Metadata |
+| -------- | -------- | ------- | -------- |
+| **camera_ui** | ![Info](https://img.shields.io/badge/Info-green) | Camera switched | **previousDevicePosition**, **newDevicePosition** |
+| **camera_ui** | ![Info](https://img.shields.io/badge/Info-green) | Torch toggled | **devicePosition**, **isTorchEnabled** |
+| **camera_ui** | ![Info](https://img.shields.io/badge/Info-green) | Zoom magnification started | **devicePosition**, **magnificationValue**, **lastZoomFactor** |
+| **camera_ui** | ![Info](https://img.shields.io/badge/Info-green) | Zoom changed | **devicePosition**, **zoomFactor** |
+| **camera_ui** | ![Info](https://img.shields.io/badge/Info-green) | Focus changed | **devicePosition**, **focusPoint** |
+| **camera_ui** | ![Info](https://img.shields.io/badge/Info-green) | Preview orientation updated | **orientation**, **videoOrientation** |
+
+### Events
+| Event Name | Severity | Message | Metadata |
+| ---------- | -------- | ------- | -------- |
+| `camera_switch_failed` | ![Error](https://img.shields.io/badge/Error-red) | Camera switch failed | **previousDevicePosition**, **newDevicePosition** |
+| `focus_change_failed` | ![Error](https://img.shields.io/badge/Error-red) | Focus change failed | **devicePosition**, **focusPoint** |
+| `torch_not_available` | ![Error](https://img.shields.io/badge/Error-red) | Torch not available on device | **devicePosition** |
 
 ---
 
 ## ✅ Validation & Completion Events
-| Event Name | Severity | Description | Metadata |
-| ---------- | -------- | ----------- | -------- |
-| **media_validation_succeeded** | ![Info](https://img.shields.io/badge/Info-green) | Media collection passed validation. | **mediaCount**, **state** |
-| **media_validation_failed** | ![Error](https://img.shields.io/badge/Error-red) | Media collection failed validation. | **mediaCount**, **state** |
-| **operation_completed** | ![Info](https://img.shields.io/badge/Info-green) | Camera operation finished successfully. | **mediaCount**, **result** |
-| **camera_dismissed_with_unsaved_media** | ![Warning](https://img.shields.io/badge/Warning-yellow) | User dismissed camera while unsaved media still present. | **mediaCount**, **mediaTypes** |
+
+### Breadcrumbs
+| Category | Severity | Message | Metadata |
+| -------- | -------- | ------- | -------- |
+| **camera_lifecycle** | ![Info](https://img.shields.io/badge/Info-green) | Camera initialization started | (none) |
+| **camera_lifecycle** | ![Info](https://img.shields.io/badge/Info-green) | Camera initialized successfully | **devicePosition**, **zoomFactors**, **isAuthorized**, **isTorchAvailable**, **flashMode**, **lensFacing**, **imageFormat**, **isHighResolutionEnabled**, **maxPictureCount**, **maxVideoCount**, **maxMediaCount**, **maxVideoDuration**, **resolution** |
+| **camera_lifecycle** | ![Info](https://img.shields.io/badge/Info-green) | Camera operation completed | **clipCount**, **photoCount**, **state** |
+| **camera_lifecycle** | ![Warning](https://img.shields.io/badge/Warning-yellow) | Camera dismissed with unsaved media | **clipCount**, **photoCount**, **state** |
+
+### Events
+| Event Name | Severity | Message | Metadata |
+| ---------- | -------- | ------- | -------- |
+| `camera_initialization_failed` | ![Error](https://img.shields.io/badge/Error-red) | Camera initialization failed | **isAuthorized** |
 
 ---
 
 ## ⚙️ Camera System Notifications
-| Event Name | Severity | Description | Metadata |
-| ---------- | -------- | ----------- | -------- |
-| **camera_received_services_were_reset** | ![Info](https://img.shields.io/badge/Info-green) | Camera module received a system reset notification. | **statusCode**, **isRecording**, **device**, **resolution** |
-| **camera_recovering_from_reset** | ![Info](https://img.shields.io/badge/Info-green) | Camera is attempting to recover from system reset. | **statusCode**, **isRecording** |
-| **camera_recovered_from_reset** | ![Info](https://img.shields.io/badge/Info-green) | Camera successfully recovered from system reset. | **statusCode**, **isRecording** |
-| **camera_failed_to_recover_from_reset** | ![Error](https://img.shields.io/badge/Error-red) | Camera failed to recover after system reset. | **statusCode**, **error**, **isRecording** |
-| **camera_audio_route_change_received** | ![Info](https://img.shields.io/badge/Info-green) | Camera module received an audio route change notification. | **route**, **reason**, **isRecording** |
-| **camera_audio_route_change_failed** | ![Error](https://img.shields.io/badge/Error-red) | Camera module failed to reconfigure audio after route change. | **error**, **route**, **reason**, **isRecording** |
-| **camera_runtime_error_received** | ![Error](https://img.shields.io/badge/Error-red) | Camera capture session received a runtime error notification. | **statusCode**, **error**, **device**, **isRecording** |
-| **camera_session_interrupted** | ![Info](https://img.shields.io/badge/Info-green) | Camera capture session was interrupted by the system. | **reason**, **isRecording** |
+
+### Breadcrumbs
+| Category | Severity | Message | Metadata |
+| -------- | -------- | ------- | -------- |
+| **camera_system** | ![Info](https://img.shields.io/badge/Info-green) | Camera services were reset | **state** |
+| **camera_system** | ![Info](https://img.shields.io/badge/Info-green) | Camera recovering from reset | **state** |
+| **camera_system** | ![Info](https://img.shields.io/badge/Info-green) | Camera recovered from reset | **state** |
+| **camera_system** | ![Info](https://img.shields.io/badge/Info-green) | Audio route changed | **reason**, **state** |
+| **camera_system** | ![Info](https://img.shields.io/badge/Info-green) | Camera session interrupted | **reason**, **state** |
+
+### Events
+| Event Name | Severity | Message | Metadata |
+| ---------- | -------- | ------- | -------- |
+| `camera_failed_to_recover_from_reset` | ![Error](https://img.shields.io/badge/Error-red) | Camera failed to recover from reset | **state** |
+| `audio_route_change_failed` | ![Error](https://img.shields.io/badge/Error-red) | Audio route change failed | **reason**, **state** |
+| `camera_runtime_error` | ![Error](https://img.shields.io/badge/Error-red) | Camera runtime error | **errorCode**, **state** |
 
 ---
 
@@ -81,33 +123,41 @@ See [Global Screen View & Breadcrumb Events](./screen-view.md) for details.
 
 Below is a reference of all metadata fields captured across Camera Module telemetry events:
 
-- **aspectRatio** → Current aspect ratio of the preview (e.g., `9:16`, `16:9`).  
-- **device** → Active capture device:  
-  - `"front_camera"` → front-facing camera  
-  - `"back_camera"` → rear-facing camera  
-  - `"microphone"` → active audio input device  
-  - `"unknown"` → could not be determined  
-- **devices** → List of devices involved in permission prompt (e.g., `["camera","microphone"]`).  
-- **duration** → Length of video recording in seconds.  
-- **error** → Human-readable error message string.  
-- **flashMode** → Flash setting during capture (`on`, `off`, `auto`).  
-- **focusPoint** → Normalized coordinates (0–1) where user tapped to focus.  
-- **isRecording** → Boolean indicating if a recording was active.  
+- **aspectRatio** → Current aspect ratio of the preview as string (e.g., `"0.5625"` for 9:16).  
+- **clipCount** → Number of video clips currently captured.  
+- **codec** → Video codec used for encoding (e.g., `"h264"`, `"hevc"`).  
+- **devicePosition** → Active camera position integer value (0 = unspecified, 1 = front, 2 = back).  
+- **devices** → Array of device strings in permission prompt (e.g., `["camera", "microphone"]`).  
+- **duration** → Length of video recording in seconds (double).  
+- **errorCode** → Numeric AVError code (e.g., `-11819`).  
+- **flashMode** → Flash setting during capture as string (e.g., `"on"`, `"off"`, `"auto"`).  
+- **focusPoint** → Normalized coordinates as string where user tapped to focus (e.g., `"(0.5, 0.5)"`).  
+- **imageFormat** → Image format setting as string (e.g., `"jpeg"`, `"heif"`).  
+- **isAudioAvailable** → Boolean indicating if microphone is available.  
+- **isHighResolutionEnabled** → Boolean indicating if high resolution photo capture is enabled.  
+- **isTorchAvailable** → Boolean indicating if torch/flash is available.  
 - **isTorchEnabled** → Boolean indicating torch state (on/off).  
-- **mediaCount** → Number of media items currently captured.  
-- **mediaId** → Identifier for a specific media item (photo/video).  
-- **mediaTypes** → Types of media present (e.g., `["photo"]`, `["video","photo"]`).  
-- **newDevice** → Device after switching (front/back).  
-- **previousDevice** → Device before switching (front/back).  
-- **reason** → Reason for interruption or route change (e.g., `oldDeviceUnavailable`, `systemPressure`).  
-- **resolution** → Current capture preset (`720p`, `1080p`, `4k`).  
-- **result** → Outcome of operation (e.g., `success`, `cancelled`).  
-- **route** → Audio route transition (e.g., `"speaker → headphones"`).  
-- **screenName** → Name of the screen/view being tracked.  
-- **state** → Validation or recording state (`initialized`, `running`, `paused`, `finished`, `invalid`).  
-- **status** → Authorization status (`authorized`, `denied`, `restricted`).  
-- **statusCode** → Numeric AVFoundation error/status code (e.g., `-11819`).  
-- **zoomFactor** → Current zoom factor applied to the preview.  
+- **lastZoomFactor** → The zoom factor before magnification gesture (double).  
+- **lensFacing** → Initial lens facing preference as string (e.g., `"front"`, `"back"`).  
+- **magnificationValue** → Pinch-to-zoom gesture magnification multiplier (double).  
+- **maxDuration** → Maximum allowed recording duration in seconds (double).  
+- **maxMediaCount** → Maximum total number of media items (photos + videos) allowed (integer).  
+- **maxPictureCount** → Maximum number of photos allowed (integer).  
+- **maxVideoCount** → Maximum number of video clips allowed (integer).  
+- **maxVideoDuration** → Maximum duration for a single video clip in seconds (double).  
+- **newDevicePosition** → Camera position after switching (integer value).  
+- **orientation** → Device orientation as string (e.g., `"portrait"`, `"landscapeLeft"`, `"landscapeRight"`).  
+- **photoCount** → Number of photos currently captured.  
+- **previousDevicePosition** → Camera position before switching (integer value).  
+- **processorState** → Movie processor state as string (e.g., `"writing"`, `"paused"`).  
+- **reason** → Reason code for interruption or route change (integer).  
+- **resolution** → Current capture preset as string (e.g., `"hd1920x1080"`, `"hd1280x720"`).  
+- **stabilizationMode** → Video stabilization mode (integer value).  
+- **state** → Camera recording state as string (e.g., `"initialized"`, `"running"`, `"paused"`, `"finished"`).  
+- **status** → Authorization status as string (e.g., `"authorized"`, `"denied"`, `"restricted"`).  
+- **videoOrientation** → AVCaptureVideoOrientation as string (e.g., `"portrait"`, `"landscapeLeft"`, `"landscapeRight"`).  
+- **zoomFactor** → Current zoom factor applied to the preview (double).  
+- **zoomFactors** → Array of available zoom factor values for the device (array of doubles).  
 
 ---
 

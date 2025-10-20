@@ -19,11 +19,7 @@ import UIKit
         onComplete: @escaping (TruvideoSdkCameraResult) -> Void
     ) {
         let preset: TruvideoSdkCameraConfiguration = .init(
-            backResolution: nil,
-            backResolutions: [],
             flashMode: preset.flashMode,
-            frontResolution: nil,
-            frontResolutions: [],
             lensFacing: .back,
             mode: preset.mode,
             outputPath: ""

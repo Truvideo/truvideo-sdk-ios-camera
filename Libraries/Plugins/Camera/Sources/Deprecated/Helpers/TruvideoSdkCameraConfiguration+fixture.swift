@@ -10,11 +10,7 @@ import Foundation
 extension TruvideoSdkCameraConfiguration {
     static func fixture() -> TruvideoSdkCameraConfiguration {
         TruvideoSdkCameraConfiguration(
-            backResolution: nil,
-            backResolutions: [],
             flashMode: .off,
-            frontResolution: nil,
-            frontResolutions: [],
             lensFacing: .back,
             mode: .videoAndPicture(),
             outputPath: ""

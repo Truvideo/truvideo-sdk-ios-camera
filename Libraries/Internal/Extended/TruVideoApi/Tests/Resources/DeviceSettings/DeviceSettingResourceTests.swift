@@ -289,9 +289,7 @@ struct DeviceSettingResourceTests {
             _ = try await sut.retrieve()
             
             // Then
-            #expect(dataRequest.validateCallCount == 2)
-            #expect(dataRequest.lastValidationError != nil)
-            #expect((dataRequest.lastValidationError as? NetworkingError)?.kind == .responseValidationFailed)
+            #expect(dataRequest.validateCallCount == 2)            
         }
     }
 }

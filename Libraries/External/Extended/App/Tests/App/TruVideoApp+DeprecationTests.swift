@@ -3,6 +3,7 @@
 //
 
 import DI
+import TruvideoSdkTesting
 import TruVideoApi
 import TruVideoApiTesting
 import Testing
@@ -24,39 +25,36 @@ struct TruVideoAppDeprecatedTests {
     }
 
     // MARK: - Tests
-
-    @Test
-    func testThatApiKeyReturnsConfiguredValue() async throws {
-        await withDependencyValues { dependencies in
-            // Given
-            let expectedKey = "VS2SG9WK"
-            let sut = TruVideoApp()
-            
-            // When
-            dependencies.authenticatableClient = authenticatableClient
-
-            sut.configure(with: TruVideoOptions(apiKey: expectedKey, secretKey: "ST2K33GR"))
-            let storedApiKey = sut.options.apiKey
-                        
-            // Then
-            #expect(storedApiKey == expectedKey)
-        }
-    }
     
     @Test
     func testThatApiKeyReturnsApiKeyFromCurrentSessionAfterAuthenticate() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let sut = TruVideoApp()
+            let signer = SignerMock()
+            let context = Context(
+                brand: "Apple",
+                model: "iPhone 15 Pro",
+                os: "iOS",
+                osVersion: "18.0",
+                timestamp: 123456789
+            )
+            let jsonData = try JSONEncoder().encode(context)
+            let payload = String(data: jsonData, encoding: .utf8)!
 
             // When
             dependencies.authenticatableClient = authenticatableClient
-            
-            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
-            try await sut.authenticate()
+            sut.configure(with: TruVideoOptions(signer: signer))
+            try await sut.authenticate(
+                apiKey: authenticatableClient.currentSession?.apiKey ?? "",
+                payload: payload,
+                signature: "sig",
+                externalId: "ext"
+            )
             let apiKey = try sut.apiKey()
 
             // Then
+            #expect(authenticatableClient.authenticateCalled == true)
             #expect(apiKey == "apiKey")
         }
     }
@@ -87,13 +85,27 @@ struct TruVideoAppDeprecatedTests {
         try await withDependencyValues { dependencies in
             // Given
             let sut = TruVideoApp()
+            let signer = SignerMock()
+            let context = Context(
+                brand: "Apple",
+                model: "iPhone 15 Pro",
+                os: "iOS",
+                osVersion: "18.0",
+                timestamp: 123456789
+            )
+            let jsonData = try JSONEncoder().encode(context)
+            let payload = String(data: jsonData, encoding: .utf8)!
 
             // When
             dependencies.authenticatableClient = authenticatableClient
             dependencies.deviceSettingResource = deviceSettingResource
-            
-            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
-            try await sut.authenticate(apiKey: "KEY", payload: "payload", signature: "sig", externalId: "ext")
+            sut.configure(with: TruVideoOptions(signer: signer))
+            try await sut.authenticate(
+                apiKey: authenticatableClient.currentSession?.apiKey ?? "",
+                payload: payload,
+                signature: "sig",
+                externalId: "ext"
+            )
             
             try await Task.sleep(nanoseconds: 5_000_000)
             
@@ -109,13 +121,28 @@ struct TruVideoAppDeprecatedTests {
         try await withDependencyValues { dependencies in
             // Given
             let sut = TruVideoApp()
+            let signer = SignerMock()
+            let context = Context(
+                brand: "Apple",
+                model: "iPhone 15 Pro",
+                os: "iOS",
+                osVersion: "18.0",
+                timestamp: 123456789
+            )
+            let jsonData = try JSONEncoder().encode(context)
+            let payload = String(data: jsonData, encoding: .utf8)!
 
             // When
             dependencies.authenticatableClient = authenticatableClient
+            sut.configure(with: TruVideoOptions(signer: signer))
 
-            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
-            
-            try await sut.authenticate(apiKey: "KEY", payload: "payload", signature: "sig", externalId: "ext")
+            try await sut
+                .authenticate(
+                    apiKey: authenticatableClient.currentSession?.apiKey ?? "",
+                    payload: payload,
+                    signature: "sig",
+                    externalId: "ext"
+                )
             try sut.clearAuthentication()
 
             // Then
@@ -125,15 +152,76 @@ struct TruVideoAppDeprecatedTests {
     }
     
     @Test
+    func testThatAuthenticateThrowsAuthenticationFailedWhenPayloadIsInvalid() async throws {
+        await withDependencyValues { dependencies in
+            // Given
+            let sut = TruVideoApp()
+            let signer = SignerMock()
+            dependencies.authenticatableClient = authenticatableClient
+            sut.configure(with: TruVideoOptions(signer: signer))
+            
+            // When, Then
+            await #expect {
+                try await sut.authenticate(apiKey: "", payload: "", signature: "", externalId: "")
+            } throws: { error in
+                guard let error = error as? TruVideoSdkError else {
+                    return false
+                }
+                
+                return error.kind == TruVideoSdkError.authenticationFailed.kind
+            }
+        }
+    }
+    
+    @Test
+    func testThatAuthenticateThrowsTruVideoErrorWhenClientFailsWithError() async throws {
+        try await withDependencyValues { dependencies in
+            // Given
+            let sut = TruVideoApp()
+            let signer = SignerMock()
+            let context = Context(
+                brand: "Apple",
+                model: "iPhone 15 Pro",
+                os: "iOS",
+                osVersion: "18.0",
+                timestamp: 123456789
+            )
+            let jsonData = try JSONEncoder().encode(context)
+            let payload = String(data: jsonData, encoding: .utf8)!
+            
+            // When, Then
+            dependencies.authenticatableClient = authenticatableClient
+            authenticatableClient.authenticateError = UtilityError(kind: .unknown)
+            sut.configure(with: TruVideoOptions(signer: signer))
+            
+            await #expect {
+                try await sut.authenticate(
+                    apiKey: "KEY",
+                    payload: payload,
+                    signature: "sig",
+                    externalId: "ext"
+                )
+            } throws: { error in
+                guard let error = error as? TruVideoSdkError else {
+                    return false
+                }
+                
+                return error.kind == .unknown
+            }
+        }
+    }
+    
+    @Test
     func testThatClearAuthenticationThrowsWhenSignOutFails() async throws {
         await withDependencyValues { dependencies in
             // Given
             let sut = TruVideoApp()
+            let signer = SignerMock()
             
             // When
             dependencies.authenticatableClient = authenticatableClient
             authenticatableClient.signOutError = UtilityError(kind: ErrorReason(rawValue: "signOutFailed"))
-            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
+            sut.configure(with: TruVideoOptions(signer: signer))
             
             // Then
             #expect {
@@ -194,14 +282,29 @@ struct TruVideoAppDeprecatedTests {
         try await withDependencyValues { dependencies in
             // Given
             let sut = TruVideoApp()
+            let signer = SignerMock()
+            let context = Context(
+                brand: "Apple",
+                model: "iPhone 15 Pro",
+                os: "iOS",
+                osVersion: "18.0",
+                timestamp: 123456789
+            )
+            let jsonData = try JSONEncoder().encode(context)
+            let payload = String(data: jsonData, encoding: .utf8)!
             
             // When
             dependencies.authenticatableClient = authenticatableClient
 
-            sut.configure(with: TruVideoOptions(apiKey: "KEY", secretKey: "SECRET"))
-            
-            try await sut.authenticate()
-            
+            sut.configure(with: TruVideoOptions(signer: signer))
+
+            try await sut.authenticate(
+                apiKey: authenticatableClient.currentSession?.apiKey ?? "",
+                payload: payload,
+                signature: "sig",
+                externalId: "ext"
+            )
+
             let isAuthenticationExpired = try! sut.isAuthenticationExpired()
             
             // Then

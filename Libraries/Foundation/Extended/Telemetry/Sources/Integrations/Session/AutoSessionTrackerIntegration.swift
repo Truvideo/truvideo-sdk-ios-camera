@@ -58,8 +58,10 @@ final class AutoSessionTrackerIntegration: TelemetryIntegration {
         telemetryManager = manager
         startMonitoringAppLifecycleChanges()
 
-        if application.applicationState == .active {
-            startSession()
+        Task { @MainActor in
+            if application.applicationState == .active {
+                startSession()
+            }
         }
     }
 

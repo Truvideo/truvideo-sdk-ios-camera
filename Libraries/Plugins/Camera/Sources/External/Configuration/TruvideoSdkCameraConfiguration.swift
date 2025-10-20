@@ -68,52 +68,6 @@ public class TruvideoSdkCameraConfiguration: NSObject {
 
     // MARK: - Initializer
 
-    /// Creates a new camera configuration with specified settings.
-    ///
-    /// This initializer allows comprehensive configuration of the camera
-    /// with all available settings. Most parameters have sensible defaults
-    /// to simplify common use cases while still allowing full customization
-    /// when needed.
-    ///
-    /// The resolution parameters support both arrays of available options
-    /// and specific resolution selections, providing flexibility in how
-    /// the camera handles resolution selection and fallbacks.
-    ///
-    /// - Parameters:
-    ///   - backResolutions: Available resolution options for the back camera (default: empty array)
-    ///   - flashMode: The flash mode setting (default: off)
-    ///   - frontResolutions: Available resolution options for the front camera (default: empty array)
-    ///   - imageFormat: The image format for captured photos (default: JPEG)
-    ///   - lensFacing: The camera lens to use (default: back)
-    ///   - mode: The media capture mode and limits (default: video and picture with unlimited counts)
-    ///   - outputPath: The directory path for saved media (default: empty string)
-    ///   - backResolution: Specific resolution for back camera (default: nil = auto-select)
-    ///   - frontResolution: Specific resolution for front camera (default: nil = auto-select)
-    @available(
-        *,
-        deprecated,
-        message:
-            "Use init(flashMode:imageFormat:lensFacing:mode:outputPath:) instead. Resolution handling is now internal."
-    )
-    public init(
-        backResolution: TruvideoSdkCameraResolution? = nil,
-        backResolutions: [TruvideoSdkCameraResolution] = [],
-        flashMode: TruvideoSdkCameraFlashMode = .off,
-        frontResolution: TruvideoSdkCameraResolution? = nil,
-        frontResolutions: [TruvideoSdkCameraResolution] = [],
-        imageFormat: TruvideoSdkCameraImageFormat = .jpeg,
-        lensFacing: TruvideoSdkCameraLensFacing = .back,
-        mode: TruvideoSdkCameraMediaMode = .videoAndPicture(),
-        outputPath: String = ""
-    ) {
-
-        self.flashMode = flashMode
-        self.imageFormat = imageFormat
-        self.lensFacing = lensFacing
-        self.mode = mode
-        self.outputPath = outputPath
-    }
-
     /// Creates a new camera configuration with essential settings.
     ///
     /// This initializer provides a simplified way to configure the camera with the most

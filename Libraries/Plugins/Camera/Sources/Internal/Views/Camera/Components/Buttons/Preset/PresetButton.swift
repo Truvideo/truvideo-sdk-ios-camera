@@ -24,6 +24,8 @@ struct PresetButton: View {
 
     @State var isPresented = false
 
+    // MARK: - Binding Properties
+
     var selection: Binding<AVCaptureSession.Preset> {
         Binding(
             get: { viewModel.selectedPreset },

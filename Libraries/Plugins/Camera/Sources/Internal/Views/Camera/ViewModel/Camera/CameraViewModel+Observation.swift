@@ -99,18 +99,41 @@ extension CameraViewModel {
     @objc
     func didReceiveMediaServicesWereResetNotification(_ notification: Notification) {
         Task { @SessionActor in
+            telemetryManager.captureBreadcrumb(
+                severity: .info,
+                category: .cameraSystem,
+                message: "Camera services were reset",
+                metadata: [
+                    "state": .string("\(state)")
+                ]
+            )
+
             if !captureSession.isRunning {
                 captureSession.startRunning()
             }
 
             if state == .running {
+                telemetryManager.captureBreadcrumb(
+                    severity: .info,
+                    category: .cameraSystem,
+                    message: "Camera recovering from reset"
+                )
+
                 await videoDevice.endCapturing(in: captureSession)
                 await audioDevice.endCapturing(in: captureSession)
 
                 do {
                     try await audioDevice.startCapturing()
                     try await videoDevice.startCapturing()
+
+                    telemetryManager.captureBreadcrumb(
+                        severity: .info,
+                        category: .cameraSystem,
+                        message: "Camera recovered from reset"
+                    )
                 } catch {
+                    telemetryManager.captureError(error, name: .cameraFailedToRecoverFromReset)
+
                     await didReceiveError(error.localizedDescription)
                 }
             }
@@ -120,6 +143,18 @@ extension CameraViewModel {
     @MainActor
     @objc
     func didReceiveRouteChangeNotification(_ notification: Notification) {
+        let reason = notification.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt ?? 0
+
+        telemetryManager.captureBreadcrumb(
+            severity: .info,
+            category: .cameraSystem,
+            message: "Audio route changed",
+            metadata: [
+                "reason": .int(Int(reason)),
+                "state": .string("\(state)"),
+            ]
+        )
+
         Task { @DeviceActor in
             if !audioDevice.isAvailable {
                 audioDevice.endCapturing(in: captureSession)
@@ -127,6 +162,14 @@ extension CameraViewModel {
                 do {
                     try audioDevice.configure(in: captureSession)
                 } catch {
+                    telemetryManager.captureError(
+                        error,
+                        name: .audioRouteChangeFailed,
+                        metadata: [
+                            "reason": .int(Int(reason))
+                        ]
+                    )
+
                     await didReceiveError(error.localizedDescription)
                 }
             }
@@ -137,6 +180,15 @@ extension CameraViewModel {
     @objc
     func didReceiveRuntimeErrorNotification(_ notification: Notification) {
         if let error = notification.userInfo?[AVCaptureSessionErrorKey] as? AVError, state == .running {
+            telemetryManager.captureError(
+                error,
+                name: .cameraRuntimeError,
+                metadata: [
+                    "errorCode": .int(error.code.rawValue),
+                    "state": .string("\(state)"),
+                ]
+            )
+
             if [.sessionConfigurationChanged, .sessionNotRunning].contains(error.code) {
                 Task { @SessionActor in
                     if !captureSession.isRunning {
@@ -150,6 +202,18 @@ extension CameraViewModel {
     @MainActor
     @objc
     func didReceiveSessionWasInterruptedNotification(_ notification: Notification) {
+        let reason = notification.userInfo?[AVCaptureSessionInterruptionReasonKey] as? Int ?? 0
+
+        telemetryManager.captureBreadcrumb(
+            severity: .info,
+            category: .cameraSystem,
+            message: "Camera session interrupted",
+            metadata: [
+                "reason": .int(reason),
+                "state": .string("\(state)"),
+            ]
+        )
+
         if state == .running {
             pauseSession()
         }

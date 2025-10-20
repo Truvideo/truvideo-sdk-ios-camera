@@ -44,11 +44,7 @@ extension View {
         onComplete: @escaping (TruvideoSdkCameraResult) -> Void
     ) -> some View {
         let preset: TruvideoSdkCameraConfiguration = .init(
-            backResolution: nil,
-            backResolutions: [],
             flashMode: preset.flashMode,
-            frontResolution: nil,
-            frontResolutions: [],
             lensFacing: .back,
             mode: preset.mode,
             outputPath: ""

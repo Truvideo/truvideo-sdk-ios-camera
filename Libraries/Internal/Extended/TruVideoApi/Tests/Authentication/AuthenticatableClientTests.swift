@@ -4,6 +4,7 @@
 
 import DI
 import Foundation
+import InternalUtilities
 import Networking
 import NetworkingTesting
 import Testing
@@ -19,7 +20,7 @@ struct AuthenticatableClientTests {
     // MARK: - Tests
     
     @Test
-    func testThatAuthenticateClientShouldInitializes() {
+    func testThatAuthenticateClientShouldInitialize() {
         // Given
         let sut = AuthenticationClient()
         
@@ -40,7 +41,7 @@ struct AuthenticatableClientTests {
             let sut = AuthenticationClient(session: session)
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -78,7 +79,7 @@ struct AuthenticatableClientTests {
             let sut = AuthenticationClient(session: session)
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -119,7 +120,7 @@ struct AuthenticatableClientTests {
             let sut = AuthenticationClient(session: session)
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -155,7 +156,7 @@ struct AuthenticatableClientTests {
             let deviceId = "36BBA8E7-A9C6-4F00-B4E1-F6BA888FF093"
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -194,7 +195,7 @@ struct AuthenticatableClientTests {
             let sut = AuthenticationClient(session: session)
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -230,7 +231,7 @@ struct AuthenticatableClientTests {
             let sut = AuthenticationClient(session: session)
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -269,7 +270,7 @@ struct AuthenticatableClientTests {
             let sut = AuthenticationClient(session: session)
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -306,7 +307,7 @@ struct AuthenticatableClientTests {
             let sut = AuthenticationClient(session: session)
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -354,7 +355,7 @@ struct AuthenticatableClientTests {
                 """.data(using: .utf8)!
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.data = data
@@ -387,7 +388,6 @@ struct AuthenticatableClientTests {
             let dataRequest = DataRequestMock()
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
-            let authToken = AuthToken.mock
             let sut = AuthenticationClient(session: session)
             let response = HTTPURLResponse(
                 url: URL(string: "https://beta.truvideo.com/api/device")!,
@@ -395,6 +395,7 @@ struct AuthenticatableClientTests {
                 httpVersion: nil,
                 headerFields: nil
             )!
+            
             let data = """
             {
                 "type": "about:blank",
@@ -407,19 +408,21 @@ struct AuthenticatableClientTests {
             """.data(using: .utf8)!
             
             // When
-            dependencies.apiEnvironment = .beta
-            dependencies.sessionManager = sessionManager
-            dataRequest.data = data
             session.dataRequest = dataRequest
+            
+            dataRequest.data = data
             dataRequest.response = response
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(authToken),
+                result: .failure(NetworkingError(kind: .unknown, failureReason: "")),
                 type: .networkLoad
             )
+                        
+            dependencies.environment = .beta
+            dependencies.sessionManager = sessionManager
 
             // Then
             await #expect {
@@ -447,7 +450,7 @@ struct AuthenticatableClientTests {
             let sut = AuthenticationClient(session: session)
             
             // When
-            dependencies.apiEnvironment = .beta
+            dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(

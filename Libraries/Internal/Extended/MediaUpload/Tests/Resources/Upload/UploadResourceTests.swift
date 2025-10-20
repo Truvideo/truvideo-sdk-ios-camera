@@ -692,11 +692,11 @@ private extension UploadPartResponse {
             parts: [
                 Part(
                     expiresAt: "2025-10-08T16:30:00Z",
-                    presignedUrl: "https://example-bucket.s3.amazonaws.com/upload-session-foo/part1?signature=abc123",
+                    presignedUrl: "https://example-bucket.s3.amazonaws.com/upload-session-foo/part1?signature=abc123"
                 ),
                 Part(
                     expiresAt: "2025-10-08T16:45:00Z",
-                    presignedUrl: "https://example-bucket.s3.amazonaws.com/upload-session-foo/part2?signature=def456",
+                    presignedUrl: "https://example-bucket.s3.amazonaws.com/upload-session-foo/part2?signature=def456"
                 )
             ]
         )

@@ -7,6 +7,9 @@ import SwiftUI
 struct CameraView: View {
     // MARK: - Environment Properties
 
+    @Environment(\.dismiss)
+    var dismiss
+
     @Environment(\.theme)
     var theme
 
@@ -21,13 +24,11 @@ struct CameraView: View {
             if !viewModel.isAuthenticated {
                 AuthenticationRequiredView()
             } else {
-                if UIDevice.current.isPad {
-                    CameraIpad()
-                        .hidden(!viewModel.isAuthorized)
-                } else {
-                    Camera()
-                        .hidden(!viewModel.isAuthorized)
-                }
+                CameraIpad()
+                    .hidden(!viewModel.isAuthorized || !UIDevice.current.isPad)
+
+                Camera()
+                    .hidden(!viewModel.isAuthorized || UIDevice.current.isPad)
 
                 PermissionsView()
                     .hidden(viewModel.isAuthorized)
@@ -35,6 +36,11 @@ struct CameraView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.colorScheme.surfaceContainer)
+        .onChange(of: viewModel.validationState) { validationState in
+            if validationState == .valid {
+                dismiss()
+            }
+        }
         .snackbar(isPresented: $viewModel.isSnackbarPresented) {
             Text(viewModel.localizedError)
                 .fixedSize(horizontal: false, vertical: true)

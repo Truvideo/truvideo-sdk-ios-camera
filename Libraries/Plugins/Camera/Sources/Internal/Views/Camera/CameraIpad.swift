@@ -7,9 +7,6 @@ import SwiftUI
 struct CameraIpad: View {
     // MARK: - Environment Properties
 
-    @Environment(\.dismiss)
-    var dismiss
-
     @Environment(\.theme)
     var theme
 
@@ -19,7 +16,6 @@ struct CameraIpad: View {
 
     // MARK: - State Properties
 
-    @State var isPresented = false
     @State var isZoomPickerExpanded = false
 
     // MARK: - Binding Properties
@@ -38,7 +34,10 @@ struct CameraIpad: View {
         VideoPreview(previewLayer: viewModel.previewLayer)
             .videoOrientation(viewModel.deviceOrientation)
             .simultaneousGesture(makeMagnificationGesture())
-            .onTapGesture(perform: onTap(at:))
+            .onTapGesture { point in
+                viewModel.setFocusPoint(at: point)
+                isZoomPickerExpanded = false
+            }
             .overlay {
                 RecordingFrameOverlay()
                     .hidden(viewModel.state != .running)
@@ -51,7 +50,11 @@ struct CameraIpad: View {
                 ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor, isExpanded: $isZoomPickerExpanded)
                     .padding(.leading, theme.spacingTheme.md)
             }
-            .overlay(alignment: .topLeading, content: makeHeaderControlsView)
+            .overlay(alignment: .topLeading) {
+                TopBar()
+                    .padding(.leading, theme.spacingTheme.xxl)
+                    .padding(.top, theme.spacingTheme.xxxxxl)
+            }
             .overlay(alignment: .topTrailing, content: makeContinueButton)
             .overlay {
                 TimerView(secondsRecorded: $viewModel.secondsRecorded)
@@ -74,6 +77,7 @@ struct CameraIpad: View {
             .hidden(viewModel.medias.isEmpty || [.paused, .running].contains(viewModel.state))
             .animation(.linear(duration: 0.1).delay(0.7), value: viewModel.medias)
             .id(viewModel.deviceOrientation)
+            .allowsHitTesting(viewModel.allowsHitTesting)
     }
 
     private func makeMagnificationGesture() -> some Gesture {
@@ -83,8 +87,76 @@ struct CameraIpad: View {
                 viewModel.lastZoomFactor = viewModel.zoomFactor
             }
     }
+}
 
-    private func makeHeaderControlsView() -> some View {
+private struct ToolBar: View {
+    // MARK: - Environment Properties
+
+    @Environment(\.theme)
+    var theme
+
+    // MARK: - EnvironmentObject Properties
+
+    @EnvironmentObject var viewModel: CameraViewModel
+
+    // MARK: - Body
+
+    var body: some View {
+        VStack(spacing: theme.spacingTheme.md) {
+            TorchButton()
+            CircleButton {
+                Icon(icon: DSIcons.cameraTrianglehead)
+                    .padding(theme.spacingTheme.sm)
+            } action: {
+                viewModel.switchCamera()
+            }
+            .hidden([.running, .paused].contains(viewModel.state))
+            .allowsHitTesting(viewModel.allowsHitTesting)
+
+            CircleButton {
+                Icon(
+                    icon: viewModel.state == .paused ? DSIcons.play : DSIcons.pause,
+                    size: CGSize(theme.sizeTheme.x(3.5))
+                )
+                .padding(theme.spacingTheme.sm)
+            } action: {
+                viewModel.togglePause()
+            }
+            .hidden([.finished, .initialized].contains(viewModel.state))
+            .allowsHitTesting(viewModel.allowsHitTesting)
+
+            RecordButton()
+            CircleButton {
+                Icon(icon: DSIcons.camera)
+                    .padding(theme.spacingTheme.sm)
+            } action: {
+                viewModel.capturePhoto()
+            }
+            .allowsHitTesting(viewModel.allowsHitTesting)
+
+            PresetButton()
+        }
+        .allowsHitTesting(viewModel.allowsHitTesting)
+    }
+}
+
+private struct TopBar: View {
+    // MARK: - Environment Properties
+
+    @Environment(\.theme)
+    var theme
+
+    // MARK: - EnvironmentObject Properties
+
+    @EnvironmentObject var viewModel: CameraViewModel
+
+    // MARK: - State Properties
+
+    @State var isPresented = false
+
+    // MARK: - Body
+
+    var body: some View {
         HStack(spacing: theme.spacingTheme.sm) {
             CircleButton {
                 Icon(icon: DSIcons.xmark, size: CGSize(theme.sizeTheme.lg))
@@ -105,71 +177,5 @@ struct CameraIpad: View {
             }
         }
         .frame(height: theme.spacingTheme.md)
-        .padding(.leading, theme.spacingTheme.xxl)
-        .padding(.top, theme.spacingTheme.xxxxxl)
-    }
-
-    private func onTap(at point: CGPoint) {
-        viewModel.setFocusPoint(at: point)
-        isZoomPickerExpanded = false
-    }
-}
-
-private struct ToolBar: View {
-    // MARK: - Environment Properties
-
-    @Environment(\.theme)
-    var theme
-
-    // MARK: - EnvironmentObject Properties
-
-    @EnvironmentObject var viewModel: CameraViewModel
-
-    // MARK: - Body
-
-    var body: some View {
-        VStack(spacing: theme.spacingTheme.md) {
-            TorchButton()
-            makeSwitchCameraButton()
-            makePlayPauseButton()
-            RecordButton()
-            makeTakePhotoButton()
-            PresetButton()
-        }
-        .allowsHitTesting(viewModel.allowsHitTesting)
-    }
-
-    // MARK: - Private methods
-
-    private func makePlayPauseButton() -> some View {
-        CircleButton {
-            Icon(icon: viewModel.state == .paused ? DSIcons.play : DSIcons.pause, size: CGSize(theme.sizeTheme.x(3.5)))
-                .padding(theme.spacingTheme.sm)
-        } action: {
-            viewModel.togglePause()
-        }
-        .hidden([.finished, .initialized].contains(viewModel.state))
-        .allowsHitTesting(viewModel.allowsHitTesting)
-    }
-
-    private func makeSwitchCameraButton() -> some View {
-        CircleButton {
-            Icon(icon: DSIcons.cameraTrianglehead)
-                .padding(theme.spacingTheme.sm)
-        } action: {
-            viewModel.switchCamera()
-        }
-        .hidden([.running, .paused].contains(viewModel.state))
-        .allowsHitTesting(viewModel.allowsHitTesting)
-    }
-
-    private func makeTakePhotoButton() -> some View {
-        CircleButton {
-            Icon(icon: DSIcons.camera)
-                .padding(theme.spacingTheme.sm)
-        } action: {
-            viewModel.capturePhoto()
-        }
-        .allowsHitTesting(viewModel.allowsHitTesting)
     }
 }

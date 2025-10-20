@@ -83,7 +83,7 @@ struct VideoPreviewDeprecation: View {
                         videoPlayerSize = calculateVideoPlayerSize(for: proxy)
                     }
 
-                VideoPlayerView(url: clip.url)
+                VideoPlayerViewDeprecation(url: clip.url)
                     .frame(width: videoPlayerSize.width, height: videoPlayerSize.height)
                     .rotationEffect(rotationAngle)
             }
@@ -107,7 +107,7 @@ struct VideoPreviewDeprecation: View {
     }
 }
 
-struct VideoPlayerView: View {
+struct VideoPlayerViewDeprecation: View {
     private var url: URL
     @State var player: AVPlayer
 

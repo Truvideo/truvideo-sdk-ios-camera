@@ -5,7 +5,7 @@
 import DI
 import Foundation
 internal import InternalUtilities
-import StorageKit
+internal import StorageKit
 
 /// Represents an authenticated session with API credentials and authentication token.
 ///
