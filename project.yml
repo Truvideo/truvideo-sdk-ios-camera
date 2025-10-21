@@ -114,6 +114,34 @@ targets:
       - target: Registry
     settings:
       GENERATE_INFOPLIST_FILE: YES
+      
+  RegistryTesting:
+    type: library.static
+    platform: iOS
+    sources:
+      - Libraries/Foundation/Core/Registry/Testing
+    settings:
+      DEFINES_MODULE: YES
+      PRODUCT_MODULE_NAME: RegistryTesting
+    dependencies:
+      - target: Registry
+    postCompileScripts:
+      - script: |
+          if which swift-format > /dev/null; then
+            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/Registry/Testing" -i
+          else
+            echo "warning: swift-format not installed, install with: brew install swift-format"
+          fi
+        name: SwiftFormat
+        basedOnDependencyAnalysis: false
+      - script: |
+          if which swiftlint > /dev/null; then
+            swiftlint
+          else
+            echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
+          fi
+        name: SwiftLint
+        basedOnDependencyAnalysis: false
 
   StorageKit:
     type: library.static
@@ -160,6 +188,8 @@ targets:
       - Libraries/Foundation/Core/Storage/Tests
     dependencies:
       - target: StorageKit
+      - target: StorageKitTesting
+      - package: KeychainAccess
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
@@ -173,6 +203,7 @@ targets:
       PRODUCT_MODULE_NAME: StorageTesting
     dependencies:
       - target: StorageKit
+      - package: KeychainAccess
     postCompileScripts:
       - script: |
           export PATH="/opt/homebrew/bin:$PATH"
@@ -865,6 +896,7 @@ targets:
       - target: Utilities
       - target: UtilitiesTesting
       - target: Telemetry
+      - target: RegistryTesting
       - target: TruvideoSdk
       - target: TruVideoApiTesting
       - target: TruvideoSdkTesting

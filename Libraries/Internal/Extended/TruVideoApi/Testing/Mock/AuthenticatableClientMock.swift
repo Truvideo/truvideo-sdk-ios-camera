@@ -14,9 +14,6 @@ public final class AuthenticatableClientMock: AuthenticatableClient {
     /// Records whether `authenticate(apiKey:context:signature:externalId:)` was called.
     public private(set) var authenticateCalled = false
 
-    /// Error to throw from `authenticate`, if set.
-    public var authenticateError: UtilityError?
-
     /// Captures the parameters passed to `authenticate(...)`.
     public private(set) var lastAuthenticateParams:
         (
@@ -26,11 +23,11 @@ public final class AuthenticatableClientMock: AuthenticatableClient {
             externalId: String?
         )?
 
+    /// Error to throw if set.
+    public var error: UtilityError?
+
     /// Records whether `signOut()` was called.
     public private(set) var signOutCalled = false
-
-    /// Error to throw from `signOut()`, if set.
-    public var signOutError: UtilityError?
 
     // MARK: - AuthenticatableClient
 
@@ -65,8 +62,8 @@ public final class AuthenticatableClientMock: AuthenticatableClient {
         authenticateCalled = true
         lastAuthenticateParams = (apiKey, context, signature, externalId)
 
-        if let authenticateError {
-            throw authenticateError
+        if let error {
+            throw error
         }
 
         currentSession = AuthSession(
@@ -90,8 +87,8 @@ public final class AuthenticatableClientMock: AuthenticatableClient {
     public func signOut() throws(UtilityError) {
         signOutCalled = true
 
-        if let signOutError {
-            throw UtilityError(kind: .unknown, underlyingError: signOutError)
+        if let error {
+            throw error
         }
 
         currentSession = nil

@@ -3,6 +3,7 @@
 //
 
 import CloudStorageKit
+import TruVideoApi
 import Utilities
 
 @testable import TruvideoSdk
@@ -11,6 +12,9 @@ import Utilities
 public final class CloudStorageProviderMock: CloudStorageProvider {
     // MARK: - Properties
 
+    /// The device-specific configuration associated with this cloud storage provider.
+    public var deviceSetting: DeviceSetting?
+    
     /// The error to throw when `makeStorage()` is called.
     private var error: UtilityError?
 

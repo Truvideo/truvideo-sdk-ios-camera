@@ -17,7 +17,7 @@ public final class NetworkPathMonitorMock: NetworkPathMonitor {
 
     public typealias Path = NetworkPathMock
 
-    var path: NetworkPathMock
+    public var path: NetworkPathMock
     public var currentPath: NetworkPathMock { path }
     public var pathUpdateHandler: (@Sendable (_ newPath: NetworkPathMock) -> Void)?
 

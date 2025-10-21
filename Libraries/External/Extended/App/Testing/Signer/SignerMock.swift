@@ -7,7 +7,7 @@ import Foundation
 @testable import TruvideoSdk
 
 /// Mock implementation of `Signer` for use in unit tests.
-public final class SignerMock: Signer {
+public final class SignerMock: Signer, @unchecked Sendable {
     // MARK: - Properties
 
     /// Records whether `sign(_:, secretKey:)` was called.

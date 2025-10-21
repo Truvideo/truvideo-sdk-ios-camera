@@ -3,7 +3,6 @@
 //
 
 import Foundation
-import Utilities
 
 /// A storage implementation that persists `Codable` objects to the local file system using JSON encoding.
 ///

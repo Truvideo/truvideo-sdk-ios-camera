@@ -252,7 +252,7 @@ public protocol TruVideoSDK {
 final class TruVideoApp: TruVideoSDK {
     // MARK: - Private Properties
 
-    private let cloudStorageProvider = S3CloudStorageProvider()
+    private var cloudStorageProvider: CloudStorageProvider
     private var hasBeenConfigured = false
     private let legacyStorage: LegacyStorage
     private let migrator: Migrator
@@ -316,10 +316,12 @@ final class TruVideoApp: TruVideoSDK {
     ///     - migrator: A type that defines the interface for performing data migrations.
     ///     - pathMonitor: A type that defines the behavior of a network path monitor.
     init(
+        cloudStorageProvider: CloudStorageProvider = S3CloudStorageProvider(),
         legacyStorage: LegacyStorage = LegacySessionStorage(),
         migrator: Migrator = SDKMigrator(),
         pathMonitor: some NetworkPathMonitor = NWPathMonitor()
     ) {
+        self.cloudStorageProvider = cloudStorageProvider
         self.legacyStorage = legacyStorage
         self.migrator = migrator
         self.pathMonitor = pathMonitor

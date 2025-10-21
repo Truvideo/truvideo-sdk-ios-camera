@@ -12,26 +12,16 @@ import Utilities
 @testable import TruvideoSdk
 
 struct TruVideoAppDeprecatedTests {
-    // MARK: - Private Properties
-
-    private let authenticatableClient: AuthenticatableClientMock
-    private let deviceSettingResource: DeviceSettingsResourceMock
-
-    // MARK: - Initializer
-
-    init() {
-        self.authenticatableClient = AuthenticatableClientMock()
-        self.deviceSettingResource = DeviceSettingsResourceMock()
-    }
-
     // MARK: - Tests
 
     @Test
     func testThatApiKeyReturnsApiKeyFromCurrentSessionAfterAuthenticate() async throws {
         try await withDependencyValues { dependencies in
             // Given
-            let sut = TruVideoApp()
+            let authenticatableClient = AuthenticatableClientMock()
+            let deviceSettingResource = DeviceSettingsResourceMock()
             let signer = SignerMock()
+            let sut = TruVideoApp()
             let context = Context(
                 brand: "Apple",
                 model: "iPhone 15 Pro",
@@ -39,18 +29,23 @@ struct TruVideoAppDeprecatedTests {
                 osVersion: "18.0",
                 timestamp: 123456789
             )
+
             let jsonData = try JSONEncoder().encode(context)
             let payload = String(data: jsonData, encoding: .utf8)!
 
             // When
             dependencies.authenticatableClient = authenticatableClient
+            dependencies.deviceSettingResource = deviceSettingResource
+
             sut.configure(with: TruVideoOptions(signer: signer))
+
             try await sut.authenticate(
                 apiKey: authenticatableClient.currentSession?.apiKey ?? "",
                 payload: payload,
                 signature: "sig",
                 externalId: "ext"
             )
+
             let apiKey = try sut.apiKey()
 
             // Then
@@ -63,11 +58,17 @@ struct TruVideoAppDeprecatedTests {
     func testThatApiKeyThrowsWhenCurrentSessionIsNil() async throws {
         await withDependencyValues { dependencies in
             // Given
+            let authenticatableClient = AuthenticatableClientMock()
+            let deviceSettingResource = DeviceSettingsResourceMock()
             let sut = TruVideoApp()
 
-            // When, Then
+            // When
             authenticatableClient.currentSession = nil
+
             dependencies.authenticatableClient = authenticatableClient
+            dependencies.deviceSettingResource = deviceSettingResource
+
+            // Then
 
             #expect {
                 _ = try sut.apiKey()
@@ -75,6 +76,7 @@ struct TruVideoAppDeprecatedTests {
                 guard let error = error as? TruVideoSdkError else {
                     return false
                 }
+
                 return error.kind == TruVideoSdkError.apiKeyNotFound.kind
             }
         }
@@ -84,6 +86,49 @@ struct TruVideoAppDeprecatedTests {
     func testThatAuthenticateCallsAuthenticate() async throws {
         try await withDependencyValues { dependencies in
             // Given
+            let authenticatableClient = AuthenticatableClientMock()
+            let deviceSettingResource = DeviceSettingsResourceMock()
+            let sut = TruVideoApp()
+            let signer = SignerMock()
+            let context = Context(
+                brand: "Apple",
+                model: "iPhone 15 Pro",
+                os: "iOS",
+                osVersion: "18.0",
+                timestamp: 123456789
+            )
+
+            let jsonData = try JSONEncoder().encode(context)
+            let payload = String(data: jsonData, encoding: .utf8)!
+
+            // When
+            dependencies.authenticatableClient = authenticatableClient
+            dependencies.deviceSettingResource = deviceSettingResource
+
+            sut.configure(with: TruVideoOptions(signer: signer))
+
+            try await sut.authenticate(
+                apiKey: authenticatableClient.currentSession?.apiKey ?? "",
+                payload: payload,
+                signature: "sig",
+                externalId: "ext"
+            )
+
+            try await Task.sleep(nanoseconds: 1_000_000)
+
+            // Then
+            #expect(authenticatableClient.authenticateCalled == true)
+            #expect(authenticatableClient.currentSession != nil)
+            #expect(deviceSettingResource.retrieveCallCount == 1)
+        }
+    }
+
+    @Test
+    func testThatClearAuthenticationCallsSignOut() async throws {
+        try await withDependencyValues { dependencies in
+            // Given
+            let authenticatableClient = AuthenticatableClientMock()
+            let deviceSettingResource = DeviceSettingsResourceMock()
             let sut = TruVideoApp()
             let signer = SignerMock()
             let context = Context(
@@ -99,7 +144,9 @@ struct TruVideoAppDeprecatedTests {
             // When
             dependencies.authenticatableClient = authenticatableClient
             dependencies.deviceSettingResource = deviceSettingResource
+
             sut.configure(with: TruVideoOptions(signer: signer))
+
             try await sut.authenticate(
                 apiKey: authenticatableClient.currentSession?.apiKey ?? "",
                 payload: payload,
@@ -107,42 +154,6 @@ struct TruVideoAppDeprecatedTests {
                 externalId: "ext"
             )
 
-            try await Task.sleep(nanoseconds: 5_000_000)
-
-            // Then
-            #expect(authenticatableClient.authenticateCalled == true)
-            #expect(authenticatableClient.currentSession != nil)
-            #expect(deviceSettingResource.retrieveCallCount == 1)
-        }
-    }
-
-    @Test
-    func testThatClearAuthenticationCallsSignOut() async throws {
-        try await withDependencyValues { dependencies in
-            // Given
-            let sut = TruVideoApp()
-            let signer = SignerMock()
-            let context = Context(
-                brand: "Apple",
-                model: "iPhone 15 Pro",
-                os: "iOS",
-                osVersion: "18.0",
-                timestamp: 123456789
-            )
-            let jsonData = try JSONEncoder().encode(context)
-            let payload = String(data: jsonData, encoding: .utf8)!
-
-            // When
-            dependencies.authenticatableClient = authenticatableClient
-            sut.configure(with: TruVideoOptions(signer: signer))
-
-            try await sut
-                .authenticate(
-                    apiKey: authenticatableClient.currentSession?.apiKey ?? "",
-                    payload: payload,
-                    signature: "sig",
-                    externalId: "ext"
-                )
             try sut.clearAuthentication()
 
             // Then
@@ -155,12 +166,18 @@ struct TruVideoAppDeprecatedTests {
     func testThatAuthenticateThrowsAuthenticationFailedWhenPayloadIsInvalid() async throws {
         await withDependencyValues { dependencies in
             // Given
-            let sut = TruVideoApp()
+            let authenticatableClient = AuthenticatableClientMock()
+            let deviceSettingResource = DeviceSettingsResourceMock()
             let signer = SignerMock()
+            let sut = TruVideoApp()
+
+            // When
             dependencies.authenticatableClient = authenticatableClient
+            dependencies.deviceSettingResource = deviceSettingResource
+
             sut.configure(with: TruVideoOptions(signer: signer))
 
-            // When, Then
+            // Then
             await #expect {
                 try await sut.authenticate(apiKey: "", payload: "", signature: "", externalId: "")
             } throws: { error in
@@ -177,6 +194,8 @@ struct TruVideoAppDeprecatedTests {
     func testThatAuthenticateThrowsTruVideoErrorWhenClientFailsWithError() async throws {
         try await withDependencyValues { dependencies in
             // Given
+            let authenticatableClient = AuthenticatableClientMock()
+            let deviceSettingResource = DeviceSettingsResourceMock()
             let sut = TruVideoApp()
             let signer = SignerMock()
             let context = Context(
@@ -190,8 +209,11 @@ struct TruVideoAppDeprecatedTests {
             let payload = String(data: jsonData, encoding: .utf8)!
 
             // When, Then
+            authenticatableClient.error = UtilityError(kind: .unknown)
+
             dependencies.authenticatableClient = authenticatableClient
-            authenticatableClient.authenticateError = UtilityError(kind: .unknown)
+            dependencies.deviceSettingResource = deviceSettingResource
+
             sut.configure(with: TruVideoOptions(signer: signer))
 
             await #expect {
@@ -215,12 +237,17 @@ struct TruVideoAppDeprecatedTests {
     func testThatClearAuthenticationThrowsWhenSignOutFails() async throws {
         await withDependencyValues { dependencies in
             // Given
-            let sut = TruVideoApp()
+            let authenticatableClient = AuthenticatableClientMock()
+            let deviceSettingResource = DeviceSettingsResourceMock()
             let signer = SignerMock()
+            let sut = TruVideoApp()
 
             // When
+            authenticatableClient.error = UtilityError(kind: ErrorReason(rawValue: "signOutFailed"))
+
             dependencies.authenticatableClient = authenticatableClient
-            authenticatableClient.signOutError = UtilityError(kind: ErrorReason(rawValue: "signOutFailed"))
+            dependencies.deviceSettingResource = deviceSettingResource
+
             sut.configure(with: TruVideoOptions(signer: signer))
 
             // Then
@@ -265,6 +292,7 @@ struct TruVideoAppDeprecatedTests {
     func testThatIsAuthenticationExpiredReturnsTrueIfTokenExists() async throws {
         await withDependencyValues { dependencies in
             // Given
+            let authenticatableClient = AuthenticatableClientMock()
             let sut = TruVideoApp()
 
             // When
@@ -281,6 +309,8 @@ struct TruVideoAppDeprecatedTests {
     func testThatIsAuthenticationExpiredReturnsFalseIfNoToken() async throws {
         try await withDependencyValues { dependencies in
             // Given
+            let authenticatableClient = AuthenticatableClientMock()
+            let deviceSettingResource = DeviceSettingsResourceMock()
             let sut = TruVideoApp()
             let signer = SignerMock()
             let context = Context(
@@ -295,6 +325,7 @@ struct TruVideoAppDeprecatedTests {
 
             // When
             dependencies.authenticatableClient = authenticatableClient
+            dependencies.deviceSettingResource = deviceSettingResource
 
             sut.configure(with: TruVideoOptions(signer: signer))
 

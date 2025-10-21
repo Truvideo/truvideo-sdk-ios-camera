@@ -3,7 +3,6 @@
 //
 
 import Foundation
-import Utilities
 
 /// A Storage client which implements the base `Storage` interface.
 /// `UserDefaultsStorage` uses `UserDefaults` internally.

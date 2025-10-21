@@ -82,6 +82,13 @@ extension ErrorReason {
 /// }
 /// ```
 protocol CloudStorageProvider {
+    /// The device settings containing S3 configuration information.
+    ///
+    /// This property holds the device-specific configuration retrieved from the TruVideo API,
+    /// including S3 bucket information, AWS identity pool settings, and regional configuration.
+    /// The settings are used to configure the S3 storage instance when `makeStorage()` is called.
+    var deviceSetting: DeviceSetting? { get set }
+    
     /// Creates and returns a cloud storage instance.
     ///
     /// This method is responsible for creating and configuring a `CloudStorage` instance

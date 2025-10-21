@@ -12,13 +12,13 @@ public final class DeviceSettingsResourceMock: DeviceSettingsResource, @unchecke
     // MARK: - Properties
 
     /// The stubbed settings to return when `retrieve()` is called.
-    public var stubDeviceSetting: DeviceSetting?
+    public var deviceSetting: DeviceSetting?
+
+    /// Error to throw if set.
+    public var error: UtilityError?
 
     /// Records whether `retrieve()` was called.
     public private(set) var retrieveCallCount = 0
-
-    /// Error to throw from `retrieve()`, if set.
-    public var retrieveError: UtilityError?
 
     // MARK: - Initializer
 
@@ -43,12 +43,12 @@ public final class DeviceSettingsResourceMock: DeviceSettingsResource, @unchecke
     public func retrieve() async throws(UtilityError) -> DeviceSetting {
         retrieveCallCount += 1
 
-        if let retrieveError {
-            throw UtilityError(kind: .unknown, underlyingError: retrieveError)
+        if let error {
+            throw error
         }
 
-        if let stubDeviceSetting {
-            return stubDeviceSetting
+        if let deviceSetting {
+            return deviceSetting
         }
 
         return DeviceSetting(
