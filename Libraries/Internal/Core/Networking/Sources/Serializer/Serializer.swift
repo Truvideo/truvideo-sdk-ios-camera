@@ -130,7 +130,6 @@ public struct DecodableResponseSerializer<T: Decodable>: Serializer where T: Sen
         decoder: JSONDecoder = JSONDecoder(),
         emptyResponseCodes: Set<Int> = DecodableResponseSerializer<T>.emptyResponseCodes
     ) {
-
         self.decoder = decoder
         self.emptyResponseCodes = emptyResponseCodes
     }
@@ -171,7 +170,6 @@ public struct DecodableResponseSerializer<T: Decodable>: Serializer where T: Sen
                 /// Empty instance.
                 let empty = Empty() as? T
             else {
-
                 throw NetworkingError(kind: .responseSerializationFailed, failureReason: "Invalid empty response type")
             }
 
@@ -210,7 +208,6 @@ public struct StringResponseSerializer: Serializer {
         encoding: String.Encoding = .utf8,
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) {
-
         self.emptyResponseCodes = emptyResponseCodes
         self.encoding = encoding
     }

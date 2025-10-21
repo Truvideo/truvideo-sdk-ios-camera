@@ -122,7 +122,6 @@ public class TruvideoSdkCameraConfiguration: NSObject {
         mode: TruvideoSdkCameraMediaMode = .videoAndPicture(),
         outputPath: String = ""
     ) {
-
         self.flashMode = flashMode
         self.imageFormat = imageFormat
         self.lensFacing = lensFacing
@@ -509,7 +508,8 @@ public enum TruvideoSdkCameraImageFormat: Int, RawRepresentable {
 /// All properties are immutable once initialized.
 ///
 /// - Note: The default fallback preset is `.hd1280x720` when invalid raw values are provided.
-/// - Important: Always validate preset compatibility using `canSetSessionPreset(_:)` before applying to capture sessions.
+/// - Important: Always validate preset compatibility using `canSetSessionPreset(_:)` before applying to capture
+/// sessions.
 @objcMembers
 public final class TruvideoSdkCameraPreset: RawRepresentable, CaseIterable, Codable, Hashable {
     // MARK: - Properties

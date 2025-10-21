@@ -7,7 +7,6 @@ import UIKit
 internal import Utilities
 
 extension CameraViewModel {
-
     // MARK: - Configuration
 
     /// Initializes the camera system by configuring devices and starting the capture session.
@@ -50,7 +49,7 @@ extension CameraViewModel {
                         "devicePosition": .int(videoDevice.position.rawValue),
                         "isAuthorized": .bool(isAuthorized),
                         "isTorchAvailable": .bool(isTorchAvailable),
-                        "resolution": .string(selectedPreset.rawValue),
+                        "resolution": .string(selectedPreset.rawValue)
                     ].merging(configuration.metadata, uniquingKeysWith: { lhs, _ in lhs })
                 )
             } catch {
@@ -105,7 +104,7 @@ extension CameraViewModel {
         try videoDevice.setTorchMode(torchMode)
 
         let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
-        
+
         videoDevice.setVideoOrientation(videoOrientation)
         updatePreviewOrientation()
     }
@@ -123,7 +122,7 @@ extension CameraViewModel {
                 name: .microphonePermissionDenied,
                 metadata: [
                     "device": .string("microphone"),
-                    "status": .string("\(audioDevice.authorizationStatus)"),
+                    "status": .string("\(audioDevice.authorizationStatus)")
                 ]
             )
             return
@@ -139,7 +138,7 @@ extension CameraViewModel {
             name: .cameraPermissionDenied,
             metadata: [
                 "device": .string("camera"),
-                "status": .string("\(videoDevice.authorizationStatus)"),
+                "status": .string("\(videoDevice.authorizationStatus)")
             ]
         )
     }
@@ -158,7 +157,7 @@ extension CameraViewModel {
         await audioDevice.requestAccess()
         await videoDevice.requestAccess()
 
-        if audioDevice.authorizationStatus == .authorized && videoDevice.authorizationStatus == .authorized {
+        if audioDevice.authorizationStatus == .authorized, videoDevice.authorizationStatus == .authorized {
             telemetryManager.captureBreadcrumb(
                 severity: .info,
                 category: .authorization,

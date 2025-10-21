@@ -24,7 +24,7 @@ extension AVCaptureVideoDataOutput {
                 settings[pixelFormatKey] = Int(kCVPixelFormatType_420YpCbCr8BiPlanarFullRange)
             }
 
-            if formatType == Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange) && settings[pixelFormatKey] == nil {
+            if formatType == Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange), settings[pixelFormatKey] == nil {
                 settings[pixelFormatKey] = Int(kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange)
             }
         }

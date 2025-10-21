@@ -32,6 +32,74 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
     /// A closure that produces the SwiftUI content to be presented.
     @ViewBuilder let content: () -> Content
 
+    // MARK: - Container
+
+    /// A container view controller used as the presentation host.
+    final class ContainerController: UIViewController {
+        // MARK: - Properties
+
+        var onDidAppear: (() -> Void)?
+
+        // MARK: - UIViewController
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            onDidAppear?()
+        }
+    }
+
+    // MARK: - Coordinator
+
+    /// A helper object that coordinates updates between SwiftUI and UIKit.
+    final class Coordinator {
+        // MARK: - Private Properties
+
+        private var didAppear = false
+        private let parent: ScaledTransitionView
+        private weak var transitionDelegate: ScaleTransitioningDelegate?
+
+        // MARK: - Initializer
+
+        /// Creates a coordinator for the specified parent view.
+        ///
+        /// - Parameter parent: The `ScaledTransitionView` instance that owns this coordinator.
+        init(parent: ScaledTransitionView) {
+            self.parent = parent
+        }
+
+        // MARK: - Instance Methods
+
+        func parentDidAppear(_ controller: ContainerController) {
+            didAppear = true
+            update(isPresented: parent.isPresented, from: controller)
+        }
+
+        func update(isPresented: Bool, from controller: ContainerController) {
+            guard didAppear else { return }
+
+            if isPresented {
+                if controller.presentedViewController is UIHostingController<Content> {
+                    return
+                }
+
+                let delegate = ScaleTransitioningDelegate(startingFrame: parent.startingFrame)
+                self.transitionDelegate = delegate
+
+                let hostingController = UIHostingController(rootView: parent.content())
+                hostingController.view.backgroundColor = .clear
+                hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+                hostingController.modalTransitionStyle = .crossDissolve
+                hostingController.modalPresentationStyle = .custom
+                hostingController.transitioningDelegate = self.transitionDelegate
+
+                controller.present(hostingController, animated: true)
+            } else if let presented = controller.presentedViewController {
+                presented.dismiss(animated: true)
+                transitionDelegate = nil
+            }
+        }
+    }
+
     // MARK: - Initializer
 
     /// Creates a new instance with a binding to control presentation state and content builder.
@@ -77,6 +145,7 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
 
         controller.onDidAppear = { [weak controller] in
             guard let controller else { return }
+
             context.coordinator.parentDidAppear(controller)
         }
 
@@ -85,72 +154,5 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
 
     func updateUIViewController(_ uiViewController: ContainerController, context: Context) {
         context.coordinator.update(isPresented: isPresented, from: uiViewController)
-    }
-
-    // MARK: - Container
-
-    /// A container view controller used as the presentation host.
-    final class ContainerController: UIViewController {
-        // MARK: - Properties
-
-        var onDidAppear: (() -> Void)?
-
-        // MARK: - UIViewController
-
-        override func viewDidAppear(_ animated: Bool) {
-            super.viewDidAppear(animated)
-            onDidAppear?()
-        }
-    }
-
-    // MARK: - Coordinator
-
-    /// A helper object that coordinates updates between SwiftUI and UIKit.
-    final class Coordinator {
-        // MARK: - Private Properties
-
-        private let parent: ScaledTransitionView
-        private var didAppear = false
-        private var transitionDelegate: ScaleTransitioningDelegate?
-
-        // MARK: - Initializer
-
-        /// Creates a coordinator for the specified parent view.
-        ///
-        /// - Parameter parent: The `ScaledTransitionView` instance that owns this coordinator.
-        init(parent: ScaledTransitionView) {
-            self.parent = parent
-        }
-
-        // MARK: - Instance Methods
-
-        func parentDidAppear(_ controller: ContainerController) {
-            didAppear = true
-            update(isPresented: parent.isPresented, from: controller)
-        }
-
-        func update(isPresented: Bool, from controller: ContainerController) {
-            guard didAppear else { return }
-
-            if isPresented {
-                if controller.presentedViewController is UIHostingController<Content> {
-                    return
-                }
-
-                self.transitionDelegate = ScaleTransitioningDelegate(startingFrame: parent.startingFrame)
-
-                let hostingController = UIHostingController(rootView: parent.content())
-                hostingController.view.backgroundColor = .clear
-                hostingController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-                hostingController.modalTransitionStyle = .crossDissolve
-                hostingController.modalPresentationStyle = .custom
-                hostingController.transitioningDelegate = self.transitionDelegate
-
-                controller.present(hostingController, animated: true)
-            } else if let presented = controller.presentedViewController {
-                presented.dismiss(animated: true)
-                transitionDelegate = nil
-            }
-        }
     }
 }

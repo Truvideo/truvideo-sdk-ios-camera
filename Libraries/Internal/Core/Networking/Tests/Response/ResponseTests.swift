@@ -9,15 +9,15 @@ import Testing
 
 struct ResponseTests {
     // MARK: - Properties
-    
+
     private let url = URL(string: "https://httpbin.org/")!
     private var request: URLRequest {
         var request = URLRequest(url: url)
         request.httpBody = "Test".data(using: .utf8)
-        
+
         return request
     }
-    
+
     // MARK: - Tests
 
     @Test
@@ -67,12 +67,12 @@ struct ResponseTests {
         #expect(sut.type == .networkLoad)
         #expect(sut.value == "Test")
     }
-    
+
     @Test
     func testThatMapTransformsSuccessValue() {
         // Given
         let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: nil, headerFields: nil)
-        let sut =  Response<String, Error>(
+        let sut = Response<String, Error>(
             data: Data(),
             metrics: nil,
             request: request,

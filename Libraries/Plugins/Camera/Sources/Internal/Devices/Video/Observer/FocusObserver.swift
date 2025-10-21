@@ -17,11 +17,13 @@ final class FocusObserver: NSObject {
     private var didResetFocus = false
     private var observations: [NSKeyValueObservation] = []
     private var onFocusChanged: ((AVCaptureDevice) -> Void)?
+    private var subjectAreaObserver: NSObjectProtocol?
 
     // MARK: - Deinitializer
 
     deinit {
         observations.removeAll()
+        subjectAreaObserver = nil
     }
 
     // MARK: - Instance methods
@@ -40,13 +42,15 @@ final class FocusObserver: NSObject {
         didResetFocus = false
         observations.removeAll()
 
-        NotificationCenter.default.removeObserver(self)
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(didReceiveCaptureDeviceSubjectAreaDidChange(_:)),
-            name: .AVCaptureDeviceSubjectAreaDidChange,
-            object: captureDevice
-        )
+        if subjectAreaObserver == nil {
+            subjectAreaObserver = NotificationCenter.default.addObserver(
+                forName: .AVCaptureDeviceSubjectAreaDidChange,
+                object: captureDevice,
+                queue: .main
+            ) { [weak self] notification in
+                self?.didReceiveCaptureDeviceSubjectAreaDidChange(notification)
+            }
+        }
 
         observations = [
             captureDevice.observe(\.isAdjustingExposure, options: [.new]) { [weak self] captureDevice, _ in
@@ -57,7 +61,7 @@ final class FocusObserver: NSObject {
             },
             captureDevice.observe(\.isAdjustingWhiteBalance, options: [.new]) { [weak self] captureDevice, _ in
                 self?.maybeSettled(captureDevice)
-            },
+            }
         ]
     }
 

@@ -25,10 +25,10 @@ extension NSPersistentContainer {
         var rawValue: String {
             switch self {
             case .inMemory:
-                return NSInMemoryStoreType
+                NSInMemoryStoreType
 
             case .sqlite:
-                return NSSQLiteStoreType
+                NSSQLiteStoreType
             }
         }
     }
@@ -54,7 +54,6 @@ extension NSPersistentContainer {
             /// The `NSManagedObjectModel` description.
             let managedObjectModel = cache[modelURL] ?? NSManagedObjectModel(contentsOf: modelURL)
         else {
-
             throw UtilityError(kind: .CoreDataKitErrorReason.failedModelInitialization)
         }
 

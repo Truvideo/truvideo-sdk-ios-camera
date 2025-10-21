@@ -20,6 +20,7 @@ jobs:
             docs
             test
             build
+            style
             ci
             chore
             revert

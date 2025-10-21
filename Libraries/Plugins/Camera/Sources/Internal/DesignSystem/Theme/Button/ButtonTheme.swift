@@ -198,7 +198,6 @@ public struct ButtonTheme: Sendable {
         padding: EdgeInsets?,
         textStyle: DSStateProperty<TextStyle>?
     ) {
-
         self.alignment = alignment
         self.color = color
         self.contentOffset = contentOffset
@@ -234,7 +233,6 @@ public struct ButtonTheme: Sendable {
         padding: EdgeInsets? = nil,
         textStyle: DSStateProperty<TextStyle>? = nil
     ) -> ButtonTheme {
-
         ButtonTheme(
             alignment: alignment ?? self.alignment,
             color: color ?? self.color,

@@ -193,7 +193,6 @@ public struct DSColorScheme: Sendable {
         surfaceContainer: Color,
         onSurface: Color
     ) {
-
         self.primary = primary
         self.onPrimary = onPrimary
         self.secondary = secondary
@@ -241,7 +240,6 @@ public struct DSColorScheme: Sendable {
         surfaceContainer: Color? = nil,
         onSurface: Color? = nil
     ) -> DSColorScheme {
-
         DSColorScheme(
             primary: primary ?? self.primary,
             onPrimary: onPrimary ?? self.onPrimary,

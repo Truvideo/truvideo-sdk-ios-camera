@@ -23,7 +23,7 @@ public struct NetworkPathMock: NetworkPath {
     public var type: NWInterface.InterfaceType = .cellular
 
     /// A string description of the connectivity type (e.g., "WiFi", "Cellular").
-    public var connectivityType: String = "Cellular"
+    public var connectivityType = "Cellular"
 
     // MARK: - Initializer
 
@@ -51,7 +51,8 @@ public struct NetworkPathMock: NetworkPath {
     /// such as Wi-Fi, cellular, or wired Ethernet.
     ///
     /// - Parameter type: The `NWInterface.InterfaceType` to check for, such as `.wifi` or `.cellular`.
-    /// - Returns: A Boolean value indicating whether the specified interface type is in use (`true` if the interface is in use, `false` otherwise).
+    /// - Returns: A Boolean value indicating whether the specified interface type is in use (`true` if the interface is
+    /// in use, `false` otherwise).
     public func usesInterfaceType(_ type: NWInterface.InterfaceType) -> Bool {
         self.type == type
     }

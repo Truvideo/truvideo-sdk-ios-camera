@@ -43,7 +43,7 @@ public final class S3StreamUploadTask: S3UploadTask, StreamUploadTask {
     private var completedTasks: [UploadPartResponse] = []
     private let contentType: ContentType
     private var failedTasks: [UploadPartResponse] = []
-    private var partNumber: Int = 0
+    private var partNumber = 0
     private var uploadTasks: Set<UploadPartTask> = []
 
     // MARK: - Dependencies
@@ -65,7 +65,8 @@ public final class S3StreamUploadTask: S3UploadTask, StreamUploadTask {
     ///
     /// - Parameters:
     ///   - id: The unique identifier of the request
-    ///   - contentType: The type of content being uploaded, used to set appropriate headers and metadata for the upload.
+    ///   - contentType: The type of content being uploaded, used to set appropriate headers and metadata for the
+    /// upload.
     ///   - monitor: An optional `S3UploadMonitor` for observing request events.
     init(id: String, contentType: ContentType, delegate: S3UploadTaskDelegate, monitor: S3TaskMonitor?) {
         self.contentType = contentType
@@ -312,10 +313,10 @@ public final class S3StreamUploadTask: S3UploadTask, StreamUploadTask {
             do {
                 _ =
                     try await request
-                    .validate()
-                    .serializing(Empty.self)
-                    .result
-                    .get()
+                        .validate()
+                        .serializing(Empty.self)
+                        .result
+                        .get()
 
                 await didComplete(task: uploadTask)
             } catch {

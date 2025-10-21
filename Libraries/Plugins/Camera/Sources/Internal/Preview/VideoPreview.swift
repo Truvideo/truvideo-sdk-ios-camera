@@ -111,6 +111,12 @@ struct VideoPreview: UIViewRepresentable {
             fatalError("init(coder:) has not been implemented")
         }
 
+        // MARK: - Deinitializer
+
+        deinit {
+            NotificationCenter.default.removeObserver(self)
+        }
+
         // MARK: Overridden methods
 
         override func layoutSubviews() {
@@ -119,10 +125,6 @@ struct VideoPreview: UIViewRepresentable {
             freezedFrameImageView.frame = bounds
             overlayView.frame = bounds
             previewLayer.frame = bounds
-        }
-
-        deinit {
-            NotificationCenter.default.removeObserver(self)
         }
 
         // MARK: - Instance methods
@@ -193,12 +195,10 @@ struct VideoPreview: UIViewRepresentable {
         @objc
         func didReceiveDeviceWillChangePosition(_ notification: Notification) {
             if /// The current device position before the change
-            let position = notification.userInfo?[VideoDevice.devicePosition] as? AVCaptureDevice.Position,
+                let position = notification.userInfo?[VideoDevice.devicePosition] as? AVCaptureDevice.Position,
 
                 /// The target device position after the change
-                let newPosition = notification.userInfo?[VideoDevice.newPosition] as? AVCaptureDevice.Position
-            {
-
+                let newPosition = notification.userInfo?[VideoDevice.newPosition] as? AVCaptureDevice.Position {
                 devicePosition = newPosition
                 focusIndicatorView.alpha = 0
 
@@ -269,7 +269,7 @@ struct VideoPreview: UIViewRepresentable {
                 blurView.bottomAnchor.constraint(equalTo: bottomAnchor),
                 blurView.leadingAnchor.constraint(equalTo: leadingAnchor),
                 blurView.topAnchor.constraint(equalTo: topAnchor),
-                blurView.trailingAnchor.constraint(equalTo: trailingAnchor),
+                blurView.trailingAnchor.constraint(equalTo: trailingAnchor)
             ])
         }
 
@@ -389,7 +389,6 @@ struct VideoPreview: UIViewRepresentable {
 }
 
 extension VideoPreview.PlayerContainerView: AVCaptureVideoDataOutputSampleBufferDelegate {
-
     // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
 
     func captureOutput(
@@ -397,7 +396,6 @@ extension VideoPreview.PlayerContainerView: AVCaptureVideoDataOutputSampleBuffer
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
-
         if sampleBuffer.isValid, !isUpdating {
             lastSampleBuffer = sampleBuffer
         }
@@ -425,7 +423,7 @@ private final class FocusIndicatorView: UIView {
             imageView.bottomAnchor.constraint(equalTo: bottomAnchor),
             imageView.leadingAnchor.constraint(equalTo: leadingAnchor),
             imageView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            imageView.topAnchor.constraint(equalTo: topAnchor),
+            imageView.topAnchor.constraint(equalTo: topAnchor)
         ])
     }
 
@@ -503,7 +501,6 @@ extension UIView {
         duration: TimeInterval,
         delay: TimeInterval = 0
     ) -> UIViewPropertyAnimator {
-
         let propertyViewAnimator = UIViewPropertyAnimator(duration: duration, curve: .easeInOut) { [weak self] in
             if var self {
                 self[keyPath: key] = value

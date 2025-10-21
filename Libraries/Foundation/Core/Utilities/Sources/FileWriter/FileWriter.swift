@@ -22,5 +22,5 @@ public protocol FileWriter {
     ///   - content: The object conforming to `Codable` that will be serialized and written to disk.
     ///   - url: The destination `URL` where the serialized data will be saved.
     /// - Throws: An error if the encoding fails or the data cannot be written to the file system.
-    func write<T: Codable>(_ content: T, to url: URL) throws(UtilityError)
+    func write(_ content: some Codable, to url: URL) throws(UtilityError)
 }

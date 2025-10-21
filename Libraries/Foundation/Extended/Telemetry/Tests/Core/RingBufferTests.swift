@@ -23,20 +23,20 @@ struct RingBufferTests {
     func testThatAddAndSnapshot() {
         // Given
         var buffer = RingBuffer<String>(maxCapacity: 3)
-        
+
         // When
         buffer.add("A")
         buffer.add("B")
-        
+
         // Then
         #expect(buffer.snapshot() == ["A", "B"])
     }
-    
+
     @Test
     func testThatAddAndShouldReturnNilIfThereIsNoCapacity() {
         // Given
         var buffer = RingBuffer<String>(maxCapacity: 0)
-    
+
         // When, Then
         #expect(buffer.add("A") == nil)
         #expect(buffer.count == 0)
@@ -46,12 +46,12 @@ struct RingBufferTests {
     func testThatBufferShouldDropFirstElementWhenFull() {
         // Given
         var buffer = RingBuffer<Int>(maxCapacity: 2)
-        
+
         // When
         buffer.add(0)
         buffer.add(1)
         buffer.add(2)
-        
+
         // Then
         #expect(buffer.isFull)
         #expect(buffer.snapshot() == [1, 2])
@@ -61,13 +61,13 @@ struct RingBufferTests {
     func testThatRemoveAll() {
         // Given
         var buffer = RingBuffer<String>(maxCapacity: 2)
-        
+
         // When
         buffer.add("A")
         buffer.add("B")
-        
+
         buffer.removeAll()
-        
+
         // Then
         #expect(buffer.snapshot().isEmpty)
     }
@@ -80,7 +80,7 @@ struct RingBufferTests {
         // When
         buffer.add(10)
         buffer.add(20)
-        
+
         // Then
         #expect(buffer[0] == 10)
         #expect(buffer[1] == 20)
@@ -91,7 +91,7 @@ struct RingBufferTests {
     func testThatRingBufferIsNotFullOnInit() {
         // Given, // When
         let buffer = RingBuffer<Int>(maxCapacity: 2)
-        
+
         // Then
         #expect(!buffer.isFull)
     }
@@ -109,13 +109,13 @@ struct RingBufferTests {
         #expect(buffer.isFull)
         #expect(buffer.count == 2)
     }
-    
+
     @Test
     func testThatSequenceConformance() {
         // Given
         var buffer = RingBuffer<String>(maxCapacity: 3)
         var collected: [String] = []
-        
+
         // When
         buffer.add("A")
         buffer.add("B")

@@ -8,7 +8,8 @@ internal import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the audio device operations.
     ///
-    /// The `AudioDeviceErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `AudioDeviceErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
     /// during interactions with the external devices.
     struct AudioDeviceErrorReason: Sendable {
         /// The capture input could not be added to the session.

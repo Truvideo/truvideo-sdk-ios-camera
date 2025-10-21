@@ -11,30 +11,30 @@ import Testing
 
 struct UploadRequestRetrierTests {
     // MARK: - Tests
-    
+
     @Test
     func testThatUploadPartTaskShouldInitialize() async throws {
         // Given
         let sut = UploadRequestRetrier()
         let session = SessionMock()
         let request = RequestMock()
-        
+
         // When
         let policy = await sut.retry(request, for: session, failedWith: URLError(.badServerResponse))
-        
+
         // Then
         if case .doNotRetry = policy {
             #expect(true)
         }
     }
-    
+
     @Test
     func testThatRetryStopsAfterMaxNumberOfRetries() async throws {
         // Given
         let sut = UploadRequestRetrier()
         let session = SessionMock()
         let request = RequestMock()
-        
+
         // When
         request.request = URLRequest(url: URL(string: "https://test.com")!)
         request.response = HTTPURLResponse(
@@ -43,17 +43,17 @@ struct UploadRequestRetrierTests {
             httpVersion: nil,
             headerFields: nil
         )
-        
+
         request.retryCount = 3
-        
+
         let policy = await sut.retry(request, for: session, failedWith: URLError(.unknown))
-        
+
         // Then
         if case .doNotRetry = policy {
             #expect(true)
         }
     }
-    
+
     @Test
     func testThatRetryAppliesExponentialBackoffOnServerError() async throws {
         // Given
@@ -73,11 +73,11 @@ struct UploadRequestRetrierTests {
         let policy = await sut.retry(request, for: session, failedWith: URLError(.badServerResponse))
 
         // Then
-        if case .retry(let delay) = policy {
+        if case let .retry(delay) = policy {
             #expect(delay == 2.0)
         }
     }
-    
+
     @Test
     func testThatRetryDoesNotRetryOnNonRetriableStatusCode() async throws {
         // Given

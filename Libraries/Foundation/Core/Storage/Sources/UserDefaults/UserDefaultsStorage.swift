@@ -45,7 +45,7 @@ public final class UserDefaultsStorage: Storage, @unchecked Sendable {
     ///
     /// - Parameter key: The type conforming to `StorageKey` whose value should be removed.
     /// - Throws: An error if the delete operation fails.
-    public func deleteValue<Key: StorageKey>(for key: Key.Type) throws {
+    public func deleteValue(for key: (some StorageKey).Type) throws {
         userDefaults.removeObject(forKey: key.name)
     }
 

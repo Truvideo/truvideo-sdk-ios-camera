@@ -83,12 +83,12 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
 
         let transition = OrientationTransition(from: previousDeviceOrientation, to: deviceOrientation.orientation)
 
-        if deviceOrientation.source == .sensors && UIDevice.current.orientation == .portrait {
+        if deviceOrientation.source == .sensors, UIDevice.current.orientation == .portrait {
             rotationAngle = transition.newAngle(from: rotationAngle)
             collapsibleAngle = deviceOrientation.orientation.isPortrait ? Angle.zero : Angle(degrees: 360)
         }
 
-        if deviceOrientation.source == .system && UIDevice.current.orientation == .portrait {
+        if deviceOrientation.source == .system, UIDevice.current.orientation == .portrait {
             rotationAngle = transition.newAngle(from: rotationAngle)
         }
     }
@@ -116,7 +116,8 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
     /// - The device is in portrait or landscape orientation.
     /// - The mask is currently expanded or collapsed.
     ///
-    /// - Parameter isExpanded: A Boolean flag indicating whether the mask should be expanded (`true`) or collapsed (`false`).
+    /// - Parameter isExpanded: A Boolean flag indicating whether the mask should be expanded (`true`) or collapsed
+    /// (`false`).
     /// - Returns: A `CGSize` representing the maximum size of the animatable mask.
     func maxSizeForAnimatableMask(isExpanded: Bool) -> CGSize {
         if UIDevice.current.isPad || isSystemLandscape {
@@ -137,7 +138,8 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
     /// The main difference is that when the mask is collapsed, one of its dimensions
     /// shrinks to `0` instead of keeping a fixed `size`.
     ///
-    /// - Parameter isExpanded: A Boolean flag indicating whether the mask should be expanded (`true`) or collapsed (`false`).
+    /// - Parameter isExpanded: A Boolean flag indicating whether the mask should be expanded (`true`) or collapsed
+    /// (`false`).
     /// - Returns: A `CGSize` representing the maximum size of the collapsible mask.
     func maxSizeForCollapsibleMask(isExpanded: Bool) -> CGSize {
         if UIDevice.current.isPad || isSystemLandscape {

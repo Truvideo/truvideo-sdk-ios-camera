@@ -55,7 +55,6 @@ struct UploadPartTask: Identifiable {
 }
 
 extension UploadPartTask: Hashable {
-
     // MARK: - Hashable
 
     /// Returns a Boolean value indicating whether two values are equal.

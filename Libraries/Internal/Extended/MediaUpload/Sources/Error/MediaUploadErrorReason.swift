@@ -8,7 +8,8 @@ import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the signer.
     ///
-    /// The `MediaUploadErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `MediaUploadErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
     /// during interactions with the external storages.
     public struct MediaUploadErrorReason: Sendable {
         /// Error indicating that the multipart media upload could not be completed.

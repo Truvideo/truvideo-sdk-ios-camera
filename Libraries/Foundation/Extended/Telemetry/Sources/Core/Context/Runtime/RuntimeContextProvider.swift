@@ -17,7 +17,6 @@ import Utilities
 /// This context is used to enrich telemetry events with diagnostic metadata about
 /// the host device, helping developers analyze and debug issues in production or testing environments.
 struct RuntimeContextProvider: ContextProvider {
-
     // MARK: - ContextProvider
 
     /// Creates and returns a `Context` object representing the current system and environment state.

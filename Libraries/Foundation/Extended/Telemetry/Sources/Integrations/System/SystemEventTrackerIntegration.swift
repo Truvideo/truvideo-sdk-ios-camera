@@ -41,14 +41,14 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
         startMonitoringTimeZoneChanges()
 
         pathMonitor.pathUpdateHandler = { [weak self] newPath in
-            guard let self = self else { return }
+            guard let self else { return }
 
             telemetryManager?.captureBreadcrumb(
                 deviceConnectivityCategory,
                 severity: .info,
                 metadata: [
                     "connectivityType": .string(newPath.connectivityType),
-                    "status": .string(newPath.status.debugDescription),
+                    "status": .string(newPath.status.debugDescription)
                 ]
             )
         }
@@ -77,7 +77,7 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
                 metadata: [
                     "isLowPowerModeEnabled": .bool(ProcessInfo.processInfo.isLowPowerModeEnabled),
                     "isPlugged": .bool([.charging, .full].contains(currentDevice.batteryState)),
-                    "level": currentDevice.batteryState != .unknown ? "\(currentDevice.batteryLevel * 100)" : "Unknown",
+                    "level": currentDevice.batteryState != .unknown ? "\(currentDevice.batteryLevel * 100)" : "Unknown"
                 ]
             )
         }
@@ -96,7 +96,7 @@ final class SystemEventTrackerIntegration: TelemetryIntegration {
             message: "Low memory",
             metadata: [
                 "freeMemory": .string(UIDevice.current.freeMemory?.description ?? "Unknown"),
-                "totalMemory": .int(Int(ProcessInfo.processInfo.physicalMemory)),
+                "totalMemory": .int(Int(ProcessInfo.processInfo.physicalMemory))
             ]
         )
     }

@@ -91,7 +91,7 @@ public struct InMemoryURLCache: HTTPURLCache, @unchecked Sendable {
     /// - Parameter memoryCapacity: The maximum amount of memory the cache can use in bytes.
     ///   If `nil`, defaults to 20% of the device's physical memory.
     public init(memoryCapacity: Int? = nil) {
-        self.memoryCapacity = memoryCapacity ?? Int(ProcessInfo.processInfo.physicalMemory) / 5  // 20% of total RAM
+        self.memoryCapacity = memoryCapacity ?? Int(ProcessInfo.processInfo.physicalMemory) / 5 // 20% of total RAM
 
         cache.totalCostLimit = self.memoryCapacity
     }
@@ -149,7 +149,6 @@ extension HTTPURLDataRequest {
             /// The HTTP method.
             let methodString = request?.method.rawValue
         else {
-
             return nil
         }
 

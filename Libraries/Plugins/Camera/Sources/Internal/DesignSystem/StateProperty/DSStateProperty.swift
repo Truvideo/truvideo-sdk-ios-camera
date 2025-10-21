@@ -7,9 +7,11 @@ import SwiftUI
 /// A structure that represents various visual and interaction states for a view.
 ///
 /// `DSState` conforms to `OptionSet` and `Sendable`, allowing you to combine multiple states using set algebra.
-/// It is primarily used for managing UI components' interactive or visual states, such as highlighting, selection, errors, or being disabled.
+/// It is primarily used for managing UI components' interactive or visual states, such as highlighting, selection,
+/// errors, or being disabled.
 ///
-/// This structure supports combining multiple states for complex UI behavior, enabling more responsive and intuitive user interactions.
+/// This structure supports combining multiple states for complex UI behavior, enabling more responsive and intuitive
+/// user interactions.
 ///
 /// ### Example Usage:
 /// ```swift
@@ -48,13 +50,16 @@ public struct DSState: OptionSet, Sendable {
     }
 }
 
-/// A structure that represents a state-dependent property, allowing dynamic resolution of values based on the current state.
+/// A structure that represents a state-dependent property, allowing dynamic resolution of values based on the current
+/// state.
 ///
 /// `DSStateProperty` allows defining a property whose value can vary depending on the provided `DSState`.
-/// This is particularly useful for customizing UI elements, such as colors, sizes, or styles, depending on different interaction states l
+/// This is particularly useful for customizing UI elements, such as colors, sizes, or styles, depending on different
+/// interaction states l
 /// ike `.highlighted`, `.selected`, or `.disabled`.
 ///
-/// This structure offers flexibility for state-specific customization while also providing a convenient way to resolve a constant value for all states.
+/// This structure offers flexibility for state-specific customization while also providing a convenient way to resolve
+/// a constant value for all states.
 ///
 /// ### Example Usage:
 /// ```swift
@@ -73,7 +78,7 @@ public struct DSState: OptionSet, Sendable {
 public struct DSStateProperty<T>: Sendable {
     /// A callback to invoke when resolving the current `T`
     /// value based on the given state.
-    public let resolve: (@MainActor @Sendable (DSState) -> T)
+    public let resolve: @MainActor @Sendable (DSState) -> T
 
     // MARK: - Static methods
 

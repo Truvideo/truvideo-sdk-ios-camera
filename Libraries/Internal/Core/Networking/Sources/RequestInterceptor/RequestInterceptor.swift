@@ -56,7 +56,8 @@ public protocol RequestInterceptor {
 /// - Retrying failed requests based on specific conditions (e.g., network errors, token refresh).
 /// - Monitoring and logging request outcomes.
 ///
-/// Conforming types must implement the required methods from both `RequestInterceptor` and `RequestRetrier`, enabling full control over request
+/// Conforming types must implement the required methods from both `RequestInterceptor` and `RequestRetrier`, enabling
+/// full control over request
 /// modification and retry logic.
 public protocol RequestMiddleware: RequestRetrier, RequestInterceptor {}
 
@@ -160,7 +161,6 @@ public struct Middleware: RequestMiddleware {
         interceptors: [RequestInterceptor],
         session: Session
     ) async throws -> URLRequest {
-
         var interceptors = interceptors
 
         guard !interceptors.isEmpty else {
@@ -179,7 +179,6 @@ public struct Middleware: RequestMiddleware {
         for session: Session,
         failedWith error: Error
     ) async -> RetryPolicy {
-
         var retriers = retriers
 
         guard !retriers.isEmpty else {

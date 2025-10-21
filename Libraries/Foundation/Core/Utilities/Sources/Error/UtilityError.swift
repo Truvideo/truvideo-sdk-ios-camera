@@ -76,7 +76,6 @@ public struct UtilityError: LocalizedError {
         column: Int = #column,
         line: Int = #line
     ) {
-
         self.column = column
         self.failureReason = failureReason
         self.kind = kind

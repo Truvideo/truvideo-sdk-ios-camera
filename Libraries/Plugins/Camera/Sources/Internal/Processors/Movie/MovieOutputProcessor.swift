@@ -35,7 +35,8 @@ actor MovieOutputProcessorActor {
 ///
 /// ```swift
 /// class CameraViewController: MovieOutputProcessorDelegate {
-///     func movieOutputProcessor(_ output: MovieOutputProcessor, didReachMaxDuration result: Result<VideoClip, Error>) {
+///     func movieOutputProcessor(_ output: MovieOutputProcessor, didReachMaxDuration result: Result<VideoClip, Error>)
+/// {
 ///         switch result {
 ///         case .success(let videoClip):
 ///             // Handle successful video clip creation
@@ -278,17 +279,16 @@ final class MovieOutputProcessor {
         func canTransition(to newState: State) -> Bool {
             switch (self, newState) {
             case (.initialized, .failed),
-                (.initialized, .writing),
-                (.failed, .writing),
-                (.finished, .writing),
-                (.finishing, .failed),
-                (.finishing, .finished),
-                (.paused, .finishing),
-                (.paused, .writing),
-                (.writing, .failed),
-                (.writing, .finishing),
-                (.writing, .paused):
-
+                 (.initialized, .writing),
+                 (.failed, .writing),
+                 (.finished, .writing),
+                 (.finishing, .failed),
+                 (.finishing, .finished),
+                 (.paused, .finishing),
+                 (.paused, .writing),
+                 (.writing, .failed),
+                 (.writing, .finishing),
+                 (.writing, .paused):
                 true
 
             default:
@@ -463,15 +463,13 @@ final class MovieOutputProcessor {
 
         for buffer in buffers {
             if /// The current audio input.
-            let audioInput,
+                let audioInput,
 
                 /// The adjusted audio buffer.
                 let adjustedBuffer = buffer.sampleBuffer.offset(by: buffer.timestamp, duration: buffer.duration),
 
                 /// A value that indicates whether the input is ready to accept media data.
-                audioInput.isReadyForMoreMediaData
-            {
-
+                audioInput.isReadyForMoreMediaData {
                 if !audioInput.append(adjustedBuffer) {
                     failedBuffers.append(buffer)
                 }
@@ -506,15 +504,13 @@ final class MovieOutputProcessor {
         }
 
         if /// The active video input.
-        let videoInput,
+            let videoInput,
 
             /// The prixel buffer adapter.
             let pixelBufferAdapter,
 
             /// Current buffer to process.
-            let bufferToProcess = buffer.imageBuffer, videoInput.isReadyForMoreMediaData
-        {
-
+            let bufferToProcess = buffer.imageBuffer, videoInput.isReadyForMoreMediaData {
             pixelBufferAdapter.append(bufferToProcess, withPresentationTime: buffer.timestamp - startTimestamp)
 
             if firstVideoSampleBuffer == nil {
@@ -550,12 +546,10 @@ final class MovieOutputProcessor {
                 pixelBufferAttibutes[String(kCVPixelBufferHeightKey)] = dimensions.height
                 pixelBufferAttibutes[String(kCVPixelBufferWidthKey)] = dimensions.width
             } else if /// The video height dimension.
-            let height = settings?[String(kCVPixelBufferHeightKey)],
+                let height = settings?[String(kCVPixelBufferHeightKey)],
 
                 /// The video width dimension.
-                let width = settings?[String(kCVPixelBufferWidthKey)]
-            {
-
+                let width = settings?[String(kCVPixelBufferWidthKey)] {
                 pixelBufferAttibutes[String(kCVPixelBufferHeightKey)] = height
                 pixelBufferAttibutes[String(kCVPixelBufferWidthKey)] = width
             } else {
@@ -698,7 +692,6 @@ final class MovieOutputProcessor {
 }
 
 extension MovieOutputProcessor: DeviceOutputProcessor {
-
     // MARK: - DeviceOutputProcessor
 
     /// Processes an audio sample buffer using the specified configuration.

@@ -62,7 +62,6 @@ struct URLMock {
         statusCode: Int,
         url: String
     ) {
-
         self.data = data
         self.headers = headers
         self.method = method
@@ -88,7 +87,6 @@ struct URLMock {
         url: String,
         bundle: Bundle
     ) {
-
         guard let resourceURL = bundle.url(forResource: fileName, withExtension: "json") else {
             fatalError("Resource not found.")
         }

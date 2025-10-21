@@ -110,7 +110,6 @@ public struct AsyncSequenceObserver<Model: NSFetchRequestResult>: AsyncSequence 
             for type: NSFetchedResultsChangeType,
             newIndexPath: IndexPath?
         ) {
-
             switch type {
             case .delete:
                 guard let object = anObject as? Model else { return }

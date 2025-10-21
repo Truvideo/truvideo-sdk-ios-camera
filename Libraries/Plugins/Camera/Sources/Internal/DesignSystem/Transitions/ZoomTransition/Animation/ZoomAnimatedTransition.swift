@@ -16,7 +16,8 @@ protocol ZoomAnimatorOriginProvider: AnyObject {
 
     // MARK: - Instance Methods
 
-    /// Returns the frame of the image at a given index, converted into the coordinate space of the provided container view.
+    /// Returns the frame of the image at a given index, converted into the coordinate space of the provided container
+    /// view.
     ///
     /// - Parameters:
     ///   - index: The index of the image.
@@ -78,7 +79,8 @@ class ZoomAnimatedTransition: NSObject, UIViewControllerAnimatedTransitioning {
     /// Creates a new transition animator.
     ///
     /// - Parameters:
-    ///   - isPresenting: A Boolean value indicating whether this is a presenting transition (`true`) or a dismissing transition (`false`).
+    ///   - isPresenting: A Boolean value indicating whether this is a presenting transition (`true`) or a dismissing
+    /// transition (`false`).
     ///   - originFrame: The frame of the media item in the origin view.
     ///   - originImage: The image to be animated.
     ///   - originProvider: The origin provider that supplies frames and visibility updates.
@@ -101,7 +103,11 @@ class ZoomAnimatedTransition: NSObject, UIViewControllerAnimatedTransitioning {
     }
 
     func animateTransition(using transitionContext: UIViewControllerContextTransitioning) {
-        isPresenting ? animatePresentation(using: transitionContext) : animateDismissal(using: transitionContext)
+        if isPresenting {
+            animatePresentation(using: transitionContext)
+        } else {
+            animateDismissal(using: transitionContext)
+        }
     }
 
     // MARK: - Instance Methods
@@ -134,7 +140,7 @@ class ZoomAnimatedTransition: NSObject, UIViewControllerAnimatedTransitioning {
 
     private func animatePresentation(using transitionContext: UIViewControllerContextTransitioning) {
         guard let toVC = transitionContext.viewController(forKey: .to),
-            let origin = originProvider
+              let origin = originProvider
         else {
             transitionContext.completeTransition(false)
             return
@@ -175,7 +181,7 @@ class ZoomAnimatedTransition: NSObject, UIViewControllerAnimatedTransitioning {
 
     private func animateDismissal(using transitionContext: UIViewControllerContextTransitioning) {
         guard let fromVC = transitionContext.viewController(forKey: .from) as? ZoomAnimatorDestinationProvider,
-            let origin = originProvider
+              let origin = originProvider
         else {
             transitionContext.completeTransition(false)
             return

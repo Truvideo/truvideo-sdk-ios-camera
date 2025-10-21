@@ -37,7 +37,7 @@ import Foundation
 final class URLProtocolMock: URLProtocol {
     // MARK: - Static Properties
 
-    nonisolated(unsafe) private static var stubs: [String: URLMock] = [:]
+    private nonisolated(unsafe) static var stubs: [String: URLMock] = [:]
 
     // MARK: - Types
 
@@ -63,7 +63,7 @@ final class URLProtocolMock: URLProtocol {
 
     /// Overrides needed to define a valid inheritance of URLProtocol.
     override class func canInit(with request: URLRequest) -> Bool {
-        guard let mock = Self.stubs[request.url?.absoluteString ?? ""] else {
+        guard let mock = stubs[request.url?.absoluteString ?? ""] else {
             return false
         }
 
@@ -92,7 +92,6 @@ final class URLProtocolMock: URLProtocol {
                 headerFields: mock.headers
             )
         else {
-
             client?.urlProtocol(
                 self,
                 didFailWithError: MockError.missingMockedData(url: request.url?.absoluteString ?? "")

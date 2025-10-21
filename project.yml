@@ -38,15 +38,20 @@ targets:
         - DITests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/DI/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -79,15 +84,20 @@ targets:
         - RegistryTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/Registry/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -122,15 +132,20 @@ targets:
         - StorageKitTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/Storage/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -160,15 +175,20 @@ targets:
       - target: StorageKit
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/Storage/Testing" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -191,15 +211,20 @@ targets:
         - UtilitiesTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/Utilities/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -232,15 +257,20 @@ targets:
       - target: Telemetry
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Foundation/Core/Utilities/Testing" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -267,15 +297,20 @@ targets:
         - CoreDataUtilitiesTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Foundation/Extended/CoreDataUtilities/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -313,15 +348,20 @@ targets:
         - TelemetryTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Foundation/Extended/Telemetry/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -352,28 +392,34 @@ targets:
       DEFINES_MODULE: YES
       PRODUCT_MODULE_NAME: InternalUtilities
     dependencies:
+      - target: DI
       - target: Utilities
     scheme:
       testTargets:
         - InternalUtilitiesTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Internal/Core/InternalUtilities/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
           fi
         name: SwiftLint
         basedOnDependencyAnalysis: false
-        
+
   InternalUtilitiesTests:
     type: bundle.unit-test
     platform: iOS
@@ -381,10 +427,9 @@ targets:
       - Libraries/Internal/Core/InternalUtilities/Tests
     dependencies:
       - target: InternalUtilities
-      - target: Networking
     settings:
       GENERATE_INFOPLIST_FILE: YES
-  
+
   Networking:
     type: library.static
     platform: iOS
@@ -404,15 +449,20 @@ targets:
         - NetworkingTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Internal/Core/Networking/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -443,15 +493,20 @@ targets:
       - target: Networking
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Internal/Core/Networking/Testing" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -480,15 +535,20 @@ targets:
         - CloudStorageKitTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Internal/Extended/CloudStorage/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -508,15 +568,20 @@ targets:
         - target: CloudStorageKit
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Internal/Extended/CloudStorage/Testing" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -530,16 +595,11 @@ targets:
     sources:
       - Libraries/Internal/Extended/CloudStorage/Tests
     dependencies:
-      - target: DI
       - target: CloudStorageKit
       - target: CloudStorageKitTesting
-      - target: Networking
-      - target: NetworkingTesting
-      - target: Utilities
-      - package: AWSS3
     settings:
       GENERATE_INFOPLIST_FILE: YES
-      
+
   MediaUpload:
     type: library.static
     platform: iOS
@@ -562,22 +622,27 @@ targets:
         - MediaUploadTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Internal/Extended/MediaUpload/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
           fi
         name: SwiftLint
         basedOnDependencyAnalysis: false
-        
+
   MediaUploadTests:
     type: bundle.unit-test
     platform: iOS
@@ -587,7 +652,6 @@ targets:
       - target: DI
       - target: InternalUtilities
       - target: MediaUpload
-      - target: NetworkingTesting
       - target: Networking
       - target: Utilities
     settings:
@@ -615,15 +679,20 @@ targets:
         - TruVideoApiTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Internal/Extended/TruVideoApi/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -662,15 +731,20 @@ targets:
       - target: TruVideoApi
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Internal/Extended/TruVideoApi/Testing" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -712,27 +786,32 @@ targets:
         - -force_load $(BUILT_PRODUCTS_DIR)/libCloudStorageKit.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libTruVideoApi.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libInternalUtilities.a
+        - -force_load $(BUILT_PRODUCTS_DIR)/libMediaUpload.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libUtilities.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libRegistry.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libTelemetry.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libNetworking.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libStorageKit.a
         - -force_load $(BUILT_PRODUCTS_DIR)/libDI.a
-        - -force_load $(BUILT_PRODUCTS_DIR)/libMediaUpload.a
     scheme:
       testTargets:
         - TruvideoSdkTests
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/App/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -754,15 +833,20 @@ targets:
       - target: TruvideoSdk
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/External/Extended/App/Testing" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -811,15 +895,20 @@ targets:
         - -ObjC
     postCompileScripts:
       - script: |
-          if which swift-format > /dev/null; then
-            swift-format format -r "${SRCROOT}/Libraries/Plugins/Camera/Sources" -i
+          export PATH="/opt/homebrew/bin:$PATH"
+          if which swiftformat >/dev/null; then
+            swiftformat .
           else
-            echo "warning: swift-format not installed, install with: brew install swift-format"
+            echo "warning: SwiftFormat not installed, download from https://github.com/nicklockwood/SwiftFormat"
           fi
         name: SwiftFormat
         basedOnDependencyAnalysis: false
       - script: |
-          if which swiftlint > /dev/null; then
+          if [ -f /opt/homebrew/bin/swiftlint ]; then
+            /opt/homebrew/bin/swiftlint
+          elif [ -f /usr/local/bin/swiftlint ]; then
+            /usr/local/bin/swiftlint
+          elif which swiftlint > /dev/null; then
             swiftlint
           else
             echo "warning: SwiftLint not installed, download from https://github.com/realm/SwiftLint"
@@ -896,8 +985,11 @@ schemes:
   InternalUtilities:
     build:
       targets:
-        DI: all        
-        Utilities: all         
+        DI: all
+        Utilities: all
+        InternalUtilities: all
+    test:
+      targets: [InternalUtilitiesTests]
 
   Networking:
     build:
@@ -918,10 +1010,24 @@ schemes:
         NetworkingTesting: all
   
   # Internal Extended Schemes
+  MediaUpload:
+    build:
+      targets:
+        DI: all
+        InternalUtilities: all
+        Utilities: all
+        Registry: all
+        Telemetry: all
+        Networking: all
+        MediaUpload: all
+    test:
+      targets: [MediaUploadTests]
+
   TruVideoApi:
     build:
       targets:
-        DI: all        
+        DI: all
+        InternalUtilities: all
         Utilities: all
         Networking: all
         TruVideoApi: all

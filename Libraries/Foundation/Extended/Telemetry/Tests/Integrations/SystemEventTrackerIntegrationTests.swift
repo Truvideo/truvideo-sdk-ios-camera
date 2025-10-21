@@ -3,9 +3,9 @@
 //
 
 import DI
+import Foundation
 import StorageKit
 import StorageKitTesting
-import Foundation
 import Testing
 import UIKit
 
@@ -48,7 +48,7 @@ final class SystemEventTrackerIntegrationTests {
         )
         let pathMonitor = NetworkPathMonitorMock(initialPath: pathMock)
         let sut = SystemEventTrackerIntegration(pathMonitor: pathMonitor)
-        
+
         // When
         sut.install(on: manager)
         pathMonitor.pathUpdateHandler?(pathMock)
@@ -82,11 +82,11 @@ final class SystemEventTrackerIntegrationTests {
     func testThatBackgroundNotificationCapturesBreadcrumb() {
         // Given
         let sut = SystemEventTrackerIntegration()
-        
+
         // When
         sut.install(on: manager)
         NotificationCenter.default.post(name: UIApplication.didEnterBackgroundNotification, object: nil)
-        
+
         // Then
         let breadcrumb = manager.capturedBreadcrumbs.last
         #expect(breadcrumb?.category == "app.lifecycle")
@@ -127,13 +127,13 @@ final class SystemEventTrackerIntegrationTests {
         #expect(breadcrumb?.metadata!["totalMemory"] != nil)
         #expect(breadcrumb?.severity == .warning)
     }
-    
+
     @Test
     func testThatBatteryLevelChangeCapturesBreadcrumb() {
         // Given
         let sut = SystemEventTrackerIntegration()
         UIDevice.current.isBatteryMonitoringEnabled = true
-        
+
         // When
         sut.install(on: manager)
         NotificationCenter.default.post(name: UIDevice.batteryLevelDidChangeNotification, object: UIDevice.current)

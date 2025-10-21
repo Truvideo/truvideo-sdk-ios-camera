@@ -45,7 +45,7 @@ public struct HTTPHeaders: Hashable, Sendable {
         }
 
         set {
-            guard let newValue = newValue else {
+            guard let newValue else {
                 removeHeader(forKey: name)
                 return
             }
@@ -60,14 +60,15 @@ public struct HTTPHeaders: Hashable, Sendable {
     ///
     /// - Parameter array: An array of `HTTPHeader` values to initialize the collection.
     public init(array: [HTTPHeader] = []) {
-        array.forEach {
-            insertOrReplace($0)
+        for item in array {
+            insertOrReplace(item)
         }
     }
 
     /// Creates a new `HTTPHeaders` instance from a dictionary of key-value pairs.
     ///
-    /// - Parameter dictionary: A dictionary where keys represent header names and values represent their corresponding values.
+    /// - Parameter dictionary: A dictionary where keys represent header names and values represent their corresponding
+    /// values.
     public init(dictionary: [String: String]) {
         self.init(array: dictionary.map(HTTPHeader.init))
     }
@@ -112,7 +113,6 @@ public struct HTTPHeaders: Hashable, Sendable {
 }
 
 extension HTTPHeaders: ExpressibleByArrayLiteral {
-
     // MARK: ExpressibleByArrayLiteral
 
     /// Creates an instance of `HTTPHeaders` from an array literal of `HTTPHeader` elements.
@@ -124,7 +124,6 @@ extension HTTPHeaders: ExpressibleByArrayLiteral {
 }
 
 extension HTTPHeaders: ExpressibleByDictionaryLiteral {
-
     // MARK: ExpressibleByDictionaryLiteral
 
     /// Creates an instance initialized with the given elements.
@@ -135,7 +134,6 @@ extension HTTPHeaders: ExpressibleByDictionaryLiteral {
 }
 
 extension HTTPHeaders: Collection {
-
     // MARK: - Collection
 
     /// The collection's "past the end" position---that is, the position one
@@ -171,7 +169,6 @@ extension HTTPHeaders: Collection {
 }
 
 extension HTTPHeaders: Sequence {
-
     // MARK: - Sequence
 
     /// Returns an iterator over the elements of this sequence.
@@ -199,14 +196,14 @@ extension HTTPHeaders: Sequence {
 /// ```
 public func + (lhs: HTTPHeaders, rhs: HTTPHeaders) -> HTTPHeaders {
     var httpHeaders = lhs
-    rhs.dictionary.map(HTTPHeader.init).forEach { header in
+    for header in rhs.dictionary.map(HTTPHeader.init) {
         httpHeaders.append(header)
     }
 
     return httpHeaders
 }
 
-extension Array where Element == HTTPHeader {
+extension [HTTPHeader] {
     /// Case-insensitively finds the index of an `HTTPHeader` with the provided name, if it exists.
     fileprivate func index(of name: String) -> Index? {
         let lowercasedName = name.lowercased()

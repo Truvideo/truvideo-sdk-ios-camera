@@ -15,7 +15,8 @@ public protocol NetworkPathMonitor: AnyObject {
     /// Access the current network path tracked by the monitor
     var currentPath: Path { get }
 
-    /// Set a block to be called when the network path changes. pathUpdateHandler will not be called until `start` is called.
+    /// Set a block to be called when the network path changes. pathUpdateHandler will not be called until `start` is
+    /// called.
     var pathUpdateHandler: (@Sendable (_ newPath: Path) -> Void)? { get set }
 
     /// Cancel the path monitor, after which point no more path updates will

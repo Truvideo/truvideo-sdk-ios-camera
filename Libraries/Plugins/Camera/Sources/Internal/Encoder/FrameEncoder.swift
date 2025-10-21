@@ -56,8 +56,10 @@ internal import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the frame encoder operations.
     ///
-    /// The `FrameEncoderErrorReason` struct provides a set of static constants representing various errors that can occur
-    /// during frame encoder operations. These error reasons help identify specific failure points in the frame encoder generation
+    /// The `FrameEncoderErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
+    /// during frame encoder operations. These error reasons help identify specific failure points in the frame encoder
+    /// generation
     /// process, making debugging and error handling more precise and informative.
     struct FrameEncoderErrorReason: Sendable {
         /// Error reason indicating that frame buffer encoding failed.
@@ -141,7 +143,8 @@ struct VideoBufferFrameEncoder: FrameEncoder, @unchecked Sendable {
     ///
     /// - **Software**: `kCGImagePropertyTIFFSoftware` - A human-readable app identifier (e.g., `truVideoMetadataTitle`)
     /// - **Artist**: `kCGImagePropertyTIFFArtist` - The creator/author tag (e.g., `truVideoMetadataArtist`)
-    /// - **DateTime**: `kCGImagePropertyTIFFDateTime` - An ISO-8601 timestamp string indicating when the image was created
+    /// - **DateTime**: `kCGImagePropertyTIFFDateTime` - An ISO-8601 timestamp string indicating when the image was
+    /// created
     ///
     /// ## Usage
     ///
@@ -155,7 +158,7 @@ struct VideoBufferFrameEncoder: FrameEncoder, @unchecked Sendable {
     static let imageMetadata = [
         kCGImagePropertyTIFFSoftware as String: truVideoMetadataTitle,
         kCGImagePropertyTIFFArtist as String: truVideoMetadataArtist,
-        kCGImagePropertyTIFFDateTime as String: ISO8601DateFormatter().string(from: Date()),
+        kCGImagePropertyTIFFDateTime as String: ISO8601DateFormatter().string(from: Date())
     ]
 
     // MARK: - FrameEncoder

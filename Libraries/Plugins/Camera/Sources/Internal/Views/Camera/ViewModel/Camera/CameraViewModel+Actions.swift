@@ -7,7 +7,6 @@ import UIKit
 internal import Utilities
 
 extension CameraViewModel {
-
     // MARK: - Private Computed Properties
 
     /// Determines whether more photos can be captured based on configuration limits.
@@ -91,7 +90,7 @@ extension CameraViewModel {
                     metadata: [
                         "devicePosition": .int(videoDevice.position.rawValue),
                         "flashMode": .string(configuration.flashMode.rawValue),
-                        "resolution": .string(selectedPreset.rawValue),
+                        "resolution": .string(selectedPreset.rawValue)
                     ]
                 )
 
@@ -121,7 +120,7 @@ extension CameraViewModel {
                     metadata: [
                         "devicePosition": .int(videoDevice.position.rawValue),
                         "magnificationValue": .double(value),
-                        "lastZoomFactor": .double(lastZoomFactor),
+                        "lastZoomFactor": .double(lastZoomFactor)
                     ]
                 )
             }
@@ -162,7 +161,7 @@ extension CameraViewModel {
                     message: "Zoom changed",
                     metadata: [
                         "devicePosition": .int(videoDevice.position.rawValue),
-                        "zoomFactor": .double(zoomFactor),
+                        "zoomFactor": .double(zoomFactor)
                     ]
                 )
             } catch {
@@ -193,7 +192,7 @@ extension CameraViewModel {
                     message: "Focus changed",
                     metadata: [
                         "devicePosition": .int(videoDevice.position.rawValue),
-                        "focusPoint": .string("(\(focusPoint.x), \(focusPoint.y))"),
+                        "focusPoint": .string("(\(focusPoint.x), \(focusPoint.y))")
                     ]
                 )
             } catch {
@@ -202,7 +201,7 @@ extension CameraViewModel {
                     name: .focusChangeFailed,
                     metadata: [
                         "devicePosition": .int(videoDevice.position.rawValue),
-                        "focusPoint": .string("(\(focusPoint.x), \(focusPoint.y))"),
+                        "focusPoint": .string("(\(focusPoint.x), \(focusPoint.y))")
                     ]
                 )
 
@@ -268,7 +267,7 @@ extension CameraViewModel {
                     message: "Camera switched",
                     metadata: [
                         "previousDevicePosition": .int(previousDevicePosition.rawValue),
-                        "newDevicePosition": .int(position.rawValue),
+                        "newDevicePosition": .int(position.rawValue)
                     ]
                 )
 
@@ -277,7 +276,7 @@ extension CameraViewModel {
 
                 self.isTorchAvailable = isTorchAvailable || isFlashAvailable
 
-                if !self.isTorchAvailable && isTorchEnabled {
+                if !self.isTorchAvailable, isTorchEnabled {
                     switchTorch()
                 }
 
@@ -292,7 +291,7 @@ extension CameraViewModel {
                     name: .cameraSwitchFailed,
                     metadata: [
                         "previousDevicePosition": .int(previousDevicePosition.rawValue),
-                        "newDevicePosition": .int(position.rawValue),
+                        "newDevicePosition": .int(position.rawValue)
                     ]
                 )
 
@@ -344,7 +343,7 @@ extension CameraViewModel {
                     message: "Torch toggled",
                     metadata: [
                         "devicePosition": .int(videoDevice.position.rawValue),
-                        "isTorchEnabled": .bool(isTorchEnabled),
+                        "isTorchEnabled": .bool(isTorchEnabled)
                     ]
                 )
             } catch {
@@ -363,7 +362,7 @@ extension CameraViewModel {
         let metadata: Metadata = [
             "devicePosition": .int(videoDevice.position.rawValue),
             "flashMode": .string(configuration.flashMode.rawValue),
-            "resolution": .string(selectedPreset.rawValue),
+            "resolution": .string(selectedPreset.rawValue)
         ]
 
         telemetryManager.captureBreadcrumb(message, severity: .info, category: .photoCapture, metadata: metadata)

@@ -10,15 +10,15 @@ import Testing
 
 struct HTTPURLDataRequestTests {
     // MARK: - Private Properties
-    
+
     private let monitor = MonitorMock()
     private let requestRetrier = RequestRetrierMock()
     private let config = URLSessionConfiguration.ephemeral
     private let queue = DispatchQueue.global()
     private let url = "https://httpbin.org/"
-    
+
     // MARK: - Tests
-    
+
     @Test
     func testThatDidReceiveDataShouldAppendData() {
         // Given
@@ -27,11 +27,11 @@ struct HTTPURLDataRequestTests {
 
         // When
         sut.didReceive(data: Data())
-        
+
         // Then
         #expect(sut.data != nil)
     }
-    
+
     @Test
     func testThatResetShouldResetTheData() {
         // Given
@@ -41,18 +41,18 @@ struct HTTPURLDataRequestTests {
         // When
         sut.didReceive(data: Data())
         sut.reset()
-        
+
         // Then
         #expect(sut.data == nil)
     }
-    
+
     @Test
     func testThatSerializingShouldSucceed() async {
         // Given
         let urlMock = URLMock(
             data: """
-        { "url": "https://mock.test", "headers": {}, "args": {}, "origin": "127.0.0.1" }
-        """.data(using: .utf8),
+            { "url": "https://mock.test", "headers": {}, "args": {}, "origin": "127.0.0.1" }
+            """.data(using: .utf8),
             headers: ["Content-Type": "application/json"],
             method: .get,
             statusCode: 200,
@@ -71,7 +71,7 @@ struct HTTPURLDataRequestTests {
         #expect(response.value != nil)
         #expect(response.error == nil)
     }
-    
+
     @Test
     func testThatSerializingWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
@@ -89,33 +89,33 @@ struct HTTPURLDataRequestTests {
         // When
         config.protocolClasses = [URLProtocolMock.self]
         let response = await sut.serializing(Empty.self, emptyResponseCodes: [200])
-        
+
         // Then
         #expect(response.data == nil)
         #expect(response.value == Empty())
     }
-    
+
     @Test
     func tesThattUploadWithRequestBuilderShouldSucceed() async {
         // Given
         let sut = HTTPURLSession()
         let data = "Test".data(using: .utf8)!
         let requestBuilder = RequestBuilderMock()
-        
+
         // When
         let result = sut.upload(data, with: requestBuilder, middleware: nil)
-        
+
         // Then
         #expect(result != nil)
     }
-    
+
     @Test
     func tesThatUploadWithURLAndMethodShouldSucceed() async {
         // Given
         let sut = HTTPURLSession()
         let data = "Test".data(using: .utf8)!
         let url = URLConvertibleMock()
-        
+
         // When
         let result = sut.upload(
             data,
@@ -124,11 +124,11 @@ struct HTTPURLDataRequestTests {
             headers: nil,
             middleware: nil
         )
-        
+
         // Then
         #expect(result != nil)
     }
-    
+
     @Test
     func testThatSerializingWithCustomEmptyStatusCodesShouldFail() async {
         // Given
@@ -137,12 +137,12 @@ struct HTTPURLDataRequestTests {
 
         // When
         let response = await sut.serializing(TestResponse.self, emptyResponseCodes: [305])
-        
+
         // Then
         #expect(response.value == nil)
         #expect(response.error?.kind == .responseSerializationFailed)
     }
-    
+
     @Test
     func testThatSerializingReturnsTheResponseAfterFinished() async {
         // Given
@@ -152,13 +152,13 @@ struct HTTPURLDataRequestTests {
         // When
         _ = await sut.serializing(TestResponse.self)
         let response = await sut.serializingData()
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.result.failure == nil)
         #expect(response.value != nil)
     }
-    
+
     @Test
     func testThatSerializingDataShouldSucceed() async {
         // Given
@@ -167,12 +167,12 @@ struct HTTPURLDataRequestTests {
 
         // When
         let response = await sut.serializingData()
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.value != nil)
     }
-    
+
     @Test
     func testThatSerializingDataWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
@@ -205,12 +205,12 @@ struct HTTPURLDataRequestTests {
 
         // When
         let response = await sut.serializingData(emptyResponseCodes: [200])
-        
+
         // Then
         #expect(response.value != nil)
         #expect(response.error == nil)
     }
-    
+
     @Test
     func testThatSerializingDataReturnsTheResponseAfterFinished() async {
         // Given
@@ -220,13 +220,13 @@ struct HTTPURLDataRequestTests {
         // When
         _ = await sut.serializingData()
         let response = await sut.serializingData()
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.result.failure == nil)
         #expect(response.value != nil)
     }
-    
+
     @Test
     func testThatSerializingStringShouldSucceed() async {
         // Given
@@ -235,12 +235,12 @@ struct HTTPURLDataRequestTests {
 
         // When
         let response = await sut.serializingString()
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.value != nil)
     }
-    
+
     @Test
     func testThatSerializingStringWithCustomEmptyStatusCodesShouldSucceed() async {
         // Given
@@ -258,12 +258,12 @@ struct HTTPURLDataRequestTests {
 
         // When
         let response = await sut.serializingString(emptyResponseCodes: [305])
-        
+
         // Then
         #expect(response.value == "Hello world")
         #expect(response.error == nil)
     }
-    
+
     @Test
     func testThatSerializingStringWithCustomEmptyStatusCodesShouldFail() async {
         // Given
@@ -286,7 +286,7 @@ struct HTTPURLDataRequestTests {
         #expect(response.value == nil)
         #expect(response.error?.kind == .responseSerializationFailed)
     }
-    
+
     @Test
     func testThatSerializingStringReturnsTheResponseAfterFinished() async {
         // Given
@@ -296,13 +296,13 @@ struct HTTPURLDataRequestTests {
         // When
         _ = await sut.serializingString()
         let response = await sut.serializingString()
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.result.failure == nil)
         #expect(response.value != nil)
     }
-    
+
     @Test
     func testThatDidFailToCreateURLRequestShouldRetryTheRequestOnRetryPolicy() async {
         // Given
@@ -319,24 +319,24 @@ struct HTTPURLDataRequestTests {
         // When
         sut.state = .resumed
         requestRetrier.retry = .retry(0)
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidFinishCallback = {
                 continuation.resume()
             }
-           
+
             session.queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
-        
+
         // Then
         #expect(sut.retryCount == 1)
         #expect(monitor.requestDidFinishCallCount == 1)
         #expect(monitor.requestIsRetryingCallCount == 1)
         #expect(monitor.didFailToCreateURLRequestWithErrorCallCount == 1)
     }
-    
+
     @Test
     func testThatDidFailToCreateURLRequestShouldNotRetryTheRequestOnRetryPolicy() async {
         // Given
@@ -352,22 +352,22 @@ struct HTTPURLDataRequestTests {
         // When
         sut.state = .resumed
         requestRetrier.retry = .doNotRetryWithError(error)
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidFinishCallback = {
                 continuation.resume()
             }
-           
+
             session.queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
-        
+
         // Then
         #expect(sut.error?.kind == .requestRetryFailed)
         #expect(sut.error?.underlyingError is HTTPURLSession.RetryError)
     }
-    
+
     @Test
     func testThatValidateShouldSucceed() async {
         // Given
@@ -378,13 +378,13 @@ struct HTTPURLDataRequestTests {
         let response = await sut
             .validate { _, _, _ in }
             .serializingData()
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.error == nil)
         #expect(response.value != nil)
     }
-    
+
     @Test
     func testThatValidateWithCustomValidatorShouldFailTheRequest() async {
         // Given
@@ -397,14 +397,14 @@ struct HTTPURLDataRequestTests {
                 throw NetworkingError(kind: .responseValidationFailed)
             }
             .serializingData()
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.error?.kind == .responseValidationFailed)
         #expect(response.error?.underlyingError == nil)
         #expect(response.value == nil)
     }
-    
+
     @Test
     func testThatValidateWithCustomValidatorAndCustomErrorShouldFailTheRequest() async {
         // Given
@@ -417,14 +417,14 @@ struct HTTPURLDataRequestTests {
                 throw NSError(domain: "", code: 0)
             }
             .serializingData()
-        
+
         // Then
         #expect(response.data != nil)
         #expect(response.error?.kind == .responseValidationFailed)
         #expect(response.error?.underlyingError is NSError)
         #expect(response.value == nil)
     }
-    
+
     @Test
     func testThatDidFailToCreateURLRequestShouldNotRetryTheRequestOnRetryPolicyWithCustomError() async {
         // Given
@@ -440,22 +440,22 @@ struct HTTPURLDataRequestTests {
         // When
         sut.state = .resumed
         requestRetrier.retry = .doNotRetryWithError(NSError(domain: "", code: 0))
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidFinishCallback = {
                 continuation.resume()
             }
-           
+
             session.queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
-        
+
         // Then
         #expect(sut.error?.kind == .requestRetryFailed)
         #expect(sut.error?.underlyingError is NSError)
     }
-    
+
     @Test
     func testThatDataRequestShouldReturnCachedDataOnReturnCacheDataDontLoadPolicy() async throws {
         // Given
@@ -469,12 +469,12 @@ struct HTTPURLDataRequestTests {
         session.queue.sync {
             request.didCreate(urlRequest: urlRequest)
         }
-        
+
         cache.cache(response, for: request)
-                
+
         let sut = session.request(url, cachePolicy: .returnCacheDataDontLoad) as! HTTPURLDataRequest
         let result = await sut.serializingData()
-        
+
         // Then
         #expect(sut.state == .finished)
         #expect(sut.request != nil)
@@ -482,7 +482,7 @@ struct HTTPURLDataRequestTests {
         #expect(result.response != nil)
         #expect(result.type == .localCache)
     }
-    
+
     @Test
     func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataDontLoadPolicy() async {
         // Given
@@ -495,7 +495,7 @@ struct HTTPURLDataRequestTests {
 
         // When
         let result = await sut.serializingData()
-        
+
         // Then
         #expect(sut.state == .finished)
         #expect(sut.request != nil)
@@ -503,7 +503,7 @@ struct HTTPURLDataRequestTests {
         #expect(result.response == nil)
         #expect(result.type == .localCache)
     }
-    
+
     @Test
     func testThatDataRequestShouldReturnCachedDataAndDontLoadOnReturnCacheDataElseLoadPolicy() async throws {
         // Given
@@ -520,16 +520,16 @@ struct HTTPURLDataRequestTests {
         session.queue.sync {
             request.didCreate(urlRequest: urlRequest)
         }
-        
+
         cache.cache(response, for: request)
-                
+
         let sut = session.request(
             url.appending("/200"),
             cachePolicy: .returnCacheDataDontLoad
         ) as! HTTPURLDataRequest
-        
+
         let result = await sut.serializingData()
-        
+
         // Then
         #expect(sut.state == .finished)
         #expect(sut.request != nil)
@@ -537,7 +537,7 @@ struct HTTPURLDataRequestTests {
         #expect(result.response != nil)
         #expect(result.type == .localCache)
     }
-    
+
     @Test
     func testThatDataRequestShouldLoadDataOnReloadIgnoringLocalCacheDataPolicy() async throws {
         // Given
@@ -551,12 +551,12 @@ struct HTTPURLDataRequestTests {
         session.queue.sync {
             request.didCreate(urlRequest: urlRequest)
         }
-        
+
         cache.cache(response, for: request)
-                
+
         let sut = session.request(url) as! HTTPURLDataRequest
         let result = await sut.serializingData()
-        
+
         // Then
         #expect(sut.state == .finished)
         #expect(!sut.tasks.isEmpty)
@@ -564,19 +564,18 @@ struct HTTPURLDataRequestTests {
         #expect(result.response != nil)
         #expect(result.type == .networkLoad)
     }
-    
+
     @Test
     func testThatDataRequestShouldLoadDataOnReturnCacheDataElseLoadPolicy() async throws {
         // Given
         let cache = InMemoryURLCache()
         let session = HTTPURLSession(cache: cache)
         let sut = session.request(url.appending("/200"),
-            cachePolicy: .returnCacheDataElseLoad
-        ) as! HTTPURLDataRequest
+                                  cachePolicy: .returnCacheDataElseLoad) as! HTTPURLDataRequest
 
         // When
         let result = await sut.serializingData()
-        
+
         // Then
         #expect(sut.state == .finished)
         #expect(sut.request != nil)
@@ -584,7 +583,7 @@ struct HTTPURLDataRequestTests {
         #expect(result.response != nil)
         #expect(result.type == .networkLoad)
     }
-    
+
     @Test
     func testThatDataRequestShoulDoNotRetryRequest() async {
         // Given
@@ -599,12 +598,12 @@ struct HTTPURLDataRequestTests {
         // When
         requestRetrier.retry = .doNotRetry
         _ = await sut.serializingData()
-        
+
         // Then
         #expect(sut.state == .finished)
         #expect(sut.retryCount == 0)
     }
-    
+
     @Test
     func testThatDataRequestShoulDoNotRetryAndReturnFailedResponseOnDoNotRetryWithError() async {
         // Given
@@ -615,15 +614,15 @@ struct HTTPURLDataRequestTests {
 
         // When
         requestRetrier.retry = .doNotRetryWithError(NSError(domain: "", code: 0))
-        
+
         let response = await sut.validate().serializingData()
-        
+
         // Then
         #expect(response.error?.kind == .requestRetryFailed)
         #expect(response.error?.underlyingError != nil)
         #expect(sut.retryCount == 0)
     }
-    
+
     @Test
     func testThatDataRequestShouldRetryRequest() async {
         // Given
@@ -635,13 +634,13 @@ struct HTTPURLDataRequestTests {
 
         // When
         let response = await sut.validate().serializingData()
-        
+
         // Then
         #expect(response.error?.underlyingError == nil)
         #expect(response.error?.kind == .responseValidationFailed)
         #expect(sut.retryCount == requestRetrier.maxNumberOfRetries)
     }
-    
+
     @Test
     func testThatValidationWithCustomStatusCodesShouldSucceed() async {
         // Given
@@ -667,7 +666,7 @@ struct HTTPURLDataRequestTests {
         let response = await sut
             .validate(acceptableStatusCodes: [400])
             .serializingData(emptyResponseCodes: [400])
-        
+
         // Then
         #expect(response.error == nil)
         #expect(response.value != nil)
@@ -686,8 +685,8 @@ struct HTTPURLDataRequestTests {
         let response = await sut
             .validate(acceptableStatusCodes: [400])
             .serializingData()
-        
-        // Then        
+
+        // Then
         #expect(response.error != nil)
         #expect(response.value == nil)
     }

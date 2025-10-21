@@ -14,20 +14,20 @@ import Utilities
 
 struct AuthenticatableClientTests {
     // MARK: - Private Properties
-    
+
     private let context = Context(brand: "brand", model: "model", os: "os", osVersion: "osVersion", timestamp: 0)
-    
+
     // MARK: - Tests
-    
+
     @Test
     func testThatAuthenticateClientShouldInitialize() {
         // Given
         let sut = AuthenticationClient()
-        
+
         // When, Then
         #expect(sut.session is HTTPURLSession, "Expected the default session to be HTTPURLSession")
     }
-    
+
     @Test
     func testThatAuthenticateShouldSaveTheAuthSessionInTheStorage() async throws {
         try await withDependencyValues { dependencies in
@@ -39,7 +39,7 @@ struct AuthenticatableClientTests {
             let apiKey = "test-api-Key"
             let signature = "signature"
             let sut = AuthenticationClient(session: session)
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -52,13 +52,13 @@ struct AuthenticatableClientTests {
                 result: .success(authToken),
                 type: .networkLoad
             )
-            
+
             try await sut.authenticate(
                 apiKey: apiKey,
                 context: context,
                 signature: signature
             )
-            
+
             // Then
             #expect(sessionManager.currentSession != nil)
             #expect(sessionManager.currentSession!.apiKey == apiKey)
@@ -67,7 +67,7 @@ struct AuthenticatableClientTests {
             #expect(sessionManager.currentSession!.authToken.refreshToken == authToken.refreshToken)
         }
     }
-    
+
     @Test
     func testThatAuthenticateShouldFailToSaveTheAuthSessionInTheStorage() async throws {
         await withDependencyValues { dependencies in
@@ -77,7 +77,7 @@ struct AuthenticatableClientTests {
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
             let sut = AuthenticationClient(session: session)
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -91,7 +91,7 @@ struct AuthenticatableClientTests {
                 type: .networkLoad
             )
             sessionManager.error = NSError(domain: "StorageError", code: 1)
-            
+
             // Then
             await #expect {
                 try await sut.authenticate(
@@ -101,13 +101,13 @@ struct AuthenticatableClientTests {
                     externalId: ""
                 )
             } throws: { error in
-                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed
+                (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed
             }
-            
+
             #expect(sessionManager.currentSession == nil, "Auth session should not be saved if storage fails")
         }
     }
-    
+
     @Test
     func testThatAuthenticateIncludesMultitenantExternalIdHeaderForMultiTenantScenarios() async throws {
         try await withDependencyValues { dependencies in
@@ -118,7 +118,7 @@ struct AuthenticatableClientTests {
             let authToken = AuthToken.mock
             let externalId = "QA"
             let sut = AuthenticationClient(session: session)
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -131,19 +131,19 @@ struct AuthenticatableClientTests {
                 result: .success(authToken),
                 type: .networkLoad
             )
-            
+
             try await sut.authenticate(
                 apiKey: "test-api-key",
                 context: context,
                 signature: "signature",
                 externalId: externalId
             )
-            
+
             // Then
             #expect(session.lastRequestHeaders?["x-multitenant-external-id"] == externalId)
         }
     }
-    
+
     @Test
     func testThatAuthenticateIncludesAuthenticationDeviceIdHeaderWhenCurrentSessionExists() async throws {
         try await withDependencyValues { dependencies in
@@ -154,7 +154,7 @@ struct AuthenticatableClientTests {
             let authToken = AuthToken.mock
             let sut = AuthenticationClient(session: session)
             let deviceId = "36BBA8E7-A9C6-4F00-B4E1-F6BA888FF093"
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -167,21 +167,21 @@ struct AuthenticatableClientTests {
                 result: .success(authToken),
                 type: .networkLoad
             )
-            
+
             try sessionManager.set(AuthSession.mock)
-            
+
             try await sut.authenticate(
                 apiKey: "test-api-key",
                 context: context,
                 signature: "signature",
                 externalId: ""
             )
-            
+
             // Then
             #expect(session.lastRequestHeaders?["x-authentication-device-id"] == deviceId)
         }
     }
-    
+
     @Test
     func testThatAuthenticateShouldIncludesApiKeyAndSignatureHeaders() async throws {
         try await withDependencyValues { dependencies in
@@ -193,7 +193,7 @@ struct AuthenticatableClientTests {
             let apiKey = "test-api-Key"
             let signature = "signature"
             let sut = AuthenticationClient(session: session)
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -206,20 +206,20 @@ struct AuthenticatableClientTests {
                 result: .success(authToken),
                 type: .networkLoad
             )
-            
+
             try await sut.authenticate(
                 apiKey: apiKey,
                 context: context,
                 signature: signature,
                 externalId: ""
             )
-            
+
             // Then
             #expect(session.lastRequestHeaders?["x-authentication-api-key"] == apiKey)
             #expect(session.lastRequestHeaders?["x-authentication-signature"] == signature)
         }
     }
-    
+
     @Test
     func testThatAuthenticateShouldUseCorrectParameters() async throws {
         try await withDependencyValues { dependencies in
@@ -229,7 +229,7 @@ struct AuthenticatableClientTests {
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
             let sut = AuthenticationClient(session: session)
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -242,14 +242,14 @@ struct AuthenticatableClientTests {
                 result: .success(authToken),
                 type: .networkLoad
             )
-            
+
             try await sut.authenticate(
                 apiKey: "test-api-key",
                 context: context,
                 signature: "signature",
                 externalId: ""
             )
-            
+
             // Then
             #expect(session.lastRequestParameters?["brand"] as? String == context.brand)
             #expect(session.lastRequestParameters?["model"] as? String == context.model)
@@ -258,7 +258,7 @@ struct AuthenticatableClientTests {
             #expect(session.lastRequestParameters?["timestamp"] as? Int == context.timestamp)
         }
     }
-    
+
     @Test
     func testThatAuthenticateShouldUseCorrectURL() async throws {
         try await withDependencyValues { dependencies in
@@ -268,7 +268,7 @@ struct AuthenticatableClientTests {
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
             let sut = AuthenticationClient(session: session)
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -281,21 +281,21 @@ struct AuthenticatableClientTests {
                 result: .success(authToken),
                 type: .networkLoad
             )
-            
+
             try await sut.authenticate(
                 apiKey: "test-api-key",
                 context: context,
                 signature: "signature",
                 externalId: ""
             )
-            
+
             let url = try session.lastRequestURL?.asURL()
-            
+
             // Then
             #expect(url!.absoluteString.contains("api/device"))
         }
     }
-    
+
     @Test
     func testThatAuthenticateShouldUsePostMethod() async throws {
         try await withDependencyValues { dependencies in
@@ -305,7 +305,7 @@ struct AuthenticatableClientTests {
             let sessionManager = SessionManagerMock()
             let authToken = AuthToken.mock
             let sut = AuthenticationClient(session: session)
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -318,19 +318,19 @@ struct AuthenticatableClientTests {
                 result: .success(authToken),
                 type: .networkLoad
             )
-            
+
             try await sut.authenticate(
                 apiKey: "test-api-key",
                 context: context,
                 signature: "signature",
                 externalId: ""
             )
-            
+
             // Then
             #expect(session.lastRequestMethod == .post)
         }
     }
-    
+
     @Test
     func testThatAuthenticateValidateResponse() async throws {
         try await withDependencyValues { dependencies in
@@ -347,13 +347,13 @@ struct AuthenticatableClientTests {
                 headerFields: nil
             )!
             let data = """
-                {
-                    "id": "36BBA8E7-A9C6-4F00-B4E1-F6BA888FF093",
-                    "accessToken": "test-access-token",
-                    "refreshToken": "test-refresh-token"
-                }
-                """.data(using: .utf8)!
-            
+            {
+                "id": "36BBA8E7-A9C6-4F00-B4E1-F6BA888FF093",
+                "accessToken": "test-access-token",
+                "refreshToken": "test-refresh-token"
+            }
+            """.data(using: .utf8)!
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -380,7 +380,7 @@ struct AuthenticatableClientTests {
             #expect(dataRequest.validateCallCount == 1, "Expected validate to be called once")
         }
     }
-    
+
     @Test
     func testThatAuthenticateShouldThrowResponseValidationFailedWhenValidationFails() async throws {
         await withDependencyValues { dependencies in
@@ -395,7 +395,7 @@ struct AuthenticatableClientTests {
                 httpVersion: nil,
                 headerFields: nil
             )!
-            
+
             let data = """
             {
                 "type": "about:blank",
@@ -406,10 +406,10 @@ struct AuthenticatableClientTests {
                 "instance": "/api/device"
             }
             """.data(using: .utf8)!
-            
+
             // When
             session.dataRequest = dataRequest
-            
+
             dataRequest.data = data
             dataRequest.response = response
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
@@ -420,7 +420,7 @@ struct AuthenticatableClientTests {
                 result: .failure(NetworkingError(kind: .unknown, failureReason: "")),
                 type: .networkLoad
             )
-                        
+
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
 
@@ -433,10 +433,10 @@ struct AuthenticatableClientTests {
                     externalId: ""
                 )
             } throws: { error in
-                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed
+                (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed
             }
-            
-            #expect(dataRequest.validateCallCount == 1, "Expected validate to be called once")            
+
+            #expect(dataRequest.validateCallCount == 1, "Expected validate to be called once")
         }
     }
 
@@ -448,7 +448,7 @@ struct AuthenticatableClientTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let sut = AuthenticationClient(session: session)
-            
+
             // When
             dependencies.environment = .beta
             dependencies.sessionManager = sessionManager
@@ -461,7 +461,7 @@ struct AuthenticatableClientTests {
                 result: .failure(NetworkingError(kind: .invalidURL, failureReason: "")),
                 type: .networkLoad
             )
-            
+
             // Then
             await #expect {
                 try await sut.authenticate(
@@ -471,7 +471,7 @@ struct AuthenticatableClientTests {
                     externalId: ""
                 )
             } throws: { error in
-                return (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed
+                (error as? UtilityError)?.kind == .TruVideoApiErrorReason.authenticationFailed
             }
         }
     }

@@ -9,37 +9,37 @@ import Testing
 
 struct StringResponseSerializerTests {
     // MARK: - Properties
-    
+
     private let url = URL(string: "https://httpbin.org/")!
-    
+
     // MARK: - Tests
-    
+
     @Test
     func testThatSerializeShouldReturnAValidString() throws {
         // Given
         let data = "Foo".data(using: .utf8)
         let sut = StringResponseSerializer()
-        
+
         // When
         let serializedObject = try sut.serialize(request: nil, response: nil, data: data, error: nil)
 
         // Then
         #expect(serializedObject == "Foo")
     }
-    
+
     @Test
     func testThatSerializeShouldReturnAStringOnCustomEmptyResponseCodes() throws {
         // Given
         let response = HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)
         let sut = StringResponseSerializer(emptyResponseCodes: [500])
-        
+
         // When
         let serializedObject = try sut.serialize(request: nil, response: response, data: nil, error: nil)
 
         // Then
         #expect(serializedObject == "")
     }
-    
+
     @Test
     func testThatSerializeShouldThrowAnErrorIfSentErrorIsNotNil() throws {
         // Given
@@ -65,11 +65,11 @@ struct StringResponseSerializerTests {
             guard let error = error as? NetworkingError else {
                 return false
             }
-            
+
             return error.kind == .responseSerializationFailed
         }
     }
-    
+
     @Test
     func testThatSerializeShouldThrowAnErrorIfDataIsEmptyWithCustomEmptyResponseCodes() throws {
         // Given
@@ -83,11 +83,11 @@ struct StringResponseSerializerTests {
             guard let error = error as? NetworkingError else {
                 return false
             }
-            
+
             return error.kind == .responseSerializationFailed
         }
     }
-    
+
     @Test
     func testThatSerializeShouldThrowAnErrorOnInvalidUTF8StringData() throws {
         // Given
@@ -102,7 +102,7 @@ struct StringResponseSerializerTests {
             guard let error = error as? NetworkingError else {
                 return false
             }
-            
+
             return error.kind == .responseSerializationFailed
         }
     }

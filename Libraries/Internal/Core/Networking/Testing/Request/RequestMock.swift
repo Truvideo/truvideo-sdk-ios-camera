@@ -74,7 +74,6 @@ public final class RequestMock: Request {
 }
 
 extension RequestMock {
-
     // MARK: - Equatable
 
     /// Returns a Boolean value indicating whether two values are equal.

@@ -13,7 +13,8 @@ public protocol Request: Equatable, CustomDebugStringConvertible {
     /// Current `URLRequest` created on behalf of the `Request`.
     var request: URLRequest? { get }
 
-    /// `HTTPURLResponse` received from the server, if any. If the `Request` was retried, this is the response of the last `URLSessionTask`.
+    /// `HTTPURLResponse` received from the server, if any. If the `Request` was retried, this is the response of the
+    /// last `URLSessionTask`.
     var response: HTTPURLResponse? { get }
 
     /// The current retry count for this request.

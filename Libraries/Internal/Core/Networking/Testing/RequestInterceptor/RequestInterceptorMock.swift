@@ -7,8 +7,10 @@ import Networking
 
 /// A mock implementation of the `RequestInterceptor` protocol for testing network requests.
 ///
-/// `RequestInterceptorMock` is primarily designed for unit testing to verify that requests are being intercepted and adapted correctly.
-/// It allows for capturing intercepted `URLRequest` instances and simulating errors during interception. This makes it useful for testing both successful and failure scenarios.
+/// `RequestInterceptorMock` is primarily designed for unit testing to verify that requests are being intercepted and
+/// adapted correctly.
+/// It allows for capturing intercepted `URLRequest` instances and simulating errors during interception. This makes it
+/// useful for testing both successful and failure scenarios.
 ///
 /// ### Example Usage:
 /// ```swift

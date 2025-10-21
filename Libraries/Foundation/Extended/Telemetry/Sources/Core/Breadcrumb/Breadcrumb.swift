@@ -63,7 +63,6 @@ public struct Breadcrumb: Codable, Sendable {
         timestamp: Date = Date(),
         metadata: Metadata? = nil
     ) {
-
         self.category = category
         self.message = message
         self.metadata = metadata

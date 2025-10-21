@@ -63,7 +63,7 @@ public struct DSColor: Sendable {
             "shade700": Color("dusk", bundle: Bundle(for: BundleLocator.self)),
             "shade800": Color("night", bundle: Bundle(for: BundleLocator.self)),
             "shade850": Color("midnight", bundle: Bundle(for: BundleLocator.self)),
-            "shade900": Color("void", bundle: Bundle(for: BundleLocator.self)),
+            "shade900": Color("void", bundle: Bundle(for: BundleLocator.self))
         ]
     )
 
@@ -77,7 +77,7 @@ public struct DSColor: Sendable {
         primary: Color("teal", bundle: Bundle(for: BundleLocator.self)),
         swatch: [
             "shade200": Color("teal", bundle: Bundle(for: BundleLocator.self)),
-            "shade500": .green,
+            "shade500": .green
         ]
     )
 

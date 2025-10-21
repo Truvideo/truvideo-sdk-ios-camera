@@ -68,6 +68,7 @@
 disabled_rules:
   - trailing_comma
   - trailing_whitespace
+  - empty_line_after_super
 
 opt_in_rules:
   - array_init
@@ -127,7 +128,7 @@ opt_in_rules:
   - vertical_whitespace_closing_braces
   - yoda_condition
   - redundant_discardable_let
-  - redundant_optional_initialization
+  - implicit_optional_initialization
   - return_arrow_whitespace
   - self_in_property_initialization
   - shorthand_operator
@@ -147,6 +148,7 @@ excluded:
   - "**/Deprecated"
   - "**/Deprecated/**"
   - Libraries/App/Tests/*
+  - Libraries/*/*/Examples/*
   - Libraries/*/*/Testing/*
   - Libraries/*/*/Tests/*
   - Libraries/*/*/*/Deprecated/*
@@ -245,7 +247,7 @@ trailing_closure:
   only_single_muted_parameter: true
 
 type_body_length:
-  warning: 500
+  warning: 400
   error: 500
 
 type_contents_order:

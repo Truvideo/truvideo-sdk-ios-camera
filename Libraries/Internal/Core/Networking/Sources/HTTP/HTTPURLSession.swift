@@ -6,8 +6,10 @@ import Foundation
 
 /// A class responsible for managing and executing network requests using `URLSession`.
 ///
-/// `HTTPURLSession` handles the lifecycle of network requests, including initialization, execution, monitoring, and cancellation.
-/// It integrates with customizable middleware, monitors, and delegates for flexible request handling. The session operates asynchronously
+/// `HTTPURLSession` handles the lifecycle of network requests, including initialization, execution, monitoring, and
+/// cancellation.
+/// It integrates with customizable middleware, monitors, and delegates for flexible request handling. The session
+/// operates asynchronously
 /// on specified queues, ensuring efficient execution without blocking the main thread.
 ///
 /// This class is ideal for managing network requests in applications requiring robust networking operations,
@@ -45,7 +47,7 @@ import Foundation
 ///   - Custom middleware can be used to handle authentication, logging, or request modification before sending.
 ///   - Use `RequestMonitor` for analytics, logging, or tracking request lifecycle events.
 ///   - All networking tasks are automatically handled on background queues to avoid blocking the main thread.
-public class HTTPURLSession: @unchecked Sendable, Session {
+open class HTTPURLSession: @unchecked Sendable, Session {
     // MARK: - Private Properties
 
     private let cache: HTTPURLCache?
@@ -76,12 +78,15 @@ public class HTTPURLSession: @unchecked Sendable, Session {
 
     // MARK: - Types
 
-    /// A builder responsible for constructing a `URLRequest` with configurable parameters, method, headers, and encoding.
+    /// A builder responsible for constructing a `URLRequest` with configurable parameters, method, headers, and
+    /// encoding.
     ///
-    /// `URLRequestBuilder` conforms to the `RequestBuilder` protocol and provides a structured way to build HTTP requests.
+    /// `URLRequestBuilder` conforms to the `RequestBuilder` protocol and provides a structured way to build HTTP
+    /// requests.
     /// It allows for injecting parameters, encoding strategies, custom headers, and request interceptors.
     ///
-    /// This is particularly useful for networking layers that require flexible request construction with support for various HTTP methods, encoders, and interceptors.
+    /// This is particularly useful for networking layers that require flexible request construction with support for
+    /// various HTTP methods, encoders, and interceptors.
     ///
     /// ### Example Usage:
     /// ```swift
@@ -121,7 +126,8 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         /// a valid HTTP request. The request should include all necessary details such as the URL, HTTP method,
         /// headers, query parameters, and body content.
         ///
-        /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components, serialization issues, or missing required fields.
+        /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components,
+        /// serialization issues, or missing required fields.
         /// - Returns: A fully configured `URLRequest` instance ready for execution.
         func build() throws -> URLRequest {
             let request = try URLRequest(url: url, method: method, headers: headers)
@@ -222,7 +228,8 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         /// a valid HTTP request. The request should include all necessary details such as the URL, HTTP method,
         /// headers, query parameters, and body content.
         ///
-        /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components, serialization issues, or missing required fields.
+        /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components,
+        /// serialization issues, or missing required fields.
         /// - Returns: A fully configured `URLRequest` instance ready for execution.
         func build() throws -> URLRequest {
             try request.build()
@@ -235,13 +242,16 @@ public class HTTPURLSession: @unchecked Sendable, Session {
     ///
     /// - Parameters:
     ///   - session: The `URLSession` instance responsible for managing HTTP requests.
-    ///   - delegate: The `HTTPURLSessionDelegate` responsible for handling session events, such as task completion and failures.
+    ///   - delegate: The `HTTPURLSessionDelegate` responsible for handling session events, such as task completion and
+    /// failures.
     ///   - cache: The cache for providing cached responses to requests within the session.
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
-    ///   - middleware: An optional `RequestMiddleware` instance used to modify requests before execution (default is `nil`).
+    ///   - middleware: An optional `RequestMiddleware` instance used to modify requests before execution (default is
+    /// `nil`).
     ///   - monitors: An optional `RequestMonitor`s list for observing request events.
     ///   - queue: A `DispatchQueue` used for executing networking operations (default is a custom background queue).
-    ///   - requestQueue: A `DispatchQueue` used specifically for managing request execution (default is a custom background queue).
+    ///   - requestQueue: A `DispatchQueue` used specifically for managing request execution (default is a custom
+    /// background queue).
     public init(
         session: URLSession,
         delegate: HTTPURLSessionDelegate,
@@ -250,7 +260,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         monitors: [Monitor] = [],
         queue: DispatchQueue = DispatchQueue(label: "com.networking.session.queue")
     ) {
-
         self.cache = cache
         self.delegate = delegate
         self.middleware = middleware
@@ -264,14 +273,19 @@ public class HTTPURLSession: @unchecked Sendable, Session {
 
     /// Creates and initializes a networking session using default configuration settings.
     ///
-    /// This convenience initializer automatically sets up a `URLSession` with a specified configuration, a delegate, and operation queues.
-    /// It is useful for quickly setting up a networking session with sensible defaults, while still allowing for customization.
+    /// This convenience initializer automatically sets up a `URLSession` with a specified configuration, a delegate,
+    /// and operation queues.
+    /// It is useful for quickly setting up a networking session with sensible defaults, while still allowing for
+    /// customization.
     ///
     /// - Parameters:
-    ///   - configuration: A `URLSessionConfiguration` instance that defines behavior for the networking session (default is `.createDefault()`).
-    ///   - delegate: A `SessionDelegate` instance responsible for handling session events (default is a new `SessionDelegate` instance).
+    ///   - configuration: A `URLSessionConfiguration` instance that defines behavior for the networking session
+    /// (default is `.createDefault()`).
+    ///   - delegate: A `SessionDelegate` instance responsible for handling session events (default is a new
+    /// `SessionDelegate` instance).
     ///   - cache: The cache for providing cached responses to requests within the session.
-    ///   - middleware: An optional `RequestMiddleware` instance used for modifying requests before execution (default is `nil`).
+    ///   - middleware: An optional `RequestMiddleware` instance used for modifying requests before execution (default
+    /// is `nil`).
     ///   - monitors: An optional `RequestMonitor`s list for observing request events.
     ///   - queue: A `DispatchQueue` used for networking operations (default is a custom background queue).
     ///   - requestQueue: A `DispatchQueue` used for handling request execution (default is a custom background queue).
@@ -283,7 +297,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         monitors: [Monitor] = [],
         queue: DispatchQueue = DispatchQueue(label: "com.networking.session.queue")
     ) {
-
         let serialQueue = queue === DispatchQueue.main ? queue : DispatchQueue(label: queue.label, target: queue)
         let delegateQueue = OperationQueue.createDefault(with: serialQueue)
         let session = URLSession(configuration: configuration, delegate: delegate, delegateQueue: delegateQueue)
@@ -301,7 +314,7 @@ public class HTTPURLSession: @unchecked Sendable, Session {
     deinit {
         let error = NetworkingError(kind: .sessionInvalidated, failureReason: "Session deinitialized.")
 
-        activeRequests.forEach { request in
+        for request in activeRequests {
             self.queue.async {
                 request.finish(error: error)
             }
@@ -322,7 +335,8 @@ public class HTTPURLSession: @unchecked Sendable, Session {
 
     // MARK: - DataRequest
 
-    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
+    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional
+    /// configuration.
     ///
     /// - Parameters:
     ///   - url: A `URLConvertible` instance representing the endpoint for the request.
@@ -330,7 +344,8 @@ public class HTTPURLSession: @unchecked Sendable, Session {
     ///   - parameters: A dictionary of parameters to be included in the request (default is `nil`).
     ///   - encoder: The `ParameterEncoder` used for encoding request parameters (default is `.url`).
     ///   - headers: Additional HTTP headers to be included in the request (default is `nil`).
-    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is executed (default is `nil`).
+    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is
+    /// executed (default is `nil`).
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
     /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
     open func request(
@@ -342,7 +357,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         middleware: RequestMiddleware?,
         cachePolicy: URLCachePolicy
     ) -> any DataRequest {
-
         let requestBuilder = URLRequestBuilder(
             url: url,
             method: method,
@@ -361,16 +375,18 @@ public class HTTPURLSession: @unchecked Sendable, Session {
     /// logging, or handling pre-processing logic.
     ///
     /// - Parameters:
-    ///   - requestBuilder: An instance conforming to `RequestBuilder`, responsible for constructing a valid `URLRequest`.
-    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is executed.
+    ///   - requestBuilder: An instance conforming to `RequestBuilder`, responsible for constructing a valid
+    /// `URLRequest`.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
-    /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled, or validated.
+    /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled,
+    /// or validated.
     open func request(
         _ requestBuilder: RequestBuilder,
         middleware: RequestMiddleware?,
         cachePolicy: URLCachePolicy
     ) -> any DataRequest {
-
         let dataRequest = HTTPURLDataRequest(
             requestBuilder: requestBuilder,
             cache: cache,
@@ -399,7 +415,8 @@ public class HTTPURLSession: @unchecked Sendable, Session {
     ///   - url: A `URLConvertible` value representing the endpoint for the request.
     ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
     ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
-    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is executed.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
     /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
     open func upload(
         _ data: Data,
@@ -408,7 +425,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         headers: HTTPHeaders?,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
-
         let requestBuilder = ParameterlessRequestBuilder(url: url, method: method, headers: headers)
 
         return upload(data, with: requestBuilder, middleware: middleware)
@@ -433,7 +449,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         with requestBuilder: any RequestBuilder,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
-
         upload(.data(data), with: requestBuilder, middleware: middleware)
     }
 
@@ -449,10 +464,10 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         } catch {
             let error =
                 error as? NetworkingError
-                ?? NetworkingError(
-                    kind: .requestCreationFailed,
-                    underlyingError: error
-                )
+                    ?? NetworkingError(
+                        kind: .requestCreationFailed,
+                        underlyingError: error
+                    )
 
             request.didFailToCreateURLRequest(with: error)
 
@@ -481,10 +496,10 @@ public class HTTPURLSession: @unchecked Sendable, Session {
                 queue.async {
                     let error =
                         error as? NetworkingError
-                        ?? NetworkingError(
-                            kind: .requestInterceptationFailed,
-                            underlyingError: error
-                        )
+                            ?? NetworkingError(
+                                kind: .requestInterceptationFailed,
+                                underlyingError: error
+                            )
 
                     request.didFailToIntercept(urlRequest, with: error)
                 }
@@ -517,7 +532,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
             /// The global middleware.
             let sessionMiddleware = middleware
         else {
-
             return request.middleware ?? middleware
         }
 
@@ -558,10 +572,10 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         } catch {
             let error =
                 error as? NetworkingError
-                ?? NetworkingError(
-                    kind: .createUploadableFailed,
-                    underlyingError: error
-                )
+                    ?? NetworkingError(
+                        kind: .createUploadableFailed,
+                        underlyingError: error
+                    )
 
             request.didFailToCreateUploadable(with: error)
 
@@ -579,7 +593,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
             /// The global middleware.
             let sessionMiddleware = middleware
         else {
-
             return request.middleware ?? middleware
         }
 
@@ -591,7 +604,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         with requestBuilder: any RequestBuilder,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
-
         let uploadBuilder = SimpleUploadRequestBuilder(request: requestBuilder, uploadable: uploadable)
 
         return upload(uploadBuilder, middleware: middleware)
@@ -601,7 +613,6 @@ public class HTTPURLSession: @unchecked Sendable, Session {
         _ uploadBuilder: any UploadRequestBuilder,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
-
         let uploadRequest = HTTPURLUploadRequest(
             uploadBuilder: uploadBuilder,
             delegate: self,
@@ -695,7 +706,7 @@ extension HTTPURLSession: HTTPURLRequestDelegate {
         let retryPolicy = await retrier.retry(request, for: self, failedWith: error)
 
         switch retryPolicy {
-        case .doNotRetryWithError(let retryError):
+        case let .doNotRetryWithError(retryError):
             let error = RetryError.retryFailed(error: retryError, originalError: error)
 
             return .doNotRetryWithError(error)
@@ -707,7 +718,6 @@ extension HTTPURLSession: HTTPURLRequestDelegate {
 }
 
 extension HTTPURLSession: HTTPURLSessionDelegateProvider {
-
     // MARK: - SessionDelegateProvider
 
     /// Retrieves the `Request` associated with a given URL session task.

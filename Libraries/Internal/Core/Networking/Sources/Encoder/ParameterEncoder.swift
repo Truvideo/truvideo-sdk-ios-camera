@@ -40,7 +40,6 @@ public typealias Parameters = [String: any Any & Sendable]
 /// request = try encoder.encode(parameters, into: request)
 /// ```
 public protocol ParameterEncoder: Sendable {
-
     /// Encodes the given parameters into a `URLRequest`.
     ///
     /// Implementations of this method should handle how the parameters are encoded
@@ -139,7 +138,8 @@ public struct JSONParameterEncoder: ParameterEncoder {
 extension ParameterEncoder where Self == JSONParameterEncoder {
     /// Provides a default instance of `JSONParameterEncoder`.
     ///
-    /// This static property returns a new instance of `JSONParameterEncoder` using the default `JSONSerialization.WritingOptions`.
+    /// This static property returns a new instance of `JSONParameterEncoder` using the default
+    /// `JSONSerialization.WritingOptions`.
     /// It is a convenient way to quickly access a basic JSON encoder for encoding parameters into
     /// a request body.
     public static var json: JSONParameterEncoder {
@@ -162,11 +162,14 @@ extension ParameterEncoder where Self == JSONParameterEncoder {
 
 /// An encoder that encodes parameters into a `URLRequest` either as URL query items or as HTTP body data.
 ///
-/// The `URLParameterEncoder` determines the encoding destination based on the HTTP method or a specified `ParameterDestination`.
-/// It supports encoding parameters directly into the URL for methods like `GET`, `HEAD`, and `DELETE`, or into the body for methods like `POST`, `PUT`,
+/// The `URLParameterEncoder` determines the encoding destination based on the HTTP method or a specified
+/// `ParameterDestination`.
+/// It supports encoding parameters directly into the URL for methods like `GET`, `HEAD`, and `DELETE`, or into the body
+/// for methods like `POST`, `PUT`,
 /// and `PATCH`.
 ///
-/// This encoder conforms to the `ParameterEncoder` protocol and is designed to work seamlessly with network request configurations.
+/// This encoder conforms to the `ParameterEncoder` protocol and is designed to work seamlessly with network request
+/// configurations.
 public struct URLParameterEncoder: ParameterEncoder {
     // MARK: - Private methods
 
@@ -195,13 +198,13 @@ public struct URLParameterEncoder: ParameterEncoder {
         func encodeParametersInURL(for method: HTTPMethod) -> Bool {
             switch self {
             case .auto:
-                return [HTTPMethod.get, .head, .delete].contains(method)
+                [HTTPMethod.get, .head, .delete].contains(method)
 
             case .body:
-                return false
+                false
 
             case .query:
-                return true
+                true
             }
         }
     }
@@ -232,14 +235,12 @@ public struct URLParameterEncoder: ParameterEncoder {
         var request = request
 
         if /// The raw string http method.
-        let method = request.httpMethod, destination.encodeParametersInURL(for: .init(rawValue: method)) {
-
+            let method = request.httpMethod, destination.encodeParametersInURL(for: .init(rawValue: method)) {
             if /// The url of the request.
-            let url = request.url,
+                let url = request.url,
 
                 /// The components of the url.
-                var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            {
+                var urlComponents = URLComponents(url: url, resolvingAgainstBaseURL: false) {
                 urlComponents.queryItems = parameters.queryItems
                 request.url = urlComponents.url
             }
@@ -265,7 +266,8 @@ extension ParameterEncoder where Self == URLParameterEncoder {
 extension NSNumber {
     /// A Boolean property that indicates whether the `NSNumber` instance represents a boolean value.
     ///
-    /// This property checks the Objective-C type encoding of the `NSNumber` instance. In Objective-C, the type code `"c"`
+    /// This property checks the Objective-C type encoding of the `NSNumber` instance. In Objective-C, the type code
+    /// `"c"`
     /// corresponds to a `Bool` (or `char` type). By comparing the `objCType` of the `NSNumber` instance to `"c"`,
     /// this property determines if the instance represents a boolean value.
     ///

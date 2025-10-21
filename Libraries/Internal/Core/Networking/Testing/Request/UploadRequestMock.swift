@@ -37,7 +37,7 @@ public final class UploadRequestMock: UploadRequest {
     public var responseDelay: UInt64
 
     /// The current retry count for this request.
-    public var retryCount: Int = 0
+    public var retryCount = 0
 
     // MARK: - Call Count Properties
 
@@ -88,7 +88,6 @@ public final class UploadRequestMock: UploadRequest {
         decoder: JSONDecoder = JSONDecoder(),
         emptyResponseCodes: Set<Int> = DecodableResponseSerializer<Value>.emptyResponseCodes
     ) async -> Response<Value, NetworkingError> where Value: Sendable {
-
         try? await Task.sleep(nanoseconds: responseDelay)
 
         if let error {
@@ -136,7 +135,7 @@ public final class UploadRequestMock: UploadRequest {
     /// - Parameter acceptableStatusCodes: A sequence of acceptable status codes.
     /// - Returns: The mock instance for chaining.
     @discardableResult
-    public func validate<S: Sequence>(acceptableStatusCodes: S) -> Self where S: Sendable, S.Element == Int {
+    public func validate(acceptableStatusCodes: some Sequence<Int> & Sendable) -> Self {
         validateStatusCodesCallCount += 1
         return self
     }

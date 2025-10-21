@@ -1,0 +1,27 @@
+--allman false
+--indent 4
+--tabwidth 4
+--maxwidth 120
+--disable wrapConditionalBodies
+--disable wrapMultilineStatementBraces
+--ranges spaced
+--semicolons never
+--commas inline
+--importgrouping alphabetical
+--strip-unused-args
+--disable wraparguments
+--self remove
+--stripunusedargs closure-only
+--xcodeindentation enabled
+--type-blank-lines remove
+--header ignore
+--comments indent
+--filter singleline
+--mark-types always
+--redundant-throws tests-only
+--redundant-type inferred
+--disable redundantSelf
+--disable extensionAccessControl
+--disable swiftTestingTestCaseNames
+--disable numberFormatting
+--exclude Libraries/Plugins/Camera/Sources/Deprecated

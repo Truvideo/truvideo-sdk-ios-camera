@@ -4,7 +4,8 @@
 
 import Foundation
 
-/// A concrete implementation of the `FileWriter` protocol that writes codable objects to a file on the local file system.
+/// A concrete implementation of the `FileWriter` protocol that writes codable objects to a file on the local file
+/// system.
 ///
 /// `SystemFileWriter` uses a specified `FileManager`, `JSONEncoder`, and file URL to encode and append codable objects
 /// to a file. Each object is written as a JSON line (NDJSON format), making it suitable for log or report storage.
@@ -49,7 +50,7 @@ public struct SystemFileWriter: FileWriter {
     ///   - content: The object conforming to `Codable` that will be serialized and written to disk.
     ///   - url: The destination `URL` where the serialized data will be saved.
     /// - Throws: An error if the encoding fails or the data cannot be written to the file system.
-    public func write<T: Codable>(_ content: T, to url: URL) throws(UtilityError) {
+    public func write(_ content: some Codable, to url: URL) throws(UtilityError) {
         do {
             if !fileManager.fileExists(atPath: url.path) {
                 try fileManager.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)

@@ -75,7 +75,6 @@ extension CMSampleBuffer {
             target: kCGImagePropertyTIFFDictionary,
             attachmentMode: kCMAttachmentMode_ShouldPropagate
         ) {
-
             let attachments = attachments as NSDictionary
             var metaDict: [String: Any] = [:]
             for (key, value) in metadataAdditions {

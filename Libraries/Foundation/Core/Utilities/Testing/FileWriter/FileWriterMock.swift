@@ -24,7 +24,7 @@ public final class FileWriterMock: FileWriter {
     public var error: UtilityError?
 
     // MARK: - Initializer
-    
+
     /// Creates an instance of the `FileWriterMock`.
     public init() {}
 
@@ -49,7 +49,7 @@ public final class FileWriterMock: FileWriter {
     ///   - url: The destination URL where the data would be written.
     /// - Returns: The `Data` specified in the `data` property.
     /// - Throws: `UtilityError` if the `error` property is set to simulate a failure.
-    public func write<T>(_ content: T, to url: URL) throws(UtilityError) where T: Codable {
+    public func write(_ content: some Codable, to url: URL) throws(UtilityError) {
         if let error {
             throw error
         }

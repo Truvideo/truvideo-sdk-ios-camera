@@ -11,7 +11,8 @@ protocol KeychainProtocol: Sendable {
     ///
     /// - Parameters:
     ///   - key: The key used to store the data.
-    ///   - ignoringAttributeSynchronizable: A Boolean flag indicating whether to ignore the `synchronizable` attribute when retrieving data.
+    ///   - ignoringAttributeSynchronizable: A Boolean flag indicating whether to ignore the `synchronizable` attribute
+    /// when retrieving data.
     /// - Returns: The data associated with the given key, or `nil` if no data is found.
     /// - Throws: An error if the retrieval operation fails.
     func getData(_ key: String, ignoringAttributeSynchronizable: Bool) throws -> Data?
@@ -25,7 +26,8 @@ protocol KeychainProtocol: Sendable {
     ///
     /// - Parameters:
     ///   - key: The key associated with the data to be removed.
-    ///   - ignoringAttributeSynchronizable: A Boolean flag indicating whether to ignore the `synchronizable` attribute when removing data.
+    ///   - ignoringAttributeSynchronizable: A Boolean flag indicating whether to ignore the `synchronizable` attribute
+    /// when removing data.
     /// - Throws: An error if the removal operation fails.
     func remove(_ key: String, ignoringAttributeSynchronizable: Bool) throws
 
@@ -34,7 +36,8 @@ protocol KeychainProtocol: Sendable {
     /// - Parameters:
     ///   - value: The data to be stored in the keychain.
     ///   - key: The key used to store the data.
-    ///   - ignoringAttributeSynchronizable: A Boolean flag indicating whether to ignore the `synchronizable` attribute when storing data.
+    ///   - ignoringAttributeSynchronizable: A Boolean flag indicating whether to ignore the `synchronizable` attribute
+    /// when storing data.
     /// - Throws: An error if the storage operation fails.
     func set(_ value: Data, key: String, ignoringAttributeSynchronizable: Bool) throws
 }

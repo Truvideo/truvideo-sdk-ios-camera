@@ -2,8 +2,8 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
-internal import Utilities
 internal import ffmpegkit
+internal import Utilities
 
 /// A protocol defining the interface for composing multiple media assets into a single output.
 ///
@@ -41,7 +41,6 @@ protocol MediaComposer {
 }
 
 struct FFMPEGVideoComposer: MediaComposer {
-
     // MARK: - MediaComposer
 
     /// Composes multiple media assets into a single output file.

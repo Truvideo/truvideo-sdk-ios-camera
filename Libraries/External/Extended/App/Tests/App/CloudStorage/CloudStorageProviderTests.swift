@@ -11,9 +11,8 @@ import Utilities
 @testable import TruvideoSdk
 
 struct CloudStorageProviderTests {
-    
     // MARK: - Private Properties
-    
+
     private let deviceSettings = DeviceSetting(
         isAutoPlayEnabled: true,
         isNoseCancellingEnabled: false,
@@ -28,22 +27,22 @@ struct CloudStorageProviderTests {
             region: "us-west-2"
         )
     )
-    
+
     // MARK: - Tests
-    
+
     @Test
     func testThatMakeStorageReturnsNilWhenNoDeviceSetting() async throws {
         // Given
         let sut = S3CloudStorageProvider()
-        
+
         // When
         let storage = try sut.makeStorage()
-        
+
         // Then
         #expect(storage == nil)
         #expect(sut.deviceSetting == nil)
     }
-    
+
     @Test
     func testThatMakeStorageReturnsCachedInstance() async throws {
         // Given

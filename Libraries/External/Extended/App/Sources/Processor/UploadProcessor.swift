@@ -52,14 +52,13 @@ final class UploadProcessor: TelemetryManagerSubscriber {
         pathMonitor: some NetworkPathMonitor = NWPathMonitor(),
         storageURL: URL = FileManager.default.telemetryDirectory
     ) {
-
         self.cloudStorageProvider = cloudStorageProvider
         self.fileURL = storageURL.appendingPathComponent("report.json")
         self.pathMonitor = pathMonitor
 
         pathMonitor.start(queue: queue)
     }
-    
+
     // MARK: - Deinitializer
 
     deinit {
@@ -70,38 +69,37 @@ final class UploadProcessor: TelemetryManagerSubscriber {
 
     /// Called whenever a new telemetry report is published by the `TelemetryManager`.
     ///
-    /// - Parameter report: A fully structured telemetry report containing contextual metadata, breadcrumbs, and event details.
+    /// - Parameter report: A fully structured telemetry report containing contextual metadata, breadcrumbs, and event
+    /// details.
     func didReceive(_ report: TelemetryReport) {
         Task {
             do {
                 try fileWriter.write(report, to: fileURL)
-                
+
                 let data = try Data(contentsOf: fileURL)
 
                 if /// `cloudStorage` must be successfully created from the `cloudStorageProvider`.
-                let cloudStorage = try cloudStorageProvider.makeStorage(),
+                    let cloudStorage = try cloudStorageProvider.makeStorage(),
 
                     /// The current network path status must be `.satisfied` (device is online).
                     pathMonitor.currentPath.status == .satisfied,
 
                     /// The `data` to be uploaded must not be empty.
-                    !data.isEmpty
-                {
-                    
+                    !data.isEmpty {
                     let fileName = "\(UUID()).json"
-                    let uploadDataTask = cloudStorage.upload(data, fileName: fileName, contentType: .json)
-                    
-                    uploadDataTask.onComplete { [weak self] result in
-                        guard let self else { return }
-                                                    
-                        guard let error = result.failure else {
-                            try? self.fileWriter.remove(at: fileURL)
-                            return
+
+                    cloudStorage.upload(data, fileName: fileName, contentType: .json)
+                        .onComplete { [weak self] result in
+                            guard let self else { return }
+
+                            guard let error = result.failure else {
+                                try? self.fileWriter.remove(at: fileURL)
+                                return
+                            }
+
+                            print("❌ Upload failed with error: \(error)")
                         }
-                        
-                        print("❌ Upload failed with error: \(error)")
-                    }
-                    .resume()
+                        .resume()
                 }
             } catch {
                 print("Failed to process report: \(error)")

@@ -62,4 +62,5 @@ public struct Context: Codable, Sendable {
         self.timestamp = timestamp
     }
 }
+
 // swiftlint:enable identifier_name

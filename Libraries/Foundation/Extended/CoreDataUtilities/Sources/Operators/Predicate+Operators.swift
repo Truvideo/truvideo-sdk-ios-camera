@@ -126,7 +126,7 @@ public func || <Element>(left: QueryPredicate<Element>, right: QueryPredicate<El
 ///
 /// - Parameter predicate: The `Predicate` to negate.
 /// - Returns: A `Predicate` that negates the provided predicate.
-prefix public func ! <Element>(predicate: QueryPredicate<Element>) -> QueryPredicate<Element> {
+public prefix func ! <Element>(predicate: QueryPredicate<Element>) -> QueryPredicate<Element> {
     QueryPredicate(predicate: !predicate.predicate)
 }
 
@@ -156,6 +156,6 @@ public func || (left: NSPredicate, right: NSPredicate) -> NSPredicate {
 ///
 /// - Parameter left: The `NSPredicate` to negate.
 /// - Returns: An `NSPredicate` representing the negation of the predicate.
-prefix public func ! (left: NSPredicate) -> NSPredicate {
+public prefix func ! (left: NSPredicate) -> NSPredicate {
     NSCompoundPredicate(type: .not, subpredicates: [left])
 }

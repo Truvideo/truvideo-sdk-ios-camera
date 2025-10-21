@@ -8,7 +8,6 @@ import Foundation
 
 /// A mock implementation of `CloudStorage` used for unit testing.
 public final class CloudStorageMock: CloudStorage {
-
     // MARK: - Properties
 
     /// The content type passed in the last `upload` call.

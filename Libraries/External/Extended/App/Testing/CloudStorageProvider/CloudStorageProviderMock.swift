@@ -34,7 +34,7 @@ public final class CloudStorageProviderMock: CloudStorageProvider {
     public func makeStorage() throws(UtilityError) -> (any CloudStorage)? {
         makeStorageCallCount += 1
 
-        if let error = error {
+        if let error {
             throw error
         }
 

@@ -87,7 +87,6 @@ struct Photo {
         preset: AVCaptureSession.Preset,
         createdAt: TimeInterval = Date().timeIntervalSince1970
     ) {
-
         self.createdAt = createdAt
         self.format = format
         self.lensPosition = lensPosition
@@ -99,7 +98,6 @@ struct Photo {
 }
 
 extension Photo: Equatable {
-
     // MARK: - Hashable
 
     /// Returns a Boolean value indicating whether two values are equal.

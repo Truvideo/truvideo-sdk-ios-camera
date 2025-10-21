@@ -8,7 +8,8 @@ import Networking
 /// A mock implementation of the `RequestMonitor` protocol used for testing network request events.
 ///
 /// `MonitorMock` allows developers to capture and inspect events that occur during the lifecycle of a network request.
-/// Each event can be handled using corresponding callback closures, making this class particularly useful for testing and debugging.
+/// Each event can be handled using corresponding callback closures, making this class particularly useful for testing
+/// and debugging.
 ///
 /// ### Example Usage:
 /// ```swift
@@ -200,7 +201,6 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
         data: Data?,
         error: NetworkingError?
     ) {
-
         requestDidValidateCallCount += 1
         didValidateRequestCallback?()
     }
@@ -252,11 +252,10 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
     // MARK: - DataRequest Monitoring
 
     /// Event called when a `DataRequest` calls a `ResponseSerializer` and creates a generic `Response<Value>`.
-    public func request<Value>(
+    public func request(
         _ request: any DataRequest,
-        didParseResponse response: Response<Value, NetworkingError>
+        didParseResponse response: Response<some Any, NetworkingError>
     ) {
-
         requestDidParseResponseCallCount += 1
         requestDidParseResponseCallback?()
     }
@@ -320,7 +319,6 @@ public final class MonitorMock: Monitor, @unchecked Sendable {
         didFailToIntercept urlRequest: URLRequest,
         with error: NetworkingError
     ) {
-
         requestDidFailToInterceptURLRequestCallCount += 1
         requestDidFailToInterceptURLRequestCallback?(error)
     }

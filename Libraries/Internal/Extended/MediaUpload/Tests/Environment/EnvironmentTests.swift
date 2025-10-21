@@ -13,7 +13,7 @@ struct UploadEnvironmentTests {
     func testThatEnvironmentDevShouldUseCorrectBaseURL() {
         // Given
         let environment = Environment.dev
-        
+
         // When, Then
         #expect(environment.baseURL == "https://upload-api-dev.truvideo.com")
     }
@@ -22,7 +22,7 @@ struct UploadEnvironmentTests {
     func testThatEnvironmentBetaShouldUseCorrectBaseURL() {
         // Given
         let environment = Environment.beta
-        
+
         // When, Then
         #expect(environment.baseURL == "https://upload-api-beta.truvideo.com")
     }
@@ -31,7 +31,7 @@ struct UploadEnvironmentTests {
     func testThatEnvironmentRcShouldUseCorrectBaseURL() {
         // Given
         let environment = Environment.rc
-        
+
         // When, Then
         #expect(environment.baseURL == "https://upload-api-rc.truvideo.com")
     }
@@ -40,7 +40,7 @@ struct UploadEnvironmentTests {
     func testThatEnvironmentProdShouldUseCorrectBaseURL() {
         // Given
         let environment = Environment.prod
-        
+
         // When, Then
         #expect(environment.baseURL == "https://upload-api.truvideo.com")
     }
@@ -49,9 +49,8 @@ struct UploadEnvironmentTests {
     func testThatUnknownEnvironmentReturnsProductionBaseURLByDefault() {
         // Given
         let custom = Environment(rawValue: "STAGING")
-        
+
         // When, Then
         #expect(custom.baseURL == "https://upload-api.truvideo.com")
     }
 }
-

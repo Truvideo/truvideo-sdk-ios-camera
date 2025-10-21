@@ -35,6 +35,7 @@ struct GalleryGrid: UIViewControllerRepresentable {
 
     // MARK: - UIViewControllerRepresentable
 
+    // swiftlint:disable type_contents_order
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
@@ -48,6 +49,8 @@ struct GalleryGrid: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: GalleryGridViewController, context: Context) {
         uiViewController.updateMedias(medias)
     }
+
+    // swiftlint:enable type_contents_order
 
     // MARK: - Coordinator
 
@@ -66,7 +69,7 @@ struct GalleryGrid: UIViewControllerRepresentable {
 
         // MARK: - GalleryGridViewControllerDelegate
 
-        func galleryGridViewControllerDidUpdateMedias(_ vc: GalleryGridViewController, medias: [Media]) {
+        func galleryGridViewControllerDidUpdateMedias(_ viewController: GalleryGridViewController, medias: [Media]) {
             parent.medias = medias
             if medias.isEmpty {
                 parent.isPresented = false
@@ -146,6 +149,7 @@ final class GalleryGridViewController: UIViewController {
 
     // MARK: - UIViewController
 
+    // swiftlint:disable type_contents_order
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -164,6 +168,8 @@ final class GalleryGridViewController: UIViewController {
         }
     }
 
+    // swiftlint:enable type_contents_order
+
     // MARK: - Instance Methods
 
     /// Updates the media items displayed in the grid.
@@ -179,6 +185,7 @@ final class GalleryGridViewController: UIViewController {
     /// - Parameter index: The index of the item to delete.
     func deleteMedia(at index: Int) {
         guard index < medias.count else { return }
+
         medias.remove(at: index)
         collectionView.reloadData()
         deleteDelegate?.galleryGridViewControllerDidUpdateMedias(self, medias: medias)
@@ -267,7 +274,7 @@ extension GalleryGridViewController: UICollectionViewDataSource, UICollectionVie
 extension GalleryGridViewController: MediaPreviewPageViewControllerDelegate {
     // MARK: - MediaPreviewPageViewControllerDelegate
 
-    func mediaPreviewPageViewController(_ vc: MediaPreviewPageViewController, didDeleteAt index: Int) {
+    func mediaPreviewPageViewController(_ viewController: MediaPreviewPageViewController, didDeleteAt index: Int) {
         deleteMedia(at: index)
     }
 }

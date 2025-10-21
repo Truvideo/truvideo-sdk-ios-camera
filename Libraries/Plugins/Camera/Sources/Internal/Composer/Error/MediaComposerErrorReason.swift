@@ -8,7 +8,8 @@ internal import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the media composer operations.
     ///
-    /// The `MediaComposerErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `MediaComposerErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
     /// during media processing.
     struct MediaComposerErrorReason: Sendable {
         /// Indicates that the media composition operation failed.

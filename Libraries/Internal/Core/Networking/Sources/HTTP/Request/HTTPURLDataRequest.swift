@@ -60,7 +60,6 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
         monitor: Monitor?,
         queue: DispatchQueue
     ) {
-
         self.cache = cache
         self.cachePolicy = cachePolicy
         self.requestBuilder = requestBuilder
@@ -95,14 +94,13 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
         dispatchPrecondition(condition: .onQueue(queue))
 
         if /// The cache for providing cached responses to requests within the session.
-        let cache,
+            let cache,
 
             /// The received data from the server.
             let data,
 
             /// The metadata associated with the response to an HTTP protocol URL load request.
-            let response = task.response as? HTTPURLResponse, [.head, .get].contains(request?.method)
-        {
+            let response = task.response as? HTTPURLResponse, [.head, .get].contains(request?.method) {
             let response = URLCachedResponse(data: data, response: response)
             cache.cache(response, for: self)
         }
@@ -196,7 +194,6 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
         decoder: JSONDecoder = JSONDecoder(),
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) async -> Response<Value, NetworkingError> where Value: Sendable {
-
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 self.response(
@@ -229,7 +226,6 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
     public func serializingData(
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) async -> Response<Data, NetworkingError> {
-
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 self.response(
@@ -266,7 +262,6 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
         encoding: String.Encoding = .utf8,
         emptyResponseCodes: Set<Int> = DataResponseSerializer.emptyResponseCodes
     ) async -> Response<String, NetworkingError> {
-
         await withTaskCancellationHandler {
             await withCheckedContinuation { continuation in
                 self.response(
@@ -319,20 +314,19 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
     public func validate(_ validator: @escaping Validation) -> Self {
         let validator: RequestValidator = { [weak self] in
             if /// Strong self.
-            let self,
+                let self,
 
                 /// The received response if any.
-                let response, error == nil
-            {
+                let response, error == nil {
                 do {
                     try validator(request, response, data)
                 } catch {
                     self.error =
                         error as? NetworkingError
-                        ?? NetworkingError(
-                            kind: .responseValidationFailed,
-                            underlyingError: error
-                        )
+                            ?? NetworkingError(
+                                kind: .responseValidationFailed,
+                                underlyingError: error
+                            )
                 }
 
                 monitor?.request(self, didValidate: request, data: data, error: self.error)
@@ -373,7 +367,6 @@ public class HTTPURLDataRequest: HTTPURLRequest, DataRequest, @unchecked Sendabl
         serializer: S,
         completionHandler: @escaping @Sendable (Response<S.SerializedObject, NetworkingError>) -> Void
     ) -> Self {
-
         appendResponseSerializer { [weak self] in
             guard let self else { return }
 

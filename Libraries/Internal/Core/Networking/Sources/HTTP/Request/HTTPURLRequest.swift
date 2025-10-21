@@ -94,7 +94,8 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
     /// The delegate responsible for handling retries.
     public private(set) weak var delegate: HTTPURLRequestDelegate?
 
-    /// `HTTPURLResponse` received from the server, if any. If the `Request` was retried, this is the response of the last `URLSessionTask`.
+    /// `HTTPURLResponse` received from the server, if any. If the `Request` was retried, this is the response of the
+    /// last `URLSessionTask`.
     public internal(set) var response: HTTPURLResponse?
 
     /// An optional request interceptor for intercepting the request.
@@ -165,28 +166,26 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
         func canTransition(to state: State) -> Bool {
             switch (self, state) {
             case (.initialized, _),
-                (.finishing, .finished),
-                (.finishing, .cancelled),
-                (.resumed, .cancelled),
-                (.resumed, .finishing),
-                (.resumed, .suspended),
-                (.suspended, .cancelled),
-                (.suspended, .finishing),
-                (.suspended, .resumed),
-                (_, .finished):
-
-                return true
+                 (.finishing, .finished),
+                 (.finishing, .cancelled),
+                 (.resumed, .cancelled),
+                 (.resumed, .finishing),
+                 (.resumed, .suspended),
+                 (.suspended, .cancelled),
+                 (.suspended, .finishing),
+                 (.suspended, .resumed),
+                 (_, .finished):
+                true
 
             case (_, .initialized),
-                (.cancelled, _),
-                (.finished, _),
-                (.finishing, .finishing),
-                (.finishing, .resumed),
-                (.finishing, .suspended),
-                (.suspended, .suspended),
-                (.resumed, .resumed):
-
-                return false
+                 (.cancelled, _),
+                 (.finished, _),
+                 (.finishing, .finishing),
+                 (.finishing, .resumed),
+                 (.finishing, .suspended),
+                 (.suspended, .suspended),
+                 (.resumed, .resumed):
+                false
             }
         }
     }
@@ -208,7 +207,6 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
         monitor: Monitor?,
         queue: DispatchQueue
     ) {
-
         self.id = id
         self.delegate = delegate
         self.middleware = middleware
@@ -340,7 +338,8 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
 
     /// Handles a failure that occurs during the interception of a `URLRequest`.
     ///
-    /// This method is triggered when an attempt to intercept and modify a request fails, typically due to a `NetworkingError`.
+    /// This method is triggered when an attempt to intercept and modify a request fails, typically due to a
+    /// `NetworkingError`.
     ///
     /// - Parameters:
     ///   - request: The `URLRequest` that failed during interception.
@@ -483,9 +482,11 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
     /// 1. Ensures thread safety by verifying that the function is executed on the correct dispatch queue.
     /// 2. Increments the `retryCount` property to track the number of retry attempts made.
     /// 3. Calls `reset()` to clear any existing errors, reinitialize the state, and remove response serializers.
-    /// 4. Notifies the associated `monitor` that the request is being retried, allowing for logging, tracking, or custom actions.
+    /// 4. Notifies the associated `monitor` that the request is being retried, allowing for logging, tracking, or
+    /// custom actions.
     ///
-    /// This method is typically used in network request frameworks where retries are automatically managed based on response failures
+    /// This method is typically used in network request frameworks where retries are automatically managed based on
+    /// response failures
     /// or retry policies.
     func prepareForRetry() {
         dispatchPrecondition(condition: .onQueue(queue))
@@ -515,7 +516,6 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
             /// Ensure the request is not already cancelled.
             state != .cancelled
         else {
-
             finish(error: error)
             return
         }
@@ -529,19 +529,19 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
                     self.finish(error: error)
                 }
 
-            case .doNotRetryWithError(let error):
+            case let .doNotRetryWithError(error):
                 let error =
                     error as? NetworkingError
-                    ?? NetworkingError(
-                        kind: .requestRetryFailed,
-                        underlyingError: error
-                    )
+                        ?? NetworkingError(
+                            kind: .requestRetryFailed,
+                            underlyingError: error
+                        )
 
                 queue.async {
                     self.finish(error: error)
                 }
 
-            case .retry(let delay):
+            case let .retry(delay):
                 delegate.retry(request: self, after: delay)
             }
         }
@@ -558,6 +558,7 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
     func task(for urlRequest: URLRequest, using session: URLSession) throws(NetworkingError) -> URLSessionTask {
         fatalError("Subclasses must override.")
     }
+
     // swiftlint:enable unavailable_function
 
     // MARK: - Instance methods
@@ -688,7 +689,6 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
         acceptableStatusCodes: S,
         response: HTTPURLResponse
     ) throws where S.Iterator.Element == Int {
-
         guard !acceptableStatusCodes.contains(response.statusCode) else {
             return
         }
@@ -750,7 +750,6 @@ extension HTTPURLRequest {
             /// The HTTPMethod of the request.
             let method = request.httpMethod
         else {
-
             return "$ curl command could not be created"
         }
 
@@ -776,11 +775,10 @@ extension HTTPURLRequest {
         }
 
         if /// The body data.
-        let httpBodyData = request.httpBody,
+            let httpBodyData = request.httpBody,
 
             /// The string representation of the body.
-            let httpBody = String(data: httpBodyData, encoding: .utf8)
-        {
+            let httpBody = String(data: httpBodyData, encoding: .utf8) {
             var escapedBody = httpBody.replacingOccurrences(of: "\\\"", with: "\\\\\"")
             escapedBody = escapedBody.replacingOccurrences(of: "\"", with: "\\\"")
 

@@ -5,8 +5,8 @@
 import CloudStorageKit
 import CloudStorageKitTesting
 import Foundation
-import Telemetry
 import Network
+import Telemetry
 import Testing
 import TruvideoSdkTesting
 import Utilities
@@ -16,7 +16,7 @@ import UtilitiesTesting
 
 struct UploadProcessorTests {
     // MARK: - Private Properties
-        
+
     private let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(
         UUID().uuidString,
         isDirectory: true
@@ -47,9 +47,9 @@ struct UploadProcessorTests {
         ),
         session: Session(installationId: UUID())
     )
-        
+
     // MARK: - Tests
-    
+
     @Test
     func testThatDidReceiveReportIsWrittenToFileBeforeUpload() async throws {
         // Given
@@ -58,16 +58,16 @@ struct UploadProcessorTests {
         let cloudStorageProvider = CloudStorageProviderMock()
         let uploadDataTask = UploadDataTaskMock()
         let sut = UploadProcessor(cloudStorageProvider: cloudStorageProvider)
-        
+
         // When
         cloudStorageProvider.cloudStorage = cloudStorage
         cloudStorage.uploadDataTask = uploadDataTask
         fileWriter.writtenReport = report
-        
+
         sut.didReceive(report)
-        
+
         try await Task.sleep(nanoseconds: 200_000_000)
-        
+
         // Then
         #expect(cloudStorageProvider.makeStorageCallCount == 1)
         #expect(fileWriter.writtenReport != nil)
@@ -79,12 +79,12 @@ struct UploadProcessorTests {
         // Given
         let cloudStorageProvider = CloudStorageProviderMock()
         let sut = UploadProcessor(cloudStorageProvider: cloudStorageProvider)
-        
+
         // When
         sut.didReceive(report)
-        
+
         try await Task.sleep(nanoseconds: 200_000_000)
-        
+
         // Then
         #expect(cloudStorageProvider.makeStorageCallCount == 1)
         #expect(cloudStorageProvider.cloudStorage == nil)
@@ -103,23 +103,23 @@ struct UploadProcessorTests {
             pathMonitor: pathMonitor,
             storageURL: tempURL
         )
-        
+
         // When
         try FileManager.default.createDirectory(at: tempURL, withIntermediateDirectories: true)
-        
+
         cloudStorageProvider.cloudStorage = cloudStorage
         cloudStorage.uploadDataTask = uploadDataTask
-        
+
         sut.didReceive(report)
-        
+
         try await Task.sleep(nanoseconds: 200_000_000)
-        
+
         cloudStorage.uploadDataTask?.complete(with: .success(expectedURL))
-        
+
         // Then
         #expect(cloudStorage.uploadDataTask?.resumeCallCount == 1)
     }
-    
+
     @Test
     func testThatDidReceiveReportShouldFailsOnTaskError() async throws {
         // Given
@@ -133,24 +133,24 @@ struct UploadProcessorTests {
             storageURL: tempURL
         )
         let fileURL = tempURL.appendingPathComponent("report.json")
-        
+
         // When
         try FileManager.default.createDirectory(at: tempURL, withIntermediateDirectories: true)
-        
+
         cloudStorageProvider.cloudStorage = cloudStorage
         cloudStorage.uploadDataTask = uploadTask
-        
+
         sut.didReceive(report)
-        
+
         try await Task.sleep(nanoseconds: 200_000_000)
-        
+
         cloudStorage.uploadDataTask?.onCompleteHandler?(.failure(UtilityError(kind: .unknown)))
-        
+
         // Then
         #expect(cloudStorage.uploadDataTask?.resumeCallCount == 1)
         #expect(FileManager.default.fileExists(atPath: fileURL.path))
     }
-    
+
     @Test
     func testThatDidReceiveReportDoesNotUploadWhenNetworkUnsatisfied() async throws {
         // Given
@@ -168,7 +168,7 @@ struct UploadProcessorTests {
         cloudStorageProvider.cloudStorage = cloudStorage
         sut.didReceive(report)
         try await Task.sleep(nanoseconds: 200_000_000)
-        
+
         // Then
         #expect(cloudStorage.uploadDataTask == nil)
     }

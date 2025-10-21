@@ -123,7 +123,7 @@ final class AudioDevice: NSObject, Device {
     // MARK: - Initializer
 
     /// Creates a new instance of the `AudioDevice`.
-    nonisolated override init() {}
+    override nonisolated init() {}
 
     // MARK: - Device
 
@@ -213,7 +213,8 @@ final class AudioDevice: NSObject, Device {
     /// settings as needed. Prefer calling this while the session is inside a configuration block.
     ///
     /// - Parameter session: The `AVCaptureSession` to which inputs/outputs will be added.
-    /// - Throws: An error if authorization is missing, if no suitable device is found, or if inputs/outputs cannot be added to the session due to incompatibility.
+    /// - Throws: An error if authorization is missing, if no suitable device is found, or if inputs/outputs cannot be
+    /// added to the session due to incompatibility.
     @DeviceActor
     func startCapturing() throws(UtilityError) {
         if state.canTransition(to: .running) {
@@ -290,7 +291,6 @@ final class AudioDevice: NSObject, Device {
 }
 
 extension AudioDevice: AVCaptureAudioDataOutputSampleBufferDelegate {
-
     // MARK: - AVCaptureAudioDataOutputSampleBufferDelegate
 
     func captureOutput(
@@ -298,7 +298,6 @@ extension AudioDevice: AVCaptureAudioDataOutputSampleBufferDelegate {
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
-
         if state == .running {
             let sampleBuffer = AudioSampleBuffer(
                 duration: CMSampleBufferGetDuration(sampleBuffer),

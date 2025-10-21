@@ -37,7 +37,6 @@ actor UploadRequestRetrier: RequestRetrier {
             /// The response sent by the server.
             let response = request.response
         else {
-
             return .doNotRetry
         }
 

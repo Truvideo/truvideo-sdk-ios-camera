@@ -9,7 +9,7 @@ import Foundation
 /// `Localizations` provides a centralized location for all user-facing text strings
 /// that need to be localized. Each property represents a specific UI element or
 /// message that users will see in the camera interface.
-struct Localizations {
+enum Localizations {
     // MARK: - A
 
     /// Error message when another app is using the audio copy.

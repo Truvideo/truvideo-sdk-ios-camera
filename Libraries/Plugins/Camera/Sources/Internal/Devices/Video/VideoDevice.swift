@@ -32,12 +32,10 @@ class VideoDevice: NSObject, Device {
     private var processors: [ObjectIdentifier: any VideoOutputProcessor] = [:]
     private let queue = DispatchQueue(label: "com.video.device.queue")
     private var videoOrientation = AVCaptureVideoOrientation.portrait
-    private lazy var availableDevices: [AVCaptureDevice.Position: [AVCaptureDevice]] = {
-        [
-            .back: AVCaptureDevice.availableVideoDevices(for: .back),
-            .front: AVCaptureDevice.availableVideoDevices(for: .front),
-        ]
-    }()
+    private lazy var availableDevices: [AVCaptureDevice.Position: [AVCaptureDevice]] = [
+        .back: AVCaptureDevice.availableVideoDevices(for: .back),
+        .front: AVCaptureDevice.availableVideoDevices(for: .front)
+    ]
 
     // MARK: - Properties
 
@@ -106,9 +104,7 @@ class VideoDevice: NSObject, Device {
     /// This array defines the zoom levels that are available for selection in the camera
     /// interface. Each value represents a magnification factor.
     var displayVideoZoomFactors: [CGFloat] {
-        guard let captureDevice else {
-            return []
-        }
+        guard let captureDevice else { return [] }
 
         let zoomFactors = stride(
             from: max(captureDevice.minAvailableVideoZoomFactor, Self.minZoomFactor),
@@ -263,7 +259,6 @@ class VideoDevice: NSObject, Device {
         imageExporting: ImageExporting = ImageExporter(),
         notificationCenter: NotificationCenter = .default
     ) {
-
         self.capturePhotoController = CapturePhotoController(imageExporting: imageExporting)
         self.frameEncoder = frameEncoder
         self.imageExporting = imageExporting
@@ -382,7 +377,8 @@ class VideoDevice: NSObject, Device {
     /// settings as needed. Prefer calling this while the session is inside a configuration block.
     ///
     /// - Parameter session: The `AVCaptureSession` to which inputs/outputs will be added.
-    /// - Throws: An error if authorization is missing, if no suitable device is found, or if inputs/outputs cannot be added to the session due to incompatibility.
+    /// - Throws: An error if authorization is missing, if no suitable device is found, or if inputs/outputs cannot be
+    /// added to the session due to incompatibility.
     @DeviceActor
     func startCapturing() throws(UtilityError) {
         if state.canTransition(to: .running) {
@@ -496,7 +492,7 @@ class VideoDevice: NSObject, Device {
                             object: captureDevice,
                             userInfo: [
                                 Self.oldFocusPoint: oldFocusPoint,
-                                Self.newFocusPoint: captureDevice.focusPointOfInterest,
+                                Self.newFocusPoint: captureDevice.focusPointOfInterest
                             ]
                         )
                     }
@@ -535,12 +531,11 @@ class VideoDevice: NSObject, Device {
             captureDeviceInput = try captureSession.addDeviceInput(for: captureDevice)
 
             if /// The zoom factor of the next constituent device.
-            let zoomFactor = captureDevice.virtualDeviceSwitchOverVideoZoomFactors.first,
+                let zoomFactor = captureDevice.virtualDeviceSwitchOverVideoZoomFactors.first,
 
-                /// Whether the device is virtual and the position is back, since the back position resets the zoom factor.
-                captureDevice.isVirtualDevice, position == .back
-            {
-
+                /// Whether the device is virtual and the position is back, since the back position resets the zoom
+                /// factor.
+                captureDevice.isVirtualDevice, position == .back {
                 captureDevice.videoZoomFactor = zoomFactor.doubleValue
             }
 
@@ -626,7 +621,8 @@ class VideoDevice: NSObject, Device {
     ///
     /// - Parameters:
     ///    - zoomFactor: The desired zoom factor to apply to the video capture.
-    ///    - rate: The rate at which to transition to the new magnification factor, specified in powers of two per second.
+    ///    - rate: The rate at which to transition to the new magnification factor, specified in powers of two per
+    /// second.
     @DeviceActor
     func setZoomFactor(_ zoomFactor: CGFloat, rate: Float = 10) throws(UtilityError) {
         if let captureDevice, rate >= 0 {
@@ -733,7 +729,6 @@ class VideoDevice: NSObject, Device {
 }
 
 extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
-
     // MARK: - AVCaptureVideoDataOutputSampleBufferDelegate
 
     func captureOutput(
@@ -741,7 +736,6 @@ extension VideoDevice: AVCaptureVideoDataOutputSampleBufferDelegate {
         didOutput sampleBuffer: CMSampleBuffer,
         from connection: AVCaptureConnection
     ) {
-
         if let captureDevice, state == .running {
             let sampleBuffer = VideoSampleBuffer(
                 bitRate: configuration.preset.bitRate,

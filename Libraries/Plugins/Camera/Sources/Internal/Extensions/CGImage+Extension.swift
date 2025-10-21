@@ -7,7 +7,6 @@ import Foundation
 import UIKit
 
 extension CGImage {
-
     func oriented(to orientation: AVCaptureVideoOrientation, devicePosition: AVCaptureDevice.Position) -> UIImage? {
         let context = CIContext(options: nil)
         let orientation = CGImagePropertyOrientation(from: orientation, devicePosition: devicePosition)

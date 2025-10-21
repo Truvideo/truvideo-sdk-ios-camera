@@ -10,7 +10,7 @@ import Testing
 
 struct MiddlewareTests {
     // MARK: - Properties
-    
+
     let error = NetworkingError(kind: .explicitlyCancelled)
     let request = RequestMock()
     let session = SessionMock()
@@ -39,7 +39,7 @@ struct MiddlewareTests {
 
         // When
         _ = try await sut.intercept(request, for: session)
-        
+
         // Then
         #expect(interceptor.request == request)
         #expect(interceptor.session != nil)
@@ -54,14 +54,14 @@ struct MiddlewareTests {
 
         // When
         let retryPolicy = await sut.retry(request, for: session, failedWith: error)
-        
+
         // Then
         #expect(retryPolicy.isRetry)
         #expect((retrier.error as? NetworkingError)?.kind == .explicitlyCancelled)
         #expect((retrier.request as? RequestMock) == request)
         #expect(retrier.session != nil)
     }
-    
+
     @Test
     func testThatDoNotRetryShouldNotRetryTheRequest() async {
         // Given
@@ -71,9 +71,9 @@ struct MiddlewareTests {
 
         // When
         retrier.retry = .doNotRetry
-        
+
         let retryPolicy = await sut.retry(request, for: session, failedWith: error)
-        
+
         // Then
         #expect(retryPolicy.isDoNotRetry)
         #expect((retrier.error as? NetworkingError)?.kind == .explicitlyCancelled)
@@ -90,16 +90,16 @@ struct MiddlewareTests {
 
         // When
         retrier.retry = .doNotRetryWithError(NetworkingError(kind: .sessionTaskFailed))
-        
+
         let retryPolicy = await sut.retry(request, for: session, failedWith: error)
-        
+
         // Then
         #expect(retryPolicy.isDoNotRetryWithError)
         #expect((retrier.error as? NetworkingError)?.kind == .explicitlyCancelled)
         #expect((retrier.request as? RequestMock) == request)
         #expect(retrier.session != nil)
     }
-    
+
     @Test
     func testThatRetryShouldDoNotRetryWhenRetriersAreEmpty() async {
         // Given
@@ -107,11 +107,11 @@ struct MiddlewareTests {
 
         // When
         let retryPolicy = await sut.retry(request, for: session, failedWith: error)
-        
+
         // Then
         #expect(retryPolicy.isDoNotRetry)
     }
-    
+
     @Test
     func testThatDefaultRetryPolicy() async {
         // Given
@@ -120,7 +120,7 @@ struct MiddlewareTests {
 
         // When
         let retryPolicy = await sut.retry(request, for: session, failedWith: error)
-        
+
         // Then
         #expect(retryPolicy.isDoNotRetry)
     }
@@ -132,21 +132,21 @@ private extension RetryPolicy {
     /// Returns true if the policy is a do not retry.
     var isDoNotRetry: Bool {
         guard case .doNotRetry = self else { return false }
-        
+
         return true
     }
-    
+
     /// Returns true if the policy is a do not retry with error.
     var isDoNotRetryWithError: Bool {
-        guard case .doNotRetryWithError(_) = self else { return false }
-        
+        guard case .doNotRetryWithError = self else { return false }
+
         return true
     }
-    
+
     /// Returns true if the policy is a retry.
     var isRetry: Bool {
-        guard case .retry(_) = self else { return false }
-        
+        guard case .retry = self else { return false }
+
         return true
     }
 }

@@ -19,7 +19,6 @@ extension Error {
             /// The underlying response error.
             let underlyingError = error.underlyingError as? RequestValidator.ResponseError
         else {
-
             return UtilityError(kind: kind, underlyingError: self)
         }
 

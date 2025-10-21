@@ -29,7 +29,7 @@ import SwiftUI
 /// // Use custom bundle icons
 /// DSIcons.flipCameraIcon
 /// ```
-public struct DSIcons {
+public enum DSIcons {
     /// Represents a filled lightning bolt, typically used for power or energy-related actions.
     static let boltFill = Image(systemName: "bolt.fill")
 
@@ -43,7 +43,8 @@ public struct DSIcons {
     /// Represents the camera flip action, loaded from the app's custom image assets.
     static let cameraTrianglehead = Image("flip-camera", bundle: Bundle(for: BundleLocator.self))
 
-    /// Represents the rear iPhone camera, typically used for device-specific camera indicators or settings related to camera hardware.
+    /// Represents the rear iPhone camera, typically used for device-specific camera indicators or settings related to
+    /// camera hardware.
     static let iphoneCamera = Image(systemName: "iphone.rear.camera")
 
     /// Represents a lock icon for security and authentication-related actions.

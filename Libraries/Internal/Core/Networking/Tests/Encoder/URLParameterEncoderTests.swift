@@ -9,14 +9,14 @@ import Testing
 
 struct URLParameterEncoderTests {
     // MARK: - Tests
-    
+
     @Test
     func testThatEncodeWithAutoDestinationAndDELETEHTTPMethodShouldEncodeParametersInQuery() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder()
-        
+
         // When
         request.httpMethod = "DELETE"
         request = try sut.encode(parameters, into: request)
@@ -26,14 +26,14 @@ struct URLParameterEncoderTests {
         #expect(request.httpBody == nil, "Expected httpBody to be nil")
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
-    
+
     @Test
     func testThatEncodeWithAutoDestinationAndGETHTTPMethodShouldEncodeParametersInQuery() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder()
-        
+
         // When
         request.httpMethod = "GET"
         request = try sut.encode(parameters, into: request)
@@ -43,14 +43,14 @@ struct URLParameterEncoderTests {
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
-    
+
     @Test
     func testThatEncodeWithAutoDestinationAndHEADHTTPMethodShouldEncodeParametersInQuery() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder()
-        
+
         // When
         request.httpMethod = "HEAD"
         request = try sut.encode(parameters, into: request)
@@ -60,14 +60,14 @@ struct URLParameterEncoderTests {
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
-    
+
     @Test
     func testThatEncodeWithAutoDestinationAndPOSTHTTPMethodShouldEncodeParametersInBody() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder()
-        
+
         // When
         request.httpMethod = "POST"
         request = try sut.encode(parameters, into: request)
@@ -77,14 +77,14 @@ struct URLParameterEncoderTests {
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
-    
+
     @Test
     func testThatEncodeWithAutoDestinationAndPUTHTTPMethodShouldEncodeParametersInBody() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder()
-        
+
         // When
         request.httpMethod = "PUT"
         request = try sut.encode(parameters, into: request)
@@ -94,14 +94,14 @@ struct URLParameterEncoderTests {
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
-    
+
     @Test
     func testThatEncodeWithAutoDestinationAndTRACEHTTPMethodShouldEncodeParametersInBody() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder()
-        
+
         // When
         request.httpMethod = "TRACE"
         request = try sut.encode(parameters, into: request)
@@ -111,14 +111,14 @@ struct URLParameterEncoderTests {
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
-    
+
     @Test
     func testThatEncodeWithAutoDestinationAndOPTIONSHTTPMethodShouldEncodeParametersInBody() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder()
-        
+
         // When
         request.httpMethod = "OPTIONS"
         request = try sut.encode(parameters, into: request)
@@ -134,7 +134,7 @@ struct URLParameterEncoderTests {
         // Given
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder()
-        
+
         // When
         request = try sut.encode(nil, into: request)
 
@@ -143,14 +143,14 @@ struct URLParameterEncoderTests {
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
-    
+
     @Test
     func testThatEncodeWithBodyDestinationShouldEncodeParametersInBody() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder(destination: .body)
-        
+
         // When
         request.httpMethod = "GET"
         request = try sut.encode(parameters, into: request)
@@ -160,14 +160,14 @@ struct URLParameterEncoderTests {
         #expect(String(data: request.httpBody!, encoding: .utf8) == "foo=bar&xyz=abc")
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
-    
+
     @Test
     func testThatEncodeWithQueryDestinationShouldEncodeParametersInQuery() throws {
         // Given
         let parameters = ["foo": "bar", "xyz": "abc"]
         var request = URLRequest(url: URL(string: "https://httpbin.org/")!)
         let sut = URLParameterEncoder(destination: .query)
-        
+
         // When
         request.httpMethod = "POST"
         request = try sut.encode(parameters, into: request)
@@ -177,7 +177,7 @@ struct URLParameterEncoderTests {
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
-    
+
     @Test
     func testThatEncodeComplexParametersInURL() throws {
         // Given
@@ -189,13 +189,13 @@ struct URLParameterEncoderTests {
             "xyz": "abc",
             "array": [
                 "value",
-                "value1",
+                "value1"
             ],
             "dictionary": [
                 "key": false
             ]
         ]
-        
+
         // When
         request = try sut.encode(parameters, into: request)
 
@@ -204,7 +204,7 @@ struct URLParameterEncoderTests {
         #expect(request.httpBody == nil)
         #expect(request.allHTTPHeaders["Content-Type"] == nil)
     }
-    
+
     @Test
     func testThatEncodeComplexParametersInBody() throws {
         // Given
@@ -217,13 +217,13 @@ struct URLParameterEncoderTests {
             "another": 1,
             "array": [
                 "value",
-                "value1",
+                "value1"
             ],
             "dictionary": [
                 "key": true
             ]
         ]
-        
+
         // When
         request = try sut.encode(parameters, into: request)
 
@@ -232,7 +232,7 @@ struct URLParameterEncoderTests {
         #expect(String(data: request.httpBody!, encoding: .utf8) == expectedBody)
         #expect(request.allHTTPHeaders["Content-Type"] == "application/x-www-form-urlencoded")
     }
-    
+
     @Test
     func testThatUrlStaticProperty() {
         // Given, When, Then

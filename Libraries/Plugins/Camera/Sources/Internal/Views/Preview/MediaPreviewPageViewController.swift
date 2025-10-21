@@ -14,7 +14,7 @@ protocol MediaPreviewPageViewControllerDelegate: AnyObject {
     /// - Parameters:
     ///   - vc: The preview page view controller sending the event.
     ///   - index: The index of the deleted media item.
-    func mediaPreviewPageViewController(_ vc: MediaPreviewPageViewController, didDeleteAt index: Int)
+    func mediaPreviewPageViewController(_ viewController: MediaPreviewPageViewController, didDeleteAt index: Int)
 }
 
 /// A page view controller that displays a full-screen preview of media items (photos or clips).
@@ -61,6 +61,7 @@ final class MediaPreviewPageViewController: UIPageViewController {
 
     // MARK: - UIPageViewController
 
+    // swiftlint:disable type_contents_order
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -74,6 +75,8 @@ final class MediaPreviewPageViewController: UIPageViewController {
             setViewControllers([viewController], direction: .forward, animated: false, completion: nil)
         }
     }
+
+    // swiftlint:enable type_contents_order
 
     // MARK: - Actions
 
@@ -125,7 +128,7 @@ final class MediaPreviewPageViewController: UIPageViewController {
 
             deleteButton.topAnchor.constraint(equalTo: view.topAnchor, constant: topSpacing),
             deleteButton.widthAnchor.constraint(equalToConstant: buttonSize),
-            deleteButton.heightAnchor.constraint(equalToConstant: buttonSize),
+            deleteButton.heightAnchor.constraint(equalToConstant: buttonSize)
         ])
 
         view.bringSubviewToFront(closeButton)
@@ -145,18 +148,18 @@ final class MediaPreviewPageViewController: UIPageViewController {
 
     /// Returns a view controller configured to display the media at the given index.
     private func mediaViewController(for index: Int) -> UIViewController? {
-        guard index >= 0 && index < medias.count else { return nil }
+        guard index >= 0, index < medias.count else { return nil }
 
         let media = medias[index]
 
         switch media {
-        case .clip(let clip):
+        case let .clip(clip):
             let viewController = ClipViewController(clip: clip)
             viewController.index = index
 
             return viewController
 
-        case .photo(let photo):
+        case let .photo(photo):
             let viewController = PhotoViewController(photo: photo)
             viewController.index = index
 

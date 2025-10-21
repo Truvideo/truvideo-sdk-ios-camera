@@ -7,17 +7,17 @@ import Telemetry
 
 struct ContentView: View {
     // MARK: - State Properties
-    
+
     @State var breadcrumbCounter = 0
     @State var errorCounter = 0
     @State var eventCounter = 0
-    
+
     // MARK: - StateObject Properties
-    
+
     @StateObject private var telemetrySubscriber = TelemetrySubsriber()
-    
+
     // MARK: - Body
-    
+
     var body: some View {
         VStack {
             HStack {
@@ -53,19 +53,19 @@ struct ContentView: View {
                 .clipShape(.rect)
                 .buttonStyle(.borderedProminent)
             }
-            
+
             HStack {
                 Button("Show Report") {
                     breadcrumbCounter = 0
                     eventCounter = 0
                     errorCounter = 0
-                    
+
                     NotificationCenter.default.post(
                         name: UIApplication.willTerminateNotification,
                         object: nil,
                         userInfo: nil
                     )
-                    
+
                     NotificationCenter.default.post(
                         name: UIApplication.didBecomeActiveNotification,
                         object: nil,
@@ -75,7 +75,7 @@ struct ContentView: View {
                 .clipShape(.rect)
                 .buttonStyle(.borderedProminent)
             }
-            
+
             if !telemetrySubscriber.report.isEmpty {
                 ScrollView {
                     Text(telemetrySubscriber.report)
@@ -89,26 +89,25 @@ struct ContentView: View {
             TelemetryManager.shared.add(telemetrySubscriber)
         }
     }
-    
+
     // MARK: - Types
-    
+
     enum AppError: Error {
         case corruptedData
     }
 }
 
 private final class TelemetrySubsriber: ObservableObject, TelemetryManagerSubscriber {
-    
     // MARK: - Published Properties
-    
+
     @Published var report = ""
-    
+
     // MARK: - TelemetryManagerSubscriber
-    
+
     func didReceive(_ report: TelemetryReport) {
         let encoder = JSONEncoder()
         encoder.outputFormatting = .prettyPrinted
-        
+
         if let data = try? encoder.encode(report),
            let string = String(data: data, encoding: .utf8) {
             self.report = string

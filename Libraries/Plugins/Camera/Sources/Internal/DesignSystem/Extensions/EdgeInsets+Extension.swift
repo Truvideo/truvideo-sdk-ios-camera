@@ -32,7 +32,6 @@ extension EdgeInsets {
         top: CGFloat = 0,
         trailing: CGFloat = 0
     ) -> EdgeInsets {
-
         EdgeInsets(top: top, leading: leading, bottom: bottom, trailing: trailing)
     }
 

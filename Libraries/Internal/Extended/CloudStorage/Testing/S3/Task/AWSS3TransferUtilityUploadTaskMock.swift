@@ -27,17 +27,17 @@ public final class AWSS3TransferUtilityUploadTaskMock: AWSS3TransferUtilityUploa
     // MARK: - Overrides
 
     /// Overrides `resume()` to increment `didResumeCallCount`.
-    public override func cancel() {
+    override public func cancel() {
         didCancelCallCount += 1
     }
 
     /// Overrides `resume()` to increment `didResumeCallCount`.
-    public override func resume() {
+    override public func resume() {
         didResumeCallCount += 1
     }
 
     /// Overrides `suspend()` to increment `didSuspendCallCount`.
-    public override func suspend() {
+    override public func suspend() {
         didSuspendCallCount += 1
     }
 }

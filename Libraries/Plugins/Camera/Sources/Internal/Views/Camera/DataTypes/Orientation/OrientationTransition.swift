@@ -22,10 +22,10 @@ struct OrientationTransition: Hashable {
     /// The starting orientation of the device
     let from: UIDeviceOrientation
 
-    //swiftlint:disable identifier_name
+    // swiftlint:disable identifier_name
     /// The target orientation of the device
     let to: UIDeviceOrientation
-    //swiftlint:enable identifier_name
+    // swiftlint:enable identifier_name
 
     // MARK: - Private Properties
 
@@ -35,7 +35,7 @@ struct OrientationTransition: Hashable {
         OrientationTransition(from: .portrait, to: .portraitUpsideDown): .degrees(180),
         OrientationTransition(from: .landscapeLeft, to: .landscapeRight): .degrees(-90),
         OrientationTransition(from: .landscapeRight, to: .landscapeLeft): .degrees(90),
-        OrientationTransition(from: .portraitUpsideDown, to: .portrait): .degrees(0),
+        OrientationTransition(from: .portraitUpsideDown, to: .portrait): .degrees(0)
     ]
 
     // MARK: - Instance methods

@@ -10,7 +10,7 @@ import Testing
 
 struct CompositeMonitorTests {
     // MARK: - Private Properties
-    
+
     private let request = DataRequestMock()
     private let sessionTaskMetrics = URLSessionTaskMetrics()
     private let url = URL(string: "https://httpbin.org/")!
@@ -23,84 +23,84 @@ struct CompositeMonitorTests {
         var didResumeCallCount = 0
         let monitor = MonitorMock()
         let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
-        
+
         // When
         await withCheckedContinuation { continuation in
             monitor.requestDidResumeCallback = {
                 didResumeCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.requestDidResume(request)
         }
-        
+
         // Then
         #expect(didResumeCallCount == 1)
     }
-    
+
     @Test
     func testThatDidCancelShouldCallMonitors() async {
         // Given
         var didCancelCallCount = 0
         let monitor = MonitorMock()
         let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
-        
+
         // When
         await withCheckedContinuation { continuation in
             monitor.requestDidCancelCallback = {
                 didCancelCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.requestDidCancel(request)
         }
-        
+
         // Then
         #expect(didCancelCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidFinishShouldCallMonitors() async {
         // Given
         var didFinishCallCount = 0
         let monitor = MonitorMock()
         let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
-        
+
         // When
         await withCheckedContinuation { continuation in
             monitor.requestDidFinishCallback = {
                 didFinishCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.requestDidFinish(request)
         }
-        
+
         // Then
         #expect(didFinishCallCount == 1)
     }
-    
+
     @Test
     func testThatDidSuspendShouldCallMonitors() async {
         // Given
         var didSuspendCallCount = 0
         let monitor = MonitorMock()
         let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
-        
+
         // When
         await withCheckedContinuation { continuation in
             monitor.requestDidSuspendCallback = {
                 didSuspendCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.requestDidSuspend(request)
         }
-        
+
         // Then
         #expect(didSuspendCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestIsPreparingShouldCallMonitors() async {
         // Given
@@ -112,7 +112,7 @@ struct CompositeMonitorTests {
             monitor.requestIsPreparingCallback = {
                 continuation.resume()
             }
-            
+
             sut.requestIsPreparing(request)
         }
 
@@ -133,14 +133,14 @@ struct CompositeMonitorTests {
                 requestIsRetryingCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.requestIsRetrying(request)
         }
 
         // Then
         #expect(requestIsRetryingCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidParseResponseShouldCallMonitors() async {
         // Given
@@ -154,7 +154,7 @@ struct CompositeMonitorTests {
                 didParseResponseCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(
                 request,
                 didParseResponse: Response(
@@ -185,7 +185,7 @@ struct CompositeMonitorTests {
                 didParseResponseCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(
                 request,
                 didParseResponse: Response<Empty, NetworkingError>(
@@ -216,7 +216,7 @@ struct CompositeMonitorTests {
                 didCollectMetricsCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didGatherMetrics: sessionTaskMetrics)
         }
 
@@ -238,7 +238,7 @@ struct CompositeMonitorTests {
                 didCompleteTaskCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didCompleteTask: task, with: nil)
         }
 
@@ -260,14 +260,14 @@ struct CompositeMonitorTests {
                 didCreateTaskCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didCreateTask: task)
         }
 
         // Then
         #expect(didCreateTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidCreateURLRequestShouldCallMonitors() async {
         // Given
@@ -281,7 +281,7 @@ struct CompositeMonitorTests {
                 didCreateURLRequestCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didCreateURLRequest: try! URLRequest(url: url, method: .get))
         }
 
@@ -302,14 +302,14 @@ struct CompositeMonitorTests {
                 didFailToCreateURLRequestCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didFailToCreateURLRequestWithError: .init(kind: .explicitlyCancelled))
         }
 
         // Then
         #expect(didFailToCreateURLRequestCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidFailToInterceptURLRequestShouldCallMonitors() async {
         // Given
@@ -323,7 +323,7 @@ struct CompositeMonitorTests {
                 didFailToInterceptURLRequestCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(
                 request,
                 didFailToIntercept: try! URLRequest(url: url, method: .get),
@@ -334,7 +334,7 @@ struct CompositeMonitorTests {
         // Then
         #expect(didFailToInterceptURLRequestCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidInterceptURLRequestShouldCallMonitors() async {
         // Given
@@ -348,7 +348,7 @@ struct CompositeMonitorTests {
                 didInterceptURLRequestlCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(
                 request,
                 didIntercept: try! URLRequest(url: url, method: .get),
@@ -373,7 +373,7 @@ struct CompositeMonitorTests {
                 didValidateRequestCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didValidate: nil, data: nil, error: NetworkingError(kind: .explicitlyCancelled))
         }
 
@@ -390,11 +390,11 @@ struct CompositeMonitorTests {
 
         // When
         await withCheckedContinuation { continuation in
-            monitor.requestDidFailToInterceptURLRequestCallback = { error in
+            monitor.requestDidFailToInterceptURLRequestCallback = { _ in
                 didFailToInterceptURLRequestCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(
                 request,
                 didFailToIntercept: try! URLRequest(url: url, method: .get),
@@ -405,7 +405,7 @@ struct CompositeMonitorTests {
         // Then
         #expect(didFailToInterceptURLRequestCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidCancelTaskShouldCallMonitors() async {
         // Given
@@ -420,7 +420,7 @@ struct CompositeMonitorTests {
                 didCancelTaskCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didCancelTask: task)
         }
 
@@ -441,14 +441,14 @@ struct CompositeMonitorTests {
                 requestIsFinishingCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.requestIsFinishing(request)
         }
 
         // Then
         #expect(requestIsFinishingCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidFailTaskWithErrorShouldCallMonitors() async {
         // Given
@@ -463,14 +463,14 @@ struct CompositeMonitorTests {
                 didFailTaskWithErrorCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didFailTask: task, with: NetworkingError(kind: .explicitlyCancelled))
         }
 
         // Then
         #expect(didFailTaskWithErrorCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidFailToCreateTaskWithErrorShouldCallMonitors() async {
         // Given
@@ -484,14 +484,14 @@ struct CompositeMonitorTests {
                 didFailToCreateTaskWithErrorCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didFailToCreateTaskWithError: .init(kind: .explicitlyCancelled))
         }
 
         // Then
         #expect(didFailToCreateTaskWithErrorCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidCreateUploadableShouldCallMonitors() async {
         // Given
@@ -506,35 +506,35 @@ struct CompositeMonitorTests {
                 didCreateUploadableCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didCreateUploadable: uploadable)
         }
 
         // Then
         #expect(didCreateUploadableCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidFailToCreateUploadableWithErrorShouldCallMonitors() async {
         // Given
         var didFailToCreateUploadableWithErrorCallCount = 0
         let monitor = MonitorMock()
         let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
-        
+
         // When
         await withCheckedContinuation { continuation in
             monitor.uploadRequestDidFailToCreateUploadableCallback = { _ in
                 didFailToCreateUploadableWithErrorCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didFailToCreateUploadableWithError: .init(kind: .explicitlyCancelled))
         }
 
         // Then
         #expect(didFailToCreateUploadableWithErrorCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidResumeTaskShouldCallMonitors() async {
         // Given
@@ -549,14 +549,14 @@ struct CompositeMonitorTests {
                 didResumeTaskCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didResumeTask: task)
         }
 
         // Then
         #expect(didResumeTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidSuspendTaskShouldCallMonitors() async {
         // Given
@@ -571,18 +571,18 @@ struct CompositeMonitorTests {
                 didSuspendTaskCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didSuspendTask: task)
         }
 
         // Then
         #expect(didSuspendTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatRequestDidCreateInitialURLRequestShouldCallMonitors() async {
         // Given
-        var didCreateInitialURLRequestCallCount = 0        
+        var didCreateInitialURLRequestCallCount = 0
         let monitor = MonitorMock()
         let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
 
@@ -592,14 +592,14 @@ struct CompositeMonitorTests {
                 didCreateInitialURLRequestCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.request(request, didCreateInitialURLRequest: URLRequest(url: url))
         }
 
         // Then
         #expect(didCreateInitialURLRequestCallCount == 1)
     }
-    
+
     @Test
     func testThatSessionDataTaskDidReceiveDataShouldCallMonitors() async {
         // Given
@@ -614,14 +614,14 @@ struct CompositeMonitorTests {
                 sessionDataTaskDidReceiveDataCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.urlSession(URLSession.shared, dataTask: task, didReceive: Data())
         }
 
         // Then
         #expect(sessionDataTaskDidReceiveDataCallCount == 1)
     }
-    
+
     @Test
     func testThatSessionDataTaskDidReceiveResponseShouldCallMonitors() async {
         // Given
@@ -636,7 +636,7 @@ struct CompositeMonitorTests {
                 sessionDataTaskDidReceiveResponseCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.urlSession(URLSession.shared, dataTask: task, didReceive: URLResponse())
         }
 
@@ -646,11 +646,11 @@ struct CompositeMonitorTests {
             "Expect sessionDataTaskDidReceiveResponseCallCount to be 1"
         )
     }
-    
+
     @Test
     func testThatSessionDataTaskDidBecomeInvalidWithErrorShouldCallMonitors() async {
         // Given
-        var sessionDataTaskDidBecomeInvalidWithErrorCallCount = 0        
+        var sessionDataTaskDidBecomeInvalidWithErrorCallCount = 0
         let monitor = MonitorMock()
         let sut = CompositeMonitor(monitors: [monitor, CustomMonitor()])
 
@@ -660,7 +660,7 @@ struct CompositeMonitorTests {
                 sessionDataTaskDidBecomeInvalidWithErrorCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.urlSession(URLSession.shared, didBecomeInvalidWithError: NetworkingError(kind: .explicitlyCancelled))
         }
 
@@ -670,7 +670,7 @@ struct CompositeMonitorTests {
             "Expect sessionDataTaskDidBecomeInvalidWithErrorCallCount to be 1"
         )
     }
-    
+
     @Test
     func testThatSessionDataTaskDidCompleteWithErrorShouldCallMonitors() async {
         // Given
@@ -685,14 +685,14 @@ struct CompositeMonitorTests {
                 sessionDataTaskDidCompleteWithErrorMetricsCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.urlSession(URLSession.shared, task: task, didCompleteWithError: nil)
         }
 
         // Then
         #expect(sessionDataTaskDidCompleteWithErrorMetricsCallCount == 1)
     }
-    
+
     @Test
     func testThatSessionDataTaskDidFinishCollectingMetricsShouldCallMonitors() async {
         // Given
@@ -707,7 +707,7 @@ struct CompositeMonitorTests {
                 sessionDataTaskDidFinishCollectingMetricsCallCount += 1
                 continuation.resume()
             }
-            
+
             sut.urlSession(URLSession.shared, task: task, didFinishCollecting: sessionTaskMetrics)
         }
 

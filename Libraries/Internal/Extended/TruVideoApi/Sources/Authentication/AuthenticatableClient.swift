@@ -185,7 +185,7 @@ public final class AuthenticationClient: AuthenticatableClient {
         do {
             var headers: HTTPHeaders = [
                 "x-authentication-api-key": apiKey,
-                "x-authentication-signature": signature,
+                "x-authentication-signature": signature
             ]
 
             if let externalId, !externalId.isEmpty {
@@ -204,7 +204,7 @@ public final class AuthenticationClient: AuthenticatableClient {
                     "model": context.model,
                     "os": context.os,
                     "osVersion": context.osVersion,
-                    "timestamp": context.timestamp,
+                    "timestamp": context.timestamp
                 ],
                 encoder: JSONParameterEncoder.sortedKeys,
                 headers: headers

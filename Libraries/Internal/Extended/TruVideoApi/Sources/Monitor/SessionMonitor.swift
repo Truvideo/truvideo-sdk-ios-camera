@@ -11,7 +11,8 @@ import Networking
 /// such as request resumption and response parsing. It helps debug network operations
 /// by providing detailed request and response metadata.
 ///
-/// - Note: This monitor is useful for debugging API calls, tracking request states, and capturing errors during request execution.
+/// - Note: This monitor is useful for debugging API calls, tracking request states, and capturing errors during request
+/// execution.
 public struct SessionMonitor: Monitor {
     // MARK: - Public Properties
 
@@ -44,13 +45,12 @@ public struct SessionMonitor: Monitor {
     /// - Parameters:
     ///   - request: The `DataRequest` instance being parsed.
     ///   - response: The `Response` containing the parsed value or an error.
-    public func request<Value: Sendable>(
+    public func request(
         _ request: any DataRequest,
-        didParseResponse response: Response<Value, NetworkingError>
+        didParseResponse response: Response<some Sendable, NetworkingError>
     ) {
-
         switch response.result {
-        case .failure(let error):
+        case let .failure(error):
             print(
                 """
                 ------------------------------- ⚙️ Request did parse response --------------------------------
@@ -60,7 +60,7 @@ public struct SessionMonitor: Monitor {
                 """
             )
 
-        case .success(let value):
+        case let .success(value):
             print(
                 """
                 ------------------------------- ⚙️ Request did parse response --------------------------------

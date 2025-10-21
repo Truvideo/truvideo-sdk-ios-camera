@@ -71,10 +71,10 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
     /// - Returns: A `TruvideoSdkCameraMedia` instance with the media's data
     static func from(_ media: Media) -> TruvideoSdkCameraMedia {
         switch media {
-        case .clip(let clip):
+        case let .clip(clip):
             from(clip)
 
-        case .photo(let photo):
+        case let .photo(photo):
             from(photo)
         }
     }
@@ -151,7 +151,6 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
         resolution: TruvideoSdkCameraResolution,
         type: TruvideoSdkCameraMediaType
     ) {
-
         self.id = id
         self.createdAt = createdAt
         self.duration = duration

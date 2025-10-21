@@ -17,7 +17,7 @@ extension TruVideoSdkError {
         errorDescription: "API key not found or unavailable.",
         failureReason: "The required API key could not be retrieved from the configured source."
     )
-    
+
     /// Failed to generate the request payload.
     ///
     /// This error occurs when the SDK fails to encode or assemble the expected payload
@@ -30,7 +30,6 @@ extension TruVideoSdkError {
 }
 
 extension TruVideoApp {
-
     // MARK: - TruVideoSDKDeprecated
 
     /// Returns the currently configured API key.
@@ -41,7 +40,7 @@ extension TruVideoApp {
         guard let apiKey = authenticatableClient.currentSession?.apiKey else {
             throw TruVideoSdkError.apiKeyNotFound
         }
-        
+
         return apiKey
     }
 
@@ -59,7 +58,7 @@ extension TruVideoApp {
     public func generatePayload() throws -> String {
         do {
             let context = Context()
-            let jSONEncoder =  JSONEncoder()
+            let jSONEncoder = JSONEncoder()
             jSONEncoder.outputFormatting = [.sortedKeys]
 
             let jsonData = try jSONEncoder.encode(context)

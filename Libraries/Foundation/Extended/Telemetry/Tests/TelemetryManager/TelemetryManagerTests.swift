@@ -11,21 +11,21 @@ import Testing
 
 private final class TelemetryManagerTests {
     // MARK: - Private Properties
-    
+
     private var contextProvider: ContextProviderMock!
     private let storageURL: URL
     private var subscriber: TelemetryManagerSubscriberMock!
-    
+
     // MARK: - Initializer
-    
-    init () {
+
+    init() {
         contextProvider = ContextProviderMock()
         storageURL = FileManager.default.telemetryDirectory.appendingPathComponent("\(UUID()).json")
         subscriber = TelemetryManagerSubscriberMock()
     }
 
     // MARK: - Tests
-    
+
     @Test
     func testThatFlushPreviousSessionEmitsSessionEndedEvent() async throws {
         await withDependencyValues { dependencies in
@@ -45,15 +45,15 @@ private final class TelemetryManagerTests {
             dependencies.contextProvider = contextProvider
             dependencies.installation = installation
             dependencies.storage = InMemoryStorage()
-            
+
             try! dependencies.storage.write(session, forKey: TelemetryManager.SessionStorageKey.self)
-            
+
             sut.add(subscriber)
             sut.flushPreviousSession(endedAt: endDate)
-            
+
             report = subscriber.receivedReports.first
             event = report?.events.first { $0.name == "session_ended" }
-            
+
             // Then
             #expect(subscriber.receivedReports.count == 1)
             #expect(contextProvider.makeContextCallCount == 1)
@@ -63,7 +63,7 @@ private final class TelemetryManagerTests {
             #expect(report?.session.endedAt == endDate)
         }
     }
-    
+
     @Test
     func testThatEndSessionEmitsSessionEndedEvent() async throws {
         await withDependencyValues { dependencies in
@@ -76,30 +76,30 @@ private final class TelemetryManagerTests {
                 eventsBuffer: EventDiskBuffer(storageURL: storageURL),
                 integrations: []
             )
-            
+
             // When
             dependencies.contextProvider = contextProvider
             dependencies.installation = TelemetryInstallationMock()
             dependencies.storage = InMemoryStorage()
-            
+
             sut.add(subscriber)
-            
+
             sut.startSession()
             sut.endSession(at: endDate)
-            
+
             report = subscriber.receivedReports.last!
             event = report?.events.first { $0.name == "session_ended" }
-            
+
             // Then
             #expect(subscriber.receivedReports.count == 1)
             #expect(contextProvider.makeContextCallCount == 1)
             #expect(event?.severity == .info)
             #expect(event?.source == "Telemetry")
-            #expect(report?.session.endedAt == endDate)            
+            #expect(report?.session.endedAt == endDate)
             #expect(try! dependencies.storage.readValue(for: TelemetryManager.SessionStorageKey.self) == nil)
         }
     }
-    
+
     @Test
     func testThatEndSessionDoesNothingWhenNoActiveSession() async throws {
         await withDependencyValues { dependencies in
@@ -109,21 +109,21 @@ private final class TelemetryManagerTests {
                 eventsBuffer: EventDiskBuffer(storageURL: storageURL),
                 integrations: []
             )
-            
+
             // When
             dependencies.contextProvider = contextProvider
             dependencies.installation = TelemetryInstallationMock()
             dependencies.storage = InMemoryStorage()
-            
+
             sut.add(subscriber)
             sut.endSession(at: Date())
-            
+
             // Then
             #expect(contextProvider.makeContextCallCount == 0)
             #expect(subscriber.receivedReports.isEmpty)
         }
     }
-    
+
     @Test
     func testThatRemoveSubscriberUnregistersSubscriber() async throws {
         await withDependencyValues { dependencies in
@@ -133,7 +133,7 @@ private final class TelemetryManagerTests {
                 eventsBuffer: EventDiskBuffer(storageURL: storageURL),
                 integrations: []
             )
-            
+
             // When
             dependencies.contextProvider = contextProvider
             dependencies.installation = TelemetryInstallationMock()
@@ -142,7 +142,7 @@ private final class TelemetryManagerTests {
             sut.add(subscriber)
             sut.startSession()
             sut.endSession(at: Date())
-            
+
             sut.remove(subscriber)
             sut.startSession()
             sut.endSession(at: Date())
@@ -164,14 +164,14 @@ private final class TelemetryManagerTests {
             dependencies.contextProvider = contextProvider
             dependencies.installation = TelemetryInstallationMock()
             dependencies.storage = InMemoryStorage()
-            
+
             sut.add(subscriber)
             sut.startSession()
             sut.captureEvent(name: "custom_event", source: "test_source", metadata: ["foo": "bar"])
-                        
+
             event = eventsBuffer.snapshot().first(where: { $0.name == "custom_event" })
 
-            // Then            
+            // Then
             #expect(event?.metadata?["foo"] == "bar")
             #expect(event?.source == "test_source")
         }
@@ -198,7 +198,7 @@ private final class TelemetryManagerTests {
                 source: "test_source",
                 metadata: ["foo": "bar"]
             )
-            
+
             event = eventsBuffer.snapshot().first(where: { $0.name == "message_event" })
 
             // Then
@@ -220,7 +220,7 @@ private final class TelemetryManagerTests {
                 code: 1,
                 userInfo: [NSLocalizedDescriptionKey: "Something went wrong"]
             )
-            
+
             // When
             dependencies.contextProvider = contextProvider
             dependencies.installation = TelemetryInstallationMock()
@@ -228,7 +228,7 @@ private final class TelemetryManagerTests {
 
             sut.add(subscriber)
             sut.capture(error, name: "error_event", source: "test_source", metadata: ["foo": .string("bar")])
-            
+
             event = eventsBuffer.snapshot().first(where: { $0.name == "error_event" })
 
             // Then
@@ -237,7 +237,7 @@ private final class TelemetryManagerTests {
             #expect(event?.metadata?["foo"] == "bar")
         }
     }
-    
+
     @Test
     func testThatCaptureBreadcrumbAddsBreadcrumbToEvent() async throws {
         await withDependencyValues { dependencies in
@@ -278,7 +278,7 @@ private final class TelemetryManagerTests {
 
             sut.add(subscriber)
             sut.startSession()
-            
+
             event = eventsBuffer.snapshot().first(where: { $0.name == "session_started" })
 
             // Then
@@ -326,7 +326,7 @@ private final class TelemetryManagerTests {
 
             sut.add(subscriber)
             sut.startSession()
-            
+
             let firstSession = try! dependencies.storage.readValue(for: TelemetryManager.SessionStorageKey.self)
 
             sut.startSession()

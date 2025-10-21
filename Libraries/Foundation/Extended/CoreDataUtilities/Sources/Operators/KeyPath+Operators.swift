@@ -12,7 +12,7 @@ import Foundation
 ///
 /// - Parameter keyPath: The `KeyPath` to convert into an `NSExpression`.
 /// - Returns: An `NSExpression` representing the `KeyPath`.
-func expression<Element, Value>(for keyPath: KeyPath<Element, Value>) -> NSExpression {
+func expression(for keyPath: KeyPath<some Any, some Any>) -> NSExpression {
     NSExpression(forKeyPath: keyPath)
 }
 
@@ -24,7 +24,7 @@ func expression<Element, Value>(for keyPath: KeyPath<Element, Value>) -> NSExpre
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The value to compare against.
 /// - Returns: An `NSPredicate` representing the equality comparison.
-public func == <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPredicate {
+public func == <Value>(lhs: KeyPath<some Any, Value>, rhs: Value) -> NSPredicate {
     expression(for: lhs) == NSExpression(forConstantValue: rhs)
 }
 
@@ -34,7 +34,7 @@ public func == <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSP
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The value to compare against.
 /// - Returns: An `NSPredicate` representing the inequality comparison.
-public func != <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPredicate {
+public func != <Value>(lhs: KeyPath<some Any, Value>, rhs: Value) -> NSPredicate {
     expression(for: lhs) != NSExpression(forConstantValue: rhs)
 }
 
@@ -44,7 +44,7 @@ public func != <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSP
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The value to compare against.
 /// - Returns: An `NSPredicate` representing the greater than comparison.
-public func > <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPredicate {
+public func > <Value>(lhs: KeyPath<some Any, Value>, rhs: Value) -> NSPredicate {
     expression(for: lhs) > NSExpression(forConstantValue: rhs)
 }
 
@@ -55,7 +55,7 @@ public func > <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPr
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The value to compare against.
 /// - Returns: An `NSPredicate` representing the greater than or equal to comparison.
-public func >= <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPredicate {
+public func >= <Value>(lhs: KeyPath<some Any, Value>, rhs: Value) -> NSPredicate {
     expression(for: lhs) >= NSExpression(forConstantValue: rhs)
 }
 
@@ -65,7 +65,7 @@ public func >= <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSP
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The value to compare against.
 /// - Returns: An `NSPredicate` representing the less than comparison.
-public func < <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPredicate {
+public func < <Value>(lhs: KeyPath<some Any, Value>, rhs: Value) -> NSPredicate {
     expression(for: lhs) < NSExpression(forConstantValue: rhs)
 }
 
@@ -76,7 +76,7 @@ public func < <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPr
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The value to compare against.
 /// - Returns: An `NSPredicate` representing the less than or equal to comparison.
-public func <= <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPredicate {
+public func <= <Value>(lhs: KeyPath<some Any, Value>, rhs: Value) -> NSPredicate {
     expression(for: lhs) <= NSExpression(forConstantValue: rhs)
 }
 
@@ -86,7 +86,7 @@ public func <= <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSP
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The value to compare against using pattern matching.
 /// - Returns: An `NSPredicate` representing the pattern matching comparison.
-public func ~= <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSPredicate {
+public func ~= <Value>(lhs: KeyPath<some Any, Value>, rhs: Value) -> NSPredicate {
     expression(for: lhs) ~= NSExpression(forConstantValue: rhs)
 }
 
@@ -97,7 +97,7 @@ public func ~= <Element, Value>(lhs: KeyPath<Element, Value>, rhs: Value) -> NSP
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The array of values to check for inclusion.
 /// - Returns: An `NSPredicate` representing the `IN` comparison.
-public func << <Element, Value>(lhs: KeyPath<Element, Value>, rhs: [Value]) -> NSPredicate {
+public func << <Value>(lhs: KeyPath<some Any, Value>, rhs: [Value]) -> NSPredicate {
     expression(for: lhs) << NSExpression(forConstantValue: rhs)
 }
 
@@ -108,8 +108,8 @@ public func << <Element, Value>(lhs: KeyPath<Element, Value>, rhs: [Value]) -> N
 ///   - lhs: The `KeyPath` to compare.
 ///   - rhs: The range of values to check for inclusion.
 /// - Returns: An `NSPredicate` representing the range comparison.
-public func << <Element, Value>(
-    lhs: KeyPath<Element, Value>,
+public func << <Value>(
+    lhs: KeyPath<some Any, Value>,
     rhs: Range<Value>
 ) -> NSPredicate where Value: Strideable, Value.Stride: SignedInteger {
     expression(for: lhs) << NSExpression(forConstantValue: Array(rhs))

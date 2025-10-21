@@ -29,9 +29,7 @@ public final class TransferUtilityTaskMock: AWSS3TransferUtilityTask {
 
     /// Overrides the `response` property of `AWSS3TransferUtilityTask`
     /// to return a mock value supplied via `setMockResponse`.
-    public override var response: HTTPURLResponse? {
-        get { _mockResponse }
-    }
+    override public var response: HTTPURLResponse? { _mockResponse }
 
     /// Allows injection of a custom `HTTPURLResponse` for testing.
     ///

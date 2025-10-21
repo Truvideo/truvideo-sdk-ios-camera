@@ -50,12 +50,12 @@ final class ClipViewController: UIViewController {
         super.viewDidLoad()
 
         let videoPlayerView = VideoPlayerView(player: player)
-        
+
         let hostingController = UIHostingController(rootView: videoPlayerView)
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
 
         addChild(hostingController)
-        
+
         view.backgroundColor = .black
         view.addSubview(hostingController.view)
 
@@ -63,7 +63,7 @@ final class ClipViewController: UIViewController {
             hostingController.view.topAnchor.constraint(equalTo: view.topAnchor),
             hostingController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
             hostingController.view.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hostingController.view.trailingAnchor.constraint(equalTo: view.trailingAnchor)
         ])
 
         hostingController.didMove(toParent: self)

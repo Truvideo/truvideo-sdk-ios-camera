@@ -28,7 +28,7 @@ extension CoreDataQueryable {
     /// - Returns: The existing managed object if found, or a new instance if no match is found.
     /// - Throws: An error if the search operation fails.
     public static func findOrCreate(_ id: Self.ID, in context: NSManagedObjectContext) throws -> Self {
-        guard let entityName = Self.entity().name else {
+        guard let entityName = entity().name else {
             throw UtilityError(kind: .CoreDataKitErrorReason.invalidEntityName)
         }
 

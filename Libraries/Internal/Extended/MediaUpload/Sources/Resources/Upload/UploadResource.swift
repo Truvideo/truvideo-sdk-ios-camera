@@ -65,7 +65,8 @@ public protocol UploadResource: Sendable {
     ///   - uploadId: The unique identifier of the upload session, returned by `start`.
     ///   - count: The number of parts to request in this batch (valid range: 1...10_000).
     /// - Returns: A batch of upload parts, each containing a presigned URL and its sequence number.
-    /// - Throws: `UtilityError` if the request fails, the parameters are invalid or the server response cannot be decoded.
+    /// - Throws: `UtilityError` if the request fails, the parameters are invalid or the server response cannot be
+    /// decoded.
     func retrieve(for uploadId: String, count: Int) async throws(UtilityError) -> [Part]
 
     /// Initializes a multipart media upload session with the TruVideo API.
@@ -138,7 +139,7 @@ public struct UploadResourceImpl: UploadResource {
                 "parts": parts.map { part in
                     [
                         "etag": part.eTag,
-                        "partNumber": part.partNumber,
+                        "partNumber": part.partNumber
                     ]
                 }
             ]
@@ -178,7 +179,7 @@ public struct UploadResourceImpl: UploadResource {
                 method: .post,
                 parameters: [
                     "partNumber": part.partNumber,
-                    "etag": part.eTag,
+                    "etag": part.eTag
                 ],
                 encoder: .json
             )
@@ -205,7 +206,8 @@ public struct UploadResourceImpl: UploadResource {
     ///   - uploadId: The unique identifier of the upload session, returned by `start`.
     ///   - count: The number of parts to request in this batch (valid range: 1...10_000).
     /// - Returns: A batch of upload parts, each containing a presigned URL and its sequence number.
-    /// - Throws: `UtilityError` if the request fails, the parameters are invalid or the server response cannot be decoded.
+    /// - Throws: `UtilityError` if the request fails, the parameters are invalid or the server response cannot be
+    /// decoded.
     public func retrieve(for uploadId: String, count: Int) async throws(UtilityError) -> [Part] {
         do {
             return try await session.request(
@@ -236,7 +238,8 @@ public struct UploadResourceImpl: UploadResource {
     ///
     /// - Parameter fileType: The type of the media file being uploaded (e.g., `.mp4`, `.jpg`).
     /// - Returns: A `UploadSession` containing the `uploadId` and the presigned URLs required to upload each part.
-    /// - Throws: `UtilityError` if the request fails, the session cannot be created, or the provided parameters are invalid.
+    /// - Throws: `UtilityError` if the request fails, the session cannot be created, or the provided parameters are
+    /// invalid.
     public func start(for fileType: FileType) async throws(UtilityError) -> UploadSession {
         do {
             return try await session.request(

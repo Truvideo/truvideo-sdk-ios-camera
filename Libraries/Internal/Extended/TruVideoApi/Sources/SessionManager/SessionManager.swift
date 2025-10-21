@@ -113,9 +113,8 @@ final class SessionManagerImpl: SessionManager, @unchecked Sendable {
     ///
     /// The storage is initialized lazily to ensure the environment dependency is properly
     /// resolved before storage creation.
-    lazy var storage: any Storage = {
+    lazy var storage: any Storage =
         UserDefaultsStorage(userDefaults: UserDefaults(suiteName: environment.baseURL) ?? .standard)
-    }()
 
     // MARK: - Computed Properties
 

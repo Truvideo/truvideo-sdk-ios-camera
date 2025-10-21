@@ -58,7 +58,8 @@ public final class DependencyValues: @unchecked Sendable {
 
 /// Executes an operation within a new set of dependency values.
 ///
-/// This function initializes a fresh instance of `DependencyValues` and provides it to the given asynchronous operation.
+/// This function initializes a fresh instance of `DependencyValues` and provides it to the given asynchronous
+/// operation.
 /// It ensures that dependencies are properly scoped within the operation's execution context.
 ///
 /// - Parameters:
@@ -74,7 +75,6 @@ public func withDependencyValues<R>(
     file: String = #fileID,
     line: UInt = #line
 ) async rethrows -> R {
-
     let dependencyValues = DependencyValues()
 
     return try await DependencyValues.$current.withValue(dependencyValues) {

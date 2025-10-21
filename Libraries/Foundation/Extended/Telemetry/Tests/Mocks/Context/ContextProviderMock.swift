@@ -9,10 +9,10 @@ import Foundation
 /// A mock implementation of the `ContextProvider` protocol for use in unit tests.
 final class ContextProviderMock: ContextProvider, @unchecked Sendable {
     // MARK: - Properties
-    
+
     /// The number of times the make context function was invoked.
     private(set) var makeContextCallCount = 0
-    
+
     // MARK: - ContextProvider
 
     /// Returns a static `Context` object with predefined values representing
@@ -21,7 +21,7 @@ final class ContextProviderMock: ContextProvider, @unchecked Sendable {
     /// - Returns: A `Context` containing simulated device, OS, and SDK information.
     func makeContext() -> Context {
         makeContextCallCount += 1
-        
+
         return Context(
             device: .init(
                 battery: .init(isLowPowerMode: false, level: 100, state: "full"),

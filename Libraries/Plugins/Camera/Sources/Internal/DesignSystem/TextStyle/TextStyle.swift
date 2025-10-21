@@ -91,15 +91,15 @@ public struct TextStyle: Sendable {
     public var fontName: String {
         var fontName = fontFamily.rawValue
 
-        if let weight = weight {
+        if let weight {
             fontName += "-\(weight.rawValue)"
         }
 
-        if let width = width {
+        if let width {
             fontName += "-\(width.rawValue)"
         }
 
-        if let design = design {
+        if let design {
             fontName += "-\(design.rawValue)"
         }
 
@@ -136,7 +136,6 @@ public struct TextStyle: Sendable {
         weight: TextStyle.Weight? = nil,
         width: TextStyle.Width? = nil
     ) -> TextStyle {
-
         TextStyle(
             color: color ?? self.color,
             decoration: decoration ?? self.decoration,

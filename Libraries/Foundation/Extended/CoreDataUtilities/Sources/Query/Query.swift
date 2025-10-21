@@ -94,7 +94,6 @@ public struct Query<Model: NSManagedObject>: Equatable {
         predicate: NSPredicate?,
         range: Range<Int>?
     ) {
-
         self.context = query.context
         self.entityName = query.entityName
         self.sortDescriptors = sortDescriptors ?? []
@@ -310,7 +309,7 @@ public struct Query<Model: NSManagedObject>: Equatable {
     ///   - keyPath: The key path to order by.
     ///   - ascending: Whether to order in ascending order.
     /// - Returns: A new `Query` ordered by the specified key path.
-    public func orderBy<T>(_ keyPath: KeyPath<Model, T>, ascending: Bool) -> Query<Model> {
+    public func orderBy(_ keyPath: KeyPath<Model, some Any>, ascending: Bool) -> Query<Model> {
         let keyPathString = NSExpression(forKeyPath: keyPath).keyPath
 
         return orderBy(NSSortDescriptor(key: keyPathString, ascending: ascending))

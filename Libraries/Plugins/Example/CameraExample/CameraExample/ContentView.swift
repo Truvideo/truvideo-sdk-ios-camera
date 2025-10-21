@@ -1,8 +1,5 @@
 //
-//  ContentView.swift
-//  CameraExample
-//
-//  Created by Jorge Orjuela on 4/09/25.
+// Copyright © 2025 TruVideo. All rights reserved.
 //
 
 import SwiftUI
@@ -10,7 +7,7 @@ import TruvideoSdkCamera
 
 struct ContentView: View {
     @State var isPresented = false
-    
+
     var body: some View {
         VStack {
             Image(systemName: "globe")

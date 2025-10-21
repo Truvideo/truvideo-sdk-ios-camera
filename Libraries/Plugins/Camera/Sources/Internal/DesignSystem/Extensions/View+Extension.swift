@@ -27,7 +27,7 @@ extension View {
     /// - Returns: Either the original `View` or the modified `View`
     /// if the condition is `true`.
     @ViewBuilder
-    func `if`<Content: View>(_ condition: Bool, @ViewBuilder transform: (Self) -> Content) -> some View {
+    func `if`(_ condition: Bool, @ViewBuilder transform: (Self) -> some View) -> some View {
         if condition {
             transform(self)
         } else {
@@ -89,11 +89,10 @@ extension View {
     ///   - isPresented: A binding that controls whether the content is currently presented
     ///   - content: A view builder closure that returns the content to be presented
     /// - Returns: A modified view with the scaled full-screen cover overlay
-    func scaledFullScreenCover<Content: View>(
+    func scaledFullScreenCover(
         isPresented: Binding<Bool>,
-        @ViewBuilder content: @escaping () -> Content
+        @ViewBuilder content: @escaping () -> some View
     ) -> some View {
-
         overlay {
             GeometryReader { geometryProxy in
                 ScaledTransitionView(isPresented: isPresented) {
@@ -107,7 +106,8 @@ extension View {
 
     /// Displays a snackbar with a specified label, position, duration, and vertical offset.
     ///
-    /// This method creates a snackbar with the provided label and binds its presentation state to a given `Binding<Bool>`.
+    /// This method creates a snackbar with the provided label and binds its presentation state to a given
+    /// `Binding<Bool>`.
     /// It allows customization of the snackbar's position, duration, and vertical offset.
     ///
     /// - Parameters:
@@ -148,12 +148,12 @@ extension View {
     ///   - vOffset: Optional vertical offset to adjust the snackbar's position from its default location
     ///   - content: A view builder closure that defines the content to display inside the snackbar
     /// - Returns: A view with the snackbar overlay attached
-    func snackbar<Content: View>(
+    func snackbar(
         isPresented: Binding<Bool>,
         position: SnackbarPosition = .bottom,
         duration: TimeInterval = 3,
         vOffset: CGFloat? = nil,
-        @ViewBuilder content: @escaping () -> Content
+        @ViewBuilder content: @escaping () -> some View
     ) -> some View {
         overlay {
             Snackbar(

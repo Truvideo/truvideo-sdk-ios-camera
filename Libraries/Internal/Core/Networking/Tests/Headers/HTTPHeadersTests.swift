@@ -7,9 +7,8 @@ import Testing
 @testable import Networking
 
 struct HTTPHeadersTests {
-    
     // MARK: - Tests
-    
+
     @Test
     func testThatDefaultHeaders() {
         // Given
@@ -18,7 +17,7 @@ struct HTTPHeadersTests {
         // When, Then
         #expect(sut == [.defaultAcceptLanguage])
     }
-    
+
     @Test
     func testThatDictionaryValues() {
         // Given
@@ -26,7 +25,7 @@ struct HTTPHeadersTests {
             "Accept-Language": "pt-BR",
             "Authorization": "foo"
         ]
-        
+
         let sut = HTTPHeaders(array: [
             .acceptLanguage("pt-BR"),
             .authorization("foo")
@@ -35,7 +34,7 @@ struct HTTPHeadersTests {
         // When, Then
         #expect(sut.dictionary == expectedDictionary)
     }
-    
+
     @Test
     func testThatHeadersShouldReturnNilHeaderIfDoesNotExists() {
         // Given
@@ -44,7 +43,7 @@ struct HTTPHeadersTests {
         // When, Then
         #expect(sut["foo"] == nil)
     }
-    
+
     @Test
     func testThatRemoveHeaderShouldRemoveHeaderIfNilValueIsAssigned() {
         // Given
@@ -52,11 +51,11 @@ struct HTTPHeadersTests {
 
         // When
         sut["Authorization"] = nil
-        
+
         // Then
         #expect(sut["Authorization"] == nil)
     }
-    
+
     @Test
     func testThatHeadersAreStoreUniquelyFromArray() {
         // Given
@@ -69,7 +68,7 @@ struct HTTPHeadersTests {
         // When, Then
         #expect(sut.count == 1)
     }
-    
+
     @Test
     func testThatHeadersAreStoreUniquelyFromArrayLiteral() {
         // Given
@@ -112,7 +111,7 @@ struct HTTPHeadersTests {
         // Then
         #expect(sut["Key"] == "foo")
     }
-    
+
     @Test
     func testThatAppendHeaderShouldInsertANewValue() {
         // Given
@@ -120,13 +119,13 @@ struct HTTPHeadersTests {
 
         // When
         #expect(sut["Authorization"] == nil)
-        
+
         sut.append(.authorization("foo"))
 
         // Then
         #expect(sut["Authorization"] == "foo")
     }
-    
+
     @Test
     func testThatAppendHeaderShouldReplaceExistingHeaderValue() {
         // Given
@@ -134,13 +133,13 @@ struct HTTPHeadersTests {
 
         // When
         #expect(sut["Authorization"] == "foo")
-        
+
         sut.append(.authorization("bar"))
 
         // Then
         #expect(sut["Authorization"] == "bar")
     }
-    
+
     @Test
     func testThatSetHeaderShouldInsertANewValue() {
         // Given
@@ -148,13 +147,13 @@ struct HTTPHeadersTests {
 
         // When
         #expect(sut["Key"] == nil)
-        
+
         sut.setHeader("foo", forKey: "Key")
 
         // Then
         #expect(sut["Key"] == "foo")
     }
-    
+
     @Test
     func testThatSetHeaderShouldReplaceExistingHeaderValue() {
         // Given
@@ -162,13 +161,13 @@ struct HTTPHeadersTests {
 
         // When
         #expect(sut["Authorization"] == "foo")
-        
+
         sut.setHeader("bar", forKey: "Authorization")
 
         // Then
         #expect(sut["Authorization"] == "bar")
     }
-    
+
     @Test
     func testThatGetHeaderByIndex() {
         // Given
@@ -177,7 +176,7 @@ struct HTTPHeadersTests {
         // When, Then
         #expect(sut[0] == HTTPHeader.authorization("foo"))
     }
-    
+
     @Test
     func testThatMakeIterator() {
         // Given
@@ -186,32 +185,32 @@ struct HTTPHeadersTests {
         // When, Then
         #expect(sut.makeIterator().count(where: { _ in true }) == 1)
     }
-    
+
     @Test
     func testThatAdditionOperator() {
         // Given
         let lhs = HTTPHeaders(array: [HTTPHeader.authorization("foo")])
         let rhs = HTTPHeaders(array: [HTTPHeader.acceptLanguage("foo")])
-        
+
         // When
         let combined = lhs + rhs
-        
+
         // Then
         #expect(combined["Authorization"] == "foo")
         #expect(combined["Accept-Language"] == "foo")
     }
-    
+
     @Test
     func testThatAdditionOperatorShouldCombineHeadersByKeepingRHSValues() {
         // Given
         let lhs = HTTPHeaders(array: [HTTPHeader.authorization("foo")])
         let rhs = HTTPHeaders(array: [HTTPHeader.authorization("bar")])
-        
+
         // When
         let combined = lhs + rhs
-        
+
         // Then
         #expect(combined.count == 1)
-        #expect(combined["Authorization"] == "bar")        
+        #expect(combined["Authorization"] == "bar")
     }
 }

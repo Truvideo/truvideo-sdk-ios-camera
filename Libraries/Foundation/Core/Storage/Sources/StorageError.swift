@@ -76,16 +76,16 @@ public enum StorageError: LocalizedError {
     public var failureReason: String? {
         switch self {
         case let .clearFailed(error):
-            return "Failed to clear storage: \(error.localizedDescription)"
+            "Failed to clear storage: \(error.localizedDescription)"
 
         case let .deleteFailed(error):
-            return "Failed to delete value from storage: \(error.localizedDescription)"
+            "Failed to delete value from storage: \(error.localizedDescription)"
 
         case let .readFailed(error):
-            return "Failed to read value from storage: \(error.localizedDescription)"
+            "Failed to read value from storage: \(error.localizedDescription)"
 
         case let .writeFailed(error):
-            return "Failed to write value to storage: \(error.localizedDescription)"
+            "Failed to write value to storage: \(error.localizedDescription)"
         }
     }
 }

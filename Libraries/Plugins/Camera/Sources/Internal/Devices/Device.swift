@@ -71,18 +71,17 @@ enum RecordingState: Sendable {
     func canTransition(to newState: RecordingState) -> Bool {
         switch (self, newState) {
         case (.initialized, .failed),
-            (.initialized, .finished),
-            (.initialized, .running),
-            (.failed, .running),
-            (.failed, .initialized),
-            (.finished, .running),
-            (.paused, .finished),
-            (.paused, .initialized),
-            (.paused, .running),
-            (.running, .failed),
-            (.running, .finished),
-            (.running, .paused):
-
+             (.initialized, .finished),
+             (.initialized, .running),
+             (.failed, .running),
+             (.failed, .initialized),
+             (.finished, .running),
+             (.paused, .finished),
+             (.paused, .initialized),
+             (.paused, .running),
+             (.running, .failed),
+             (.running, .finished),
+             (.running, .paused):
             true
 
         default:
@@ -130,6 +129,7 @@ protocol Device: AnyObject, Sendable {
     /// settings as needed. Prefer calling this while the session is inside a configuration block.
     ///
     /// - Parameter session: The `AVCaptureSession` to which inputs/outputs will be added.
-    /// - Throws: An error if authorization is missing, if no suitable device is found, or if inputs/outputs cannot be added to the session due to incompatibility.
+    /// - Throws: An error if authorization is missing, if no suitable device is found, or if inputs/outputs cannot be
+    /// added to the session due to incompatibility.
     func startCapturing() throws(UtilityError)
 }

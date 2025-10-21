@@ -14,7 +14,8 @@ internal import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the device operations.
     ///
-    /// The `CameraViewModelErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `CameraViewModelErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
     /// during interactions with the external devices.
     struct CameraViewModelErrorReason: Sendable {
         /// The app is not authorized to use the device.
@@ -280,7 +281,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         let maxMediaCount = TruvideoSdkCameraMediaMode.maxMediaCount
         let isWithinRange = configuration.mode.maxMediaCount > 0 && configuration.mode.maxMediaCount < maxMediaCount
 
-        guard configuration.mode.maxPictureCount == 0 && configuration.mode.maxVideoCount == 0, isWithinRange else {
+        guard configuration.mode.maxPictureCount == 0, configuration.mode.maxVideoCount == 0, isWithinRange else {
             return ""
         }
 
@@ -352,7 +353,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         truVideoSdk: TruVideoSDK = TruvideoSdk,
         onCompleted: @escaping (TruvideoSdkCameraResult) -> Void
     ) {
-
         let outputDirectory = URL(string: configuration.outputPath) ?? URL(fileURLWithPath: NSTemporaryDirectory())
 
         self.configuration = configuration
@@ -405,7 +405,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             message: "Camera operation completed",
             metadata: [
                 "clipCount": .int(medias.lazy.filter(\.isClip).count),
-                "photoCount": .int(medias.lazy.filter(\.isPhoto).count),
+                "photoCount": .int(medias.lazy.filter(\.isPhoto).count)
             ]
         )
 
@@ -427,7 +427,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 message: "Camera dismissed with unsaved media",
                 metadata: [
                     "clipCount": .int(medias.lazy.filter(\.isClip).count),
-                    "photoCount": .int(medias.lazy.filter(\.isPhoto).count),
+                    "photoCount": .int(medias.lazy.filter(\.isPhoto).count)
                 ]
             )
 
@@ -513,7 +513,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                     message: "Preview orientation updated",
                     metadata: [
                         "orientation": .string("\(deviceOrientation)"),
-                        "videoOrientation": .string("\(videoOrientation)"),
+                        "videoOrientation": .string("\(videoOrientation)")
                     ]
                 )
             }
@@ -536,7 +536,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
                 "devicePosition": .int(videoDevice.position.rawValue),
                 "duration": .double(clip.duration),
                 "clipCount": .int(medias.lazy.filter(\.isClip).count + 1),
-                "zoomFactor": .double(zoomFactor),
+                "zoomFactor": .double(zoomFactor)
             ]
         )
 
@@ -578,7 +578,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 }
 
 extension CameraViewModel: MovieOutputProcessorDelegate {
-
     // MARK: - MovieOutputProcessorDelegate
 
     /// Notifies the delegate when the movie output processor reaches the maximum recording duration.
@@ -601,11 +600,11 @@ extension CameraViewModel: MovieOutputProcessorDelegate {
             state = .finished
 
             switch result {
-            case .failure(let error):
+            case let .failure(error):
                 mediasTaken = max(0, mediasTaken - 1)
                 didReceiveError(error.localizedDescription)
 
-            case .success(let clip):
+            case let .success(clip):
                 await telemetryManager.captureBreadcrumb(
                     severity: .warning,
                     category: .videoRecording,
@@ -614,7 +613,7 @@ extension CameraViewModel: MovieOutputProcessorDelegate {
                         "devicePosition": .int(videoDevice.position.rawValue),
                         "duration": .double(clip.duration),
                         "maxDuration": .double(configuration.mode.maxVideoDuration),
-                        "clipCount": .int(medias.lazy.filter(\.isClip).count + 1),
+                        "clipCount": .int(medias.lazy.filter(\.isClip).count + 1)
                     ]
                 )
 
@@ -626,7 +625,6 @@ extension CameraViewModel: MovieOutputProcessorDelegate {
 }
 
 extension TruvideoSdkCameraConfiguration {
-
     /// A dictionary of telemetry metadata representing the camera configuration settings.
     ///
     /// This computed property provides a structured collection of all key camera configuration
@@ -644,7 +642,7 @@ extension TruvideoSdkCameraConfiguration {
             "maxPictureCount": .int(mode.maxPictureCount),
             "maxVideoCount": .int(mode.maxVideoCount),
             "maxMediaCount": .int(mode.maxMediaCount),
-            "maxVideoDuration": .double(mode.maxVideoDuration),
+            "maxVideoDuration": .double(mode.maxVideoDuration)
         ]
     }
 }

@@ -9,7 +9,6 @@ import Utilities
 
 /// A mock implementation of `UploadTask` used for unit testing.
 public final class UploadTaskMock: UploadTask {
-
     // MARK: - Properties
 
     /// Number of times `cancel()` was invoked.

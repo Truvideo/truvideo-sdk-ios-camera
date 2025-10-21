@@ -50,7 +50,7 @@ final class ImageCollectionViewCell: UICollectionViewCell {
         durationLabel.translatesAutoresizingMaskIntoConstraints = false
         NSLayoutConstraint.activate([
             durationLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -4),
-            durationLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4),
+            durationLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -4)
         ])
     }
 

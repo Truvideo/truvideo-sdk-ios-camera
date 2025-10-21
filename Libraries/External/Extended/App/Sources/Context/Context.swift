@@ -57,9 +57,9 @@ public struct Context: Codable, Sendable {
         self.osVersion = UIDevice.current.systemVersion
         self.timestamp = Int(Date().timeIntervalSince1970)
     }
-    
+
     // MARK: - Instance methods
-    
+
     /// Converts the current device information into a TruVideoApi.Context object.
     ///
     /// This function creates a new `TruVideoApi.Context` instance by mapping the current
@@ -73,4 +73,5 @@ public struct Context: Codable, Sendable {
         TruVideoApi.Context(brand: brand, model: model, os: os, osVersion: osVersion, timestamp: timestamp)
     }
 }
+
 // swiftlint:enable identifier_name

@@ -21,7 +21,8 @@ public final class SessionMock: Session, @unchecked Sendable {
     /// The number of times `cancelAllRequests()` has been called.
     public private(set) var cancelAllRequestsCallCount = 0
 
-    /// The number of times the URL-based `request(_:method:parameters:encoder:headers:middleware:cachePolicy:)` method has been called.
+    /// The number of times the URL-based `request(_:method:parameters:encoder:headers:middleware:cachePolicy:)` method
+    /// has been called.
     public private(set) var requestURLCallCount = 0
 
     /// The number of times the builder-based `request(_:middleware:cachePolicy:)` method has been called.
@@ -74,7 +75,8 @@ public final class SessionMock: Session, @unchecked Sendable {
         cancelAllRequestsCallCount += 1
     }
 
-    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
+    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional
+    /// configuration.
     ///
     /// - Parameters:
     ///   - url: A `URLConvertible` instance representing the endpoint for the request.
@@ -82,7 +84,8 @@ public final class SessionMock: Session, @unchecked Sendable {
     ///   - parameters: A dictionary of parameters to be included in the request (default is `nil`).
     ///   - encoder: The `ParameterEncoder` used for encoding request parameters (default is `.url`).
     ///   - headers: Additional HTTP headers to be included in the request (default is `nil`).
-    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is executed (default is `nil`).
+    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is
+    /// executed (default is `nil`).
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
     /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
     public func request(
@@ -113,10 +116,13 @@ public final class SessionMock: Session, @unchecked Sendable {
     /// logging, or handling pre-processing logic.
     ///
     /// - Parameters:
-    ///   - requestBuilder: An instance conforming to `RequestBuilder`, responsible for constructing a valid `URLRequest`.
-    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is executed.
+    ///   - requestBuilder: An instance conforming to `RequestBuilder`, responsible for constructing a valid
+    /// `URLRequest`.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
-    /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled, or validated.
+    /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled,
+    /// or validated.
     public func request(
         _ requestBuilder: RequestBuilder,
         middleware: RequestMiddleware?,

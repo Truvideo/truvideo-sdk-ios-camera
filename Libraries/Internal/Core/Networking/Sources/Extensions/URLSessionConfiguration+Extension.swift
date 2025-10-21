@@ -29,7 +29,7 @@ extension URLSessionConfiguration {
         configuration.urlCache = nil
         configuration.urlCredentialStorage = nil
         #if os(iOS)
-        configuration.multipathServiceType = .handover
+            configuration.multipathServiceType = .handover
         #endif
 
         return configuration

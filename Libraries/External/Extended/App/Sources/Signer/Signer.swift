@@ -186,9 +186,12 @@ public struct HMACSHA256Signer: Signer {
             secretKey.withCString { keyCString in
                 message.withCString { msgCString in
                     macData.withUnsafeMutableBytes { macDataBytes in
-                        guard let keyBytes = UnsafeRawPointer(keyCString)?.assumingMemoryBound(to: UInt8.self),
-                            let msgBytes = UnsafeRawPointer(msgCString)?.assumingMemoryBound(to: UInt8.self)
-                        else {
+                        guard
+                            /// Returns a typed pointer to the memory referenced by this pointer.
+                            let keyBytes = UnsafeRawPointer(keyCString)?.assumingMemoryBound(to: UInt8.self),
+
+                            /// Returns a typed pointer to the memory referenced by this pointer,
+                            let msgBytes = UnsafeRawPointer(msgCString)?.assumingMemoryBound(to: UInt8.self) else {
                             return
                         }
 
@@ -204,8 +207,7 @@ public struct HMACSHA256Signer: Signer {
                 }
             }
 
-            return
-                macData
+            return macData
                 .map { String(format: "%02x", $0) }
                 .joined()
         } catch let error as SignerError {

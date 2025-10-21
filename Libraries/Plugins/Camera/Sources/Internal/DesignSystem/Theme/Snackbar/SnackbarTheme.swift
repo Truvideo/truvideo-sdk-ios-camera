@@ -164,7 +164,6 @@ public struct SnackbarTheme: Sendable {
         shadowRadius: CGFloat,
         textStyle: TextStyle?
     ) {
-
         self.backgroundColor = backgroundColor
         self.contentPadding = contentPadding
         self.cornerRadius = cornerRadius
@@ -187,7 +186,6 @@ public struct SnackbarTheme: Sendable {
         shadowRadius: CGFloat? = nil,
         textStyle: TextStyle? = nil
     ) -> SnackbarTheme {
-
         SnackbarTheme(
             backgroundColor: backgroundColor ?? self.backgroundColor,
             contentPadding: contentPadding ?? self.contentPadding,

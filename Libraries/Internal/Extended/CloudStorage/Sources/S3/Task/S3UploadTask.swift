@@ -254,10 +254,10 @@ public class S3UploadTask: Identifiable {
     func didCancel() {
         error =
             error
-            ?? UtilityError(
-                kind: .CloudStorageErrorReason.explicitlyCancelled,
-                failureReason: "Request Explicitly Cancelled"
-            )
+                ?? UtilityError(
+                    kind: .CloudStorageErrorReason.explicitlyCancelled,
+                    failureReason: "Request Explicitly Cancelled"
+                )
 
         monitor?.taskDidCancel(self)
     }
@@ -342,7 +342,6 @@ public class S3UploadTask: Identifiable {
 }
 
 extension S3UploadTask: Hashable {
-
     // MARK: - Hashable
 
     /// Returns a Boolean value indicating whether two upload tasks are equal.

@@ -84,14 +84,14 @@ public struct TruVideoSdkError: LocalizedError {
         public let rawValue: String
 
         // MARK: - Static Properties
-        
+
         /// Error indicating that the authentication process has failed.
         ///
         /// This error reason is used when the authentication process fails due to
         /// various reasons such as invalid credentials, network issues, or server errors.
         /// It provides a general authentication failure indicator for error handling.
         public static let authenticationFailed = ErrorReason(rawValue: "authenticationFailed")
-        
+
         /// Error reason indicating that the SDK requires configuration before it can be used.
         ///
         /// This error is thrown when attempting to use SDK functionality that requires
@@ -116,7 +116,7 @@ public struct TruVideoSdkError: LocalizedError {
 
         /// Unknown error.
         public static let unknown = ErrorReason(rawValue: "unknown")
-        
+
         // MARK: - Static methods
 
         /// Maps a string value to the corresponding error reason or returns unknown.

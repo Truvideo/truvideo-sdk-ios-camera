@@ -7,10 +7,13 @@ import SwiftUI
 // swiftlint:disable identifier_name
 /// A comprehensive radius system that defines consistent corner radius values for UI components.
 ///
-/// `Radius` provides a scalable and customizable way to define corner radius values based on a core unit (`radiusUnit`).
-/// It ensures design consistency by offering predefined radius levels, from extra-extra-small (`xxs`) to extra-large (`xl`).
+/// `Radius` provides a scalable and customizable way to define corner radius values based on a core unit
+/// (`radiusUnit`).
+/// It ensures design consistency by offering predefined radius levels, from extra-extra-small (`xxs`) to extra-large
+/// (`xl`).
 ///
-/// This struct is designed to work with SwiftUI's corner radius modifiers and provides a systematic approach to maintaining
+/// This struct is designed to work with SwiftUI's corner radius modifiers and provides a systematic approach to
+/// maintaining
 /// consistent rounded corners across different UI components in your application.
 ///
 /// ## Radius Scale
@@ -148,4 +151,5 @@ public struct RadiusTheme: Sendable {
         CGFloat(multiple) * radiusUnit
     }
 }
+
 // swiftlint:enable identifier_name

@@ -47,7 +47,7 @@ public struct Attribute<Value>: Equatable {
     /// Initializes a new instance of the `Attribute` property wrapper with the specified key path.
     ///
     /// - Parameter keyPath: The key path of the attribute that this property wrapper will manage.
-    public init<Type>(_ keyPath: KeyPath<Type, Value>) {
+    public init(_ keyPath: KeyPath<some Any, Value>) {
         self.expression = NSExpression(forKeyPath: keyPath)
     }
 
@@ -197,6 +197,6 @@ public func << <AttributeType>(left: Attribute<AttributeType>, right: Range<Attr
 ///
 /// - Parameter left: The boolean `Attribute` to negate.
 /// - Returns: An `NSPredicate` that checks if the boolean `Attribute` is `false`.
-prefix public func ! (left: Attribute<Bool>) -> NSPredicate {
+public prefix func ! (left: Attribute<Bool>) -> NSPredicate {
     left == false
 }

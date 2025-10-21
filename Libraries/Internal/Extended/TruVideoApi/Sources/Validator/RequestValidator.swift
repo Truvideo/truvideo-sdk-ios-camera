@@ -32,7 +32,7 @@ import Foundation
 ///   "instance": "/api/device"
 /// }
 /// ```
-struct RequestValidator {
+enum RequestValidator {
     // MARK: - Types
 
     /// Internal structure for parsing error responses from the server.

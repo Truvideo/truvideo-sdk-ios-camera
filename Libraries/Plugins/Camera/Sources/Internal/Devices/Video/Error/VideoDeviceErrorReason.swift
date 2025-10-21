@@ -8,7 +8,8 @@ internal import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the video device operations.
     ///
-    /// The `VideoDeviceErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `VideoDeviceErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
     /// during interactions with the external devices.
     struct VideoDeviceErrorReason: Sendable {
         /// The capture input could not be added to the session.

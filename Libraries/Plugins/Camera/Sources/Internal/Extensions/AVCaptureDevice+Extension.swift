@@ -8,7 +8,8 @@ internal import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the video device operations.
     ///
-    /// The `CaptureDeviceErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `CaptureDeviceErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
     /// during interactions with the external devices.
     struct CaptureDeviceErrorReason: Sendable {
         /// The device could not be locked for configuration.
@@ -43,7 +44,7 @@ extension AVCaptureDevice {
             .builtInDualWideCamera,
             .builtInTelephotoCamera,
             .builtInUltraWideCamera,
-            .builtInWideAngleCamera,
+            .builtInWideAngleCamera
         ]
     }
 

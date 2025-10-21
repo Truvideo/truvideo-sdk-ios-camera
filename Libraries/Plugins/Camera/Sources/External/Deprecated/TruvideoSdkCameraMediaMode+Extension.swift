@@ -24,7 +24,6 @@ extension TruvideoSdkCameraMediaMode {
         pictureCount: NSNumber? = nil,
         videoDuration: NSNumber? = nil
     ) -> TruvideoSdkCameraMediaMode {
-
         TruvideoSdkCameraMediaMode.videoAndPicture(
             videoCount: videoCount?.intValue ?? Int.max,
             pictureCount: pictureCount?.intValue ?? Int.max,
@@ -93,7 +92,6 @@ extension TruvideoSdkCameraMediaMode {
         videoCount: NSNumber? = nil,
         videoDuration: NSNumber? = nil
     ) -> TruvideoSdkCameraMediaMode {
-
         TruvideoSdkCameraMediaMode.video(
             videoCount: videoCount?.intValue ?? Int.max,
             videoDuration: videoDuration?.intValue ?? Int.max
@@ -132,7 +130,6 @@ extension TruvideoSdkCameraMediaMode {
         mediaCount: NSNumber? = nil,
         videoDuration: NSNumber? = nil
     ) -> TruvideoSdkCameraMediaMode {
-
         TruvideoSdkCameraMediaMode.videoAndPicture(
             mediaCount: mediaCount?.intValue ?? Int.max,
             videoDuration: videoDuration?.intValue ?? Int.max

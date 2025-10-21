@@ -20,16 +20,16 @@ extension UIImage {
         switch fileFormat {
         case .heic:
             if #available(iOS 17.0, *) {
-                return heicData()
+                heicData()
             } else {
-                return jpegData(compressionQuality: fileFormat.quality)
+                jpegData(compressionQuality: fileFormat.quality)
             }
 
         case .jpeg:
-            return jpegData(compressionQuality: fileFormat.quality)
+            jpegData(compressionQuality: fileFormat.quality)
 
         case .png:
-            return pngData()
+            pngData()
         }
     }
 
@@ -53,12 +53,10 @@ extension UIImage {
     /// - Returns: A resized and compressed `UIImage` suitable for thumbnails, or `nil` if compression fails.
     func thumbnail(maxSize: CGFloat = 200, compressionQuality: CGFloat = 0.9) -> UIImage? {
         let aspectRatio = size.width / size.height
-        var newSize: CGSize
-
-        if aspectRatio > 1 {
-            newSize = CGSize(width: maxSize, height: (maxSize / aspectRatio).rounded(.down))
+        var newSize = if aspectRatio > 1 {
+            CGSize(width: maxSize, height: (maxSize / aspectRatio).rounded(.down))
         } else {
-            newSize = CGSize(width: (maxSize * aspectRatio).rounded(.down), height: maxSize)
+            CGSize(width: (maxSize * aspectRatio).rounded(.down), height: maxSize)
         }
 
         let renderer = UIGraphicsImageRenderer(size: newSize)

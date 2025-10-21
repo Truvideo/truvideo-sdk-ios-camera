@@ -10,14 +10,14 @@ import Utilities
 
 struct RequestValidatorTests {
     // MARK: - Private Properties
-    
+
     private let response = HTTPURLResponse(
         url: URL(string: "https://api.example.com")!,
         statusCode: 400,
         httpVersion: nil,
         headerFields: nil
     )!
-    
+
     // MARK: - Tests
 
     @Test
@@ -31,7 +31,7 @@ struct RequestValidatorTests {
         // Given, When, Then
         try RequestValidator.validate(request: nil, response: response, data: nil)
     }
-    
+
     @Test
     func testThatValidateWithValidErrorResponseThrowsAnUtilityError() throws {
         // Given
@@ -45,13 +45,13 @@ struct RequestValidatorTests {
             "instance": "/api/device"
         } 
         """.data(using: .utf8)!
-        
+
         // When, Then
         #expect {
             try RequestValidator.validate(request: nil, response: response, data: data)
         } throws: { error in
             let error = error as! RequestValidator.ResponseError
-                        
+
             return error.detail == "not supported." && error.message == "error.invalidApiKey"
         }
     }
@@ -60,7 +60,7 @@ struct RequestValidatorTests {
     func testThatValidateWithInvalidJSONDoesNotThrowAnError() throws {
         // Given
         let data = "invalid json data".data(using: .utf8)!
-        
+
         // When, Then
         try RequestValidator.validate(request: nil, response: response, data: data)
     }
@@ -74,11 +74,11 @@ struct RequestValidatorTests {
             "message": "INVALID_API_KEY"
         }
         """.data(using: .utf8)!
-        
+
         // When, Then
         try RequestValidator.validate(request: nil, response: response, data: data)
     }
-    
+
     @Test
     func testThatValidateShouldPassIfStatusCodeIsValid() throws {
         // Given
@@ -88,7 +88,7 @@ struct RequestValidatorTests {
             httpVersion: nil,
             headerFields: nil
         )!
-        
+
         let data = """
         {
             "type": "about:blank",
@@ -99,7 +99,7 @@ struct RequestValidatorTests {
             "instance": "/api/device"
         } 
         """.data(using: .utf8)!
-        
+
         // When, Then
         try RequestValidator.validate(request: nil, response: response, data: data)
     }

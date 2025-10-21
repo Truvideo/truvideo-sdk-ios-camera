@@ -149,8 +149,10 @@ public class S3UploadDataTask: S3UploadTask, UploadDataTask {
     ///
     /// - Parameters:
     ///   - id: A unique identifier for the upload task. If not provided, a new UUID will be generated.
-    ///   - payload: The `S3DataPayload` containing the data to upload, target bucket, content type, and destination path.
-    ///   - delegate: An optional delegate that will be notified when the task completes. Used for cleanup and retry logic.
+    ///   - payload: The `S3DataPayload` containing the data to upload, target bucket, content type, and destination
+    /// path.
+    ///   - delegate: An optional delegate that will be notified when the task completes. Used for cleanup and retry
+    /// logic.
     ///   - monitor: An optional `S3TaskMonitor` for observing and logging upload task events throughout the lifecycle.
     init(
         id: String = UUID().uuidString,
@@ -158,7 +160,6 @@ public class S3UploadDataTask: S3UploadTask, UploadDataTask {
         delegate: S3UploadTaskDelegate?,
         monitor: S3TaskMonitor?
     ) {
-
         self.payload = payload
 
         super.init(id: id, delegate: delegate, monitor: monitor)
@@ -302,10 +303,10 @@ public class S3UploadDataTask: S3UploadTask, UploadDataTask {
                 guard let url = response?.url else {
                     let error =
                         error
-                        ?? UtilityError(
-                            kind: .CloudStorageErrorReason.missingUploadURL,
-                            failureReason: "Upload finished but no URL returned."
-                        )
+                            ?? UtilityError(
+                                kind: .CloudStorageErrorReason.missingUploadURL,
+                                failureReason: "Upload finished but no URL returned."
+                            )
 
                     completion(.failure(error))
                     return

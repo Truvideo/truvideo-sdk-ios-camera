@@ -6,9 +6,11 @@ import Foundation
 
 /// A composite monitor that aggregates multiple `Monitor` instances.
 ///
-/// `CompositeRequestMonitor` enables broadcasting of network request events to multiple monitors simultaneously. This is particularly useful when different observers need to track the same network request events.
+/// `CompositeRequestMonitor` enables broadcasting of network request events to multiple monitors simultaneously. This
+/// is particularly useful when different observers need to track the same network request events.
 ///
-/// Each event triggered on the composite monitor will be asynchronously dispatched to all registered monitors on a dedicated queue.
+/// Each event triggered on the composite monitor will be asynchronously dispatched to all registered monitors on a
+/// dedicated queue.
 ///
 /// ### Example Usage:
 /// ```swift
@@ -174,7 +176,6 @@ public struct CompositeMonitor: Monitor {
         didFailToIntercept urlRequest: URLRequest,
         with error: NetworkingError
     ) {
-
         queue.async {
             monitors.forEach { $0.request(request, didFailToIntercept: urlRequest, with: error) }
         }
@@ -260,7 +261,6 @@ public struct CompositeMonitor: Monitor {
         data: Data?,
         error: NetworkingError?
     ) {
-
         queue.async {
             monitors.forEach { $0.request(request, didValidate: urlRequest, data: data, error: error) }
         }
@@ -286,11 +286,10 @@ public struct CompositeMonitor: Monitor {
     /// - Parameters:
     ///   - request: The `DataRequest` instance being parsed.
     ///   - response: The `Response` containing the parsed value or an error.
-    public func request<Value: Sendable>(
+    public func request(
         _ request: any DataRequest,
-        didParseResponse response: Response<Value, NetworkingError>
+        didParseResponse response: Response<some Sendable, NetworkingError>
     ) {
-
         queue.async {
             monitors.forEach { $0.request(request, didParseResponse: response) }
         }
@@ -384,7 +383,6 @@ public struct CompositeMonitor: Monitor {
         task: URLSessionTask,
         didFinishCollecting metrics: URLSessionTaskMetrics
     ) {
-
         queue.async {
             monitors.forEach { $0.urlSession(session, task: task, didFinishCollecting: metrics) }
         }

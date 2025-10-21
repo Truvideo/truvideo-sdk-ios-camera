@@ -66,16 +66,16 @@ extension ErrorReason {
 /// ```swift
 /// class MyStorageManager {
 ///     private let storageProvider: CloudStorageProvider
-///     
+///
 ///     init(storageProvider: CloudStorageProvider) {
 ///         self.storageProvider = storageProvider
 ///     }
-///     
+///
 ///     func uploadFile(data: Data, fileName: String) async throws {
 ///         guard let storage = try storageProvider.makeStorage() else {
 ///             throw MyError.storageNotAvailable
 ///         }
-///         
+///
 ///         let uploadTask = storage.upload(data, fileName: fileName, contentType: .jpeg)
 ///         // Handle upload...
 ///     }
@@ -154,7 +154,7 @@ protocol CloudStorageProvider {
 ///         print("Storage not available - missing configuration")
 ///         return
 ///     }
-///     
+///
 ///     // Use storage for upload operations
 ///     let uploadTask = storage.upload(data, fileName: "file.jpg", contentType: .jpeg)
 ///     // Handle upload...

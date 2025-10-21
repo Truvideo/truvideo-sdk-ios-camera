@@ -53,7 +53,7 @@ final class AudioDeviceConfiguration {
     // MARK: - Static Properties
 
     /// Default encoder bit rate (128 kbps).
-    static let audioBitRateDefault: Int = 128_000
+    static let audioBitRateDefault = 128_000
 
     /// Default number of channels (stereo).
     static let audioChannelsCountDefault = 2
@@ -70,22 +70,20 @@ final class AudioDeviceConfiguration {
     /// attempt to infer them from the provided `sampleBuffer`’s format description. Channel layout
     /// data is included when available.
     ///
-    /// - Parameter sampleBuffer: Optional `CMSampleBuffer` used to infer `sampleRate`, `channelsCount`, and channel layout.
-    /// - Returns: A dictionary keyed by `AV*` audio constants . Returns `nil` only if insufficient information is available (rare).
+    /// - Parameter sampleBuffer: Optional `CMSampleBuffer` used to infer `sampleRate`, `channelsCount`, and channel
+    /// layout.
+    /// - Returns: A dictionary keyed by `AV*` audio constants . Returns `nil` only if insufficient information is
+    /// available (rare).
     func makeSettingsDictionary(sampleBuffer: CMSampleBuffer? = nil) -> [String: Any] {
         var config: [String: Any] = [AVEncoderBitRateKey: bitRate]
 
         if /// Sample buffer
-        let sampleBuffer,
+            let sampleBuffer,
 
             /// Sample format description.
-            let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
-        {
-
+            let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
             if let streamBasicDescription = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription),
-                sampleRate == nil, channelsCount == nil
-            {
-
+               sampleRate == nil, channelsCount == nil {
                 sampleRate = streamBasicDescription.pointee.mSampleRate
                 channelsCount = Int(streamBasicDescription.pointee.mChannelsPerFrame)
             }

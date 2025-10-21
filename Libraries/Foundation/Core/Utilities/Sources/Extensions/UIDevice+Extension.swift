@@ -17,11 +17,11 @@ extension UIDevice {
     /// - Returns: A string representing the CPU architecture.
     public var cpuArchitecture: String {
         #if arch(arm64)
-        return "arm64"
+            return "arm64"
         #elseif arch(x86_64)
-        return "x86_64"
+            return "x86_64"
         #else
-        return "unknown"
+            return "unknown"
         #endif
     }
 
@@ -92,16 +92,16 @@ extension UIDevice.BatteryState: @retroactive CustomDebugStringConvertible {
     public var debugDescription: String {
         switch self {
         case .charging:
-            return "charging"
+            "charging"
 
         case .full:
-            return "full"
+            "full"
 
         case .unplugged:
-            return "unplugged"
+            "unplugged"
 
         default:
-            return "unknown"
+            "unknown"
         }
     }
 }

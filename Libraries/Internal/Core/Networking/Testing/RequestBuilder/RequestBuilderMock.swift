@@ -26,7 +26,8 @@ public struct RequestBuilderMock: RequestBuilder {
     /// a valid HTTP request. The request should include all necessary details such as the URL, HTTP method,
     /// headers, query parameters, and body content.
     ///
-    /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components, serialization issues, or missing required fields.
+    /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components,
+    /// serialization issues, or missing required fields.
     /// - Returns: A fully configured `URLRequest` instance ready for execution.
     public func build() throws -> URLRequest {
         try URLRequest(url: "https://httpbin.org" + path, method: .get)

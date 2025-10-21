@@ -8,9 +8,8 @@ import Testing
 @testable import Networking
 
 struct NetworkingErrorTests {
-    
     // MARK: - Tests
-    
+
     @Test
     func testThatInitialization() {
         // Given

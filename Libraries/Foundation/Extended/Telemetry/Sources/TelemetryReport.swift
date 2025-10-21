@@ -36,7 +36,8 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
         /// A chronological list of breadcrumbs that describe notable events leading up to the telemetry event.
         public let breadcrumbs: [Breadcrumb]?
 
-        /// An optional exception object containing the message and stack frame when the event involves an error or failure.
+        /// An optional exception object containing the message and stack frame when the event involves an error or
+        /// failure.
         public let exception: Exception?
 
         /// Additional information attached to the event.
@@ -92,7 +93,6 @@ public struct TelemetryReport: Codable, Identifiable, Sendable {
             timestamp: Date = Date(),
             metadata: Metadata? = nil
         ) {
-
             self.breadcrumbs = breadcrumbs
             self.exception = exception
             self.message = message

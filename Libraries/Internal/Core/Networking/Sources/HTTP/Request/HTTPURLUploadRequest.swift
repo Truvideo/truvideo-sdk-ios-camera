@@ -50,7 +50,6 @@ public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked
         monitor: Monitor?,
         queue: DispatchQueue
     ) {
-
         self.uploadableBuilder = uploadBuilder
 
         super.init(

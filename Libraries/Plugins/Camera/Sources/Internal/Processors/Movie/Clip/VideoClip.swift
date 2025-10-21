@@ -91,7 +91,6 @@ struct VideoClip {
         thumbnailURL: URL,
         url: URL
     ) {
-
         self.duration = duration
         self.lensPosition = lensPosition
         self.orientation = orientation
@@ -103,7 +102,6 @@ struct VideoClip {
 }
 
 extension VideoClip: Hashable {
-
     // MARK: - Equatable
 
     /// Returns a Boolean value indicating whether two type-erased hashable

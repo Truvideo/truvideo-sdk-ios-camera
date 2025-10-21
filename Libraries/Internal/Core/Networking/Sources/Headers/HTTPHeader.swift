@@ -80,7 +80,7 @@ public struct HTTPHeader: Hashable, Sendable {
     }
 }
 
-extension Sequence where Element == String {
+extension Sequence<String> {
     /// Returns the Quality Encoded header.
     func qualityEncoded() -> String {
         enumerated().map { index, value in

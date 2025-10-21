@@ -256,15 +256,13 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
                 to: operationQueue
             ) { [weak self] deviceMotion, error in
                 if let self {
-
                     guard let error else {
                         Task { @MainActor in
                             let currentOrientation = self.deviceOrientation.value.orientation
-                            
+
                             if let orientation = deviceMotion?.gravity.orientation,
-                                orientation != currentOrientation,
-                                orientation.isSupported
-                            {
+                               orientation != currentOrientation,
+                               orientation.isSupported {
                                 let deviceOrientation = DeviceOrientation(orientation: orientation, source: .sensors)
 
                                 try await Task.sleep(nanoseconds: self.notificationDelay)

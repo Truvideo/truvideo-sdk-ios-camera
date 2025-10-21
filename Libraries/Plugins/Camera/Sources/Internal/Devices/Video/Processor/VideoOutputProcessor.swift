@@ -129,7 +129,6 @@ struct VideoSampleBuffer {
         minFrameDuration: CMTime,
         sampleBuffer: CMSampleBuffer
     ) {
-
         self.bitRate = bitRate
         self.orientation = orientation
         self.isMirrored = isMirrored

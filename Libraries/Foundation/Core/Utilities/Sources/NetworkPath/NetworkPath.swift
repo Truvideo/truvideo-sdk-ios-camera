@@ -24,6 +24,7 @@ public protocol NetworkPath: Sendable {
     /// such as Wi-Fi, cellular, or wired Ethernet.
     ///
     /// - Parameter type: The `NWInterface.InterfaceType` to check for, such as `.wifi` or `.cellular`.
-    /// - Returns: A Boolean value indicating whether the specified interface type is in use (`true` if the interface is in use, `false` otherwise).
+    /// - Returns: A Boolean value indicating whether the specified interface type is in use (`true` if the interface is
+    /// in use, `false` otherwise).
     func usesInterfaceType(_ type: NWInterface.InterfaceType) -> Bool
 }

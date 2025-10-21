@@ -8,7 +8,8 @@ import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the signer.
     ///
-    /// The `CloudStorageErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `CloudStorageErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
     /// during interactions with the external storages.
     public struct CloudStorageErrorReason: Sendable {
         /// Indicates that the cloud storage system failed to initialize properly.

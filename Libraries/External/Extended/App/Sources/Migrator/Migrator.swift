@@ -38,10 +38,10 @@ protocol Migrator {
 /// duplicate migrations on subsequent runs.
 struct SDKMigrator: Migrator {
     // MARK: - Private Properties
-    
+
     private let legacyStorage: UserDefaults
     private let storage: Storage
-    
+
     // MARK: - Types
 
     /// A storage key for managing migration state in the storage system.
@@ -58,9 +58,9 @@ struct SDKMigrator: Migrator {
         /// when storing and retrieving authentication tokens.
         typealias Value = Bool
     }
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a new migrator instance with optional custom storage and legacy storage.
     ///
     /// This initializer sets up the migrator with both legacy and new storage systems.
@@ -77,13 +77,12 @@ struct SDKMigrator: Migrator {
         storage: Storage = UserDefaultsStorage(),
         legacyStorage: UserDefaults = UserDefaults(suiteName: "truvideo-sdk-common-settings") ?? .standard
     ) {
-        
         self.legacyStorage = legacyStorage
         self.storage = storage
     }
-    
+
     // MARK: - Migrator
-    
+
     /// Performs the migration from legacy storage to the new storage system.
     ///
     /// This method reads authentication data from the legacy storage system,
@@ -93,28 +92,27 @@ struct SDKMigrator: Migrator {
     ///
     /// - Throws: An error if migration fails or legacy data is invalid
     func migrate() throws {
-        let hasBeenMigrated = try storage.readValue(for: MigrationStorageKey.self) ?? false        
-        
+        let hasBeenMigrated = try storage.readValue(for: MigrationStorageKey.self) ?? false
+
         guard !hasBeenMigrated else {
             return
         }
-                
+
         if
             /// The stored api key used for authentication.
             let apiKey = legacyStorage.string(forKey: "truvideo-sdk-api-key"),
-            
+
             /// The stored authentication token.
             let rawToken = legacyStorage.string(forKey: "truvideo-sdk-authentication")?.data(using: .utf8) {
-            
             if let authenticationDictionary = try JSONSerialization.jsonObject(with: rawToken) as? [String: Any] {
                 let jsonDictionary: [String: Any] = [
                     "apiKey": apiKey,
                     "authToken": authenticationDictionary
                 ]
-                
+
                 let rawSession = try JSONSerialization.data(withJSONObject: jsonDictionary)
                 let authSession = try JSONDecoder().decode(AuthSession.self, from: rawSession)
-                
+
                 try DependencyValues.current.sessionManager.set(authSession)
                 try storage.write(true, forKey: MigrationStorageKey.self)
             } else {

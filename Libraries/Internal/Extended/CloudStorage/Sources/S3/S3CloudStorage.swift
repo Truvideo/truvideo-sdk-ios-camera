@@ -254,7 +254,6 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
                     contentType: payload.contentType.rawValue,
                     expression: uploadDataTask.expression
                 ) { awsTask, error in
-
                     Task { @S3CloudStorageActor in
                         var wrappedError: UtilityError?
 
@@ -295,7 +294,6 @@ public final class S3CloudStorage: CloudStorage, @unchecked Sendable {
 }
 
 extension S3CloudStorage: S3UploadTaskDelegate {
-
     // MARK: - S3UploadTaskDelegate
 
     func taskDidComplete(_ task: S3UploadTask) {

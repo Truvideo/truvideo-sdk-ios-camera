@@ -9,7 +9,7 @@ import Foundation
 /// A test implementation for `TelemetryManagerSubscriber` used for testing purposes.
 final class TelemetryManagerSubscriberMock: TelemetryManagerSubscriber {
     // MARK: - Properties
-    
+
     var receivedReports: [TelemetryReport] = []
 
     // MARK: - TelemetryManagerSubscriber

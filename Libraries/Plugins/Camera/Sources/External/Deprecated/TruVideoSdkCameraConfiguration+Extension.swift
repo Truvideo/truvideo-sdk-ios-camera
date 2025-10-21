@@ -36,7 +36,6 @@ extension TruvideoSdkCameraConfiguration {
         mode: TruvideoSdkCameraMediaMode,
         outputPath: String
     ) -> TruvideoSdkCameraConfiguration {
-
         TruvideoSdkCameraConfiguration(
             imageFormat: imageFormat,
             lensFacing: lensFacing,

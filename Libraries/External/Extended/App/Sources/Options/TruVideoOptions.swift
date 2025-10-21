@@ -15,7 +15,7 @@ import Foundation
 /// and signing configuration.
 public struct TruVideoOptions: Sendable {
     // MARK: - Public Properties
-    
+
     /// The signer implementation used for cryptographic operations.
     public let signer: Signer
 
@@ -23,7 +23,8 @@ public struct TruVideoOptions: Sendable {
 
     /// Creates a new instance of `TruVideoOptions` with the specified configuration.
     ///
-    /// - Parameter signer: The signer implementation used for cryptographic operations (defaults to `HMACSHA256Signer()`)
+    /// - Parameter signer: The signer implementation used for cryptographic operations (defaults to
+    /// `HMACSHA256Signer()`)
     public init(signer: Signer = HMACSHA256Signer()) {
         self.signer = signer
     }

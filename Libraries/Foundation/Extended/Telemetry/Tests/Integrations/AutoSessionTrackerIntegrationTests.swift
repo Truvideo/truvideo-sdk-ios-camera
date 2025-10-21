@@ -3,9 +3,9 @@
 //
 
 import DI
+import Foundation
 import StorageKit
 import StorageKitTesting
-import Foundation
 import Testing
 import UIKit
 
@@ -32,15 +32,15 @@ private final class AutoSessionTrackerIntegrationTests {
             eventsBuffer: buffer
         )
     }
-    
+
     // MARK: - Tests
-    
+
     @Test
     func testThatInstallStartsSessionWhenAppIsActive() async {
         await withDependencyValues { dependencies in
             // Given
             let sut = AutoSessionTrackerIntegration()
-            
+
             // When
             dependencies.storage = storage
             sut.install(on: manager)
@@ -49,14 +49,14 @@ private final class AutoSessionTrackerIntegrationTests {
             #expect(manager.didStartSession == true)
         }
     }
-    
+
     @Test
     func testThatWillResignActiveStoresForegroundDate() async {
         await withDependencyValues { dependencies in
             // Given
             let sut = AutoSessionTrackerIntegration()
             let now = Date()
-            
+
             // When
             dependencies.storage = storage
             sut.install(on: manager)
@@ -86,7 +86,7 @@ private final class AutoSessionTrackerIntegrationTests {
             try? storage.write(pastDate, forKey: AutoSessionTrackerIntegration.PreviousForegroundDateStorageKey.self)
 
             sut.install(on: manager)
-            
+
             NotificationCenter.default.post(name: UIApplication.willTerminateNotification, object: nil)
 
             let storedDate = try? storage.readValue(
@@ -113,7 +113,7 @@ private final class AutoSessionTrackerIntegrationTests {
             try? storage.write(pastDate, forKey: AutoSessionTrackerIntegration.PreviousForegroundDateStorageKey.self)
 
             sut.install(on: manager)
-            
+
             NotificationCenter.default.post(name: UIApplication.didBecomeActiveNotification, object: nil)
 
             // Then
@@ -121,7 +121,7 @@ private final class AutoSessionTrackerIntegrationTests {
             #expect(manager.endedSessionAt != nil)
         }
     }
-    
+
     @Test
     func testThatStartSessionStartsNewSessionWhenStorageReadFails() async {
         await withDependencyValues { dependencies in
@@ -136,9 +136,9 @@ private final class AutoSessionTrackerIntegrationTests {
             // When
             dependencies.storage = storage
             storage.error = NSError(domain: "", code: 0)
-            
+
             sut.install(on: manager)
-            
+
             // Then
             #expect(manager.didStartSession == true)
             #expect(manager.endedSessionAt == nil)

@@ -7,7 +7,6 @@ import Testing
 @testable import Telemetry
 
 struct MetadataTests {
-    
     // MARK: - Tests
 
     @Test
@@ -35,7 +34,7 @@ struct MetadataTests {
 
         // When
         let result = metadata.prettify()
-        
+
         // Then
         #expect(result != nil)
         for key in expectedKeys {
@@ -71,10 +70,10 @@ struct MetadataTests {
         }
         """
         let data = Data(json.utf8)
-        
+
         // When
         let result = try decoder.decode(Metadata.self, from: data)
-        
+
         // Then
         #expect(result["name"] == .string("Test"))
         #expect(result["count"] == .int(10))
@@ -95,11 +94,11 @@ struct MetadataTests {
             "authors": ["Apple": "https://developer.apple.com/"],
             "license": 2.0
         ]
-        
+
         // When
         let data = try JSONEncoder().encode(metadata)
         let string = String(data: data, encoding: .utf8)
-        
+
         // Then
         #expect(string?.contains("language") == true)
         #expect(string?.contains("Swift") == true)

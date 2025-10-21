@@ -107,7 +107,7 @@ public class LibraryRegistry: @unchecked Sendable {
         allowedSet.insert(charactersIn: "-_.")
 
         guard library.name.rangeOfCharacter(from: allowedSet) != nil,
-            library.name.rangeOfCharacter(from: allowedSet.inverted) == nil
+              library.name.rangeOfCharacter(from: allowedSet.inverted) == nil
         else {
             return
         }

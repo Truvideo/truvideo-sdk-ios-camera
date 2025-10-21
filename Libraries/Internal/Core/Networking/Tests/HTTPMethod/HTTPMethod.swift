@@ -8,9 +8,8 @@ import Testing
 @testable import Networking
 
 struct HTTPMethodTests {
-    
     // MARK: - Tests
-    
+
     @Test
     func testThatHTTPMethodInitialization() {
         // Given
@@ -19,7 +18,7 @@ struct HTTPMethodTests {
         // When, Then
         #expect(sut.rawValue == "foo")
     }
-    
+
     @Test
     func testThatDeletetHTTPMethod() {
         // Given
@@ -28,7 +27,7 @@ struct HTTPMethodTests {
         // When, Then
         #expect(sut.rawValue == "DELETE")
     }
-    
+
     @Test
     func testThatGetHTTPMethod() {
         // Given
@@ -37,7 +36,7 @@ struct HTTPMethodTests {
         // When, Then
         #expect(sut.rawValue == "GET")
     }
-    
+
     @Test
     func testThatHeadHTTPMethod() {
         // Given
@@ -46,7 +45,7 @@ struct HTTPMethodTests {
         // When, Then
         #expect(sut.rawValue == "HEAD")
     }
-    
+
     @Test
     func testThatOptionsHTTPMethod() {
         // Given
@@ -55,7 +54,7 @@ struct HTTPMethodTests {
         // When, Then
         #expect(sut.rawValue == "OPTIONS")
     }
-    
+
     @Test
     func testThatPatchHTTPMethod() {
         // Given
@@ -64,7 +63,7 @@ struct HTTPMethodTests {
         // When, Then
         #expect(sut.rawValue == "PATCH")
     }
-    
+
     @Test
     func testThatPostHTTPMethod() {
         // Given
@@ -73,7 +72,7 @@ struct HTTPMethodTests {
         // When, Then
         #expect(sut.rawValue == "POST")
     }
-    
+
     @Test
     func testThatPutHTTPMethod() {
         // Given
@@ -82,7 +81,7 @@ struct HTTPMethodTests {
         // When, Then
         #expect(sut.rawValue == "PUT")
     }
-    
+
     @Test
     func testThatTraceHTTPMethod() {
         // Given

@@ -11,8 +11,10 @@ internal import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to image exporting operations.
     ///
-    /// The `ImageExportingErrorReason` struct provides a set of static constants representing various errors that can occur
-    /// during image exporting operations. These error reasons help identify specific failure points in the image processing
+    /// The `ImageExportingErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
+    /// during image exporting operations. These error reasons help identify specific failure points in the image
+    /// processing
     /// and export pipeline, making debugging and error handling more precise and informative.
     struct ImageExportingErrorReason: Sendable {
         /// Error reason indicating that image export operation failed.
@@ -163,14 +165,13 @@ struct ImageExporter: ImageExporting, @unchecked Sendable {
         to destinationURL: URL,
         constrainedTo maxPixel: CGFloat
     ) throws(UtilityError) {
-
         let options = [kCGImageSourceShouldCache: false]
         let maxPixelSize = Int(ceil(maxPixel * UIScreen.main.scale))
         let thumbnailOptions: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,
             kCGImageSourceShouldCacheImmediately: false,
-            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+            kCGImageSourceThumbnailMaxPixelSize: maxPixelSize
         ]
 
         guard
@@ -192,7 +193,6 @@ struct ImageExporter: ImageExporting, @unchecked Sendable {
                 nil
             )
         else {
-
             throw UtilityError(
                 kind: .ImageExportingErrorReason.failedToExportImage,
                 failureReason: "Unable to create source image."
@@ -201,7 +201,7 @@ struct ImageExporter: ImageExporting, @unchecked Sendable {
 
         let properties: [CFString: Any] = [
             kCGImageDestinationLossyCompressionQuality: 1,
-            kCGImageDestinationOptimizeColorForSharing: true,
+            kCGImageDestinationOptimizeColorForSharing: true
         ]
 
         CGImageDestinationAddImage(imageDestination, cgImageThumbnail, properties as CFDictionary)
@@ -242,7 +242,6 @@ struct ImageExporter: ImageExporting, @unchecked Sendable {
             /// The image object from the data at the specified index.
             let cgImage = CGImageSourceCreateImageAtIndex(imageSource, 0, nil)
         else {
-
             throw UtilityError(
                 kind: .ImageExportingErrorReason.failedToExportImage,
                 failureReason: "Unable to create image source from data or extract Core Graphics image"
@@ -269,7 +268,6 @@ struct ImageExporter: ImageExporting, @unchecked Sendable {
             /// The image destination from the mutable data object.
             let image = CGImageDestinationCreateWithData(data, format.type.identifier as CFString, 1, nil)
         else {
-
             throw UtilityError(
                 kind: .ImageExportingErrorReason.failedToExportImage,
                 failureReason: "Unable to create mutable data, Core Graphics image, or image destination"
@@ -278,7 +276,7 @@ struct ImageExporter: ImageExporting, @unchecked Sendable {
 
         let properties: [CFString: Any] = [
             kCGImageDestinationLossyCompressionQuality: format.quality,
-            kCGImageDestinationOptimizeColorForSharing: true,
+            kCGImageDestinationOptimizeColorForSharing: true
         ]
 
         CGImageDestinationAddImage(image, cgImage, properties as CFDictionary)

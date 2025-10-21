@@ -45,10 +45,10 @@ public struct Response<Success: Sendable, Failure: Error>: Sendable where Failur
     public var error: Failure? {
         switch result {
         case let .failure(error):
-            return error
+            error
 
         default:
-            return nil
+            nil
         }
     }
 
@@ -56,10 +56,10 @@ public struct Response<Success: Sendable, Failure: Error>: Sendable where Failur
     public var value: Success? {
         switch result {
         case let .success(value):
-            return value
+            value
 
         default:
-            return nil
+            nil
         }
     }
 
@@ -82,7 +82,6 @@ public struct Response<Success: Sendable, Failure: Error>: Sendable where Failur
         result: Result<Success, Failure>,
         type: ResponseType
     ) {
-
         self.data = data
         self.metrics = metrics
         self.request = request
@@ -127,14 +126,13 @@ extension Response: CustomStringConvertible, CustomDebugStringConvertible {
         var bodyDescription = "[Body]: None"
 
         if /// The body data.
-        let data = urlRequest.httpBody,
+            let data = urlRequest.httpBody,
 
             /// String representation of the body.
-            let body = String(data: data, encoding: .utf8)
-        {
+            let body = String(data: data, encoding: .utf8) {
             bodyDescription = """
-                [Body]: \(body.trimmingCharacters(in: .whitespacesAndNewlines))
-                """
+            [Body]: \(body.trimmingCharacters(in: .whitespacesAndNewlines))
+            """
                 .replacingOccurrences(of: "\n", with: "\n    ")
         }
 
@@ -144,31 +142,30 @@ extension Response: CustomStringConvertible, CustomDebugStringConvertible {
             var body = "None"
 
             if /// The response data.
-            let data,
+                let data,
 
                 /// The string representation of the response.
-                let responseString = String(data: data, encoding: .utf8)
-            {
+                let responseString = String(data: data, encoding: .utf8) {
                 body =
                     responseString
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .replacingOccurrences(of: "\n", with: "\n    ")
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .replacingOccurrences(of: "\n", with: "\n    ")
             }
 
             responseDescription = """
-                [Response]:
-                    [Status Code]: \(response.statusCode)
-                    [Body]: \(body)
-                """
+            [Response]:
+                [Status Code]: \(response.statusCode)
+                [Body]: \(body)
+            """
                 .replacingOccurrences(of: "\n", with: "\n    ")
         }
 
         return """
-            [Request]: \(urlRequest.httpMethod ?? "") \(urlRequest)
-            \(bodyDescription)
-            \(responseDescription)
-            [Result]: \(result)
-            [Type]: \(type)
-            """
+        [Request]: \(urlRequest.httpMethod ?? "") \(urlRequest)
+        \(bodyDescription)
+        \(responseDescription)
+        [Result]: \(result)
+        [Type]: \(type)
+        """
     }
 }

@@ -25,7 +25,7 @@ protocol LegacyStorage {
     /// cleanup of all authentication-related data, effectively signing out the user
     /// from the legacy authentication system.
     func clear()
-    
+
     /// Stores an authentication token and API key in the legacy storage system.
     ///
     /// This method persists the provided authentication token and API key
@@ -37,7 +37,7 @@ protocol LegacyStorage {
     ///   - apiKey: The API key to be stored alongside the token
     /// - Throws: Various errors depending on the specific storage implementation
     func set(_ token: AuthToken, apiKey: String) throws
-    
+
     /// Stores the device setting in the legacy storage system.
     ///
     /// This function persists device-specific configuration and settings to the legacy
@@ -62,11 +62,11 @@ protocol LegacyStorage {
 /// maintaining compatibility with existing authentication storage systems.
 struct LegacySessionStorage: LegacyStorage {
     // MARK: - Private Properties
-    
+
     private let userDefaults: UserDefaults
-    
+
     // MARK: - Initializer
-    
+
     /// Creates a new legacy session storage instance with the specified UserDefaults.
     ///
     /// This initializer sets up the legacy session storage with a configurable
@@ -79,9 +79,9 @@ struct LegacySessionStorage: LegacyStorage {
     init(userDefaults: UserDefaults? = UserDefaults(suiteName: "truvideo-sdk-common-settings")) {
         self.userDefaults = userDefaults ?? .standard
     }
-    
+
     // MARK: - LegacyStorage
-    
+
     /// Clears all stored authentication data from the legacy storage system.
     ///
     /// This method removes all authentication tokens, API keys, and device settings
@@ -93,7 +93,7 @@ struct LegacySessionStorage: LegacyStorage {
         userDefaults.removeObject(forKey: "truvideo-sdk-authentication")
         userDefaults.removeObject(forKey: "truvideo-sdk-settings")
     }
-    
+
     /// Stores an authentication token and API key in the legacy storage system.
     ///
     /// This method persists the provided authentication token and API key
@@ -106,7 +106,7 @@ struct LegacySessionStorage: LegacyStorage {
     /// - Throws: Various errors depending on the specific storage implementation
     func set(_ token: AuthToken, apiKey: String) throws {
         let rawData = try JSONEncoder().encode(token)
-        
+
         if let rawToken = String(data: rawData, encoding: .utf8) {
             userDefaults.set(apiKey, forKey: "truvideo-sdk-api-key")
             userDefaults.set(rawToken, forKey: "truvideo-sdk-authentication")
@@ -114,7 +114,7 @@ struct LegacySessionStorage: LegacyStorage {
             throw UtilityError(kind: .unknown, failureReason: "Unable to create string representation of the token.")
         }
     }
-    
+
     /// Stores the device setting in the legacy storage system.
     ///
     /// This function persists device-specific configuration and settings to the legacy
@@ -126,7 +126,7 @@ struct LegacySessionStorage: LegacyStorage {
     /// - Throws: Various errors depending on the specific storage implementation
     func set(_ deviceSetting: DeviceSetting) throws {
         let rawData = try JSONEncoder().encode(deviceSetting)
-        
+
         if let rawSettings = String(data: rawData, encoding: .utf8) {
             userDefaults.set(rawSettings, forKey: "truvideo-sdk-settings")
         } else {

@@ -47,14 +47,14 @@ import Utilities
 /// }
 /// ```
 public protocol TokenRefresher: Sendable {
-
     /// Refreshes the current authentication token using the stored refresh token.
     ///
     /// This method exchanges the current refresh token for a new access token and
     /// updates the stored authentication session. The refresh process involves
     /// making a network request to the authentication server with the refresh token.
     ///
-    /// - Throws: An error if the token refresh fails, including network errors, authentication failures, or missing session data
+    /// - Throws: An error if the token refresh fails, including network errors, authentication failures, or missing
+    /// session data
     func refreshToken() async throws
 }
 
@@ -85,7 +85,8 @@ public actor SessionTokenRefresher: TokenRefresher {
     /// If no session is provided, it defaults to an `HTTPURLSession` with a `SessionMonitor`
     /// for tracking network operations.
     ///
-    /// - Parameter session: The network session to use for token refresh requests. Defaults to a monitored HTTP session.
+    /// - Parameter session: The network session to use for token refresh requests. Defaults to a monitored HTTP
+    /// session.
     public init(session: any Session = HTTPURLSession(monitors: [SessionMonitor()])) {
         self.session = session
     }
@@ -98,7 +99,8 @@ public actor SessionTokenRefresher: TokenRefresher {
     /// updates the stored authentication session. The refresh process involves
     /// making a network request to the authentication server with the refresh token.
     ///
-    /// - Throws: An error if the token refresh fails, including network errors, authentication failures, or missing session data
+    /// - Throws: An error if the token refresh fails, including network errors, authentication failures, or missing
+    /// session data
     public func refreshToken() async throws {
         guard let authSession = sessionManager.currentSession else {
             throw UtilityError(

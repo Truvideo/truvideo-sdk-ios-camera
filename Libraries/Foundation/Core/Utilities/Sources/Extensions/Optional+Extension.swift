@@ -14,7 +14,7 @@ extension Optional {
         case .none:
             throw error()
 
-        case .some(let wrapped):
+        case let .some(wrapped):
             return wrapped
         }
     }

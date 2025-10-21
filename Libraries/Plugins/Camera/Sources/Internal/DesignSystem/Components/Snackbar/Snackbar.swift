@@ -7,7 +7,8 @@ import UIKit
 
 /// An enumeration that specifies the alignment mode for a Snackbar.
 ///
-/// `SnackbarPosition` defines two possible positions where the Snackbar can be displayed: at the top or at the bottom of the screen.
+/// `SnackbarPosition` defines two possible positions where the Snackbar can be displayed: at the top or at the bottom
+/// of the screen.
 enum SnackbarPosition {
     /// Display the Snackbar at the bottom of the screen.
     case bottom
@@ -44,7 +45,8 @@ enum SnackbarPosition {
 /// }
 /// ```
 ///
-/// This struct creates a snackbar that can display any SwiftUI view (`Content`) based on its visibility state (`isShowing`).
+/// This struct creates a snackbar that can display any SwiftUI view (`Content`) based on its visibility state
+/// (`isShowing`).
 struct Snackbar<Content: View>: View {
     // MARK: - Binding Properties
 
@@ -103,7 +105,6 @@ struct Snackbar<Content: View>: View {
         vOffset: CGFloat?,
         content: @escaping () -> Content
     ) {
-
         self._isPresented = isPresented
         self.content = content
         self.duration = duration
@@ -269,7 +270,6 @@ private class SnackbarView<Content: View>: UIView {
         vOffset: CGFloat?,
         content: @escaping () -> Content
     ) {
-
         self.position = position
         self.content = content
         self.theme = theme

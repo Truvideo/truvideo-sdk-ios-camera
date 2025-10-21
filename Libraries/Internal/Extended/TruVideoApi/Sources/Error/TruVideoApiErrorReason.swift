@@ -8,7 +8,8 @@ import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the signer.
     ///
-    /// The `TruVideoApiErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `TruVideoApiErrorReason` struct provides a set of static constants representing various errors that can
+    /// occur
     /// during interactions with the external storages.
     public struct TruVideoApiErrorReason: Sendable {
         /// Error indicating that the authentication process has failed.

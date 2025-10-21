@@ -10,7 +10,8 @@ internal import Utilities
 extension ErrorReason {
     /// A collection of error reasons related to the photo controller device operations.
     ///
-    /// The `CapturePhotoControllerErrorReason` struct provides a set of static constants representing various errors that can occur
+    /// The `CapturePhotoControllerErrorReason` struct provides a set of static constants representing various errors
+    /// that can occur
     /// during interactions with the capture photo controller.
     struct CapturePhotoControllerErrorReason: Sendable {
         /// Error reason indicating that the photo output could not be configured for the capture session.
@@ -240,7 +241,6 @@ final class CapturePhotoController: NSObject, @unchecked Sendable {
 }
 
 extension CapturePhotoController: AVCapturePhotoCaptureDelegate {
-
     // MARK: - AVCapturePhotoCaptureDelegate
 
     func photoOutput(_ output: AVCapturePhotoOutput, didFinishProcessingPhoto photo: AVCapturePhoto, error: Error?) {
@@ -307,10 +307,7 @@ extension ImageExporting {
             devicePosition: configuration.devicePosition
         )
 
-        let thumbnailURL =
-            outputURL
-            .deletingPathExtension()
-            .appendingPathExtension("TV-photo-thumb.jpeg")
+        let thumbnailURL = outputURL.deletingPathExtension().appendingPathExtension("TV-photo-thumb.jpeg")
 
         try export(
             data,
@@ -351,7 +348,7 @@ extension AVCapturePhotoSettings {
                 AVVideoCodecKey: configuration.imageFormat.codec,
                 AVVideoCompressionPropertiesKey: [
                     AVVideoQualityKey: NSNumber(value: configuration.imageFormat.quality)
-                ],
+                ]
             ],
             processedFileType: configuration.imageFormat.fileType
         )

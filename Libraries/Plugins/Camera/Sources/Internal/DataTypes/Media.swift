@@ -90,10 +90,10 @@ enum Media: Equatable {
     var isClip: Bool {
         switch self {
         case .clip:
-            return true
+            true
 
         case .photo:
-            return false
+            false
         }
     }
 
@@ -108,10 +108,10 @@ enum Media: Equatable {
     var isPhoto: Bool {
         switch self {
         case .clip:
-            return false
+            false
 
         case .photo:
-            return true
+            true
         }
     }
 }

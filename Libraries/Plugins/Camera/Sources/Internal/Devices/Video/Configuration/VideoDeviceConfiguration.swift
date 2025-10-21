@@ -133,28 +133,28 @@ struct VideoDeviceConfiguration: Sendable {
         var dimensions: CGSize? {
             switch self {
             case .active:
-                return nil
+                nil
 
             case .cinematic:
-                return CGSize(width: 2.35, height: 1)
+                CGSize(width: 2.35, height: 1)
 
-            case .custom(let size):
-                return size
+            case let .custom(size):
+                size
 
             case .square:
-                return CGSize(width: 1, height: 1)
+                CGSize(width: 1, height: 1)
 
             case .standard:
-                return CGSize(width: 3, height: 4)
+                CGSize(width: 3, height: 4)
 
             case .standardLandscape:
-                return CGSize(width: 4, height: 3)
+                CGSize(width: 4, height: 3)
 
             case .widescreen:
-                return CGSize(width: 9, height: 16)
+                CGSize(width: 9, height: 16)
 
             case .widescreenLandscape:
-                return CGSize(width: 16, height: 9)
+                CGSize(width: 16, height: 9)
             }
         }
 
@@ -164,16 +164,16 @@ struct VideoDeviceConfiguration: Sendable {
         var ratio: CGFloat? {
             switch self {
             case .active:
-                return nil
+                nil
 
-            case .custom(let size):
-                return size.aspectRatio
+            case let .custom(size):
+                size.aspectRatio
 
             case .square:
-                return 1
+                1
 
             default:
-                return dimensions?.aspectRatio
+                dimensions?.aspectRatio
             }
         }
     }
@@ -189,7 +189,8 @@ struct VideoDeviceConfiguration: Sendable {
     /// key‑frame interval, and profile level into the compression properties.
     ///
     /// - Parameter sampleBuffer: An optional `CMSampleBuffer` from which to infer input dimensions.
-    /// - Returns: A dictionary of video settings keyed by `AVVideo*` constants, or `nil` if insufficient information is available to determine dimensions.
+    /// - Returns: A dictionary of video settings keyed by `AVVideo*` constants, or `nil` if insufficient information is
+    /// available to determine dimensions.
     func makeSettingsDictionary(sampleBuffer: CMSampleBuffer? = nil) -> [String: Any]? {
         var config: [String: Any] = [:]
 
@@ -197,16 +198,14 @@ struct VideoDeviceConfiguration: Sendable {
             config[AVVideoHeightKey] = dimensions.height
             config[AVVideoWidthKey] = dimensions.width
         } else if /// The sample buffer
-        let sampleBuffer,
+            let sampleBuffer,
 
             /// The format description for the `sampleBuffer`
-            let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
-        {
-
+            let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
             let videoDimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
 
             switch aspectRatio {
-            case .custom(let size):
+            case let .custom(size):
                 config[AVVideoHeightKey] = videoDimensions.width * Int32(size.height) / Int32(size.width)
                 config[AVVideoWidthKey] = Int(videoDimensions.width)
 

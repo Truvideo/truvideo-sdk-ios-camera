@@ -59,7 +59,6 @@ extension CIContext {
             /// The working color space.
             let workingColorSpace = CGColorSpace(name: CGColorSpace.linearSRGB)
         else {
-
             return nil
         }
 
@@ -69,7 +68,7 @@ extension CIContext {
             .outputPremultiplied: true,
             .highQualityDownsample: true,
             .useSoftwareRenderer: false,
-            .workingColorSpace: workingColorSpace,
+            .workingColorSpace: workingColorSpace
         ]
 
         if let device = MTLCreateSystemDefaultDevice() {
@@ -139,24 +138,21 @@ extension CIContext {
         for format: FileFormat,
         colorSpace: CGColorSpace
     ) throws(UtilityError) -> Data {
-
         let cIImage = cIImage.cropped(to: cIImage.extent.integral)
         let options: [CIImageRepresentationOption: Any] = [
             kCGImageDestinationLossyCompressionQuality as CIImageRepresentationOption: format.quality,
-            kCGImageDestinationOptimizeColorForSharing as CIImageRepresentationOption: true,
+            kCGImageDestinationOptimizeColorForSharing as CIImageRepresentationOption: true
         ]
 
-        let data: Data?
-
-        switch format {
+        let data: Data? = switch format {
         case .heic:
-            data = heifRepresentation(of: cIImage, format: .RGBA8, colorSpace: colorSpace, options: options)
+            heifRepresentation(of: cIImage, format: .RGBA8, colorSpace: colorSpace, options: options)
 
         case .jpeg:
-            data = jpegRepresentation(of: cIImage, colorSpace: colorSpace, options: options)
+            jpegRepresentation(of: cIImage, colorSpace: colorSpace, options: options)
 
         case .png:
-            data = pngRepresentation(of: cIImage, format: .RGBA8, colorSpace: colorSpace)
+            pngRepresentation(of: cIImage, format: .RGBA8, colorSpace: colorSpace)
         }
 
         guard let data else {

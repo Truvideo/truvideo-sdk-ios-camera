@@ -7,7 +7,6 @@ import Foundation
 import UIKit
 
 extension CameraViewModel {
-
     // MARK: - Instance methods
 
     /// Configures observers for application lifecycle events and state changes.
@@ -151,7 +150,7 @@ extension CameraViewModel {
             message: "Audio route changed",
             metadata: [
                 "reason": .int(Int(reason)),
-                "state": .string("\(state)"),
+                "state": .string("\(state)")
             ]
         )
 
@@ -185,7 +184,7 @@ extension CameraViewModel {
                 name: .cameraRuntimeError,
                 metadata: [
                     "errorCode": .int(error.code.rawValue),
-                    "state": .string("\(state)"),
+                    "state": .string("\(state)")
                 ]
             )
 
@@ -210,7 +209,7 @@ extension CameraViewModel {
             message: "Camera session interrupted",
             metadata: [
                 "reason": .int(reason),
-                "state": .string("\(state)"),
+                "state": .string("\(state)")
             ]
         )
 

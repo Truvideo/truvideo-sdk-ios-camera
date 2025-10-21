@@ -10,12 +10,12 @@ import Testing
 
 struct HTTPURLRequestTests {
     // MARK: - Private Properties
-    
+
     private let queue = DispatchQueue.global()
     private let request = URLRequest(url: URL(string: "https://httpbin.org/")!)
-    
+
     // MARK: - Tests
-    
+
     @Test
     func testThatCancelShouldCallMonitor() async {
         // Given
@@ -27,16 +27,16 @@ struct HTTPURLRequestTests {
             monitor.requestDidCancelCallback = {
                 continuation.resume()
             }
-            
+
             queue.async {
                 sut.didCancel()
             }
         }
-        
+
         // Then
         #expect(monitor.requestDidCancelCallCount == 1)
     }
-    
+
     @Test
     func testThatDidCancelTaskShouldCallMonitor() async {
         // Given
@@ -49,16 +49,16 @@ struct HTTPURLRequestTests {
             monitor.requestDidCancelTaskCallback = {
                 continuation.resume()
             }
-            
+
             queue.async {
                 sut.didCancel(task: task)
             }
         }
-        
+
         // Then
         #expect(monitor.requestDidCancelTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatDidCompleteShouldRunValidatorsAndSetError() async {
         // Given
@@ -71,16 +71,16 @@ struct HTTPURLRequestTests {
             sut.validators.append {
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didComplete(task: task, error: error)
             }
         }
-        
+
         // Then
         #expect(sut.error?.kind == .explicitlyCancelled)
     }
-    
+
     @Test
     func testThatDidCreateInitialRequestShouldCallMonitorAndAppendRequest() async {
         // Given
@@ -92,17 +92,17 @@ struct HTTPURLRequestTests {
             monitor.requestDidCreateInitialURLRequestCallback = {
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didCreateInitial(request: request)
             }
         }
-        
+
         // Then
         #expect(sut.requests.count == 1)
         #expect(monitor.requestDidCreateInitialURLRequestCallCount == 1)
     }
-    
+
     @Test
     func testThatDidCreateTaskShouldCallMonitorAndAppendTask() async {
         // Given
@@ -115,17 +115,17 @@ struct HTTPURLRequestTests {
             monitor.requestDidCreateTaskCallback = { _ in
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didCreate(task: task)
             }
         }
-        
+
         // Then
         #expect(sut.tasks.count == 1)
         #expect(monitor.requestDidCreateTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatDidCreateTaskWhenRequestIsCancelledShouldResumeAndCancelTheTask() async {
         // Given
@@ -135,22 +135,22 @@ struct HTTPURLRequestTests {
 
         // When
         sut.cancel()
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidCancelTaskCallback = {
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didCreate(task: task)
             }
         }
-        
+
         // Then
         #expect(sut.tasks.count == 1)
         #expect(monitor.requestDidCancelTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatDidCreateTaskWhenRequestIsResumedShouldResumeTheTask() async {
         // Given
@@ -160,22 +160,22 @@ struct HTTPURLRequestTests {
 
         // When
         sut.state = .resumed
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidResumeTaskCallback = {
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didCreate(task: task)
             }
         }
-        
+
         // Then
         #expect(sut.tasks.count == 1)
         #expect(monitor.requestDidResumeTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatDidCreateTaskWhenRequestIsSuspendedShouldSuspendTheTask() async {
         // Given
@@ -185,22 +185,22 @@ struct HTTPURLRequestTests {
 
         // When
         sut.state = .suspended
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidSuspendTaskCallback = {
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didCreate(task: task)
             }
         }
-        
+
         // Then
         #expect(sut.tasks.count == 1)
         #expect(monitor.requestDidSuspendTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatDidFailTaskShouldCallMonitorAndSetError() async {
         // Given
@@ -214,18 +214,18 @@ struct HTTPURLRequestTests {
             monitor.requestDidFailTaskWithErrorCallback = {
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didFail(task: task, with: error)
             }
         }
-        
+
         // Then
         #expect(sut.error?.kind == .explicitlyCancelled)
         #expect(sut.tasks.count == 0)
         #expect(monitor.requestDidFailTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatDidCreateURLRequestShouldCallMonitor() async {
         // Given
@@ -237,16 +237,16 @@ struct HTTPURLRequestTests {
             monitor.requestDidCreateURLRequestCallback = { _ in
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didCreate(urlRequest: request)
             }
         }
-        
+
         // Then
         #expect(monitor.requestDidCreateURLRequestCallCount == 1)
     }
-    
+
     @Test
     func testThatDidFailToCreateURLRequestShouldCallMonitorAndFinishTheRequest() async {
         // Given
@@ -259,18 +259,18 @@ struct HTTPURLRequestTests {
             monitor.requestDidFinishCallback = {
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
-        
+
         // Then
         #expect(sut.error?.kind == .explicitlyCancelled)
         #expect(monitor.requestDidFinishCallCount == 1)
         #expect(monitor.didFailToCreateURLRequestWithErrorCallCount == 1)
     }
-    
+
     @Test
     func testThatDidFailToCreateURLRequestShouldCallMonitor() async {
         // Given
@@ -280,23 +280,23 @@ struct HTTPURLRequestTests {
 
         // When
         sut.state = .cancelled
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidFailToCreateURLRequestCallback = { _ in
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didFailToCreateURLRequest(with: error)
             }
         }
-        
+
         // Then
         #expect(sut.error?.kind == .explicitlyCancelled)
         #expect(monitor.requestDidFinishCallCount == 0)
         #expect(monitor.didFailToCreateURLRequestWithErrorCallCount == 1)
     }
-    
+
     @Test
     func testThatResetShouldClearTheRequest() async throws {
         // Given
@@ -307,13 +307,13 @@ struct HTTPURLRequestTests {
         sut.error = NetworkingError(kind: .explicitlyCancelled)
         sut.state = .cancelled
         sut.appendResponseSerializer {}
-        
+
         sut.reset()
-        
+
         // Then
         #expect(sut.error == nil)
     }
-    
+
     @Test
     func testThatCancelShouldCallMonitorAndSetTheStateToCancelled() async {
         // Given
@@ -325,15 +325,15 @@ struct HTTPURLRequestTests {
             monitor.requestDidCancelCallback = {
                 continuation.resume()
             }
-           
+
             sut.cancel()
         }
-        
+
         // Then
         #expect(sut.state == .cancelled)
         #expect(monitor.requestDidCancelCallCount == 1)
     }
-    
+
     @Test
     func testThatResumeShouldCallMonitorAndSetTheStateToResumed() async {
         // Given
@@ -345,15 +345,15 @@ struct HTTPURLRequestTests {
             monitor.requestDidResumeCallback = {
                 continuation.resume()
             }
-           
+
             sut.resume()
         }
-        
+
         // Then
         #expect(sut.state == .resumed)
         #expect(monitor.requestDidResumeCallCount == 1)
     }
-    
+
     @Test
     func testThatResumeShouldCallMonitorAndResumeTheTask() async {
         // Given
@@ -365,21 +365,21 @@ struct HTTPURLRequestTests {
         queue.async {
             sut.didCreate(task: task)
         }
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidResumeTaskCallback = {
                 continuation.resume()
             }
-           
+
             sut.resume()
         }
-        
+
         // Then
         #expect(sut.state == .resumed)
         #expect(monitor.requestDidResumeCallCount == 1)
         #expect(monitor.requestDidResumeTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatSuspendShouldCallMonitorAndSetTheStateToSuspended() async {
         // Given
@@ -391,15 +391,15 @@ struct HTTPURLRequestTests {
             monitor.requestDidSuspendCallback = {
                 continuation.resume()
             }
-           
+
             sut.suspend()
         }
-        
+
         // Then
         #expect(sut.state == .suspended)
         #expect(monitor.requestDidSuspendCallCount == 1)
     }
-    
+
     @Test
     func testThatSuspendShouldCallMonitorAndSuspendTheTask() async {
         // Given
@@ -412,19 +412,19 @@ struct HTTPURLRequestTests {
             monitor.requestDidSuspendTaskCallback = {
                 continuation.resume()
             }
-           
+
             queue.async {
                 sut.didCreate(task: task)
                 sut.suspend()
             }
         }
-        
+
         // Then
         #expect(sut.state == .suspended)
         #expect(monitor.requestDidSuspendCallCount == 1)
         #expect(monitor.requestDidSuspendTaskCallCount == 1)
     }
-    
+
     @Test
     func testThatAppendResponseSerializerShouldResumeTheRequest() async {
         // Given
@@ -439,32 +439,32 @@ struct HTTPURLRequestTests {
                 continuation.resume()
             }
         }
-        
+
         await withCheckedContinuation { continuation in
             monitor.requestDidResumeCallback = {
                 continuation.resume()
             }
-            
+
             sut.appendResponseSerializer {}
         }
-        
+
         // Then
         #expect(sut.responseSerializers.count == 1)
         #expect(sut.state == .resumed)
     }
-    
+
     @Test
     func testThatDebugDescriptionShouldReturnCURLRepresentation() async {
         // Given
         let configuration = URLSessionConfiguration.ephemeral
         configuration.httpAdditionalHeaders = ["foo1": "bar"]
-        
+
         let session = HTTPURLSession(configuration: configuration)
         let sut = session.request(request.url!, headers: ["foo": "bar"])
-        
+
         // When
         _ = await sut.serializingData()
-        
+
         // Then
         #expect(sut.debugDescription != "")
     }

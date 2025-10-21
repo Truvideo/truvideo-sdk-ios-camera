@@ -8,7 +8,8 @@ import SwiftUI
 /// A comprehensive spacing system that defines consistent spacing values for UI components.
 ///
 /// `Spacing` provides a scalable and customizable way to define spacing values based on a core unit (`spaceUnit`).
-/// It ensures design consistency by offering predefined spacing levels, from extra-extra-small (`xxs`) to quintuple-extra-large (`xxxxxl`).
+/// It ensures design consistency by offering predefined spacing levels, from extra-extra-small (`xxs`) to
+/// quintuple-extra-large (`xxxxxl`).
 ///
 /// This struct is designed to work with SwiftUI's layout system and provides a systematic approach to maintaining
 /// consistent spacing across different screen sizes and components in your application.
@@ -171,4 +172,5 @@ public struct SpacingTheme: Sendable {
         CGFloat(multiple) * spaceUnit
     }
 }
+
 // swiftlint:enable identifier_name

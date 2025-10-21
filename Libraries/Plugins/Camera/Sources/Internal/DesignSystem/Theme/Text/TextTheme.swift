@@ -56,7 +56,8 @@ import SwiftUI
 public struct TextTheme: Sendable {
     /// Large Title 1 Text Style.
     ///
-    /// Use for prominent titles that require significant emphasis, such as on main screens or headers for large sections.
+    /// Use for prominent titles that require significant emphasis, such as on main screens or headers for large
+    /// sections.
     public let largeTitle: TextStyle
 
     /// Title 1 Text Style.
@@ -243,8 +244,10 @@ public struct TextTheme: Sendable {
 
     /// Initializes a new instance with the provided text styles for various typographic elements.
     ///
-    /// This initializer allows defining custom `TextStyle` configurations for different text categories used in UI elements.
-    /// Each parameter represents a specific text role commonly used in user interfaces, ensuring consistent typography across the application.
+    /// This initializer allows defining custom `TextStyle` configurations for different text categories used in UI
+    /// elements.
+    /// Each parameter represents a specific text role commonly used in user interfaces, ensuring consistent typography
+    /// across the application.
     ///
     /// - Parameters:
     ///   - largeTitle: A `TextStyle` for prominent titles, typically used for large headings.
@@ -271,7 +274,6 @@ public struct TextTheme: Sendable {
         caption1: TextStyle,
         caption2: TextStyle
     ) {
-
         self.largeTitle = largeTitle
         self.title1 = title1
         self.title2 = title2
@@ -328,7 +330,6 @@ public struct TextTheme: Sendable {
         caption1: TextStyle? = nil,
         caption2: TextStyle? = nil
     ) -> TextTheme {
-
         TextTheme(
             largeTitle: largeTitle ?? self.largeTitle,
             title1: title1 ?? self.title1,

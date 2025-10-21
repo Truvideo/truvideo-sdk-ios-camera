@@ -10,19 +10,19 @@ extension ProcessInfo.ThermalState: @retroactive CustomDebugStringConvertible {
     public var debugDescription: String {
         switch self {
         case .critical:
-            return "critical"
+            "critical"
 
         case .fair:
-            return "fair"
+            "fair"
 
         case .nominal:
-            return "nominal"
+            "nominal"
 
         case .serious:
-            return "serious"
+            "serious"
 
         default:
-            return "unknown"
+            "unknown"
         }
     }
 }

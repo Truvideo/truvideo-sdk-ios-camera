@@ -9,17 +9,17 @@ import Testing
 
 struct DecodableResponseSerializerTests {
     // MARK: - Properties
-    
+
     private let url = URL(string: "https://httpbin.org/")!
-    
+
     // MARK: - Tests
-    
+
     @Test
     func testThatSerializeShouldReturnAValidObject() throws {
         // Given
         let test = Test(name: "foo")
         let sut = DecodableResponseSerializer<Test>()
-        
+
         // When
         let serializedObject = try sut.serialize(
             request: nil,
@@ -31,20 +31,20 @@ struct DecodableResponseSerializerTests {
         // Then
         #expect(serializedObject == test)
     }
-    
+
     @Test
     func testThatSerializeShouldReturnEmptyOnCustomEmptyResponseCodes() throws {
         // Given
         let response = HTTPURLResponse(url: url, statusCode: 500, httpVersion: nil, headerFields: nil)
         let sut = DecodableResponseSerializer<Empty>(emptyResponseCodes: [500])
-        
+
         // When
         let serializedObject = try sut.serialize(request: nil, response: response, data: nil, error: nil)
 
         // Then
         #expect(serializedObject == Empty.value)
     }
-    
+
     @Test
     func testThatSerializeShouldThrowAnErrorIfSentErrorIsNotNil() throws {
         // Given
@@ -70,11 +70,11 @@ struct DecodableResponseSerializerTests {
             guard let error = error as? NetworkingError else {
                 return false
             }
-            
+
             return error.kind == .responseSerializationFailed
         }
     }
-    
+
     @Test
     func testThatSerializeShouldThrowAnErrorIfDataIsEmptyWithCustomEmptyResponseCodes() throws {
         // Given
@@ -88,11 +88,11 @@ struct DecodableResponseSerializerTests {
             guard let error = error as? NetworkingError else {
                 return false
             }
-            
+
             return error.kind == .responseSerializationFailed
         }
     }
-    
+
     @Test
     func testThatSerializeShouldThrowAnErrorIfExpectedTypeIsNotValidForAnEmptyValue() throws {
         // Given
@@ -106,11 +106,11 @@ struct DecodableResponseSerializerTests {
             guard let error = error as? NetworkingError else {
                 return false
             }
-            
+
             return error.kind == .responseSerializationFailed
         }
     }
-    
+
     @Test
     func testThatSerializeShouldThrowAnErrorIfDecoderIsNotAbleToDeserializeTheData() throws {
         // Given
@@ -124,7 +124,7 @@ struct DecodableResponseSerializerTests {
             guard let error = error as? NetworkingError else {
                 return false
             }
-            
+
             return error.kind == .responseSerializationFailed
         }
     }

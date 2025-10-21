@@ -48,7 +48,6 @@ open class HTTPURLSessionDelegate: NSObject, @unchecked Sendable {
 }
 
 extension HTTPURLSessionDelegate: URLSessionDelegate {
-
     // MARK: - URLSessionDelegate
 
     public func urlSession(_ session: URLSession, didBecomeInvalidWithError error: (any Error)?) {
@@ -59,7 +58,6 @@ extension HTTPURLSessionDelegate: URLSessionDelegate {
 }
 
 extension HTTPURLSessionDelegate: URLSessionDataDelegate {
-
     // MARK: - URLSessionDataDelegate
 
     public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
@@ -76,7 +74,6 @@ extension HTTPURLSessionDelegate: URLSessionDataDelegate {
         didReceive response: URLResponse,
         completionHandler: @escaping (URLSession.ResponseDisposition) -> Void
     ) {
-
         monitor?.urlSession(session, dataTask: dataTask, didReceive: response)
 
         completionHandler(.allow)
@@ -84,7 +81,6 @@ extension HTTPURLSessionDelegate: URLSessionDataDelegate {
 }
 
 extension HTTPURLSessionDelegate: URLSessionTaskDelegate {
-
     // MARK: - URLSessionTaskDelegate
 
     public func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: (any Error)?) {
@@ -101,7 +97,6 @@ extension HTTPURLSessionDelegate: URLSessionTaskDelegate {
         task: URLSessionTask,
         didFinishCollecting metrics: URLSessionTaskMetrics
     ) {
-
         monitor?.urlSession(session, task: task, didFinishCollecting: metrics)
 
         let request = provider?.request(for: task)

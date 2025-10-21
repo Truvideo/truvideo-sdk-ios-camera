@@ -100,8 +100,8 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
     /// - Returns: A media mode configured for picture capture
     public static func picture(pictureCount: Int? = nil) -> TruvideoSdkCameraMediaMode {
         TruvideoSdkCameraMediaMode(
-            maxMediaCount: pictureCount ?? Self.maxPictureCount,
-            maxPictureCount: pictureCount ?? Self.maxPictureCount
+            maxMediaCount: pictureCount ?? maxPictureCount,
+            maxPictureCount: pictureCount ?? maxPictureCount
         )
     }
 
@@ -126,7 +126,7 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
         TruvideoSdkCameraMediaMode(
             maxMediaCount: 1,
             maxVideoCount: 1,
-            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? Self.maxVideoDurationAllowed
+            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? maxVideoDurationAllowed
         )
     }
 
@@ -140,7 +140,7 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
     public static func singleVideoOrPicture(videoDuration: Int? = nil) -> TruvideoSdkCameraMediaMode {
         TruvideoSdkCameraMediaMode(
             maxMediaCount: 1,
-            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? Self.maxVideoDurationAllowed
+            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? maxVideoDurationAllowed
         )
     }
 
@@ -155,9 +155,9 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
     /// - Returns: A media mode configured for multiple video capture
     public static func video(videoCount: Int? = nil, videoDuration: Int? = nil) -> TruvideoSdkCameraMediaMode {
         TruvideoSdkCameraMediaMode(
-            maxMediaCount: videoCount ?? Self.maxVideoCount,
-            maxVideoCount: videoCount ?? Self.maxVideoCount,
-            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? Self.maxVideoDurationAllowed
+            maxMediaCount: videoCount ?? maxVideoCount,
+            maxVideoCount: videoCount ?? maxVideoCount,
+            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? maxVideoDurationAllowed
         )
     }
 
@@ -176,12 +176,11 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
         pictureCount: Int? = nil,
         videoDuration: Int? = nil
     ) -> TruvideoSdkCameraMediaMode {
-
         TruvideoSdkCameraMediaMode(
-            maxMediaCount: (pictureCount ?? Self.maxPictureCount) + (videoCount ?? Self.maxVideoCount),
-            maxPictureCount: pictureCount ?? Self.maxPictureCount,
-            maxVideoCount: videoCount ?? Self.maxVideoCount,
-            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? Self.maxVideoDurationAllowed
+            maxMediaCount: (pictureCount ?? maxPictureCount) + (videoCount ?? maxVideoCount),
+            maxPictureCount: pictureCount ?? maxPictureCount,
+            maxVideoCount: videoCount ?? maxVideoCount,
+            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? maxVideoDurationAllowed
         )
     }
 
@@ -199,12 +198,11 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
         mediaCount: Int? = nil,
         videoDuration: Int? = nil
     ) -> TruvideoSdkCameraMediaMode {
-
         TruvideoSdkCameraMediaMode(
-            maxMediaCount: mediaCount ?? Self.maxMediaCount,
+            maxMediaCount: mediaCount ?? maxMediaCount,
             maxPictureCount: 0,
             maxVideoCount: 0,
-            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? Self.maxVideoDurationAllowed
+            maxVideoDuration: videoDuration.map(TimeInterval.init) ?? maxVideoDurationAllowed
         )
     }
 

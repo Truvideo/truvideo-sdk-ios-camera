@@ -25,7 +25,8 @@ public protocol URLConvertible {
 /// This allows for a flexible and reusable pattern when creating network requests, supporting customization of headers,
 /// HTTP methods, URL paths, query parameters, and body content.
 ///
-/// Conforming types should implement the `build()` method, which can throw errors if the request configuration is invalid
+/// Conforming types should implement the `build()` method, which can throw errors if the request configuration is
+/// invalid
 /// or if serialization fails.
 public protocol RequestBuilder {
     /// Builds and returns a configured `URLRequest` instance.
@@ -34,7 +35,8 @@ public protocol RequestBuilder {
     /// a valid HTTP request. The request should include all necessary details such as the URL, HTTP method,
     /// headers, query parameters, and body content.
     ///
-    /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components, serialization issues, or missing required fields.
+    /// - Throws: An error if the request cannot be constructed. This may occur due to invalid URL components,
+    /// serialization issues, or missing required fields.
     /// - Returns: A fully configured `URLRequest` instance ready for execution.
     func build() throws -> URLRequest
 }
@@ -77,7 +79,8 @@ public protocol Session: Sendable {
 
     // MARK: - DataRequest
 
-    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
+    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional
+    /// configuration.
     ///
     /// - Parameters:
     ///   - url: A `URLConvertible` instance representing the endpoint for the request.
@@ -85,7 +88,8 @@ public protocol Session: Sendable {
     ///   - parameters: A dictionary of parameters to be included in the request (default is `nil`).
     ///   - encoder: The `ParameterEncoder` used for encoding request parameters (default is `.url`).
     ///   - headers: Additional HTTP headers to be included in the request (default is `nil`).
-    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is executed (default is `nil`).
+    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is
+    /// executed (default is `nil`).
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
     /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
     func request(
@@ -105,10 +109,13 @@ public protocol Session: Sendable {
     /// logging, or handling pre-processing logic.
     ///
     /// - Parameters:
-    ///   - requestBuilder: An instance conforming to `RequestBuilder`, responsible for constructing a valid `URLRequest`.
-    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is executed.
+    ///   - requestBuilder: An instance conforming to `RequestBuilder`, responsible for constructing a valid
+    /// `URLRequest`.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
-    /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled, or validated.
+    /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled,
+    /// or validated.
     func request(
         _ requestBuilder: RequestBuilder,
         middleware: RequestMiddleware?,
@@ -128,7 +135,8 @@ public protocol Session: Sendable {
     ///   - url: A `URLConvertible` value representing the endpoint for the request.
     ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
     ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
-    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is executed.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
     ///
     /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
     func upload(
@@ -162,7 +170,8 @@ public protocol Session: Sendable {
 }
 
 extension Session {
-    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
+    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional
+    /// configuration.
     ///
     /// - Parameters:
     ///   - url: A `URLConvertible` instance representing the endpoint for the request.
@@ -170,7 +179,8 @@ extension Session {
     ///   - parameters: A dictionary of parameters to be included in the request (default is `nil`).
     ///   - encoder: The `ParameterEncoder` used for encoding request parameters (default is `.url`).
     ///   - headers: Additional HTTP headers to be included in the request (default is `nil`).
-    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is executed (default is `nil`).
+    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is
+    /// executed (default is `nil`).
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
     /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
     public func request(
@@ -182,7 +192,6 @@ extension Session {
         middleware: RequestMiddleware? = nil,
         cachePolicy: URLCachePolicy = .reloadIgnoringLocalCacheData
     ) -> any DataRequest {
-
         request(
             url,
             method: method,
@@ -201,26 +210,30 @@ extension Session {
     /// logging, or handling pre-processing logic.
     ///
     /// - Parameters:
-    ///   - requestBuilder: An instance conforming to `RequestBuilder`, responsible for constructing a valid `URLRequest`.
-    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is executed.
+    ///   - requestBuilder: An instance conforming to `RequestBuilder`, responsible for constructing a valid
+    /// `URLRequest`.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
     ///   - cachePolicy: The caching policy that defines how network requests should interact with local cache data.
-    /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled, or validated.
+    /// - Returns: A `DataRequest` instance representing the ongoing network request, which can be monitored, cancelled,
+    /// or validated.
     public func request(
         _ requestBuilder: RequestBuilder,
         middleware: RequestMiddleware? = nil,
         cachePolicy: URLCachePolicy = .reloadIgnoringLocalCacheData
     ) -> any DataRequest {
-
         request(requestBuilder, middleware: middleware, cachePolicy: cachePolicy)
     }
 
-    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional configuration.
+    /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional
+    /// configuration.
     ///
     /// - Parameters:
     ///   - url: A `URLConvertible` instance representing the endpoint for the request.
     ///   - method: The HTTP method for the request (default is `.get`).
     ///   - headers: Additional HTTP headers to be included in the request (default is `nil`).
-    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is executed (default is `nil`).
+    ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is
+    /// executed (default is `nil`).
     /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
     public func upload(_ data: Data, to url: URLConvertible, method: HTTPMethod = .post) -> any UploadRequest {
         upload(data, to: url, method: method, headers: nil, middleware: nil)
@@ -245,7 +258,6 @@ extension Session {
         with requestBuilder: RequestBuilder,
         middleware: RequestMiddleware? = nil
     ) -> any UploadRequest {
-
         upload(data, with: requestBuilder, middleware: middleware)
     }
 }

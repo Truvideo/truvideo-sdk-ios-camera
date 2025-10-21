@@ -124,12 +124,11 @@ public struct AsyncRemoteImage<Content: View>: View {
         @ViewBuilder content: @escaping (Image) -> I,
         @ViewBuilder placeholder: @escaping () -> P
     ) where Content == _ConditionalContent<I, P>, I: View, P: View {
-
         self.transaction = transaction
         self.url = url
         self.content = { phase in
             switch phase {
-            case .success(let image):
+            case let .success(image):
                 ViewBuilder.buildEither(first: content(image))
 
             default:
@@ -162,12 +161,11 @@ public struct AsyncRemoteImage<Content: View>: View {
         transaction: Transaction = Transaction(),
         @ViewBuilder placeholder: @escaping () -> P
     ) where Content == _ConditionalContent<Image, P>, P: View {
-
         self.transaction = transaction
         self.url = url
         self.content = { phase in
             switch phase {
-            case .success(let image):
+            case let .success(image):
                 ViewBuilder.buildEither(first: image)
 
             default:
@@ -202,12 +200,11 @@ public struct AsyncRemoteImage<Content: View>: View {
         placeholder: @autoclosure @escaping () -> P,
         @ViewBuilder content: @escaping (Image) -> I
     ) where Content == _ConditionalContent<I, P>, I: View, P: View {
-
         self.transaction = transaction
         self.url = url
         self.content = { phase in
             switch phase {
-            case .success(let image):
+            case let .success(image):
                 ViewBuilder.buildEither(first: content(image))
 
             default:
@@ -240,12 +237,11 @@ public struct AsyncRemoteImage<Content: View>: View {
         transaction: Transaction = Transaction(),
         placeholder: @autoclosure @escaping () -> P
     ) where Content == _ConditionalContent<Image, P>, P: View {
-
         self.transaction = transaction
         self.url = url
         self.content = { phase in
             switch phase {
-            case .success(let image):
+            case let .success(image):
                 ViewBuilder.buildEither(first: image)
 
             default:
@@ -267,7 +263,7 @@ public struct AsyncRemoteImage<Content: View>: View {
                 case .failure:
                     status = .failure
 
-                case .success(let result):
+                case let .success(result):
                     image = Image(uiImage: result.image)
                     status = .success
                 }

@@ -6,7 +6,6 @@ import AVFoundation
 import UIKit
 
 extension CameraViewModel {
-
     // MARK: - Private Computed Properties
 
     /// Determines whether more video clips can be recorded based on configuration limits.
@@ -116,8 +115,7 @@ extension CameraViewModel {
                     UIApplication.shared.isIdleTimerDisabled = true
 
                 case .paused where state.canTransition(to: .finished),
-                    .writing where state.canTransition(to: .finished):
-
+                     .writing where state.canTransition(to: .finished):
                     try await endRecording()
 
                 default:
@@ -166,7 +164,7 @@ extension CameraViewModel {
                         "devicePosition": .int(videoDevice.position.rawValue),
                         "duration": .double(movieOutputProcessor.recordingDuration.seconds),
                         "clipCount": .int(medias.lazy.filter(\.isClip).count),
-                        "zoomFactor": .double(zoomFactor),
+                        "zoomFactor": .double(zoomFactor)
                     ]
                 )
 
@@ -194,7 +192,7 @@ extension CameraViewModel {
                 "devicePosition": .int(videoDevice.position.rawValue),
                 "duration": .double(clip.duration),
                 "clipCount": .int(medias.lazy.filter(\.isClip).count + 1),
-                "zoomFactor": .double(zoomFactor),
+                "zoomFactor": .double(zoomFactor)
             ]
         )
 
@@ -232,7 +230,7 @@ extension CameraViewModel {
                 "devicePosition": .int(videoDevice.position.rawValue),
                 "duration": .double(movieOutputProcessor.recordingDuration.seconds),
                 "clipCount": .int(medias.lazy.filter(\.isClip).count),
-                "zoomFactor": .double(zoomFactor),
+                "zoomFactor": .double(zoomFactor)
             ]
         )
     }
@@ -253,7 +251,7 @@ extension CameraViewModel {
                 "zoomFactor": .double(zoomFactor),
                 "stabilizationMode": .int(videoDevice.stabilizationMode.rawValue),
                 "maxDuration": .double(configuration.mode.maxVideoDuration),
-                "isAudioAvailable": .bool(audioDevice.isAvailable),
+                "isAudioAvailable": .bool(audioDevice.isAvailable)
             ]
         )
     }
@@ -268,7 +266,7 @@ extension CameraViewModel {
                 "resolution": .string(selectedPreset.rawValue),
                 "duration": .double(movieOutputProcessor.recordingDuration.seconds),
                 "processorState": .string("\(movieOutputProcessor.state)"),
-                "isAudioAvailable": .bool(audioDevice.isAvailable),
+                "isAudioAvailable": .bool(audioDevice.isAvailable)
             ]
         )
     }

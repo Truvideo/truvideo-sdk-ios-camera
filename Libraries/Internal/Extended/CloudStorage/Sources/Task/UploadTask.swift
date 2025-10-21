@@ -246,28 +246,26 @@ public enum UploadTaskState: Sendable {
     func canTransition(to state: UploadTaskState) -> Bool {
         switch (self, state) {
         case (.initialized, _),
-            (.finishing, .finished),
-            (.finishing, .cancelled),
-            (.resumed, .cancelled),
-            (.resumed, .finishing),
-            (.resumed, .suspended),
-            (.suspended, .cancelled),
-            (.suspended, .finishing),
-            (.suspended, .resumed),
-            (_, .finished):
-
-            return true
+             (.finishing, .finished),
+             (.finishing, .cancelled),
+             (.resumed, .cancelled),
+             (.resumed, .finishing),
+             (.resumed, .suspended),
+             (.suspended, .cancelled),
+             (.suspended, .finishing),
+             (.suspended, .resumed),
+             (_, .finished):
+            true
 
         case (_, .initialized),
-            (.cancelled, _),
-            (.finished, _),
-            (.finishing, .finishing),
-            (.finishing, .resumed),
-            (.finishing, .suspended),
-            (.suspended, .suspended),
-            (.resumed, .resumed):
-
-            return false
+             (.cancelled, _),
+             (.finished, _),
+             (.finishing, .finishing),
+             (.finishing, .resumed),
+             (.finishing, .suspended),
+             (.suspended, .suspended),
+             (.resumed, .resumed):
+            false
         }
     }
 }

@@ -119,7 +119,6 @@ public struct Theme: Sendable {
         spacingTheme: SpacingTheme,
         textTheme: TextTheme
     ) {
-
         self.buttonTheme = buttonTheme
         self.colorScheme = colorScheme
         self.iconTheme = iconTheme

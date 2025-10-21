@@ -79,15 +79,16 @@ open class TelemetryManager: @unchecked Sendable {
     /// enrich, and forward telemetry data such as errors, events, and system changes.
     ///
     /// - Parameters:
-    ///   - breadcrumbsBuffer: An instance of `RingBuffer` used to collect recent event breadcrumbs that provide context for errors or telemetry events.
+    ///   - breadcrumbsBuffer: An instance of `RingBuffer` used to collect recent event breadcrumbs that provide context
+    /// for errors or telemetry events.
     ///   - eventsBuffer: An instane of `EventDiskBuffer` used to collect recent events.
-    ///   - integrations: A list of telemetry integrations conforming to `TelemetryIntegration`, responsible for hooking into various system events.
+    ///   - integrations: A list of telemetry integrations conforming to `TelemetryIntegration`, responsible for hooking
+    /// into various system events.
     init(
         breadcrumbsBuffer: RingBuffer<Breadcrumb>,
         eventsBuffer: EventDiskBuffer,
         integrations: [any TelemetryIntegration] = [AutoSessionTrackerIntegration(), SystemEventTrackerIntegration()]
     ) {
-
         self.breadcrumbsBuffer = breadcrumbsBuffer
         self.eventsBuffer = eventsBuffer
         self.integrations = integrations

@@ -4,8 +4,8 @@
 
 import DI
 import Foundation
-import Utilities
 import Testing
+import Utilities
 
 @testable import Telemetry
 
@@ -53,7 +53,7 @@ struct EventDiskBufferTests {
         #expect(events.isEmpty, "Expected buffer to be empty after flush")
         #expect(!buffer.isFull, "Expected buffer must not be full")
     }
-    
+
     @Test
     func testThatRehydrateRestoresPersistedEvents() async throws {
         try await withDependencyValues { dependencies in
@@ -65,17 +65,17 @@ struct EventDiskBufferTests {
                 severity: .warning,
                 source: "rehydrate_source"
             )
-            
+
             // When
             try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
             dependencies.fileWriter = fileWriter
-            
+
             let buffer = EventDiskBuffer(storageURL: tempDir)
             buffer.add(event)
-            
+
             let restoredBuffer = EventDiskBuffer(storageURL: tempDir)
             let events = restoredBuffer.snapshot()
-            
+
             // Then
             #expect(events.count == 1, "Expected one event after rehydration")
             #expect(events.first?.name == event.name, "Expected event name to match after rehydration")

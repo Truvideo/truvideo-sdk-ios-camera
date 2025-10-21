@@ -13,7 +13,8 @@ extension Metadata {
     /// This method serializes the dictionary into JSON using `JSONSerialization` and returns it
     /// as a UTF-8 encoded string. If the dictionary is empty or serialization fails, `nil` is returned.
     ///
-    /// - Returns: A compact JSON string representation of the dictionary, or `nil` if the dictionary is empty or serialization fails.
+    /// - Returns: A compact JSON string representation of the dictionary, or `nil` if the dictionary is empty or
+    /// serialization fails.
     func prettify() -> String? {
         guard !isEmpty else { return nil }
 
@@ -47,35 +48,33 @@ public enum MetadataValue: Sendable {
 }
 
 extension MetadataValue: CustomStringConvertible {
-
     // MARK: - CustomStringConvertible
 
     /// A textual representation of this instance.
     public var description: String {
         switch self {
-        case .array(let list):
-            return list.map(\.description).description
+        case let .array(list):
+            list.map(\.description).description
 
-        case .bool(let bool):
-            return bool.description
+        case let .bool(bool):
+            bool.description
 
-        case .dictionary(let dict):
-            return dict.mapValues(\.description).description
+        case let .dictionary(dict):
+            dict.mapValues(\.description).description
 
-        case .double(let double):
-            return double.description
+        case let .double(double):
+            double.description
 
-        case .int(let int):
-            return int.description
+        case let .int(int):
+            int.description
 
-        case .string(let str):
-            return str
+        case let .string(str):
+            str
         }
     }
 }
 
 extension MetadataValue: Decodable {
-
     // MARK: - Decodable
 
     /// Creates a new instance by decoding from the given decoder.
@@ -106,7 +105,6 @@ extension MetadataValue: Decodable {
 }
 
 extension MetadataValue: Encodable {
-
     // MARK: - Encodable
 
     /// Encodes this value into the given encoder.
@@ -120,29 +118,28 @@ extension MetadataValue: Encodable {
     /// - Parameter encoder: The encoder to write data to.
     public func encode(to encoder: any Encoder) throws {
         switch self {
-        case .array(let array):
+        case let .array(array):
             try array.encode(to: encoder)
 
-        case .bool(let bool):
+        case let .bool(bool):
             try bool.encode(to: encoder)
 
-        case .dictionary(let dictionary):
+        case let .dictionary(dictionary):
             try dictionary.encode(to: encoder)
 
-        case .double(let double):
+        case let .double(double):
             try double.encode(to: encoder)
 
-        case .int(let int):
+        case let .int(int):
             try int.encode(to: encoder)
 
-        case .string(let string):
+        case let .string(string):
             try string.encode(to: encoder)
         }
     }
 }
 
 extension MetadataValue: Equatable {
-
     // MARK: - Equatable
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -153,31 +150,30 @@ extension MetadataValue: Equatable {
     public static func == (lhs: Metadata.Value, rhs: Metadata.Value) -> Bool {
         switch (lhs, rhs) {
         case let (.array(lhs), .array(rhs)):
-            return lhs == rhs
+            lhs == rhs
 
         case let (.bool(lhs), .bool(rhs)):
-            return lhs == rhs
+            lhs == rhs
 
         case let (.dictionary(lhs), .dictionary(rhs)):
-            return lhs == rhs
+            lhs == rhs
 
         case let (.double(lhs), .double(rhs)):
-            return lhs == rhs
+            lhs == rhs
 
         case let (.int(lhs), .int(rhs)):
-            return lhs == rhs
+            lhs == rhs
 
         case let (.string(lhs), .string(rhs)):
-            return lhs == rhs
+            lhs == rhs
 
         default:
-            return false
+            false
         }
     }
 }
 
 extension MetadataValue: ExpressibleByArrayLiteral {
-
     // MARK: - ExpressibleByArrayLiteral
 
     /// Creates an instance initialized with the given array elements.
@@ -187,7 +183,6 @@ extension MetadataValue: ExpressibleByArrayLiteral {
 }
 
 extension MetadataValue: ExpressibleByBooleanLiteral {
-
     // MARK: - ExpressibleByBooleanLiteral
 
     /// Creates an instance initialized to the given Boolean value.
@@ -197,7 +192,6 @@ extension MetadataValue: ExpressibleByBooleanLiteral {
 }
 
 extension MetadataValue: ExpressibleByDictionaryLiteral {
-
     // MARK: - ExpressibleByDictionaryLiteral
 
     /// Creates an instance initialized with the given key-value pairs.
@@ -207,7 +201,6 @@ extension MetadataValue: ExpressibleByDictionaryLiteral {
 }
 
 extension MetadataValue: ExpressibleByFloatLiteral {
-
     // MARK: - ExpressibleByFloatLiteral
 
     /// Creates an instance initialized to the specified floating-point value.
@@ -217,7 +210,6 @@ extension MetadataValue: ExpressibleByFloatLiteral {
 }
 
 extension MetadataValue: ExpressibleByIntegerLiteral {
-
     // MARK: - ExpressibleByIntegerLiteral
 
     /// Creates an instance initialized to the specified integer value.
@@ -227,7 +219,6 @@ extension MetadataValue: ExpressibleByIntegerLiteral {
 }
 
 extension MetadataValue: ExpressibleByStringLiteral {
-
     // MARK: - ExpressibleByStringLiteral
 
     /// Creates an instance initialized to the given string value.

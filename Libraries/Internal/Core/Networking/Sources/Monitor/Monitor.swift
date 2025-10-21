@@ -6,11 +6,13 @@ import Foundation
 
 /// A protocol designed to monitor the lifecycle of network requests and URLSession tasks.
 ///
-/// `RequestMonitor` provides hooks for various stages of a network request's lifecycle, allowing developers to log, analyze,
+/// `RequestMonitor` provides hooks for various stages of a network request's lifecycle, allowing developers to log,
+/// analyze,
 /// or modify requests as needed. This includes monitoring task creation, validation, completion, failures, and retries.
 /// It also integrates with `URLSessionDelegate` methods for deeper network session tracking.
 ///
-/// Implementing this protocol allows you to build custom monitoring systems for network activity, such as logging tools,
+/// Implementing this protocol allows you to build custom monitoring systems for network activity, such as logging
+/// tools,
 /// performance trackers, or analytics modules.
 ///
 /// - Conforms to: `Sendable`
@@ -159,18 +161,20 @@ public protocol Monitor: Sendable {
     /// - Parameters:
     ///   - request: The `DataRequest` instance being parsed.
     ///   - response: The `Response` containing the parsed value or an error.
-    func request<Value: Sendable>(
+    func request(
         _ request: any DataRequest,
-        didParseResponse response: Response<Value, NetworkingError>
+        didParseResponse response: Response<some Sendable, NetworkingError>
     )
 
     // MARK: - UploadRequest Monitoring
 
-    /// Event called when an `UploadRequest` creates its `Uploadable` value, indicating the type of upload it represents.
+    /// Event called when an `UploadRequest` creates its `Uploadable` value, indicating the type of upload it
+    /// represents.
     ///
     /// - Parameters:
     ///   - request: The `UploadRequest` instance that created the uploadable.
-    ///   - uploadable: The `UploadRequest.Uploadable` value that was successfully created, representing the content to be uploaded.
+    ///   - uploadable: The `UploadRequest.Uploadable` value that was successfully created, representing the content to
+    /// be uploaded.
     func request(_ request: any UploadRequest, didCreateUploadable uploadable: HTTPURLUploadRequest.Uploadable)
 
     /// Event called when an `UploadRequest` failed to create its `Uploadable` value due to an error.
@@ -397,18 +401,20 @@ extension Monitor {
     /// - Parameters:
     ///   - request: The `DataRequest` instance being parsed.
     ///   - response: The `Response` containing the parsed value or an error.
-    public func request<Value: Sendable>(
+    public func request(
         _ request: any DataRequest,
-        didParseResponse response: Response<Value, NetworkingError>
+        didParseResponse response: Response<some Sendable, NetworkingError>
     ) {}
 
     // MARK: - UploadRequest Monitoring
 
-    /// Event called when an `UploadRequest` creates its `Uploadable` value, indicating the type of upload it represents.
+    /// Event called when an `UploadRequest` creates its `Uploadable` value, indicating the type of upload it
+    /// represents.
     ///
     /// - Parameters:
     ///   - request: The `UploadRequest` instance that created the uploadable.
-    ///   - uploadable: The `UploadRequest.Uploadable` value that was successfully created, representing the content to be uploaded.
+    ///   - uploadable: The `UploadRequest.Uploadable` value that was successfully created, representing the content to
+    /// be uploaded.
     public func request(
         _ request: any UploadRequest,
         didCreateUploadable uploadable: HTTPURLUploadRequest.Uploadable

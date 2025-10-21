@@ -43,7 +43,7 @@ public protocol WritableStorage: Sendable {
     ///
     /// - Parameter key: The type conforming to `StorageKey` whose value should be removed.
     /// - Throws: An error if the delete operation fails.
-    func deleteValue<Key: StorageKey>(for key: Key.Type) throws
+    func deleteValue(for key: (some StorageKey).Type) throws
 
     /// Writes the given value to the storage using the specified `StorageKey`.
     ///
