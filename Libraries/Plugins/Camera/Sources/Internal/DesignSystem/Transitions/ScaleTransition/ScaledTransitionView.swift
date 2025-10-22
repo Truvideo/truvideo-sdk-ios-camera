@@ -145,7 +145,6 @@ struct ScaledTransitionView<Content: View>: UIViewControllerRepresentable {
 
         controller.onDidAppear = { [weak controller] in
             guard let controller else { return }
-
             context.coordinator.parentDidAppear(controller)
         }
 

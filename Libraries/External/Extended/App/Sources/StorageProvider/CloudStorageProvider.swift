@@ -88,7 +88,7 @@ protocol CloudStorageProvider {
     /// including S3 bucket information, AWS identity pool settings, and regional configuration.
     /// The settings are used to configure the S3 storage instance when `makeStorage()` is called.
     var deviceSetting: DeviceSetting? { get set }
-    
+
     /// Creates and returns a cloud storage instance.
     ///
     /// This method is responsible for creating and configuring a `CloudStorage` instance

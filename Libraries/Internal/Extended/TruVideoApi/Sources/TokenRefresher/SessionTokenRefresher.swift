@@ -65,6 +65,10 @@ public protocol TokenRefresher: Sendable {
 /// environment configuration and session management, and uses an actor to ensure thread-safe
 /// token refresh operations.
 public actor SessionTokenRefresher: TokenRefresher {
+    // MARK: - Private methods
+
+    private let onSessionRenewed: (AuthSession) -> Void
+
     // MARK: - Dependencies
 
     @Dependency(\.environment)
@@ -85,9 +89,16 @@ public actor SessionTokenRefresher: TokenRefresher {
     /// If no session is provided, it defaults to an `HTTPURLSession` with a `SessionMonitor`
     /// for tracking network operations.
     ///
-    /// - Parameter session: The network session to use for token refresh requests. Defaults to a monitored HTTP
-    /// session.
-    public init(session: any Session = HTTPURLSession(monitors: [SessionMonitor()])) {
+    /// - Parameters:
+    ///    - session: The network session to use for token refresh requests. Defaults to a monitored HTTP session.
+    ///    - onSessionRenewed: A callback closure that will be called when the authentication session
+    ///                        is successfully renewed. This allows you to perform additional actions such as updating
+    ///                        UI state, logging events, or triggering other authentication-dependent operations.
+    public init(
+        session: any Session = HTTPURLSession(monitors: [SessionMonitor()]),
+        onSessionRenewed: @escaping (AuthSession) -> Void = { _ in }
+    ) {
+        self.onSessionRenewed = onSessionRenewed
         self.session = session
     }
 
@@ -125,8 +136,8 @@ public actor SessionTokenRefresher: TokenRefresher {
 
             let newSession = AuthSession(apiKey: authSession.apiKey, authToken: newToken)
             try sessionManager.set(newSession)
-        } catch let error as NetworkingError {
-            throw error.asUtilityError(or: .TruVideoApiErrorReason.refreshTokenFailed)
+
+            onSessionRenewed(newSession)
         } catch {
             throw UtilityError(kind: .TruVideoApiErrorReason.refreshTokenFailed, underlyingError: error)
         }

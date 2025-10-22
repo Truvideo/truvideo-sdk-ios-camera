@@ -15,8 +15,7 @@ extension ErrorReason {
     /// A collection of error reasons related to the device operations.
     ///
     /// The `CameraViewModelErrorReason` struct provides a set of static constants representing various errors that can
-    /// occur
-    /// during interactions with the external devices.
+    /// occur during interactions with the external devices.
     struct CameraViewModelErrorReason: Sendable {
         /// The app is not authorized to use the device.
         ///

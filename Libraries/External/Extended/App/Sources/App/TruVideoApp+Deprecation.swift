@@ -59,6 +59,7 @@ extension TruVideoApp {
         do {
             let context = Context()
             let jSONEncoder = JSONEncoder()
+
             jSONEncoder.outputFormatting = [.sortedKeys]
 
             let jsonData = try jSONEncoder.encode(context)

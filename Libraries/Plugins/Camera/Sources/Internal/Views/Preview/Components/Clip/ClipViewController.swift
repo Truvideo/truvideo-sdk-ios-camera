@@ -50,8 +50,8 @@ final class ClipViewController: UIViewController {
         super.viewDidLoad()
 
         let videoPlayerView = VideoPlayerView(player: player)
-
         let hostingController = UIHostingController(rootView: videoPlayerView)
+
         hostingController.view.translatesAutoresizingMaskIntoConstraints = false
 
         addChild(hostingController)

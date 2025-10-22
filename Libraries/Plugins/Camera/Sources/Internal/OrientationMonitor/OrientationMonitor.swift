@@ -75,6 +75,19 @@ protocol OrientationMonitorSubscriber: AnyObject {
 /// }
 /// ```
 protocol OrientationMonitor: AnyObject {
+    /// Represents the most recent known device orientation for a subscriber.
+    ///
+    /// This property reflects the current orientation state as detected or provided by
+    /// the `OrientationMonitor`. It serves as the reference orientation used to
+    /// calculate transitions, rotation angles, and visual adjustments when new
+    /// orientation updates are received.
+    ///
+    /// Implementations of this property should ensure it always reflects the
+    /// **last applied orientation**, whether derived from sensors, the system, or
+    /// manually set values. When a new `DeviceOrientationInfo` arrives, this value
+    /// should be updated before handling the rotation logic in `didReceive(_:)`.
+    var currentOrientation: DeviceOrientation { get }
+
     /// Registers a orientation monitor subscriber to receive `UIDeviceOrientation` events.
     ///
     /// - Parameter subscriber: An object conforming to `OrientationMonitorSubscriber`.
@@ -104,6 +117,21 @@ final class DeviceOrientationMonitor: OrientationMonitor {
     private var isRunning = false
     private var subscribers = NSHashTable<AnyObject>.weakObjects()
 
+    // MARK: - Properties
+
+    /// Represents the most recent known device orientation for a subscriber.
+    ///
+    /// This property reflects the current orientation state as detected or provided by
+    /// the `OrientationMonitor`. It serves as the reference orientation used to
+    /// calculate transitions, rotation angles, and visual adjustments when new
+    /// orientation updates are received.
+    ///
+    /// Implementations of this property should ensure it always reflects the
+    /// **last applied orientation**, whether derived from sensors, the system, or
+    /// manually set values. When a new `DeviceOrientationInfo` arrives, this value
+    /// should be updated before handling the rotation logic in `didReceive(_:)`.
+    var currentOrientation: DeviceOrientation = .unknown
+
     // MARK: - Initializer
 
     init() {
@@ -129,6 +157,7 @@ final class DeviceOrientationMonitor: OrientationMonitor {
 
             for subscriber in subscribers.allObjects {
                 if let subscriber = subscriber as? OrientationMonitorSubscriber {
+                    currentOrientation = deviceOrientation
                     subscriber.didReceive(deviceOrientation)
                 }
             }
@@ -148,6 +177,7 @@ final class DeviceOrientationMonitor: OrientationMonitor {
             if orientation.isSupported {
                 let deviceOrientation = DeviceOrientation(orientation: orientation, source: .system)
 
+                currentOrientation = deviceOrientation
                 subscriber.didReceive(deviceOrientation)
             }
         }
@@ -194,6 +224,23 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     private let notificationDelay: UInt64 = 700_000_000
     private let operationQueue = OperationQueue()
     private var subscribers = NSHashTable<AnyObject>.weakObjects()
+
+    // MARK: - Properties
+
+    /// Represents the most recent known device orientation for a subscriber.
+    ///
+    /// This property reflects the current orientation state as detected or provided by
+    /// the `OrientationMonitor`. It serves as the reference orientation used to
+    /// calculate transitions, rotation angles, and visual adjustments when new
+    /// orientation updates are received.
+    ///
+    /// Implementations of this property should ensure it always reflects the
+    /// **last applied orientation**, whether derived from sensors, the system, or
+    /// manually set values. When a new `DeviceOrientationInfo` arrives, this value
+    /// should be updated before handling the rotation logic in `didReceive(_:)`.
+    var currentOrientation: DeviceOrientation {
+        deviceOrientation.value
+    }
 
     // MARK: - Initializer
 

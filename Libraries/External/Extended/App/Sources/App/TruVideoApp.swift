@@ -244,6 +244,32 @@ public protocol TruVideoSDK {
     func isAuthenticationExpired() throws -> Bool
 }
 
+extension TruVideoSDK {
+    /// Configures the TruVideo SDK with the specified options.
+    ///
+    /// This method sets up the SDK with the provided configuration options including
+    /// API credentials, signing configuration, and other settings. Configuration
+    /// must be performed before any other SDK operations.
+    ///
+    /// ## Error Handling
+    ///
+    /// ```swift
+    /// do {
+    ///     try TruvideoSdk.configure()
+    /// } catch TruVideoSdkError.alreadyConfigured {
+    ///     // SDK already configured, continue normally
+    ///     print("SDK already configured")
+    /// } catch {
+    ///     // Handle other configuration errors
+    ///     print("Configuration failed: \(error)")
+    /// }
+    /// ```
+    /// - Throws: `TruVideoSdkError.alreadyConfigured` if the SDK has already been configured.
+    public func configure() {
+        TruvideoSdk.configure(with: TruVideoOptions())
+    }
+}
+
 /// The main implementation of the TruVideo SDK.
 ///
 /// This class provides the concrete implementation of the `TruVideoSDK` protocol,
@@ -311,6 +337,7 @@ final class TruVideoApp: TruVideoSDK {
     /// Creates a new instance of the `TruVideoApp`.
     ///
     ///  - Parameters:
+    ///     - cloudStorageProvider: A type that provides the custom implementation of the cloud storage client.
     ///     - legacyStorage: A type that defines the interface for storing authentication data in legacy storage
     /// systems.
     ///     - migrator: A type that defines the interface for performing data migrations.
@@ -379,31 +406,16 @@ final class TruVideoApp: TruVideoSDK {
             throw TruVideoSdkError.configurationRequired
         }
 
+        let context = Context()
+        let signature: String
+
         do {
-            let context = Context()
-            let signature = try await options.signer.sign(context, secretKey: secretKey)
-
-            try await authenticatableClient.authenticate(
-                apiKey: apiKey,
-                context: context.toContext(),
-                signature: signature,
-                externalId: externalId
-            )
-
-            if let currentSession = authenticatableClient.currentSession {
-                try legacyStorage.set(currentSession.authToken, apiKey: currentSession.apiKey)
-            }
-
-            retrieveDeviceSettings()
-        } catch let error as UtilityError {
-            throw TruVideoSdkError(
-                kind: .from(error.kind.rawValue),
-                errorDescription: error.errorDescription,
-                failureReason: error.failureReason
-            )
+            signature = try await options.signer.sign(context, secretKey: secretKey)
         } catch {
             throw TruVideoSdkError.authenticationFailed
         }
+
+        try await authenticate(apiKey: apiKey, context: context, signature: signature, externalId: externalId)
     }
 
     /// Performs client authentication using the given payload and signature.
@@ -420,34 +432,20 @@ final class TruVideoApp: TruVideoSDK {
             throw TruVideoSdkError.configurationRequired
         }
 
+        guard let jsonData = payload.data(using: .utf8) else {
+            throw TruVideoSdkError.authenticationFailed
+        }
+
+        let context: Context
+        let decoder = JSONDecoder()
+
         do {
-            guard let jsonData = payload.data(using: .utf8) else {
-                throw TruVideoSdkError.configurationRequired
-            }
-
-            let context = try JSONDecoder().decode(TruVideoApi.Context.self, from: jsonData)
-
-            try await authenticatableClient.authenticate(
-                apiKey: apiKey,
-                context: context,
-                signature: signature,
-                externalId: externalId
-            )
-
-            if let currentSession = authenticatableClient.currentSession {
-                try legacyStorage.set(currentSession.authToken, apiKey: currentSession.apiKey)
-            }
-
-            retrieveDeviceSettings()
-        } catch let error as UtilityError {
-            throw TruVideoSdkError(
-                kind: .from(error.kind.rawValue),
-                errorDescription: error.errorDescription,
-                failureReason: error.failureReason
-            )
+            context = try decoder.decode(Context.self, from: jsonData)
         } catch {
             throw TruVideoSdkError.authenticationFailed
         }
+
+        try await authenticate(apiKey: apiKey, context: context, signature: signature, externalId: externalId)
     }
 
     /// Configures the TruVideo SDK with the specified options.
@@ -476,11 +474,18 @@ final class TruVideoApp: TruVideoSDK {
         if !hasBeenConfigured {
             self.options = options
 
+            let sessionTokenRefresher = SessionTokenRefresher { [weak self] session in
+                try? self?.legacyStorage.set(session.authToken, apiKey: session.apiKey)
+            }
+
+            let sessionRequestRetrier = SessionRequestRetrier(tokenRefresher: sessionTokenRefresher)
+
             LibraryRegistry.configureAll()
-            DependencyValues.current.environment = .rc
+            DependencyValues.current.environment = .beta
+            DependencyValues.current.sessionManager = SecureSessionManager(secretKey: SDKSecretKey)
             DependencyValues.current.truVideoSession = HTTPURLSession(
                 cache: InMemoryURLCache(),
-                middleware: Middleware(interceptors: [AuthTokenInterceptor()], retriers: [SessionRequestRetrier()]),
+                middleware: Middleware(interceptors: [AuthTokenInterceptor()], retriers: [sessionRequestRetrier]),
                 monitors: [SessionMonitor()]
             )
 
@@ -527,6 +532,31 @@ final class TruVideoApp: TruVideoSDK {
     }
 
     // MARK: - Private methods
+
+    private func authenticate(apiKey: String, context: Context, signature: String, externalId: String?) async throws {
+        do {
+            try await authenticatableClient.authenticate(
+                apiKey: apiKey,
+                context: context.toContext(),
+                signature: signature,
+                externalId: externalId
+            )
+
+            if let currentSession = authenticatableClient.currentSession {
+                try legacyStorage.set(currentSession.authToken, apiKey: currentSession.apiKey)
+            }
+
+            retrieveDeviceSettings()
+        } catch let error as UtilityError {
+            throw TruVideoSdkError(
+                kind: .from(error.kind.rawValue),
+                errorDescription: error.errorDescription,
+                failureReason: error.failureReason
+            )
+        } catch {
+            throw TruVideoSdkError.authenticationFailed
+        }
+    }
 
     private func retrieveDeviceSettings() {
         if isAuthenticated {

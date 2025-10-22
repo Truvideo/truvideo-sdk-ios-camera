@@ -4,6 +4,7 @@
 
 import AVFoundation
 import Combine
+internal import DI
 import Foundation
 import UIKit
 internal import Utilities
@@ -36,6 +37,11 @@ class VideoDevice: NSObject, Device {
         .back: AVCaptureDevice.availableVideoDevices(for: .back),
         .front: AVCaptureDevice.availableVideoDevices(for: .front)
     ]
+
+    // MARK: - Dependencies
+
+    @Dependency(\.orientationMonitor)
+    private var orientationMonitor: OrientationMonitor
 
     // MARK: - Properties
 
@@ -430,7 +436,7 @@ class VideoDevice: NSObject, Device {
 
         guard state == .running else {
             let configuration = CapturePhotoController.Configuration(
-                deviceOrientation: videoOrientation,
+                deviceOrientation: AVCaptureVideoOrientation(from: orientationMonitor.currentOrientation.orientation),
                 devicePosition: position,
                 flashMode: flashMode,
                 imageFormat: configuration.imageFormat,

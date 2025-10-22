@@ -25,7 +25,7 @@ struct SessionDependencyKey: DependencyKey {
 /// mechanism used in the system. By default, this uses `KeychainStorage`.
 struct SessionManagerDependencyKey: DependencyKey {
     /// The default file-based storage used if none is explicitly provided.
-    static let defaultValue: any SessionManager = SessionManagerImpl()
+    static let defaultValue: any SessionManager = SecureSessionManager(secretKey: "")
 }
 
 extension DependencyValues {

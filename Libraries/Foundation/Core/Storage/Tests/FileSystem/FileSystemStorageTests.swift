@@ -8,14 +8,13 @@ import Testing
 @testable import StorageKit
 
 struct FileSystemStorageTests {
-    
     // MARK: - Tests
-    
+
     @Test
     func testThatSaveInformationShouldSucceed() async throws {
         // Given
         let sut = FileSystemStorage()
-        
+
         // When
         try sut.write("foo", forKey: StorageKeyMock.self)
         let storedValue = try sut.readValue(for: StorageKeyMock.self)
@@ -35,14 +34,14 @@ struct FileSystemStorageTests {
             _ = try sut.readValue(for: InvalidStorageKeyMock.self)
         } throws: { error in
             guard let storageError = error as? StorageError,
-                  case .readFailed(_) = storageError else {
+                  case .readFailed = storageError else {
                 return false
             }
-            
+
             return true
         }
     }
-    
+
     @Test
     func testThatReadValueShouldReturnNilWhenKeyNotFound() throws {
         // Given
@@ -55,7 +54,7 @@ struct FileSystemStorageTests {
         // Then
         #expect(value == nil)
     }
-    
+
     @Test
     func testThatDeleteInformationShouldRemoveStoredValue() throws {
         // Given
@@ -64,15 +63,15 @@ struct FileSystemStorageTests {
 
         // When
         try sut.write("foo-bar", forKey: StorageKeyMock.self)
-        results.append(try sut.readValue(for: StorageKeyMock.self) ?? "")
+        try results.append(sut.readValue(for: StorageKeyMock.self) ?? "")
 
         try sut.deleteValue(for: StorageKeyMock.self)
-        results.append(try sut.readValue(for: StorageKeyMock.self) ?? "")
+        try results.append(sut.readValue(for: StorageKeyMock.self) ?? "")
 
         // Then
         #expect(results == ["foo-bar", ""])
     }
-    
+
     @Test
     func testThatClearRemovesAllStoredValues() throws {
         // Given
@@ -86,7 +85,6 @@ struct FileSystemStorageTests {
         #expect(try sut.readValue(for: StorageKeyMock.self) == nil)
     }
 
-    
     @Test
     func testThatClearFailsWhenUnderlyingKeychainThrows() throws {
         // Given
@@ -97,15 +95,15 @@ struct FileSystemStorageTests {
             try sut.clear()
         } throws: { error in
             guard let storageError = error as? StorageError,
-                case .clearFailed = storageError
+                  case .clearFailed = storageError
             else {
                 return false
             }
-            
+
             return true
         }
     }
-    
+
     @Test
     func testThatDeleteFailsWhenUnderlyingKeychainThrows() throws {
         // Given
@@ -116,11 +114,11 @@ struct FileSystemStorageTests {
             try sut.deleteValue(for: StorageKeyMock.self)
         } throws: { error in
             guard let storageError = error as? StorageError,
-                case .deleteFailed = storageError
+                  case .deleteFailed = storageError
             else {
                 return false
             }
-            
+
             return true
         }
     }

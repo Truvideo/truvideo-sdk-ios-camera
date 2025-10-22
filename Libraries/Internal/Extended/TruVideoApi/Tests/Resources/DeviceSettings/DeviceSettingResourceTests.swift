@@ -7,6 +7,7 @@ import Foundation
 import Networking
 import NetworkingTesting
 import Testing
+import TruVideoApiTesting
 import Utilities
 
 @testable import TruVideoApi
@@ -19,7 +20,7 @@ struct DeviceSettingResourceTests {
     // MARK: - Tests
 
     @Test
-    func testThatRetrieveShouldSucceedWithValidSession() async throws {
+    func testThatRetrieveSucceedsWithValidSession() async throws {
         try await withDependencyValues { dependencyValues in
             // Given
             let dataRequest = DataRequestMock()
@@ -52,7 +53,7 @@ struct DeviceSettingResourceTests {
     }
 
     @Test
-    func testThatRetrieveShouldThrowUnauthenticatedErrorWhenNoSession() async throws {
+    func testThatRetrieveThrowsUnauthenticatedErrorWhenNoSession() async throws {
         await withDependencyValues { dependencyValues in
             // Given
             let dataRequest = DataRequestMock()
@@ -72,7 +73,7 @@ struct DeviceSettingResourceTests {
     }
 
     @Test
-    func testThatRetrieveShouldThrowDeviceSettingsRetrievalFailedOnRequestError() async throws {
+    func testThatRetrieveFailsOnRequestError() async throws {
         try await withDependencyValues { dependencyValues in
             // Given
             let dataRequest = DataRequestMock()
@@ -104,7 +105,7 @@ struct DeviceSettingResourceTests {
     }
 
     @Test
-    func testThatRetrieveShouldUseCorrectURLWithAuthTokenId() async throws {
+    func testThatRetrieveUsesCorrectURLWithAuthTokenId() async throws {
         try await withDependencyValues { dependencyValues in
             // Given
             let authSession = AuthSession.mock
@@ -136,7 +137,7 @@ struct DeviceSettingResourceTests {
     }
 
     @Test
-    func testThatRetrieveShouldUseGetMethod() async throws {
+    func testThatRetrieveUsesGetMethod() async throws {
         try await withDependencyValues { dependencyValues in
             // Given
             let dataRequest = DataRequestMock()
@@ -165,7 +166,7 @@ struct DeviceSettingResourceTests {
     }
 
     @Test
-    func testThatRetrieveShouldUseReturnCacheDataElseLoadPolicy() async throws {
+    func testThatRetrieveUsesReturnCacheDataElseLoadPolicy() async throws {
         try await withDependencyValues { dependencyValues in
             // Given
             let dataRequest = DataRequestMock()
@@ -195,7 +196,7 @@ struct DeviceSettingResourceTests {
     }
 
     @Test
-    func testThatRetrieveShouldValidateResponse() async throws {
+    func testThatRetrieveValidatesResponse() async throws {
         try await withDependencyValues { dependencyValues in
             // Given
             let authSession = AuthSession.mock
@@ -245,7 +246,7 @@ struct DeviceSettingResourceTests {
     }
 
     @Test
-    func testThatRetrieveShouldThrowResponseValidationFailedWhenValidationFails() async throws {
+    func testThatRetrieveThrowsResponseValidationFailedWhenValidationFails() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let authSession = AuthSession.mock
@@ -291,25 +292,5 @@ struct DeviceSettingResourceTests {
             // Then
             #expect(dataRequest.validateCallCount == 2)
         }
-    }
-}
-
-private extension DeviceSetting {
-    /// A mock instance of the device setting.
-    static var mock: DeviceSetting {
-        DeviceSetting(
-            isAutoPlayEnabled: true,
-            isNoseCancellingEnabled: false,
-            s3Configuration: DeviceSetting.S3Configuration(
-                bucketName: "test-bucket",
-                bucketForLogs: "logs",
-                bucketForMedia: "media",
-                identityId: "test-identity",
-                identityPoolId: "test-pool",
-                newBucketFolderForLogs: "new-logs",
-                newBucketFolderForMedia: "new-media",
-                region: "us-east-1"
-            )
-        )
     }
 }

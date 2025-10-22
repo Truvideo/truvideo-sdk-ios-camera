@@ -276,7 +276,8 @@ struct ImageExporter: ImageExporting, @unchecked Sendable {
 
         let properties: [CFString: Any] = [
             kCGImageDestinationLossyCompressionQuality: format.quality,
-            kCGImageDestinationOptimizeColorForSharing: true
+            kCGImageDestinationOptimizeColorForSharing: true,
+            kCGImagePropertyOrientation: 1
         ]
 
         CGImageDestinationAddImage(image, cgImage, properties as CFDictionary)

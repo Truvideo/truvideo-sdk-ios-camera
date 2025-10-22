@@ -5,8 +5,6 @@
 import DI
 import Foundation
 import InternalUtilities
-import Networking
-import NetworkingTesting
 import StorageKit
 import Testing
 import Utilities
@@ -17,7 +15,7 @@ struct SessionTokenRefresherTests {
     // MARK: - Tests
 
     @Test
-    func testThatSessionTokenRefresherShouldInitializes() async throws {
+    func testThatSessionTokenRefresherInitializesWithDefaultHTTPSession() async throws {
         // Given
         let sut = SessionTokenRefresher()
 
@@ -26,30 +24,36 @@ struct SessionTokenRefresherTests {
     }
 
     @Test
-    func testThatRefreshTokenUpdatesSessionWithNewOne() async throws {
+    func testThatRefreshTokenUpdatesSessionWithNewAuthToken() async throws {
         try await withDependencyValues { dependencies in
             // Given
+            var callbackInvoked = false
             let expiredSession = AuthSession.mock
             let dataRequest = DataRequestMock()
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
-            let sut = SessionTokenRefresher(session: session)
+            let sut = SessionTokenRefresher(session: session) { _ in
+                callbackInvoked = true
+            }
 
             // When
             dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
+
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(AuthToken.new),
+                result: .success(AuthToken.mock),
                 type: .networkLoad
             )
 
             try sessionManager.set(expiredSession)
+
             try await sut.refreshToken()
+
             let newSession = sessionManager.currentSession
 
             // Then
@@ -57,11 +61,12 @@ struct SessionTokenRefresherTests {
             #expect(newSession!.authToken.id != expiredSession.authToken.id)
             #expect(newSession!.authToken.accessToken != expiredSession.authToken.accessToken)
             #expect(newSession!.authToken.refreshToken != expiredSession.authToken.refreshToken)
+            #expect(callbackInvoked == true)
         }
     }
 
     @Test
-    func testThatRefreshTokenShouldUseCorrectHeathers() async throws {
+    func testThatRefreshTokenUsesCorrectAuthenticationHeaders() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let expiredSession = AuthSession.mock
@@ -73,13 +78,14 @@ struct SessionTokenRefresherTests {
             // When
             dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
+
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(AuthToken.new),
+                result: .success(AuthToken.mock),
                 type: .networkLoad
             )
 
@@ -93,7 +99,7 @@ struct SessionTokenRefresherTests {
     }
 
     @Test
-    func testThatAuthenticateShouldUseCorrectURL() async throws {
+    func testThatRefreshTokenUsesCorrectAuthenticationEndpoint() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let expiredSession = AuthSession.mock
@@ -105,13 +111,14 @@ struct SessionTokenRefresherTests {
             // When
             dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
+
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(AuthToken.new),
+                result: .success(AuthToken.mock),
                 type: .networkLoad
             )
 
@@ -125,7 +132,7 @@ struct SessionTokenRefresherTests {
     }
 
     @Test
-    func testThatAuthenticateShouldUsePostMethod() async throws {
+    func testThatRefreshTokenUsesPostHTTPMethod() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let expiredSession = AuthSession.mock
@@ -137,13 +144,14 @@ struct SessionTokenRefresherTests {
             // When
             dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
+
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(AuthToken.new),
+                result: .success(AuthToken.mock),
                 type: .networkLoad
             )
 
@@ -156,7 +164,7 @@ struct SessionTokenRefresherTests {
     }
 
     @Test
-    func testThatRefreshTokenValidateResponse() async throws {
+    func testThatRefreshTokenValidatesResponseAndThrowsErrorOnFailure() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let expiredSession = AuthSession.mock
@@ -164,7 +172,6 @@ struct SessionTokenRefresherTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let sut = SessionTokenRefresher(session: session)
-
             let data = """
             {
                 "id": "c263c628-5fd5-41b2-ae72-4c0f87ce5c8d",
@@ -172,6 +179,7 @@ struct SessionTokenRefresherTests {
                 "refreshToken": "test-refresh-token"
             }
             """.data(using: .utf8)!
+
             let response = HTTPURLResponse(
                 url: URL(string: "https://beta.truvideo.com/api/authenticate/exchange")!,
                 statusCode: 200,
@@ -182,15 +190,17 @@ struct SessionTokenRefresherTests {
             // When
             dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
+
             session.dataRequest = dataRequest
             dataRequest.data = data
+
             dataRequest.response = response
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(AuthToken.new),
+                result: .failure(NetworkingError(kind: .unknown, failureReason: "failureReason")),
                 type: .networkLoad
             )
 
@@ -208,7 +218,7 @@ struct SessionTokenRefresherTests {
     }
 
     @Test
-    func testThatRefreshTokenShouldThrowResponseValidationFailedWhenValidationFails() async throws {
+    func testThatRefreshTokenThrowsRefreshTokenFailedWhenResponseValidationFails() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let expiredSession = AuthSession.mock
@@ -216,7 +226,6 @@ struct SessionTokenRefresherTests {
             let session = SessionMock()
             let sessionManager = SessionManagerMock()
             let sut = SessionTokenRefresher(session: session)
-
             let data = """
             {
                 "type": "about:blank",
@@ -227,6 +236,7 @@ struct SessionTokenRefresherTests {
                 "instance": "/api/authenticate/exchange"
             }
             """.data(using: .utf8)!
+
             let response = HTTPURLResponse(
                 url: URL(string: "https://beta.truvideo.com/api/authenticate/exchange")!,
                 statusCode: 415,
@@ -237,15 +247,17 @@ struct SessionTokenRefresherTests {
             // When
             dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
+
             session.dataRequest = dataRequest
             dataRequest.data = data
+
             dataRequest.response = response
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(AuthToken.new),
+                result: .failure(NetworkingError(kind: .unknown, failureReason: "failureReason")),
                 type: .networkLoad
             )
 
@@ -263,7 +275,7 @@ struct SessionTokenRefresherTests {
     }
 
     @Test
-    func testThatRefreshTokenShouldThrowRefreshTokenFailedWhenSessionNotFound() async throws {
+    func testThatRefreshTokenThrowsRefreshTokenFailedWhenNoSessionExists() async throws {
         await withDependencyValues { dependencies in
             // Given
             let session = SessionMock()
@@ -289,7 +301,7 @@ struct SessionTokenRefresherTests {
     }
 
     @Test
-    func testThatRefreshTokenShouldFailToSaveTheNewSessionInTheStorage() async throws {
+    func testThatRefreshTokenThrowsRefreshTokenFailedWhenSessionStorageFails() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let expiredSession = AuthSession.mock
@@ -301,13 +313,14 @@ struct SessionTokenRefresherTests {
             // When
             dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
+
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(AuthToken.new),
+                result: .success(AuthToken.mock),
                 type: .networkLoad
             )
 
@@ -328,7 +341,7 @@ struct SessionTokenRefresherTests {
     }
 
     @Test
-    func testThatRefreshTokenShouldThrowRefreshTokenFailedOnRequestError() async throws {
+    func testThatRefreshTokenThrowsRefreshTokenFailedWhenNetworkRequestFails() async throws {
         try await withDependencyValues { dependencies in
             // Given
             let expiredSession = AuthSession.mock
@@ -344,6 +357,7 @@ struct SessionTokenRefresherTests {
             // When
             dependencies.environment = .dev
             dependencies.sessionManager = sessionManager
+
             session.dataRequest = dataRequest
             dataRequest.mockResponse = Response<AuthToken, NetworkingError>(
                 data: Data(),

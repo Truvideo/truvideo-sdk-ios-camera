@@ -13,6 +13,9 @@ public struct DeviceSetting: Codable, Sendable {
     /// Indicates whether auto play is enabled for the device.
     public let isAutoPlayEnabled: Bool
 
+    /// A boolean indicating whether the camera module is active.
+    public let isCameraModuleEnabled: Bool
+
     /// Indicates whether noise cancellation is enabled for the device.
     public let isNoseCancellingEnabled: Bool
 
@@ -105,6 +108,7 @@ public struct DeviceSetting: Codable, Sendable {
     /// Allowable keys for the model.
     enum CodingKeys: String, CodingKey {
         case isAutoPlayEnabled = "enabledAutoPlay"
+        case isCameraModuleEnabled = "cameraModule"
         case isNoseCancellingEnabled = "noiseCancelling"
         case s3Configuration = "credentials"
     }
@@ -115,10 +119,17 @@ public struct DeviceSetting: Codable, Sendable {
     ///
     /// - Parameters:
     ///   - isAutoPlayEnabled: Indicates whether auto play is enabled for the device.
+    ///   - isCameraModuleEnabled: A boolean indicating whether the camera module is active.
     ///   - isNoseCancellingEnabled: Indicates whether noise cancellation is enabled for the device.
     ///   - s3Configuration: AWS S3 storage configuration for the device.
-    public init(isAutoPlayEnabled: Bool, isNoseCancellingEnabled: Bool, s3Configuration: S3Configuration) {
+    public init(
+        isAutoPlayEnabled: Bool,
+        isCameraModuleEnabled: Bool,
+        isNoseCancellingEnabled: Bool,
+        s3Configuration: S3Configuration
+    ) {
         self.isAutoPlayEnabled = isAutoPlayEnabled
+        self.isCameraModuleEnabled = isCameraModuleEnabled
         self.isNoseCancellingEnabled = isNoseCancellingEnabled
         self.s3Configuration = s3Configuration
     }

@@ -8,7 +8,7 @@ import Foundation
 
 extension AuthToken {
     /// Returns a mock instance `AuthToken`.
-    static var new: AuthToken {
+    static var mock: AuthToken {
         AuthToken(
             id: UUID(uuidString: "c263c628-5fd5-41b2-ae72-4c0f87ce5c8d")!,
             accessToken: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjMjYzYzYyOC01ZmQ1LTQxYjItYWU3Mi00YzBmODdjZTVjOGQiLCJzdWJBY2NvdW50RXh0ZXJuYWxJZCI6IjQyIiwiYXV0aCI6IkRFVklDRSIsIm9yaWdpbiI6IkRFRkFVTFQiLCJzYW5kYm94Ijp0cnVlLCJwcm9jZWR1cmUiOiJOT05FIiwiZGV2aWNlSWQiOiJjMjYzYzYyOC01ZmQ1LTQxYjItYWU3Mi00YzBmODdjZTVjOGQiLCJhY2NvdW50SWQiOiI1MTdhYjc1ZC05ZWJkLTRjNDEtYTZlMC0zNWE2NDM3ODlkMDQiLCJlbnZpcm9ubWVudCI6ImJldGEiLCJzdWJBY2NvdW50SWQiOiJkYTc1YjU3NC0zZWY0LTExZWYtYjIzNC0wNjYwYzM3MDY2MzciLCJleHAiOjE3NTM2NzM0MjMsImlhdCI6MTc1MzU4NzAyM30.aip2n59FE4qrbvJGmZko2DackzCmq_oQ_HLOFyoRHXs",

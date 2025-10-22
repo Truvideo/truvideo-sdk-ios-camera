@@ -53,6 +53,7 @@ public final class DeviceSettingsResourceMock: DeviceSettingsResource, @unchecke
 
         return DeviceSetting(
             isAutoPlayEnabled: true,
+            isCameraModuleEnabled: true,
             isNoseCancellingEnabled: false,
             s3Configuration: DeviceSetting.S3Configuration(
                 bucketName: "mock-bucket",

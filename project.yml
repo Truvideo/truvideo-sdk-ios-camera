@@ -744,6 +744,7 @@ targets:
       - target: Utilities
       - target: DI
       - target: TruVideoApi
+      - target: TruVideoApiTesting
       - package: KeychainAccess
     settings:
       GENERATE_INFOPLIST_FILE: YES

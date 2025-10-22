@@ -26,7 +26,7 @@ struct TruVideoAppTests {
     }
 
     // MARK: - Tests
-    
+
     @Test
     func testThatRetrieveDeviceSettingsIsCalledWhenPathMonitorBecomesSatisfied() async throws {
         try await withDependencyValues { dependencies in
@@ -34,15 +34,15 @@ struct TruVideoAppTests {
             let pathMonitor = NetworkPathMonitorMock(initialPath: .init(status: .unsatisfied))
             let deviceSettingResource = DeviceSettingsResourceMock()
             let sut = TruVideoApp(pathMonitor: pathMonitor)
-            
+
             // When, Then
             dependencies.deviceSettingResource = deviceSettingResource
             sut.configure(with: TruVideoOptions(signer: SignerMock()))
-            
+
             let newPath = NetworkPathMock(status: .satisfied)
             pathMonitor.path = newPath
             pathMonitor.pathUpdateHandler?(newPath)
-            
+
             try await Task.sleep(nanoseconds: 500_000)
 
             // Then
@@ -177,6 +177,7 @@ struct TruVideoAppTests {
             dependencies.deviceSettingResource = deviceSettingResource
             cloudStorageProvider.deviceSetting = DeviceSetting(
                 isAutoPlayEnabled: true,
+                isCameraModuleEnabled: true,
                 isNoseCancellingEnabled: false,
                 s3Configuration: DeviceSetting.S3Configuration(
                     bucketName: "mock-bucket",
@@ -189,7 +190,7 @@ struct TruVideoAppTests {
                     region: "us-east-1"
                 )
             )
-            
+
             sut.configure(with: TruVideoOptions(signer: SignerMock()))
 
             try await sut.authenticate(apiKey: "VS2SG9WK", secretKey: "ST2K33GR", externalId: nil)
@@ -204,7 +205,7 @@ struct TruVideoAppTests {
     }
 
     @Test
-    func testThatAuthenticationShouldFailWhenIsNotConfigured() async throws {
+    func testThatAuthenticateWithPayloadThrowsConfigurationRequiredErrorWhenNotConfigured() async throws {
         await withDependencyValues { dependencies in
             // Given
             let authenticatableClient = AuthenticatableClientMock()
@@ -236,7 +237,7 @@ struct TruVideoAppTests {
     }
 
     @Test
-    func testThatAuthenticationShouldFailWhenClientFailsWithUtilityError() async throws {
+    func testThatAuthenticateWithPayloadThrowsAuthenticationFailedErrorWhenClientFails() async throws {
         await withDependencyValues { dependencies in
             // Given
             let authenticatableClient = AuthenticatableClientMock()
@@ -268,7 +269,7 @@ struct TruVideoAppTests {
     }
 
     @Test
-    func testThatAuthenticationShouldFailWhenSignerFails() async throws {
+    func testThatAuthenticateWithPayloadThrowsAuthenticationFailedErrorWhenSignerFails() async throws {
         await withDependencyValues { dependencies in
             // Given
             let authenticatableClient = AuthenticatableClientMock()

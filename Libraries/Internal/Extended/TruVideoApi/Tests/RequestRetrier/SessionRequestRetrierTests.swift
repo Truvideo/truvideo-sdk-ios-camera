@@ -141,7 +141,7 @@ struct SessionRequestRetrierTests {
                 metrics: nil,
                 request: nil,
                 response: nil,
-                result: .success(AuthToken.new),
+                result: .success(AuthToken.mock),
                 type: .networkLoad
             )
 

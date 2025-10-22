@@ -6,6 +6,7 @@ import CloudStorageKit
 import Foundation
 import Testing
 import TruVideoApi
+import TruVideoApiTesting
 import Utilities
 
 @testable import TruvideoSdk
@@ -15,6 +16,7 @@ struct CloudStorageProviderTests {
 
     private let deviceSettings = DeviceSetting(
         isAutoPlayEnabled: true,
+        isCameraModuleEnabled: true,
         isNoseCancellingEnabled: false,
         s3Configuration: DeviceSetting.S3Configuration(
             bucketName: "test-bucket",
@@ -49,8 +51,12 @@ struct CloudStorageProviderTests {
         let sut = S3CloudStorageProvider()
 
         // When
-        sut.deviceSetting = deviceSettings
+        sut.deviceSetting = DeviceSetting.mock
+
         let first = try sut.makeStorage()
+
+        sut.deviceSetting = nil
+
         let second = try sut.makeStorage()
 
         // Then

@@ -475,15 +475,46 @@ struct AuthenticatableClientTests {
             }
         }
     }
-}
 
-private extension AuthToken {
-    /// A mock instance of the device setting.
-    static var mock: AuthToken {
-        AuthToken(
-            id: UUID(),
-            accessToken: "test-access-token",
-            refreshToken: "test-refresh-token"
-        )
+    @Test
+    func testThatSignOutShouldClearTheCurrentSession() async throws {
+        try await withDependencyValues { dependencies in
+            // Given
+            let session = SessionMock()
+            let sessionManager = SessionManagerMock()
+            let sut = AuthenticationClient(session: session)
+
+            // When
+            try sessionManager.set(AuthSession.mock)
+            dependencies.sessionManager = sessionManager
+
+            try sut.signOut()
+
+            // Then
+            #expect(sessionManager.currentSession == nil)
+        }
+    }
+
+    @Test
+    func testThatSignOutShouldThrownAnErrorWhenDeletingTheSessionFails() async throws {
+        try await withDependencyValues { dependencies in
+            // Given
+            let session = SessionMock()
+            let sessionManager = SessionManagerMock()
+            let sut = AuthenticationClient(session: session)
+
+            // When
+            try sessionManager.set(AuthSession.mock)
+            sessionManager.error = NSError(domain: "", code: 0)
+
+            dependencies.sessionManager = sessionManager
+
+            // Then
+            #expect {
+                try sut.signOut()
+            } throws: { error in
+                (error as? UtilityError)?.kind == .TruVideoApiErrorReason.signOutFailed
+            }
+        }
     }
 }
