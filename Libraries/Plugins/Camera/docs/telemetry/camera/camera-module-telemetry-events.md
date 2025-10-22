@@ -42,6 +42,7 @@ See [Global Screen View & Breadcrumb Events](./screen-view.md) for details.
 | Event Name | Severity | Message | Metadata |
 | ---------- | -------- | ------- | -------- |
 | `video_recording_failed` | ![Error](https://img.shields.io/badge/Error-red) | Video recording failed | **devicePosition**, **resolution**, **duration**, **processorState**, **isAudioAvailable** |
+| `camera_torch_error_during_recording` | ![Error](https://img.shields.io/badge/Error-red) | Torch error while recording | **hasTorch**, **isTorchAvailable**, **flashMode** |
 
 ---
 
@@ -132,6 +133,7 @@ Below is a reference of all metadata fields captured across Camera Module teleme
 - **errorCode** → Numeric AVError code (e.g., `-11819`).  
 - **flashMode** → Flash setting during capture as string (e.g., `"on"`, `"off"`, `"auto"`).  
 - **focusPoint** → Normalized coordinates as string where user tapped to focus (e.g., `"(0.5, 0.5)"`).  
+- **hasTorch** → Boolean indicating if the active capture device physically supports a torch.  
 - **imageFormat** → Image format setting as string (e.g., `"jpeg"`, `"heif"`).  
 - **isAudioAvailable** → Boolean indicating if microphone is available.  
 - **isHighResolutionEnabled** → Boolean indicating if high resolution photo capture is enabled.  

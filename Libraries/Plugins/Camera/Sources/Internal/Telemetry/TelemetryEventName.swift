@@ -62,6 +62,13 @@ struct TelemetryEventName: RawRepresentable {
     /// Captured when the camera capture session receives a runtime error.
     /// Includes status code, error details, device information, and recording state.
     static let cameraRuntimeError = TelemetryEventName(rawValue: "camera_runtime_error")
+    
+    /// Event name for torch-related errors occurring during video recording.
+    ///
+    /// Captured when the camera fails to configure or update the torch (flash) state
+    /// while a video recording session is active. This event provides diagnostic context
+    /// such as device capabilities, torch availability, and current zoom factor.
+    static let cameraTorchErrorDuringRecording = TelemetryEventName(rawValue: "camera_torch_error_during_recording")
 
     /// Event name for camera switch failures.
     ///

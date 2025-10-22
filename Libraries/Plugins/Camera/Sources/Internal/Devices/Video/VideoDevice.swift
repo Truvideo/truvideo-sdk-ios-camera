@@ -6,6 +6,7 @@ import AVFoundation
 import Combine
 internal import DI
 import Foundation
+internal import Telemetry
 import UIKit
 internal import Utilities
 
@@ -246,6 +247,11 @@ class VideoDevice: NSObject, Device {
     /// can use this notification to show loading indicators, disable UI elements,
     /// or perform any necessary pre-position-change operations.
     nonisolated static let deviceWillChangePosition = Notification.Name("com.truvideo.deviceWillChangePosition")
+    
+    // MARK: - Dependencies
+
+    @Dependency(\.telemetryManager)
+    var telemetryManager: TelemetryManager
 
     // MARK: - Initializer
 
@@ -348,16 +354,23 @@ class VideoDevice: NSObject, Device {
     @DeviceActor
     func pause() {
         if state.canTransition(to: .paused) {
-            do {
-                if let captureDevice, captureDevice.torchMode != .off, captureDevice.isTorchAvailable {
+            if let captureDevice, captureDevice.torchMode != .off, captureDevice.isTorchAvailable {
+                do {
                     try captureDevice.lockForConfiguration()
                     defer { captureDevice.unlockForConfiguration() }
 
                     captureDevice.torchMode = .off
+                } catch {
+                    telemetryManager.captureError(
+                        error,
+                        name: .cameraTorchErrorDuringRecording,
+                        metadata: [
+                            "hasTorch": .bool(captureDevice.hasTorch),
+                            "isTorchAvailable": .bool(captureDevice.isTorchAvailable),
+                            "flashMode": .string("\(captureDevice.torchMode.rawValue)"),
+                        ]
+                    )
                 }
-            } catch {
-                // Log should be added here
-                print(error)
             }
 
             state = .paused
