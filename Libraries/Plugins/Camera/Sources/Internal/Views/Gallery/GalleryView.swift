@@ -18,12 +18,18 @@ struct GalleryView: View {
     @Environment(\.theme)
     var theme
 
+    // MARK: - Computed Properties
+
+    private var size: CGSize {
+        UIDevice.current.isPad ? CGSize(theme.sizeTheme.xl) : CGSize(theme.sizeTheme.lg)
+    }
+
     // MARK: - Body
 
     var body: some View {
         VStack(alignment: .leading) {
             CircleButton {
-                Icon(icon: DSIcons.xmark, size: CGSize(theme.sizeTheme.lg))
+                Icon(icon: DSIcons.xmark, size: size)
             } action: {
                 isPresented.toggle()
             }

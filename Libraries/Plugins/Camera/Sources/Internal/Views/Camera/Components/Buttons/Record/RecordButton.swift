@@ -43,7 +43,7 @@ struct RecordButton: View {
     }
 
     var size: Double {
-        theme.sizeTheme.x(18.5)
+        UIDevice.current.isPad ? theme.sizeTheme.x(20) : theme.sizeTheme.x(18.5)
     }
 
     // MARK: - Body

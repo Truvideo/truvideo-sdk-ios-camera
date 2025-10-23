@@ -106,7 +106,7 @@ struct ZoomPicker: View {
         )
         .background(theme.colorScheme.surfaceContainer.opacity(0.4))
         .mask(
-            RoundedRectangle(cornerRadius: theme.radiusTheme.xxl)
+            RoundedRectangle(cornerRadius: UIDevice.current.isPad ? theme.radiusTheme.x(7) : theme.radiusTheme.xxl)
                 .frame(maxWidth: maxSizeForAnimatableMask.width, maxHeight: maxSizeForAnimatableMask.height)
                 .animation(.interpolatingSpring(mass: 1, stiffness: 200, damping: 22), value: binding.wrappedValue)
         )
@@ -158,8 +158,12 @@ private struct Chip: View {
 
     // MARK: - Computed Properties
 
-    var foregroundColor: Color {
+    private var foregroundColor: Color {
         isSelected ? theme.colorScheme.tertiary : theme.colorScheme.onPrimary
+    }
+
+    private var textStyle: TextStyle {
+        UIDevice.current.isPad ? theme.textTheme.title3 : theme.textTheme.footnote
     }
 
     // MARK: - Body
@@ -167,11 +171,10 @@ private struct Chip: View {
     var body: some View {
         HStack(spacing: 0) {
             Text(label)
-                .foregroundColor(foregroundColor)
 
             Text("×")
-                .style(theme.textTheme.footnote.copyWith(color: foregroundColor))
         }
+        .textStyle(textStyle.copyWith(color: foregroundColor))
         .rotationEffect(rotationAngle)
         .frame(width: theme.sizeTheme.x(11), height: theme.sizeTheme.x(11))
         .monospacedDigit()

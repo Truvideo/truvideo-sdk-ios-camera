@@ -51,9 +51,9 @@ struct CameraIpad: View {
                     .padding(.leading, theme.spacingTheme.md)
             }
             .overlay(alignment: .topLeading) {
-                TopBar()
-                    .padding(.leading, theme.spacingTheme.xxl)
-                    .padding(.top, theme.spacingTheme.xxxxxl)
+                CloseButton()
+                    .padding(.leading, theme.spacingTheme.md)
+                    .padding(.top, theme.spacingTheme.x(6.5))
             }
             .overlay(alignment: .topTrailing, content: makeContinueButton)
             .overlay {
@@ -105,8 +105,11 @@ private struct ToolBar: View {
         VStack(spacing: theme.spacingTheme.md) {
             TorchButton()
             CircleButton {
-                Icon(icon: DSIcons.cameraTrianglehead)
-                    .padding(theme.spacingTheme.sm)
+                Icon(
+                    icon: DSIcons.cameraTrianglehead,
+                    size: CGSize(width: theme.sizeTheme.xl, height: theme.sizeTheme.lg)
+                )
+                .padding(theme.spacingTheme.sm)
             } action: {
                 viewModel.switchCamera()
             }
@@ -116,7 +119,7 @@ private struct ToolBar: View {
             CircleButton {
                 Icon(
                     icon: viewModel.state == .paused ? DSIcons.play : DSIcons.pause,
-                    size: CGSize(theme.sizeTheme.x(3.5))
+                    size: CGSize(theme.sizeTheme.lg)
                 )
                 .padding(theme.spacingTheme.sm)
             } action: {
@@ -127,8 +130,11 @@ private struct ToolBar: View {
 
             RecordButton()
             CircleButton {
-                Icon(icon: DSIcons.camera)
-                    .padding(theme.spacingTheme.sm)
+                Icon(
+                    icon: DSIcons.camera,
+                    size: CGSize(width: theme.sizeTheme.xl, height: theme.sizeTheme.lg)
+                )
+                .padding(theme.spacingTheme.sm)
             } action: {
                 viewModel.capturePhoto()
             }
@@ -140,7 +146,7 @@ private struct ToolBar: View {
     }
 }
 
-private struct TopBar: View {
+private struct CloseButton: View {
     // MARK: - Environment Properties
 
     @Environment(\.theme)
@@ -159,7 +165,7 @@ private struct TopBar: View {
     var body: some View {
         HStack(spacing: theme.spacingTheme.sm) {
             CircleButton {
-                Icon(icon: DSIcons.xmark, size: CGSize(theme.sizeTheme.lg))
+                Icon(icon: DSIcons.xmark, size: CGSize(theme.sizeTheme.xl))
             } action: {
                 viewModel.onDismiss()
             }

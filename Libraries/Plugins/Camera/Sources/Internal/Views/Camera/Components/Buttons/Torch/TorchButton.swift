@@ -22,6 +22,12 @@ struct TorchButton: View {
 
     @EnvironmentObject var viewModel: CameraViewModel
 
+    // MARK: - Computed Properties
+
+    private var buttonSize: CGFloat {
+        UIDevice.current.isPad ? theme.sizeTheme.xl : theme.sizeTheme.x(4.5)
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -29,7 +35,7 @@ struct TorchButton: View {
             Icon(
                 icon: viewModel.isTorchEnabled ? DSIcons.boltFill : DSIcons.boltSlashFill,
                 color: viewModel.isTorchEnabled ? theme.colorScheme.surface : theme.colorScheme.onSurface,
-                size: CGSize(theme.sizeTheme.x(4.5))
+                size: CGSize(buttonSize)
             )
             .if(UIDevice.current.isPad) { view in
                 view.padding(theme.spacingTheme.xs)

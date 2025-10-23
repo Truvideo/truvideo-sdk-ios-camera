@@ -24,7 +24,7 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
     /// This constant defines the default dimension (44 points) applied to masks
     /// when determining their width or height in collapsed states.
     /// It serves as the minimum or fixed size whenever the mask is not expanded.
-    let size: CGFloat = 44
+    let size: CGFloat = UIDevice.current.isPad ? 55 : 44
 
     // MARK: - Published Properties
 

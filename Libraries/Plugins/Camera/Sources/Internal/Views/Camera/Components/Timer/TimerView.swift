@@ -30,7 +30,15 @@ struct TimerView: View {
     // MARK: - Computed Properties
 
     var fillColor: Color {
-        isSelected ? theme.colorScheme.error.opacity(0.8) : .clear
+        guard isSelected else {
+            return UIDevice.current.isPad ? theme.colorScheme.surface.opacity(0.6) : .clear
+        }
+
+        return theme.colorScheme.error.opacity(0.8)
+    }
+
+    var textStyle: TextStyle {
+        UIDevice.current.isPad ? theme.textTheme.title2 : theme.textTheme.callout
     }
 
     // MARK: - Body
@@ -38,7 +46,7 @@ struct TimerView: View {
     var body: some View {
         ZStack {
             Text(secondsRecorded)
-                .style(theme.textTheme.callout.copyWith(color: theme.colorScheme.onSurface))
+                .style(textStyle.copyWith(color: theme.colorScheme.onSurface))
                 .padding(.horizontal, theme.spacingTheme.sm)
                 .padding(.vertical, theme.spacingTheme.xs)
                 .background {
