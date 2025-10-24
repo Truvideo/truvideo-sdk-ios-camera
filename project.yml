@@ -21,6 +21,24 @@ packages:
     url: https://github.com/Truvideo/truvideo-sdk-ios-video-utils
     exactVersion: 0.0.3
 
+targetTemplates:
+  cameraExampleDeps:
+    dependencies:
+      - target: TruvideoSdkCamera
+        embed: true
+      - target: TruvideoSdk
+        embed: true
+      - package: TruvideoSdkVideoUtils
+        product: TruvideoSdkVideoUtils
+      - package: Common
+        product: Common
+      - package: AWSS3
+        product: AWSS3
+      - package: AWSS3
+        product: AWSCore
+      - package: AWSS3
+        product: AWSCognitoIdentityProvider
+
 targets:
   # Foundation Core (Low-level infrastructure)
   DI:
@@ -959,6 +977,37 @@ targets:
     settings:
       GENERATE_INFOPLIST_FILE: YES
 
+  CameraObjectiveCExample:
+    type: application
+    platform: iOS
+    templates:
+      - cameraExampleDeps
+    settings:
+      IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+      PRODUCT_BUNDLE_IDENTIFIER: com.truvideo.sdk.camera.objc.example
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: 83D7RPYBY6
+    sources:
+      - path: Libraries/Plugins/Example/CameraObjectiveCExample
+        excludes:
+          - README.md
+      - path: Libraries/Plugins/Example/Shared
+  CameraSwiftUIExample:
+    type: application
+    platform: iOS
+    templates:
+      - cameraExampleDeps
+    settings:
+      IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+      PRODUCT_BUNDLE_IDENTIFIER: com.truvideo.sdk.camera.swiftui.example
+      CODE_SIGN_STYLE: Automatic
+      DEVELOPMENT_TEAM: 83D7RPYBY6
+    sources:
+      - path: Libraries/Plugins/Example/CameraSwiftUIExample
+        excludes:
+          - README.md
+      - path: Libraries/Plugins/Example/Shared
+
 schemes:
   # Foundation Core Schemes
   DI:
@@ -1106,3 +1155,17 @@ schemes:
         TruvideoSdkCamera: all
     test:
       targets: [TruvideoSdkCameraTests]
+  CameraSwiftUIExample:
+    build:
+      targets:
+        CameraSwiftUIExample: all
+    run:
+      config: Debug
+      executable: CameraSwiftUIExample
+  CameraObjectiveCExample:
+    build:
+      targets:
+        CameraObjectiveCExample: all
+    run:
+      config: Debug
+      executable: CameraObjectiveCExample

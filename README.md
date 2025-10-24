@@ -15,6 +15,7 @@ A modular iOS SDK built with Swift, featuring a layered architecture with Founda
 - [XCFramework Creation](#xcframework-creation)
 - [Running Unit Tests](#running-unit-tests)
 - [Contributing](#contributing)
+- [Sample Projects](#sample-projects)
 
 ## Prerequisites
 
@@ -257,6 +258,15 @@ This will:
 ## Running Unit Tests
 
 Select a scheme and press <kbd>Command</kbd>+<kbd>U</kbd> in Xcode to build a component and run its unit tests.
+
+## Sample Projects
+
+Reference implementations live under `Libraries/Plugins/Example/`:
+
+- [`CameraObjectiveCExample`](Libraries/Plugins/Example/CameraObjectiveCExample) – UIKit sample showing Objective-C interoperability
+- [`CameraSwiftUIExample`](Libraries/Plugins/Example/CameraSwiftUIExample) – SwiftUI sample demonstrating configuration and media preview flows
+
+Generate the workspace via `make genbuild`, then select the desired scheme in Xcode to build and run the sample.
 
 
 ## Contributing
