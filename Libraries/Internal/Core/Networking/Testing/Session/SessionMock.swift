@@ -12,11 +12,17 @@ public final class SessionMock: Session, @unchecked Sendable {
     /// A mock request to be returned.
     public var dataRequest: (any DataRequest)?
 
-    /// The number of times the `upload` method has been called.
-    public private(set) var uploadCallCount = 0
+    /// The number of times the `upload`data  method has been called.
+    public private(set) var uploadDataCallCount = 0
+    
+    /// The number of times the `upload`URL  method has been called.
+    public private(set) var uploadFileURLCallCount = 0
 
     /// The last data payload passed to the `upload` method.
     public var lastUploadData: Data?
+    
+    /// The last file URL  payload passed to the `upload` method.
+    public var lastUploadFileURL: URL?
 
     /// The number of times `cancelAllRequests()` has been called.
     public private(set) var cancelAllRequestsCallCount = 0
@@ -74,6 +80,8 @@ public final class SessionMock: Session, @unchecked Sendable {
     public func cancelAllRequests() {
         cancelAllRequestsCallCount += 1
     }
+    
+    // MARK: - DataRequest
 
     /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional
     /// configuration.
@@ -135,6 +143,8 @@ public final class SessionMock: Session, @unchecked Sendable {
 
         return dataRequest ?? DataRequestMock()
     }
+    
+    // MARK: - UploadRequest
 
     /// Mocks an upload request for testing purposes.
     ///
@@ -149,14 +159,46 @@ public final class SessionMock: Session, @unchecked Sendable {
     ///            or a new `UploadRequestMock` with the configured `delay`.
     public func upload(
         _ data: Data,
-        to url: any Networking.URLConvertible,
-        method: Networking.HTTPMethod,
-        headers: Networking.HTTPHeaders?,
-        middleware: (any Networking.RequestMiddleware)?
-    ) -> any Networking.UploadRequest {
-        uploadCallCount += 1
+        to url: any URLConvertible,
+        method: HTTPMethod,
+        headers: HTTPHeaders?,
+        middleware: (any RequestMiddleware)?
+    ) -> any UploadRequest {
+        uploadDataCallCount += 1
 
         lastUploadData = data
+        lastRequestURL = url
+        lastRequestMethod = method
+        lastRequestHeaders = headers
+        lastRequestMiddleware = middleware
+
+        return uploadRequestMock ?? UploadRequestMock()
+    }
+    
+    /// Creates and initiates an `UploadRequest` for uploading `file URL` to the specified endpoint.
+    ///
+    /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
+    /// request modifications. The upload is then managed by the returned `UploadRequest`, which supports
+    /// additional features like interceptors and custom file management.
+    ///
+    /// - Parameters:
+    ///   - fileURL: The `URL` of the file to upload.
+    ///   - url: A `URLConvertible` value representing the endpoint for the request.
+    ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
+    ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
+    /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
+    public func upload(
+        _ fileURL: URL,
+        to url: any URLConvertible,
+        method: HTTPMethod,
+        headers: HTTPHeaders?,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest {
+        uploadFileURLCallCount += 1
+
+        lastUploadFileURL = fileURL
         lastRequestURL = url
         lastRequestMethod = method
         lastRequestHeaders = headers

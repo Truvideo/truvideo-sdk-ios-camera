@@ -21,7 +21,7 @@ public protocol HTTPURLRequestDelegate: AnyObject, Sendable {
     /// or notifying observers that the request has finished processing.
     ///
     /// - Parameter request: The `Request` instance that has completed.
-    func requestDidComplete(_ request: HTTPURLRequest)
+    func cleanup(_ request: HTTPURLRequest)
 
     /// Retries a request after a specified delay.
     ///
@@ -215,6 +215,11 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
     }
 
     // MARK: - LifeCycle methods
+    
+    /// Final cleanup step executed when the instance finishes response serialization.
+    func cleanup() {
+        delegate?.cleanup(self)
+    }
 
     /// Handles the cancellation of the request.
     ///
@@ -548,6 +553,7 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
     }
 
     // swiftlint:disable unavailable_function
+    
     /// Called when creating a `URLSessionTask` for this `Request`. Subclasses must override.
     ///
     /// - Parameters:
@@ -708,7 +714,7 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
         serializers.forEach { $0() }
 
         responseSerializers.removeAll()
-        delegate?.requestDidComplete(self)
+        cleanup()
 
         if state.canTransition(to: .finished) {
             state = .finished

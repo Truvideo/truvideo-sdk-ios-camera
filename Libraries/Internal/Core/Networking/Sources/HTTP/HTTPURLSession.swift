@@ -451,6 +451,63 @@ open class HTTPURLSession: @unchecked Sendable, Session {
     ) -> any UploadRequest {
         upload(.data(data), with: requestBuilder, middleware: middleware)
     }
+    
+    /// Creates and initiates an `UploadRequest` for uploading `file URL` to the specified endpoint.
+    ///
+    /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
+    /// request modifications. The upload is then managed by the returned `UploadRequest`, which supports
+    /// additional features like interceptors and custom file management.
+    ///
+    /// - Parameters:
+    ///   - fileURL: The `URL` of the file to upload.
+    ///   - url: A `URLConvertible` value representing the endpoint for the request.
+    ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
+    ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
+    /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
+    open func upload(
+        _ fileURL: URL,
+        to url: any URLConvertible,
+        method: HTTPMethod,
+        headers: HTTPHeaders?,
+        fileManager: FileManager,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest {
+        let requestBuilder = ParameterlessRequestBuilder(url: url, method: method, headers: headers)
+
+        return upload(fileURL, with: requestBuilder, fileManager: fileManager, middleware: middleware)
+    }
+    
+    /// Creates an `UploadRequest` to send `file URL` to a server using the provided request configuration.
+    ///
+    /// This method builds and initiates an `UploadRequest` by combining the provided `file URL` payload
+    /// with a `RequestBuilder`, which is responsible for constructing the base `URLRequest`.
+    /// Optionally, a `RequestMiddleware` can be applied to intercept or modify the request before
+    /// it is executed (e.g., to inject headers, perform logging, or apply custom pre-processing logic).
+    ///
+    /// - Parameters:
+    ///   - fileURL: The `URL` of the file to upload.
+    ///   - requestBuilder: A `RequestBuilder` instance responsible for generating the `URLRequest`
+    ///     configuration (e.g., URL, HTTP method, headers).
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - middleware: An optional `RequestMiddleware` that can modify or inspect the request before
+    ///     execution. Defaults to `nil`.
+    /// - Returns: An `UploadRequest` configured with the given `file URL` and request parameters.
+    open func upload(
+       _ fileURL: URL,
+       with requestBuilder: any RequestBuilder,
+       fileManager: FileManager,
+       middleware: RequestMiddleware?
+    ) -> any UploadRequest {
+        upload(
+            .file(fileURL, shouldRemove: false),
+            with: requestBuilder,
+            fileManager: fileManager,
+            middleware: middleware
+        )
+    }
 
     // MARK: - Private methods
 
@@ -543,11 +600,12 @@ open class HTTPURLSession: @unchecked Sendable, Session {
             self.activeRequests.insert(request)
 
             switch request {
-            case let dataRequest as HTTPURLDataRequest:
-                self.performDataRequest(dataRequest)
-
+            // UploadRequest must come before DataRequest due to subtype relationship.
             case let uploadRequest as HTTPURLUploadRequest:
                 self.performUploadRequest(uploadRequest)
+                
+            case let dataRequest as HTTPURLDataRequest:
+                self.performDataRequest(dataRequest)
 
             default:
                 fatalError("Unsupported request type: \(type(of: request))")
@@ -602,20 +660,23 @@ open class HTTPURLSession: @unchecked Sendable, Session {
     private func upload(
         _ uploadable: HTTPURLUploadRequest.Uploadable,
         with requestBuilder: any RequestBuilder,
+        fileManager: FileManager? = nil,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
         let uploadBuilder = SimpleUploadRequestBuilder(request: requestBuilder, uploadable: uploadable)
 
-        return upload(uploadBuilder, middleware: middleware)
+        return upload(uploadBuilder, fileManager: fileManager, middleware: middleware)
     }
 
     private func upload(
         _ uploadBuilder: any UploadRequestBuilder,
+        fileManager: FileManager? = nil,
         middleware: RequestMiddleware?
     ) -> any UploadRequest {
         let uploadRequest = HTTPURLUploadRequest(
             uploadBuilder: uploadBuilder,
             delegate: self,
+            fileManager: fileManager,
             middleware: middleware,
             monitor: monitor,
             queue: queue
@@ -668,7 +729,7 @@ extension HTTPURLSession: HTTPURLRequestDelegate {
     /// or notifying observers that the request has finished processing.
     ///
     /// - Parameter request: The `Request` instance that has completed.
-    public func requestDidComplete(_ request: HTTPURLRequest) {
+    public func cleanup(_ request: HTTPURLRequest) {
         activeRequests.remove(request)
     }
 

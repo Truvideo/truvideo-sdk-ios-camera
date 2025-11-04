@@ -118,7 +118,6 @@ struct HTTPURLUploadRequestTests {
     @Test
     func testThatTaskThrowsCreateUploadableFailedErrorWhenUploadBuilderFails() async throws {
         // Given
-        var expectedError: NetworkingError!
         let monitor = MonitorMock()
         let uploadBuilder = UploadBuilderFailingMock()
         let sut = HTTPURLUploadRequest(

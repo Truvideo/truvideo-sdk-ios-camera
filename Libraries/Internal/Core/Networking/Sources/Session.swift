@@ -56,7 +56,30 @@ extension HTTPURLUploadRequest.Uploadable: UploadableBuilder {
     /// - Returns: The `UploadRequest.Uploadable`.
     /// - Throws:  Any `Error` produced during creation.
     public func createUploadable() throws -> HTTPURLUploadRequest.Uploadable {
-        self
+        switch self {
+        case let .data(data):
+            guard !data.isEmpty else {
+                throw NetworkingError(
+                    kind: .createUploadableFailed,
+                    failureReason: "Empty Data is not allowed for upload."
+                )
+            }
+            
+            return self
+        
+        case let .file(url, _):
+            guard url.isFileURL else {
+                throw NetworkingError(
+                    kind: .createUploadableFailed,
+                    failureReason: "URL must be a file URL (file://)"
+                )
+            }
+            
+            return self
+            
+        default:
+            return self
+        }
     }
 }
 
@@ -146,7 +169,7 @@ public protocol Session: Sendable {
         headers: HTTPHeaders?,
         middleware: RequestMiddleware?
     ) -> any UploadRequest
-
+    
     /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
     ///
     /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
@@ -167,6 +190,52 @@ public protocol Session: Sendable {
         with requestBuilder: RequestBuilder,
         middleware: RequestMiddleware?
     ) -> any UploadRequest
+    
+    /// Creates and initiates an `UploadRequest` for uploading `file URL` to the specified endpoint.
+    ///
+    /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
+    /// request modifications. The upload is then managed by the returned `UploadRequest`, which supports
+    /// additional features like interceptors and custom file management.
+    ///
+    /// - Parameters:
+    ///   - fileURL: The `URL` of the file to upload.
+    ///   - url: A `URLConvertible` value representing the endpoint for the request.
+    ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
+    ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
+    /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
+    func upload(
+        _ fileURL: URL,
+        to url: any URLConvertible,
+        method: HTTPMethod,
+        headers: HTTPHeaders?,
+        fileManager: FileManager,
+        middleware: RequestMiddleware?
+    ) -> any UploadRequest
+    
+    /// Creates an `UploadRequest` to send `file URL` to a server using the provided request configuration.
+    ///
+    /// This method builds and initiates an `UploadRequest` by combining the provided `file URL` payload
+    /// with a `RequestBuilder`, which is responsible for constructing the base `URLRequest`.
+    /// Optionally, a `RequestMiddleware` can be applied to intercept or modify the request before
+    /// it is executed (e.g., to inject headers, perform logging, or apply custom pre-processing logic).
+    ///
+    /// - Parameters:
+    ///   - fileURL: The `URL` of the file to upload.
+    ///   - requestBuilder: A `RequestBuilder` instance responsible for generating the `URLRequest`
+    ///     configuration (e.g., URL, HTTP method, headers).
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - middleware: An optional `RequestMiddleware` that can modify or inspect the request before
+    ///     execution. Defaults to `nil`.
+    /// - Returns: An `UploadRequest` configured with the given `file URL` and request parameters.
+    func upload(
+        _ fileURL: URL,
+        with requestBuilder: any RequestBuilder,
+        fileManager: FileManager,
+        middleware: RequestMiddleware?
+     ) -> any UploadRequest
 }
 
 extension Session {
@@ -235,10 +304,16 @@ extension Session {
     ///   - middleware: An optional `RequestMiddleware` to handle pre-processing or modifications before the request is
     /// executed (default is `nil`).
     /// - Returns: A `DataRequest` instance representing the network request, ready for execution.
-    public func upload(_ data: Data, to url: URLConvertible, method: HTTPMethod = .post) -> any UploadRequest {
-        upload(data, to: url, method: method, headers: nil, middleware: nil)
+    public func upload(
+        _ data: Data,
+        to url: URLConvertible,
+        method: HTTPMethod = .post,
+        headers: HTTPHeaders? = nil,
+        middleware: RequestMiddleware? = nil
+    ) -> any UploadRequest {
+        upload(data, to: url, method: method, headers: headers, middleware: middleware)
     }
-
+    
     /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
     ///
     /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
@@ -260,4 +335,54 @@ extension Session {
     ) -> any UploadRequest {
         upload(data, with: requestBuilder, middleware: middleware)
     }
+    
+    /// Creates and initiates an `UploadRequest` for uploading `file URL` to the specified endpoint.
+    ///
+    /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
+    /// request modifications. The upload is then managed by the returned `UploadRequest`, which supports
+    /// additional features like interceptors and custom file management.
+    ///
+    /// - Parameters:
+    ///   - fileURL: The `URL` of the file to upload.
+    ///   - url: A `URLConvertible` value representing the endpoint for the request.
+    ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
+    ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
+    /// executed.
+    /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
+    public func upload(
+        _ fileURL: URL,
+        to url: any URLConvertible,
+        method: HTTPMethod,
+        headers: HTTPHeaders? = nil,
+        fileManager: FileManager = FileManager.default,
+        middleware: RequestMiddleware? = nil
+    ) -> any UploadRequest {
+        upload(fileURL, to: url, method: method, headers: headers, fileManager: fileManager, middleware: middleware)
+    }
+    
+    /// Creates an `UploadRequest` to send `file URL` to a server using the provided request configuration.
+    ///
+    /// This method builds and initiates an `UploadRequest` by combining the provided `file URL` payload
+    /// with a `RequestBuilder`, which is responsible for constructing the base `URLRequest`.
+    /// Optionally, a `RequestMiddleware` can be applied to intercept or modify the request before
+    /// it is executed (e.g., to inject headers, perform logging, or apply custom pre-processing logic).
+    ///
+    /// - Parameters:
+    ///   - fileURL: The `URL` of the file to upload.
+    ///   - requestBuilder: A `RequestBuilder` instance responsible for generating the `URLRequest`
+    ///     configuration (e.g., URL, HTTP method, headers).
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - middleware: An optional `RequestMiddleware` that can modify or inspect the request before
+    ///     execution. Defaults to `nil`.
+    /// - Returns: An `UploadRequest` configured with the given `file URL` and request parameters.
+    public func upload(
+        _ fileURL: URL,
+        with requestBuilder: any RequestBuilder,
+        fileManager: FileManager = FileManager.default,
+        middleware: RequestMiddleware? = nil
+     ) -> any UploadRequest {
+         upload(fileURL, with: requestBuilder, fileManager: fileManager, middleware: middleware)
+     }
 }
