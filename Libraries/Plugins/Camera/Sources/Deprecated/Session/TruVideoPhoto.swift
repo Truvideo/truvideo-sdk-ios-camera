@@ -30,7 +30,7 @@ struct TruVideoPhoto {
     let orientation: TruvideoSdkCameraOrientation
 
     /// Media Type
-    let resolution: TruvideoSdkCameraResolution
+    let resolution: TruvideoSdkCameraResolutionDeprecated
 
     /// Metadata key for setting the device orientation when the
     /// photo was taken
@@ -82,7 +82,7 @@ struct TruVideoPhoto {
         url: URL,
         lensFacing: TruvideoSdkCameraLensFacing,
         orientation: TruvideoSdkCameraOrientation,
-        resolution: TruvideoSdkCameraResolution,
+        resolution: TruvideoSdkCameraResolutionDeprecated,
         captureImage: UIImage
     ) {
         self.imageData = imageData
@@ -102,8 +102,7 @@ struct TruVideoPhoto {
             filePath: filePath,
             lensFacing: lensFacing,
             orientation: orientation,
-            preset: .hd1280x720,
-            resolution: resolution,
+            resolution: TruvideoSdkCameraResolution.from(resolution),
             type: type
         )
     }
@@ -124,5 +123,20 @@ extension TruVideoPhoto: Hashable {
     func hash(into hasher: inout Hasher) {
         croppedImageData.hash(into: &hasher)
         imageData.hash(into: &hasher)
+    }
+}
+
+extension TruvideoSdkCameraResolution {
+    static func from(_ resolution: TruvideoSdkCameraResolutionDeprecated) -> TruvideoSdkCameraResolution {
+        switch (resolution.width, resolution.height) {
+        case (640, 480):
+            .sd640x480
+
+        case (1920, 1080):
+            .hd1920x1080
+
+        default:
+            .hd1280x720
+        }
     }
 }

@@ -582,7 +582,7 @@ class TVCameraManager: NSObject, TVCameraManagerProtocol {
         } else {
             processLastTruvideoClip(completion)
         }
-
+        
         completion()*/
     }
 

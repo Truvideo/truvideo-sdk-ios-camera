@@ -64,7 +64,7 @@ public enum TruvideoSdkCameraEventType {
     ///   - orientation: The current camera orientation.
     ///   - lensFacing: The current lens direction.
     case truvideoSdkCameraEventRecordingPaused(
-        resolution: TruvideoSdkCameraResolution,
+        resolution: TruvideoSdkCameraResolutionDeprecated,
         orientation: TruvideoSdkCameraOrientation,
         lensFacing: TruvideoSdkCameraLensFacing
     )
@@ -76,7 +76,7 @@ public enum TruvideoSdkCameraEventType {
     ///   - orientation: The current camera orientation.
     ///   - lensFacing: The current lens direction.
     case truvideoSdkCameraEventRecordingResumed(
-        resolution: TruvideoSdkCameraResolution,
+        resolution: TruvideoSdkCameraResolutionDeprecated,
         orientation: TruvideoSdkCameraOrientation,
         lensFacing: TruvideoSdkCameraLensFacing
     )
@@ -88,7 +88,7 @@ public enum TruvideoSdkCameraEventType {
     ///   - orientation: The camera orientation.
     ///   - lensFacing: The active camera lens.
     case truvideoSdkCameraEventRecordingStarted(
-        resolution: TruvideoSdkCameraResolution,
+        resolution: TruvideoSdkCameraResolutionDeprecated,
         orientation: TruvideoSdkCameraOrientation,
         lensFacing: TruvideoSdkCameraLensFacing
     )
@@ -96,7 +96,7 @@ public enum TruvideoSdkCameraEventType {
     /// Triggered when the **camera resolution is changed**.
     ///
     /// - Parameter resolution: The new resolution applied to the camera.
-    case truvideoSdkCameraEventResolutionChanged(resolution: TruvideoSdkCameraResolution)
+    case truvideoSdkCameraEventResolutionChanged(resolution: TruvideoSdkCameraResolutionDeprecated)
 
     /// Triggered when the **camera zoom level changes**.
     ///

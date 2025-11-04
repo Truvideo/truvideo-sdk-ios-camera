@@ -34,9 +34,9 @@ class TruVideoClip {
     var orientation: TruvideoSdkCameraOrientation = .portrait
 
     /// Media Type
-    var resolution: TruvideoSdkCameraResolution {
+    var resolution: TruvideoSdkCameraResolutionDeprecated {
         guard let videoTrack = asset.tracks(withMediaType: .video).first else {
-            return TruvideoSdkCameraResolution(width: 0, height: 0)
+            return TruvideoSdkCameraResolutionDeprecated(width: 0, height: 0)
         }
 
         /// Note: This resolution is being affected by the AR Camera, looks like at this date the AR Camera is not roating the layer
@@ -46,7 +46,7 @@ class TruVideoClip {
             [.portrait, .portraitReverse].contains(orientation)
             && [.portrait, .portraitUpsideDown].contains(videoOrientation)
 
-        return TruvideoSdkCameraResolution(
+        return TruvideoSdkCameraResolutionDeprecated(
             width: isPortrait ? Int32(videoTrack.naturalSize.width) : Int32(videoTrack.naturalSize.height),
             height: isPortrait ? Int32(videoTrack.naturalSize.height) : Int32(videoTrack.naturalSize.width)
         )
@@ -135,8 +135,7 @@ class TruVideoClip {
             filePath: filePath,
             lensFacing: lensFacing,
             orientation: orientation,
-            preset: .hd1280x720,
-            resolution: resolution,
+            resolution: TruvideoSdkCameraResolution.from(resolution),
             type: type
         )
     }

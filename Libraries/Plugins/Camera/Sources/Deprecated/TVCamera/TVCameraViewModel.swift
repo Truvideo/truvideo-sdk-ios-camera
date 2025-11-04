@@ -722,7 +722,7 @@ class TVCameraViewModel: ObservableObject {
         }
     }
 
-    private func updateResolutionButton(with resolution: TruvideoSdkCameraResolution) {
+    private func updateResolutionButton(with resolution: TruvideoSdkCameraResolutionDeprecated) {
         self.resolutionImage =
             switch (resolution.width, resolution.height) {
             case (640, 480):

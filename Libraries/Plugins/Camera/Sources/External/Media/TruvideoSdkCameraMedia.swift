@@ -35,9 +35,6 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
     /// The device orientation when the media was captured.
     public let orientation: TruvideoSdkCameraOrientation
 
-    /// The preset of the captured media.
-    public let preset: TruvideoSdkCameraPreset
-
     /// The resolution of the captured media.
     public let resolution: TruvideoSdkCameraResolution
 
@@ -54,7 +51,6 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
         case type
         case lensFacing
         case orientation
-        case preset
         case resolution
         case duration
     }
@@ -94,8 +90,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
             filePath: clip.url.path,
             lensFacing: TruvideoSdkCameraLensFacing(position: clip.lensPosition),
             orientation: TruvideoSdkCameraOrientation(orientation: clip.orientation),
-            preset: TruvideoSdkCameraPreset.from(clip.preset),
-            resolution: .init(width: Int32(clip.preset.size.width), height: Int32(clip.preset.size.height)),
+            resolution: TruvideoSdkCameraResolution.from(clip.preset),
             type: .clip
         )
     }
@@ -115,8 +110,7 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
             filePath: photo.url.path,
             lensFacing: TruvideoSdkCameraLensFacing(position: photo.lensPosition),
             orientation: TruvideoSdkCameraOrientation(orientation: photo.orientation),
-            preset: TruvideoSdkCameraPreset.from(photo.preset),
-            resolution: .init(width: Int32(photo.preset.size.width), height: Int32(photo.preset.size.height)),
+            resolution: TruvideoSdkCameraResolution.from(photo.preset),
             type: .photo
         )
     }
@@ -137,7 +131,6 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
     ///   - filePath: The file system path where the media is stored
     ///   - lensFacing: The camera lens used for capture
     ///   - orientation: The device orientation during capture
-    ///   - preset: The preset of the captured media
     ///   - resolution: The resolution of the captured media
     ///   - type: The type of media that was captured
     public init(
@@ -147,7 +140,6 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
         filePath: String,
         lensFacing: TruvideoSdkCameraLensFacing,
         orientation: TruvideoSdkCameraOrientation,
-        preset: TruvideoSdkCameraPreset,
         resolution: TruvideoSdkCameraResolution,
         type: TruvideoSdkCameraMediaType
     ) {
@@ -157,7 +149,6 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
         self.filePath = filePath
         self.lensFacing = lensFacing
         self.orientation = orientation
-        self.preset = preset
         self.resolution = resolution
         self.type = type
     }
@@ -180,7 +171,6 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
         self.filePath = try container.decode(String.self, forKey: .filePath)
         self.lensFacing = try container.decode(TruvideoSdkCameraLensFacing.self, forKey: .lensFacing)
         self.orientation = try container.decode(TruvideoSdkCameraOrientation.self, forKey: .orientation)
-        self.preset = try container.decode(TruvideoSdkCameraPreset.self, forKey: .preset)
         self.resolution = try container.decode(TruvideoSdkCameraResolution.self, forKey: .resolution)
         self.type = try container.decode(TruvideoSdkCameraMediaType.self, forKey: .type)
     }
@@ -200,7 +190,6 @@ public final class TruvideoSdkCameraMedia: NSObject, Codable, Identifiable {
         try container.encode(filePath, forKey: .filePath)
         try container.encode(lensFacing, forKey: .lensFacing)
         try container.encode(orientation, forKey: .orientation)
-        try container.encode(preset, forKey: .preset)
         try container.encode(resolution, forKey: .resolution)
         try container.encode(type, forKey: .type)
     }
@@ -426,7 +415,7 @@ public enum TruvideoSdkCameraOrientation: Int, Codable, RawRepresentable {
 /// - Note: This class is deprecated. Use `AVCaptureSession.Preset` for resolution handling.
 /// - Important: Width and height values are stored as `Int32` for API compatibility.
 @objcMembers
-public class TruvideoSdkCameraResolution: NSObject, Codable {
+public class TruvideoSdkCameraResolutionDeprecated: NSObject, Codable {
     /// The height of the camera resolution in pixels.
     ///
     /// This property represents the vertical dimension of the video capture resolution.

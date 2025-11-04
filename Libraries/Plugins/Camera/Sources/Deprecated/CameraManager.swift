@@ -80,7 +80,7 @@ final class CameraManager {
     }
 
     func filterValidResolutions(
-        from resolutions: [TruvideoSdkCameraResolution],
+        from resolutions: [TruvideoSdkCameraResolutionDeprecated],
         using allResolutions: [TruvideoSdkCameraResolutionFormat]
     ) -> [TruvideoSdkCameraResolutionFormat] {
         var validResolutions = [TruvideoSdkCameraResolutionFormat]()
@@ -98,7 +98,7 @@ final class CameraManager {
     }
 
     func getResolutionFormat(
-        from resolution: TruvideoSdkCameraResolution?,
+        from resolution: TruvideoSdkCameraResolutionDeprecated?,
         using allResolutions: [TruvideoSdkCameraResolutionFormat]
     ) -> TruvideoSdkCameraResolutionFormat? {
         guard let resolution else {

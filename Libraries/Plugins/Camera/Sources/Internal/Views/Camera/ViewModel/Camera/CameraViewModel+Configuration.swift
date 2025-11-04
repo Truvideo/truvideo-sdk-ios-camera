@@ -31,6 +31,10 @@ extension CameraViewModel {
 
                 try await configureDevices()
 
+                if captureSession.canSetSessionPreset(selectedPreset) {
+                    captureSession.sessionPreset = selectedPreset
+                }
+
                 captureSession.startRunning()
 
                 Task.delayed(milliseconds: 1_200) { @MainActor in
@@ -102,6 +106,14 @@ extension CameraViewModel {
 
         try videoDevice.setPosition(position)
         try videoDevice.setTorchMode(torchMode)
+
+        let presets = position == .back ? configuration.backResolutions : configuration.frontResolutions
+        let selectedPreset = await defaultPreset
+
+        await MainActor.run {
+            self.presets = presets.map(\.preset)
+            self.selectedPreset = selectedPreset
+        }
 
         let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
 

@@ -125,8 +125,6 @@ final class ARCameraViewModel: CameraViewModelDeprecation {
 
         cleanupARSession()
         resetTrackingAndAnchors(for: createARConfiguration())
-
-        eventsHandler(.truvideoSdkCameraEventResolutionChanged(resolution: resolution))
     }
 
     override func record() {

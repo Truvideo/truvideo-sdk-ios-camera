@@ -247,7 +247,7 @@ class VideoDevice: NSObject, Device {
     /// can use this notification to show loading indicators, disable UI elements,
     /// or perform any necessary pre-position-change operations.
     nonisolated static let deviceWillChangePosition = Notification.Name("com.truvideo.deviceWillChangePosition")
-    
+
     // MARK: - Dependencies
 
     @Dependency(\.telemetryManager)
@@ -367,7 +367,7 @@ class VideoDevice: NSObject, Device {
                         metadata: [
                             "hasTorch": .bool(captureDevice.hasTorch),
                             "isTorchAvailable": .bool(captureDevice.isTorchAvailable),
-                            "flashMode": .string("\(captureDevice.torchMode.rawValue)"),
+                            "flashMode": .string("\(captureDevice.torchMode.rawValue)")
                         ]
                     )
                 }

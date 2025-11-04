@@ -591,7 +591,7 @@ struct RingBufferTests {
         for _ in 0 ..< 100 {
             buffer.removeFirst()
         }
-        
+
         let endTime = Date()
 
         // Then

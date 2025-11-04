@@ -12,7 +12,7 @@ enum ResolutionType {
     case back
 }
 
-class TruvideoSdkCameraResolutionFormat: TruvideoSdkCameraResolution, Comparable {
+class TruvideoSdkCameraResolutionFormat: TruvideoSdkCameraResolutionDeprecated, Comparable {
     let type: ResolutionType
     let format: AVCaptureDevice.Format?
 

@@ -235,11 +235,11 @@ public struct RingBuffer<Element>: Sequence {
     /// - Returns: The element at the given index.
     public subscript(index: Int) -> Element {
         precondition(index >= 0 && index < count, "index out of bounds")
-    
+
         guard let element = element(at: index) else {
             preconditionFailure("invariant violated: empty slot in-bounds")
         }
-        
+
         return element
     }
 

@@ -1885,15 +1885,15 @@ extension UIImage {
     ///   - `.landscapeLeft`, `.landscapeRight`: The resolution is adjusted for landscape orientation.
     ///   - Other orientations (e.g., `.portrait`, `.portraitUpsideDown`): The resolution remains in portrait.
     /// - Returns: A `TruvideoSdkCameraResolution` instance representing the resolution in pixels.
-    fileprivate func resolution(for orientation: UIDeviceOrientation) -> TruvideoSdkCameraResolution {
+    fileprivate func resolution(for orientation: UIDeviceOrientation) -> TruvideoSdkCameraResolutionDeprecated {
         let size = CGSize(width: size.width * scale, height: size.height * scale)
 
         switch orientation {
         case .landscapeLeft, .landscapeRight:
-            return TruvideoSdkCameraResolution(width: Int32(size.height), height: Int32(size.width))
+            return TruvideoSdkCameraResolutionDeprecated(width: Int32(size.height), height: Int32(size.width))
 
         default:
-            return TruvideoSdkCameraResolution(width: Int32(size.width), height: Int32(size.height))
+            return TruvideoSdkCameraResolutionDeprecated(width: Int32(size.width), height: Int32(size.height))
         }
     }
 }

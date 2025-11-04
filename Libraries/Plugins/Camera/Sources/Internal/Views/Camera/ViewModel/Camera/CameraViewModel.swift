@@ -138,7 +138,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// of quality, from highest to lowest resolution. It serves as the definitive list
     /// of available capture presets that can be selected by the user or applied
     /// programmatically to the capture session.
-    let presets = [AVCaptureSession.Preset.hd1920x1080, .hd1280x720, .vga640x480]
+    @Published var presets = [AVCaptureSession.Preset.hd1920x1080, .hd1280x720, .vga640x480]
 
     /// The video preview layer that displays the camera feed in the UI.
     let previewLayer = AVCaptureVideoPreviewLayer()
@@ -303,6 +303,41 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         return "\(numberOfPhotos)/\(configuration.mode.maxPictureCount)"
     }
 
+    /// The default capture preset for the active camera lens.
+    ///
+    /// This computed property returns the most appropriate `AVCaptureSession.Preset`
+    /// based on the currently active video device (`front` or `back`) and the
+    /// configured resolution preferences.
+    ///
+    /// - For the **front camera**, it checks whether the configured `frontResolution`
+    ///   exists in `frontResolutions`. If not, it falls back to the first available
+    ///   preset or `.hd1280x720` if none are available.
+    ///
+    /// - For the **back camera**, it performs the same validation using
+    ///   `backResolution` and `backResolutions`.
+    ///
+    /// This ensures the capture session always starts with a valid and supported
+    /// preset, even if the configuration contains outdated or unsupported values.
+    ///
+    /// - Returns: A valid `AVCaptureSession.Preset` for the current lens configuration.
+    var defaultPreset: AVCaptureSession.Preset {
+        get async {
+            guard await videoDevice.position == .back else {
+                if configuration.frontResolutions.contains(configuration.frontResolution) {
+                    return configuration.frontResolution.preset
+                }
+
+                return configuration.frontResolutions.first?.preset ?? .hd1280x720
+            }
+
+            if configuration.backResolutions.contains(configuration.backResolution) {
+                return configuration.backResolution.preset
+            }
+
+            return configuration.backResolutions.first?.preset ?? .hd1280x720
+        }
+    }
+
     // MARK: - Types
 
     /// A set of validation states that can be combined to represent different validation conditions.
@@ -377,10 +412,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
             configureSessionObservers()
             subscribeToSecondsRecorded()
-
-            if captureSession.canSetSessionPreset(selectedPreset) {
-                captureSession.sessionPreset = selectedPreset
-            }
         }
     }
 

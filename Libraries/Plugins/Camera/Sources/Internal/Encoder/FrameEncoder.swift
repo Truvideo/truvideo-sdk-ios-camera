@@ -240,9 +240,10 @@ struct VideoBufferFrameEncoder: FrameEncoder, @unchecked Sendable {
                 )
             }
 
-            cIImage = cIImage
-                .cropped(to: cIImage.extent.integral)
-                .applyingFilter("CILanczosScaleTransform", parameters: [kCIInputAspectRatioKey: 1])
+            cIImage =
+                cIImage
+                    .cropped(to: cIImage.extent.integral)
+                    .applyingFilter("CILanczosScaleTransform", parameters: [kCIInputAspectRatioKey: 1])
 
             return try context.dataRepresentation(of: cIImage, for: format, colorSpace: colorSpace)
         }

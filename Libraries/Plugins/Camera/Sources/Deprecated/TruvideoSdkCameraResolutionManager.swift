@@ -15,10 +15,10 @@ final class TruvideoSdkCameraResolutionManager {
     var frontResolution: TruvideoSdkCameraResolutionFormat?
 
     init(
-        backResolutions: [TruvideoSdkCameraResolution],
-        frontResolutions: [TruvideoSdkCameraResolution],
-        backResolution: TruvideoSdkCameraResolution?,
-        frontResolution: TruvideoSdkCameraResolution?
+        backResolutions: [TruvideoSdkCameraResolutionDeprecated],
+        frontResolutions: [TruvideoSdkCameraResolutionDeprecated],
+        backResolution: TruvideoSdkCameraResolutionDeprecated?,
+        frontResolution: TruvideoSdkCameraResolutionDeprecated?
     ) {
         let cameraManager = CameraManager()
         let allBackResolutions = cameraManager.getAvailableResolutions(for: .back)
@@ -71,9 +71,9 @@ final class TruvideoSdkCameraResolutionManager {
     }
 }
 
-extension [TruvideoSdkCameraResolution] {
-    fileprivate func removeDuplicates() -> [TruvideoSdkCameraResolution] {
-        var uniqueResolutions: [TruvideoSdkCameraResolution] = []
+extension [TruvideoSdkCameraResolutionDeprecated] {
+    fileprivate func removeDuplicates() -> [TruvideoSdkCameraResolutionDeprecated] {
+        var uniqueResolutions: [TruvideoSdkCameraResolutionDeprecated] = []
 
         for uniqueResolution in self {
             if !uniqueResolutions.contains(where: {

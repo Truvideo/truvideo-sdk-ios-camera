@@ -261,6 +261,13 @@ extension CameraViewModel {
                 try await videoDevice.setTorchMode(.off)
                 try await videoDevice.setPosition(position)
 
+                let presets = position == .back ? configuration.backResolutions : configuration.frontResolutions
+                self.presets = presets.map(\.preset)
+
+                if !self.presets.contains(selectedPreset) {
+                    selectedPreset = await defaultPreset
+                }
+
                 telemetryManager.captureBreadcrumb(
                     severity: .info,
                     category: .cameraUI,
