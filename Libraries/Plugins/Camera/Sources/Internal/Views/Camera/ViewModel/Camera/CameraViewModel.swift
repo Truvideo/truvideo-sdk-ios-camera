@@ -3,6 +3,7 @@
 //
 
 import AVFoundation
+import Combine
 internal import DI
 import Foundation
 internal import Telemetry
@@ -50,6 +51,7 @@ actor SessionActor {
 final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Private Properties
 
+    private var cancellables = Set<AnyCancellable>()
     private let orientationMonitor: OrientationMonitor
     private let onCompleted: (TruvideoSdkCameraResult) -> Void
 
@@ -192,6 +194,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// The last zoom factor applied to the camera preview.
     @Published var lastZoomFactor: CGFloat = 1
 
+    /// The remaining recording time in Hours:Minutes:Seconds format.
+    ///
+    /// This property displays how much recording time is left based on the
+    /// configured maximum video duration. It updates in real time as the
+    /// recording progresses, providing a clear visual indicator of the
+    /// remaining available time.
+    @Published var remainingTime = 0.toHMS()
+
     /// Whether the user must confirm before leaving or performing a potentially
     /// destructive action.
     @Published var requiresConfirmation = false
@@ -199,7 +209,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// The total duration of recorded video in Hours:Minutes:Seconds format.
     ///
     /// This property displays the cumulative recording time in a human-readable format.
-    @Published var secondsRecorded = 0.toHMS()
+    @Published var timeRecorded = 0.toHMS()
 
     /// The currently selected video capture resolution preset.
     ///
@@ -249,6 +259,41 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     }
 
     // MARK: - Computed Properties
+
+    /// The default capture preset for the active camera lens.
+    ///
+    /// This computed property returns the most appropriate `AVCaptureSession.Preset`
+    /// based on the currently active video device (`front` or `back`) and the
+    /// configured resolution preferences.
+    ///
+    /// - For the **front camera**, it checks whether the configured `frontResolution`
+    ///   exists in `frontResolutions`. If not, it falls back to the first available
+    ///   preset or `.hd1280x720` if none are available.
+    ///
+    /// - For the **back camera**, it performs the same validation using
+    ///   `backResolution` and `backResolutions`.
+    ///
+    /// This ensures the capture session always starts with a valid and supported
+    /// preset, even if the configuration contains outdated or unsupported values.
+    ///
+    /// - Returns: A valid `AVCaptureSession.Preset` for the current lens configuration.
+    var defaultPreset: AVCaptureSession.Preset {
+        get async {
+            guard await videoDevice.position == .back else {
+                if configuration.frontResolutions.contains(configuration.frontResolution) {
+                    return configuration.frontResolution.preset
+                }
+
+                return configuration.frontResolutions.first?.preset ?? .hd1280x720
+            }
+
+            if configuration.backResolutions.contains(configuration.backResolution) {
+                return configuration.backResolution.preset
+            }
+
+            return configuration.backResolutions.first?.preset ?? .hd1280x720
+        }
+    }
 
     /// Returns a formatted string representing the current video clip count and limit.
     ///
@@ -303,39 +348,22 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         return "\(numberOfPhotos)/\(configuration.mode.maxPictureCount)"
     }
 
-    /// The default capture preset for the active camera lens.
+    /// Determines whether the remaining recording time should be displayed.
     ///
-    /// This computed property returns the most appropriate `AVCaptureSession.Preset`
-    /// based on the currently active video device (`front` or `back`) and the
-    /// configured resolution preferences.
+    /// This computed property evaluates whether the remaining time indicator
+    /// needs to be shown during video recording. It compares the current mode's
+    /// maximum video duration against the SDK’s global maximum allowed duration,
+    /// and returns `true` only when:
+    /// - The configured maximum duration is smaller than the SDK limit, and
+    /// - The recording state is either `.running` or `.paused`.
     ///
-    /// - For the **front camera**, it checks whether the configured `frontResolution`
-    ///   exists in `frontResolutions`. If not, it falls back to the first available
-    ///   preset or `.hd1280x720` if none are available.
-    ///
-    /// - For the **back camera**, it performs the same validation using
-    ///   `backResolution` and `backResolutions`.
-    ///
-    /// This ensures the capture session always starts with a valid and supported
-    /// preset, even if the configuration contains outdated or unsupported values.
-    ///
-    /// - Returns: A valid `AVCaptureSession.Preset` for the current lens configuration.
-    var defaultPreset: AVCaptureSession.Preset {
-        get async {
-            guard await videoDevice.position == .back else {
-                if configuration.frontResolutions.contains(configuration.frontResolution) {
-                    return configuration.frontResolution.preset
-                }
+    /// This ensures the remaining time is shown only when the recording has
+    /// a defined time limit and is currently active or paused.
+    var shouldDisplayRemainingTime: Bool {
+        let maxVideoDurationAllowed = TruvideoSdkCameraMediaMode.maxVideoDurationAllowed
+        let maxVideoDuration = configuration.mode.maxVideoDuration
 
-                return configuration.frontResolutions.first?.preset ?? .hd1280x720
-            }
-
-            if configuration.backResolutions.contains(configuration.backResolution) {
-                return configuration.backResolution.preset
-            }
-
-            return configuration.backResolutions.first?.preset ?? .hd1280x720
-        }
+        return maxVideoDuration != maxVideoDurationAllowed && [RecordingState.running, .paused].contains(state)
     }
 
     // MARK: - Types
@@ -602,8 +630,14 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         movieOutputProcessor.$recordingDuration
             .filter(\.isValid)
             .receive(on: RunLoop.main)
-            .map { $0.seconds.toHMS() }
-            .assign(to: &$secondsRecorded)
+            .sink { [weak self] duration in
+                guard let self = self else { return }
+
+                let seconds = duration.seconds
+                self.timeRecorded = seconds.toHMS()
+                self.remainingTime = max(self.configuration.mode.maxVideoDuration - seconds, 0).toHMS()
+            }
+            .store(in: &cancellables)
     }
 }
 

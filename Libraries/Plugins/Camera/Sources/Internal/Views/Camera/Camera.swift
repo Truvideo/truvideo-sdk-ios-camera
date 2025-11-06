@@ -47,8 +47,14 @@ struct Camera: View {
                 isZoomPickerExpanded = false
             }
             .overlay {
-                TimerView(secondsRecorded: $viewModel.secondsRecorded)
+                AdaptiveOrientationLayoutView {
+                    VStack(spacing: theme.spacingTheme.lg) {
+                        TimeRecordedView(timeRecorded: $viewModel.timeRecorded)
+                        RemainingTimeView(remainingTime: $viewModel.remainingTime)
+                            .opacity(!viewModel.shouldDisplayRemainingTime ? 0 : 1)
+                    }
                     .selected([.paused, .running].contains(viewModel.state))
+                }
             }
             .overlay(alignment: .topLeading) {
                 TopBar()

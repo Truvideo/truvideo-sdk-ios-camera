@@ -5,7 +5,7 @@
 internal import DI
 import SwiftUI
 
-final class TimerViewModel: ObservableObject, OrientationMonitorSubscriber {
+final class AdaptiveOrientationLayoutViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Dependencies
 
     @Dependency(\.orientationMonitor)
@@ -19,8 +19,9 @@ final class TimerViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     // MARK: - Initializer
 
-    /// Creates a new instance of the `TimerViewModel`.
+    /// Creates a new instance of the `AdaptiveOrientationLayoutViewModel`.
     init() {
+        orientationMonitor.add(self)
         orientationMonitor.startMonitoring()
     }
 

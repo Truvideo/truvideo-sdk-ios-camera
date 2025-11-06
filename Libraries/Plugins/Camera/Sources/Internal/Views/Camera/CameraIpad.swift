@@ -57,9 +57,15 @@ struct CameraIpad: View {
             }
             .overlay(alignment: .topTrailing, content: makeContinueButton)
             .overlay {
-                TimerView(secondsRecorded: $viewModel.secondsRecorded)
-                    .selected([.paused, .running].contains(viewModel.state))
+                AdaptiveOrientationLayoutView {
+                    VStack(spacing: theme.spacingTheme.lg) {
+                        TimeRecordedView(timeRecorded: $viewModel.timeRecorded)
+                        RemainingTimeView(remainingTime: $viewModel.remainingTime)
+                            .opacity(!viewModel.shouldDisplayRemainingTime ? 0 : 1)
+                    }
                     .padding(.top, theme.spacingTheme.lg)
+                    .selected([.paused, .running].contains(viewModel.state))
+                }
             }
             .overlay {
                 ExitConfirmationView(isPresented: $viewModel.requiresConfirmation)
