@@ -363,7 +363,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         let maxVideoDurationAllowed = TruvideoSdkCameraMediaMode.maxVideoDurationAllowed
         let maxVideoDuration = configuration.mode.maxVideoDuration
 
-        return maxVideoDuration != maxVideoDurationAllowed && [RecordingState.running, .paused].contains(state)
+        return maxVideoDuration > 0 && maxVideoDuration != maxVideoDurationAllowed
+            && [RecordingState.running, .paused].contains(state)
     }
 
     // MARK: - Types
