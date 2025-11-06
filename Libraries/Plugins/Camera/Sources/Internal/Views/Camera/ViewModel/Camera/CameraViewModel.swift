@@ -1,4 +1,4 @@
-//
+    //
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
@@ -476,10 +476,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     ///
     /// Sets `validationState` to `.invalid` if clips or photos are not empty (preventing dismissal),
     /// or `.valid` if clips are empty (allowing dismissal).
-    func onDismiss() {
+    ///
+    /// - Parameter force: A Boolean value indicating whether the dismissal should bypass normal validation.
+    func onDismiss(force: Bool = false) {
         allowsHitTesting = false
 
-        guard medias.isEmpty, ![.paused, .running].contains(state) else {
+        guard (medias.isEmpty && ![.paused, .running].contains(state)) || force else {
             telemetryManager.captureBreadcrumb(
                 severity: .warning,
                 category: .cameraLifecycle,
@@ -496,6 +498,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             return
         }
 
+        onCompleted(TruvideoSdkCameraResult(media: []))
         validationState = .valid
     }
 

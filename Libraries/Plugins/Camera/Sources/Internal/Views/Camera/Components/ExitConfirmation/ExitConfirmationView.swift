@@ -18,11 +18,12 @@ import SwiftUI
 struct ExitConfirmationView: View {
     // MARK: - Environment Properties
 
-    @Environment(\.dismiss)
-    var dismiss
-
     @Environment(\.theme)
     var theme
+
+    // MARK: - EnvironmentObject Properties
+
+    @EnvironmentObject var viewModel: CameraViewModel
 
     // MARK: - Binding Properties
 
@@ -40,8 +41,10 @@ struct ExitConfirmationView: View {
                     .style(theme.textTheme.headline.copyWith(color: theme.colorScheme.onSurface))
                     .multilineTextAlignment(.center)
 
-                Button(Localizations.discard.uppercased(), action: dismiss.callAsFunction)
-                    .buttonStyle(.primary(backgroundColor: .red))
+                Button(Localizations.discard.uppercased()) {
+                    viewModel.onDismiss(force: true)
+                }
+                .buttonStyle(.primary(backgroundColor: .red))
 
                 Button(Localizations.cancel.uppercased()) {
                     isPresented.toggle()

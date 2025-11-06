@@ -24,8 +24,9 @@ struct AuthenticationRequiredView: View {
     @Environment(\.theme)
     var theme
 
-    @Environment(\.dismiss)
-    var dismiss
+    // MARK: - EnvironmentObject Properties
+
+    @EnvironmentObject var viewModel: CameraViewModel
 
     // MARK: - Computed Properties
 
@@ -55,7 +56,7 @@ struct AuthenticationRequiredView: View {
             CircleButton {
                 Icon(icon: DSIcons.xmark, size: CGSize(theme.sizeTheme.lg))
             } action: {
-                dismiss()
+                viewModel.onDismiss()
             }
             .padding(.horizontal)
         }
