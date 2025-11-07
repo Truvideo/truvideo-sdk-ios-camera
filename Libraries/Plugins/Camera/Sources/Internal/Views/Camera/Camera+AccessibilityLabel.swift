@@ -37,7 +37,7 @@ extension Camera {
         ///
         /// Example:
         /// ```swift
-        /// CameraView.AccessibilityLabel.presetOption("SD") // "PresetOption_SD"
+        /// Camera.AccessibilityLabel.presetOption("SD") // "PresetOption_SD"
         /// ```
         static func presetOption(_ label: String) -> String { "PresetOption_\(label)" }
         

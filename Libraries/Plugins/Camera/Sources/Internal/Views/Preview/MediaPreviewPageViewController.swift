@@ -115,6 +115,9 @@ final class MediaPreviewPageViewController: UIPageViewController {
         let closeButton = makeButton(systemName: "xmark", action: #selector(closeTapped))
         let deleteButton = makeButton(systemName: "trash", action: #selector(deleteTapped))
 
+        closeButton.accessibilityIdentifier = GalleryView.AccessibilityLabel.closeButton
+        deleteButton.accessibilityIdentifier = GalleryView.AccessibilityLabel.deleteButton
+
         view.addSubview(closeButton)
         view.addSubview(deleteButton)
 

@@ -36,12 +36,16 @@ struct GalleryView: View {
             .padding(theme.spacingTheme.md)
 
             GalleryGrid(medias: $medias, isPresented: $isPresented, theme: theme)
+                .accessibilityIdentifier(GalleryView.AccessibilityLabel.galleryGrid)
         }
+        .accessibilityElement(children: .contain)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
             EmptyView()
                 .background(style: .dark)
                 .ignoresSafeArea()
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier(GalleryView.AccessibilityLabel.galleryView)
     }
 }

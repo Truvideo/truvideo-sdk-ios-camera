@@ -45,7 +45,7 @@ struct CameraScreen {
     /// The top toolbar containing secondary information and actions.
     var topBar: XCUIElement { camera.otherElements[Camera.AccessibilityLabel.topBar] }
     
-    ///
+    /// Represents the "Open Camera" button in the UI.
     var openCamera: XCUIElement { app.buttons["Open Camera"] }
     
     // MARK: - Capture Controls
@@ -81,6 +81,29 @@ struct CameraScreen {
     
     /// The button used to switch between front and rear camera lenses.
     var switchCamera: XCUIElement { toolBar.buttons[Camera.AccessibilityLabel.switchCameraButton] }
+    
+    // MARK: - Gallery Elements
+    
+    /// The button used to close the gallery view.
+    var closeButton: XCUIElement { app.buttons[GalleryView.AccessibilityLabel.closeButton] }
+    
+    /// The button used to delete selected media from the gallery.
+    var deleteButton: XCUIElement { app.buttons[GalleryView.AccessibilityLabel.deleteButton] }
+    
+    /// The first photo element in the gallery grid.
+    var firstPhoto: XCUIElement { galleryGrid.images.element(boundBy: 0) }
+    
+    /// The first video cell in the gallery grid.
+    var firstVideo: XCUIElement { galleryGrid.cells.element(boundBy: 0) }
+    
+    /// The grid displaying media thumbnails inside the gallery.
+    var galleryGrid: XCUIElement { app.otherElements[GalleryView.AccessibilityLabel.galleryGrid] }
+    
+    /// The container view representing the media gallery.
+    var galleryView: XCUIElement { app.otherElements[GalleryView.AccessibilityLabel.galleryView] }
+    
+    /// The second photo element in the gallery grid.
+    var secondPhoto: XCUIElement { galleryGrid.images.element(boundBy: 1) }
     
     // MARK: - Zoom Picker
     
