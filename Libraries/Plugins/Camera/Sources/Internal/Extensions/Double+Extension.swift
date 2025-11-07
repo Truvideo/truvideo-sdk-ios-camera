@@ -14,7 +14,7 @@ extension Double {
     ///
     /// - Returns: A formatted string in "HH:MM:SS" format with zero-padded values.
     func toHMS() -> String {
-        let value = Int(self)
+        let value = Int(self.rounded())
 
         let hours = value / 3_600
         let minutes = (value % 3_600) / 60
