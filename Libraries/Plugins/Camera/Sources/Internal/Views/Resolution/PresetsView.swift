@@ -35,6 +35,7 @@ struct PresetsView: View {
                 Button("\(preset.localizedLabel)") {
                     selection = preset
                 }
+                .accessibilityIdentifier(Camera.AccessibilityLabel.presetOption(preset.localizedLabel))
                 .buttonStyle(.primary)
                 .frame(maxWidth: theme.sizeTheme.x(75))
                 .selected(selection == preset)

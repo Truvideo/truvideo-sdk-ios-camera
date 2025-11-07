@@ -992,6 +992,7 @@ targets:
         excludes:
           - README.md
       - path: Libraries/Plugins/Example/Shared
+      
   CameraSwiftUIExample:
     type: application
     platform: iOS
@@ -1007,7 +1008,9 @@ targets:
         excludes:
           - README.md
       - path: Libraries/Plugins/Example/Shared
-
+    info:
+        path: Libraries/Plugins/Example/CameraSwiftUIExample/Info.plist
+      
 schemes:
   # Foundation Core Schemes
   DI:

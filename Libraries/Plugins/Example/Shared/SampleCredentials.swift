@@ -6,7 +6,7 @@ import Foundation
 
 @objcMembers
 public final class SampleCredentials: NSObject {
-    public static var apiKey: String = ""
-    public static var secretKey: String = ""
+    public static var apiKey: String = "apikey"
+    public static var secretKey: String = "secretkey"
     public static var externalId: String?
 }

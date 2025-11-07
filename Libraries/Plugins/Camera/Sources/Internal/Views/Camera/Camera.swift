@@ -37,6 +37,8 @@ struct Camera: View {
             .aspectRatio(viewModel.aspectRatio, contentMode: .fit)
             .overlay(alignment: .bottom) {
                 ToolBar(isZoomPickerExpanded: $isZoomPickerExpanded)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier(AccessibilityLabel.toolBar)
                     .padding(.bottom, theme.spacingTheme.sm)
                     .hidden(viewModel.deviceOrientation.isLandscape)
             }
@@ -50,6 +52,7 @@ struct Camera: View {
                 AdaptiveOrientationLayoutView {
                     VStack(spacing: theme.spacingTheme.lg) {
                         TimeRecordedView(timeRecorded: $viewModel.timeRecorded)
+                        .accessibilityIdentifier(AccessibilityLabel.timerView)
                         RemainingTimeView(remainingTime: $viewModel.remainingTime)
                             .opacity(!viewModel.shouldDisplayRemainingTime ? 0 : 1)
                     }
@@ -58,14 +61,18 @@ struct Camera: View {
             }
             .overlay(alignment: .topLeading) {
                 TopBar()
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier(AccessibilityLabel.topBar)
                     .padding(.horizontal, theme.spacingTheme.md)
             }
             .overlay(alignment: .trailing) {
                 ToolBar(isZoomPickerExpanded: $isZoomPickerExpanded)
+                    .accessibilityIdentifier(AccessibilityLabel.toolBar)
                     .hidden(viewModel.deviceOrientation.isPortrait)
             }
             .overlay {
                 ExitConfirmationView(isPresented: $viewModel.requiresConfirmation)
+                    .accessibilityIdentifier(AccessibilityLabel.exitConfirmationView)
                     .hidden(!viewModel.requiresConfirmation)
             }
     }
@@ -75,6 +82,7 @@ struct Camera: View {
     @ViewBuilder
     private func makeContinueButton() -> some View {
         ContinueButton(onTap: viewModel.onContinue)
+            .accessibilityIdentifier(AccessibilityLabel.continueButton)
             .padding(.top)
             .padding(.horizontal, theme.spacingTheme.sm)
             .hidden(viewModel.medias.isEmpty || [.paused, .running].contains(viewModel.state))
@@ -118,13 +126,16 @@ private struct ToolBar: View {
         if viewModel.deviceOrientation.isPortrait {
             VStack {
                 ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor, isExpanded: $isZoomPickerExpanded)
+                    .accessibilityIdentifier(Camera.AccessibilityLabel.zoomPicker)
                 HStack {
                     makeTakePhotoButton()
                     RecordButton()
+                        .accessibilityIdentifier(Camera.AccessibilityLabel.recordVideo)
                     makePlayPauseButton()
                     makeSwitchCameraButton()
                 }
             }
+            .accessibilityElement(children: .contain)
             .allowsHitTesting(viewModel.allowsHitTesting)
         } else if viewModel.deviceOrientation.isLandscape {
             HStack {
@@ -133,9 +144,11 @@ private struct ToolBar: View {
                     makeSwitchCameraButton()
                     makePlayPauseButton()
                     RecordButton()
+                        .accessibilityIdentifier(Camera.AccessibilityLabel.recordVideo)
                     makeTakePhotoButton()
                 }
             }
+            .accessibilityElement(children: .contain)
             .allowsHitTesting(viewModel.allowsHitTesting)
         }
     }
@@ -149,6 +162,7 @@ private struct ToolBar: View {
         } action: {
             viewModel.togglePause()
         }
+        .accessibilityIdentifier(Camera.AccessibilityLabel.playAndPauseButton)
         .hidden([.finished, .initialized].contains(viewModel.state))
         .allowsHitTesting(viewModel.allowsHitTesting)
     }
@@ -160,6 +174,7 @@ private struct ToolBar: View {
         } action: {
             viewModel.switchCamera()
         }
+        .accessibilityIdentifier(Camera.AccessibilityLabel.switchCameraButton)
         .hidden([.running, .paused].contains(viewModel.state))
         .allowsHitTesting(viewModel.allowsHitTesting)
     }
@@ -171,6 +186,7 @@ private struct ToolBar: View {
         } action: {
             viewModel.capturePhoto()
         }
+        .accessibilityIdentifier(Camera.AccessibilityLabel.takePhotoButton)
         .allowsHitTesting(viewModel.allowsHitTesting)
     }
 }
@@ -208,7 +224,10 @@ private struct TopBar: View {
 
                     Spacer()
                     PresetButton()
+                        .allowsHitTesting(viewModel.allowsHitTesting)
+                        .accessibilityIdentifier(Camera.AccessibilityLabel.presetButton)
                     TorchButton()
+                        .accessibilityIdentifier(Camera.AccessibilityLabel.flashButton)
                 }
             } else if viewModel.deviceOrientation.isLandscape {
                 VStack(spacing: theme.spacingTheme.sm) {
@@ -230,6 +249,7 @@ private struct TopBar: View {
         } action: {
             viewModel.onDismiss()
         }
+        .accessibilityIdentifier(Camera.AccessibilityLabel.closeButton)
         .disabled(viewModel.state == .running)
     }
 
@@ -239,6 +259,7 @@ private struct TopBar: View {
         } label: {
             MediaCounterView()
         }
+        .accessibilityIdentifier(Camera.AccessibilityLabel.mediaCounterView)
         .allowsHitTesting(!viewModel.medias.isEmpty)
         .disabled(viewModel.state == .running)
         .scaledFullScreenCover(isPresented: $isPresented) {

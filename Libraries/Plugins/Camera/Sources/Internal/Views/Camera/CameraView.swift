@@ -28,6 +28,8 @@ struct CameraView: View {
                     .hidden(!viewModel.isAuthorized || !UIDevice.current.isPad)
 
                 Camera()
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier(AccessibilityLabel.camera)
                     .hidden(!viewModel.isAuthorized || UIDevice.current.isPad)
 
                 PermissionsView()
@@ -45,6 +47,8 @@ struct CameraView: View {
             Text(viewModel.localizedError)
                 .fixedSize(horizontal: false, vertical: true)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(AccessibilityLabel.errorMessage)
         .environmentObject(viewModel)
     }
 
