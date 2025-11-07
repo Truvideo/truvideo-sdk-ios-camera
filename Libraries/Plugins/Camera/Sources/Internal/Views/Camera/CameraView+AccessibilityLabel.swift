@@ -12,7 +12,10 @@ extension CameraView {
         /// Main container wrapping the camera preview and overlays.
         static let camera = "Camera Container"
         
-        /// Error
+        /// Identifier for the iPad-specific camera layout.
+        static let cameraIpad = "Camera Ipad View"
+        
+        /// A view displaying error messages related to camera operations.
         static let errorMessage = "Error Message View"
      }
 }

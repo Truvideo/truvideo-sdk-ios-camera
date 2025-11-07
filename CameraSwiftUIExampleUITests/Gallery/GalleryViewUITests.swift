@@ -14,6 +14,7 @@ final class GalleryViewUITests: XCTestCase {
         super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
+        app.launchArguments += ["-CameraSwiftUIExamplePermissionsUITest"]
         app.launch()
         cameraScreen = CameraScreen(app: app)
     }
@@ -24,12 +25,13 @@ final class GalleryViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 5))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 5))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
         
         XCTAssertTrue(cameraScreen.galleryView.waitForExistence(timeout: 3))
         XCTAssertTrue(cameraScreen.galleryGrid.waitForExistence(timeout: 3))
@@ -53,14 +55,15 @@ final class GalleryViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
-        
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 5))
-        cameraScreen.takePhoto.tap()
         sleep(1)
-        cameraScreen.takePhoto.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 5))
+        cameraScreen.takePhotoButton.tap()
+        sleep(1)
+        cameraScreen.takePhotoButton.tap()
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
         
         XCTAssertTrue(cameraScreen.galleryView.waitForExistence(timeout: 3))
         XCTAssertTrue(cameraScreen.galleryGrid.waitForExistence(timeout: 3))
@@ -84,14 +87,15 @@ final class GalleryViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
-        
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 5))
-        cameraScreen.takePhoto.tap()
         sleep(1)
-        cameraScreen.takePhoto.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 5))
+        cameraScreen.takePhotoButton.tap()
+        sleep(1)
+        cameraScreen.takePhotoButton.tap()
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
         
         XCTAssertTrue(cameraScreen.galleryView.waitForExistence(timeout: 3))
         XCTAssertTrue(cameraScreen.galleryGrid.waitForExistence(timeout: 3))
@@ -115,14 +119,15 @@ final class GalleryViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
-        
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 5))
-        cameraScreen.takePhoto.tap()
         sleep(1)
-        cameraScreen.takePhoto.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 5))
+        cameraScreen.takePhotoButton.tap()
+        sleep(1)
+        cameraScreen.takePhotoButton.tap()
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
         
         cameraScreen.secondPhoto.tap()
         
@@ -154,29 +159,30 @@ final class GalleryViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 5))
-        cameraScreen.takePhoto.tap()
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        XCTAssertEqual(cameraScreen.mediaCount.label, "1")
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 5))
+        cameraScreen.takePhotoButton.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        XCTAssertEqual(cameraScreen.mediaCountButton.label, "1")
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 5))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 5))
+        cameraScreen.recordVideoButton.tap()
         sleep(2)
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        XCTAssertEqual(cameraScreen.mediaCount.label, "1, 1")
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        XCTAssertEqual(cameraScreen.mediaCountButton.label, "1, 1")
         
-        cameraScreen.takePhoto.tap()
+        cameraScreen.takePhotoButton.tap()
         sleep(1)
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         sleep(1)
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertEqual(cameraScreen.mediaCount.label, "2, 2")
-        cameraScreen.mediaCount.tap()
+        XCTAssertEqual(cameraScreen.mediaCountButton.label, "2, 2")
+        cameraScreen.mediaCountButton.tap()
         
         XCTAssertTrue(cameraScreen.galleryView.waitForExistence(timeout: 5))
         XCTAssertTrue(cameraScreen.galleryGrid.waitForExistence(timeout: 5))

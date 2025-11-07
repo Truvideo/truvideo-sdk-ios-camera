@@ -13,7 +13,9 @@ struct CameraConfigurationView: View {
             Section("Lens") {
                 Picker("Lens", selection: $options.lens) {
                     Text("Back").tag(TruvideoSdkCameraLensFacing.back)
+                        .accessibilityIdentifier(AccessibilityLabel.lensFacingBack)
                     Text("Front").tag(TruvideoSdkCameraLensFacing.front)
+                        .accessibilityIdentifier(AccessibilityLabel.lensFacingFront)
                 }
                 .pickerStyle(.segmented)
             }
@@ -21,7 +23,9 @@ struct CameraConfigurationView: View {
             Section("Flash") {
                 Picker("Flash", selection: $options.flash) {
                     Text("Off").tag(TruvideoSdkCameraFlashMode.off)
+                        .accessibilityIdentifier(AccessibilityLabel.flashModeOff)
                     Text("On").tag(TruvideoSdkCameraFlashMode.on)
+                        .accessibilityIdentifier(AccessibilityLabel.flashModeOn)
                 }
                 .pickerStyle(.segmented)
             }
@@ -29,7 +33,9 @@ struct CameraConfigurationView: View {
             Section("Image Format") {
                 Picker("Format", selection: $options.imageFormat) {
                     Text("JPEG").tag(TruvideoSdkCameraImageFormat.jpeg)
+                        .accessibilityIdentifier(AccessibilityLabel.jpeg)
                     Text("PNG").tag(TruvideoSdkCameraImageFormat.png)
+                        .accessibilityIdentifier(AccessibilityLabel.png)
                 }
                 .pickerStyle(.segmented)
             }
@@ -37,15 +43,20 @@ struct CameraConfigurationView: View {
             Section("Capture Mode") {
                 Picker("Mode", selection: $options.mediaMode) {
                     Text("Photo Only").tag(CameraOptions.MediaMode.photoOnly)
+                        .accessibilityIdentifier(AccessibilityLabel.photoOnly)
                     Text("Video Only").tag(CameraOptions.MediaMode.videoOnly)
+                        .accessibilityIdentifier(AccessibilityLabel.videoOnly)
                     Text("Photo & Video").tag(CameraOptions.MediaMode.videoAndPicture)
+                        .accessibilityIdentifier(AccessibilityLabel.videoAndPicture)
                 }
+                .accessibilityIdentifier(AccessibilityLabel.captureMode)
 
                 Picker("Limit", selection: $options.mediaLimit) {
                     Text("Single").tag(CameraOptions.MediaLimit.single)
                     Text("Limited").tag(CameraOptions.MediaLimit.limited)
                     Text("Unlimited").tag(CameraOptions.MediaLimit.unlimited)
                 }
+                .accessibilityIdentifier(AccessibilityLabel.limit)
 
                 if options.mediaMode != .photoOnly {
                     HStack {
@@ -84,4 +95,3 @@ private extension NumberFormatter {
         return formatter
     }
 }
-

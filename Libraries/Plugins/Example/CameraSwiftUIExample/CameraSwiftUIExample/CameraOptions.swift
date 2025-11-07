@@ -46,8 +46,10 @@ struct CameraOptions {
             switch mediaLimit {
             case .single:
                 return .singlePicture()
+                
             case .limited:
                 return .picture(pictureCount: max(1, pictureLimit))
+                
             case .unlimited:
                 return .picture()
             }
@@ -56,8 +58,10 @@ struct CameraOptions {
             switch mediaLimit {
             case .single:
                 return .singleVideo(videoDuration: Int(videoDuration))
+                
             case .limited:
                 return .video(videoCount: max(1, videoLimit), videoDuration: Int(videoDuration))
+                
             case .unlimited:
                 return .video(videoDuration: Int(videoDuration))
             }
@@ -66,16 +70,17 @@ struct CameraOptions {
             switch mediaLimit {
             case .single:
                 return .singleVideoOrPicture(videoDuration: Int(videoDuration))
+                
             case .limited:
                 return .videoAndPicture(
                     videoCount: max(1, videoLimit),
                     pictureCount: max(1, pictureLimit),
                     videoDuration: Int(videoDuration)
                 )
+                
             case .unlimited:
                 return .videoAndPicture(mediaCount: nil, videoDuration: Int(videoDuration))
             }
         }
     }
 }
-

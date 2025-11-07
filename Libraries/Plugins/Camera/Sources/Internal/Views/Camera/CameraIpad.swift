@@ -44,14 +44,19 @@ struct CameraIpad: View {
             }
             .overlay(alignment: .trailing) {
                 ToolBar()
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier(AccessibilityLabel.toolBar)
                     .padding(.trailing, theme.spacingTheme.sm)
             }
             .overlay(alignment: .leading) {
                 ZoomPicker(options: viewModel.zoomFactors, selection: zoomFactor, isExpanded: $isZoomPickerExpanded)
+                    .accessibilityIdentifier(AccessibilityLabel.zoomPicker)
                     .padding(.leading, theme.spacingTheme.md)
             }
             .overlay(alignment: .topLeading) {
                 CloseButton()
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier(AccessibilityLabel.closeButton)
                     .padding(.leading, theme.spacingTheme.md)
                     .padding(.top, theme.spacingTheme.x(6.5))
             }
@@ -60,6 +65,7 @@ struct CameraIpad: View {
                 AdaptiveOrientationLayoutView {
                     VStack(spacing: theme.spacingTheme.lg) {
                         TimeRecordedView(timeRecorded: $viewModel.timeRecorded)
+                        .accessibilityIdentifier(AccessibilityLabel.timerView)
                         RemainingTimeView(remainingTime: $viewModel.remainingTime)
                             .opacity(!viewModel.shouldDisplayRemainingTime ? 0 : 1)
                     }
@@ -110,11 +116,13 @@ private struct ToolBar: View {
     var body: some View {
         VStack(spacing: theme.spacingTheme.md) {
             TorchButton()
+                .accessibilityIdentifier(CameraIpad.AccessibilityLabel.flashButton)
             CircleButton {
                 Icon(
                     icon: DSIcons.cameraTrianglehead,
                     size: CGSize(width: theme.sizeTheme.xl, height: theme.sizeTheme.lg)
                 )
+                .accessibilityIdentifier(CameraIpad.AccessibilityLabel.switchCamera)
                 .padding(theme.spacingTheme.sm)
             } action: {
                 viewModel.switchCamera()
@@ -131,10 +139,12 @@ private struct ToolBar: View {
             } action: {
                 viewModel.togglePause()
             }
+            .accessibilityIdentifier(CameraIpad.AccessibilityLabel.playAndPauseButton)
             .hidden([.finished, .initialized].contains(viewModel.state))
             .allowsHitTesting(viewModel.allowsHitTesting)
 
             RecordButton()
+                .accessibilityIdentifier(CameraIpad.AccessibilityLabel.recordButton)
             CircleButton {
                 Icon(
                     icon: DSIcons.camera,
@@ -144,9 +154,11 @@ private struct ToolBar: View {
             } action: {
                 viewModel.capturePhoto()
             }
+            .accessibilityIdentifier(CameraIpad.AccessibilityLabel.takePhotoButton)
             .allowsHitTesting(viewModel.allowsHitTesting)
 
             PresetButton()
+                .accessibilityIdentifier(CameraIpad.AccessibilityLabel.presetButton)
         }
         .allowsHitTesting(viewModel.allowsHitTesting)
     }
@@ -182,6 +194,7 @@ private struct CloseButton: View {
             } label: {
                 MediaCounterView()
             }
+            .accessibilityIdentifier(CameraIpad.AccessibilityLabel.mediaCounterView)
             .allowsHitTesting(!viewModel.medias.isEmpty)
             .disabled(viewModel.state == .running)
             .scaledFullScreenCover(isPresented: $isPresented) {

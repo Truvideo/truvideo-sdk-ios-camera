@@ -4,6 +4,7 @@
 
 import XCTest
 
+@testable import CameraSwiftUIExample
 @testable import TruvideoSdkCamera
 
 /// A UI abstraction layer for interacting with the camera view in UITests.
@@ -28,7 +29,48 @@ struct CameraScreen {
     /// The XCUIApplication instance under test.
     let app: XCUIApplication
     
-    // MARK: - Camera Elements
+    // MARK: - Camera Configuration
+    
+    /// The navigation bar button to return to the Camera SDK main screen.
+    var cameraSDK: XCUIElement { app.navigationBars.buttons[CameraConfigurationView.AccessibilityLabel.cameraSDK] }
+    
+    /// The button representing the **Capture Mode** configuration section.
+    var captureMode: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.captureMode)] }
+    
+    /// The button that opens the camera configuration options.
+    var configureCamera: XCUIElement { app.buttons[CameraConfigurationView.AccessibilityLabel.configureCamera] }
+    
+    /// The button to open or adjust the **Limit** configuration options.
+    var limit: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.limit)] }
+    
+    /// The button representing the **Flash On** option.
+    var flashModeOn: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.flashModeOn)] }
+    
+    /// The button representing the **Flash Off** option.
+    var flashModeOff: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.flashModeOff)] }
+    
+    /// The button to switch to the **rear-facing** camera.
+    var lensFacingBack: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.lensFacingBack)] }
+    
+    /// The button to switch to the **front-facing** camera.
+    var lensFacingFront: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.lensFacingFront)] }
+    
+    /// The button to select a **limited** capture mode option.
+    var limited: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.limited)] }
+    
+    /// The button that opens the camera view from the configuration screen.
+    var openCamera: XCUIElement { app.buttons[CameraConfigurationView.AccessibilityLabel.openCamera] }
+    
+    /// The button to enable **Photo Only** mode.
+    var photoOnly: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.photoOnly)] }
+    
+    /// The button to enable **Single** capture mode.
+    var single: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.single)] }
+    
+    /// The button to enable **Video Only** mode.
+    var videoOnly: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.videoOnly)] }
+    
+    // MARK: - Camera Elements (iPhone)
     
     /// The main container wrapping the camera preview and overlays.
     var camera: XCUIElement { app.otherElements[(CameraView.AccessibilityLabel.camera)] }
@@ -44,9 +86,6 @@ struct CameraScreen {
     
     /// The top toolbar containing secondary information and actions.
     var topBar: XCUIElement { camera.otherElements[Camera.AccessibilityLabel.topBar] }
-    
-    /// Represents the "Open Camera" button in the UI.
-    var openCamera: XCUIElement { app.buttons["Open Camera"] }
     
     // MARK: - Capture Controls
     
@@ -106,22 +145,83 @@ struct CameraScreen {
     var secondPhoto: XCUIElement { galleryGrid.images.element(boundBy: 1) }
     
     // MARK: - Zoom Picker
+
+    /// Returns a specific zoom picker element by index, ensuring its existence before use.
+    func zoomPickerValues() -> [XCUIElement] {
+        return app.staticTexts.matching(identifier: "Zoom Picker")
+            .allElementsBoundByIndex
+            .filter { $0.label.range(of: #"^\d+$"#, options: .regularExpression) != nil }
+    }
     
-    /// The first zoom option (usually 1x).
-    var zoom1: XCUIElement { toolBar.staticTexts.matching(identifier: "Zoom Picker").element(boundBy: 1) }
+    // MARK: - Camera (iPad)
+
+    /// The main container element for the camera view on iPad.
+    var cameraIpad: XCUIElement { app.otherElements[CameraView.AccessibilityLabel.cameraIpad] }
+
+    /// The bottom toolbar that contains.
+    var toolBarIpad: XCUIElement { cameraIpad.otherElements[CameraIpad.AccessibilityLabel.toolBar] }
+
+    /// The button used to capture a photo.
+    var takePhotoIpad: XCUIElement { toolBarIpad.buttons[CameraIpad.AccessibilityLabel.takePhotoButton] }
+
+    /// The play/pause button for video playback or preview.
+    var playAndPauseIpad: XCUIElement { toolBarIpad.buttons[CameraIpad.AccessibilityLabel.playAndPauseButton] }
+
+    /// The flash mode toggle button inside the toolbar.
+    var flashIpad: XCUIElement { toolBarIpad.buttons[CameraIpad.AccessibilityLabel.flashButton] }
+
+    /// The button used to select a video resolution.
+    var resolutionIpad: XCUIElement { toolBarIpad.buttons[CameraIpad.AccessibilityLabel.presetButton] }
+
+    /// The button used to close the camera screen.
+    var closeButtonIpad: XCUIElement { app.otherElements[CameraIpad.AccessibilityLabel.closeButton] }
+
+    /// The counter showing how many media items have been captured.
+    var mediaCountIpad: XCUIElement { closeButtonIpad.buttons[CameraIpad.AccessibilityLabel.mediaCounterView] }
+
+    /// The button used to switch between the front and rear camera.
+    var switchCameraIpad: XCUIElement { toolBarIpad.buttons[CameraIpad.AccessibilityLabel.switchCamera] }
+
+    /// The control used to start or stop video recording.
+    var recordVideoIpad: XCUIElement { toolBarIpad.otherElements[CameraIpad.AccessibilityLabel.recordButton] }
+
+    /// The timer label that appears on screen during video recording.
+    var timerIpad: XCUIElement { cameraIpad.staticTexts[CameraIpad.AccessibilityLabel.timerView] }
     
-    /// The second zoom option (usually 2x).
-    var zoom2: XCUIElement { toolBar.staticTexts.matching(identifier: "Zoom Picker").element(boundBy: 2) }
+    // MARK: - Unified Buttons
     
-    /// The third zoom option (usually 3x).
-    var zoom3: XCUIElement { toolBar.staticTexts.matching(identifier: "Zoom Picker").element(boundBy: 3) }
+    var cameraMainContainer: XCUIElement { UIDevice.isPad ? cameraIpad : camera }
+
+    /// Returns the flash button depending on the current device.
+    var flashButton: XCUIElement { UIDevice.isPad ? flashIpad : flash }
     
-    /// The fourth zoom option (usually 4x).
-    var zoom4: XCUIElement { toolBar.staticTexts.matching(identifier: "Zoom Picker").element(boundBy: 4) }
+    /// The counter displaying the number of captured media items.
+    var mediaCountButton: XCUIElement { UIDevice.isPad ? mediaCountIpad : mediaCount }
     
-    /// The fifth zoom option (usually 5x).
-    var zoom5: XCUIElement { toolBar.staticTexts.matching(identifier: "Zoom Picker").element(boundBy: 5) }
+    /// The play/pause button used during video playback or preview.
+    var playAndPauseButton: XCUIElement { UIDevice.isPad ? playAndPauseIpad : playAndPause }
     
-    /// The sixth zoom option (usually 6x).
-    var zoom6: XCUIElement { toolBar.staticTexts.matching(identifier: "Zoom Picker").element(boundBy: 6) }
+    /// The button used to start or stop video recording.
+    var recordVideoButton: XCUIElement { UIDevice.isPad ? recordVideoIpad : recordVideo }
+    
+    /// The button used to open the video resolution selector.
+    var resolutionButton: XCUIElement { UIDevice.isPad ? resolutionIpad : resolution }
+    
+    /// The button used to switch between front and rear cameras.
+    var switchCameraButton: XCUIElement { UIDevice.isPad ? switchCameraIpad : switchCamera }
+
+    /// The button used to capture a photo.
+    var takePhotoButton: XCUIElement { UIDevice.isPad ? takePhotoIpad : takePhoto }
+    
+    /// The timer label displayed during video recording.
+    var timerText: XCUIElement { UIDevice.isPad ? timerIpad : timer }
+
+    /// A shared reference to the top toolbar depending on the device.
+    var topBarButton: XCUIElement { UIDevice.isPad ? toolBarIpad : topBar }
+}
+
+extension UIDevice {
+    static var isPad: Bool {
+        UIDevice.current.userInterfaceIdiom == .pad
+    }
 }

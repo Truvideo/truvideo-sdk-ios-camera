@@ -17,6 +17,7 @@ struct ContentView: View {
         NavigationView {
             VStack(spacing: 16) {
                 cameraControls
+                    .accessibilityElement(children: .contain)
 
                 if capturedMedia.isEmpty {
                     emptyState
@@ -24,9 +25,11 @@ struct ContentView: View {
                     capturedMediaList
                 }
             }
+            .accessibilityElement(children: .contain)
             .padding()
             .navigationTitle("Camera SDK")
         }
+        .navigationViewStyle(StackNavigationViewStyle())
         .presentTruvideoSdkCameraView(isPresented: $isCameraPresented, preset: cameraOptions.configuration) { result in
             capturedMedia = result.media
         }
@@ -48,6 +51,7 @@ struct ContentView: View {
 
             NavigationLink("Configure Camera") {
                 CameraConfigurationView(options: $cameraOptions)
+                    .accessibilityElement(children: .contain)
             }
             .buttonStyle(.bordered)
         }
@@ -85,6 +89,11 @@ struct ContentView: View {
     }
 
     private func checkPermissions(completion: @escaping (Bool) -> Void) {
+        if CommandLine.arguments.contains("-CameraSwiftUIExamplePermissionsUITest") {
+            completion(true)
+            return
+        }
+        
         var videoGranted = false
         var audioGranted = false
         var pendingRequests = 0
@@ -161,4 +170,3 @@ struct ContentView: View {
 #Preview {
     ContentView()
 }
-

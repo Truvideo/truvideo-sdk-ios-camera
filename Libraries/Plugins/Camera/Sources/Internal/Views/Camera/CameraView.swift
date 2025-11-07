@@ -26,6 +26,8 @@ struct CameraView: View {
             } else {
                 CameraIpad()
                     .hidden(!viewModel.isAuthorized || !UIDevice.current.isPad)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier(AccessibilityLabel.cameraIpad)
 
                 Camera()
                     .accessibilityElement(children: .contain)

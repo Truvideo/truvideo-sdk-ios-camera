@@ -233,6 +233,8 @@ private struct TopBar: View {
                 VStack(spacing: theme.spacingTheme.sm) {
                     makeCloseButton()
                     PresetButton()
+                        .allowsHitTesting(viewModel.allowsHitTesting)
+                        .accessibilityIdentifier(Camera.AccessibilityLabel.presetButton)
                     TorchButton()
                     makeMediaCounterView()
                 }

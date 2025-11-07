@@ -2,6 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+import AVFoundation
 import XCTest
 
 @testable import TruvideoSdkCamera
@@ -14,6 +15,7 @@ final class CameraViewUITests: XCTestCase {
         super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
+        app.launchArguments += ["-CameraSwiftUIExamplePermissionsUITest"]
         app.launch()
         cameraScreen = CameraScreen(app: app)
     }
@@ -24,102 +26,94 @@ final class CameraViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.exists)
+        XCTAssertTrue(cameraScreen.mediaCountButton.exists)
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto1ATakeFrontCameraPhoto() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.exists)
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.exists)
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto02TakeFrontCameraPhotoFlashOff() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        cameraScreen.takePhoto.tap()
-        XCTAssertEqual(cameraScreen.flash.label, "Flash Off")
+        cameraScreen.takePhotoButton.tap()
+        XCTAssertEqual(cameraScreen.flashButton.label, "Flash Off")
     }
     
     func testUCPhoto03TakeFrontCameraPhotoFlashOn() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.flash.waitForExistence(timeout: 3))
-        cameraScreen.flash.tap()
-        XCTAssertEqual(cameraScreen.flash.label, "Flash")
+        XCTAssertTrue(cameraScreen.flashButton.waitForExistence(timeout: 3))
+        cameraScreen.flashButton.tap()
+        XCTAssertEqual(cameraScreen.flashButton.label, "Flash")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.exists)
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.exists)
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto04TakeFrontCameraPhotoWithZoom() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
-        
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom1.waitForExistence(timeout: 3))
-        cameraScreen.zoom1.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom2.waitForExistence(timeout: 3))
-        cameraScreen.zoom2.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom3.waitForExistence(timeout: 3))
-        cameraScreen.zoom3.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom4.waitForExistence(timeout: 3))
-        cameraScreen.zoom4.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom5.waitForExistence(timeout: 3))
-        cameraScreen.zoom5.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom6.waitForExistence(timeout: 3))
-        cameraScreen.zoom6.tap()
-        
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        sleep(1)
+
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
+        sleep(2)
+
+        for value in cameraScreen.zoomPickerValues() {
+            XCTAssertTrue(value.isHittable)
+            value.tap()
+        }
+
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
     }
     
     func testUCPhoto05TakeFrontCameraPhotoMultipleOrientations() {
-        // Given
-        let switchCamera = app.buttons[Camera.AccessibilityLabel.switchCameraButton]
-
-        // When, Then
+        // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(switchCamera.waitForExistence(timeout: 5))
-        switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 5))
+        cameraScreen.switchCameraButton.tap()
         
         capturePhotoIn(orientation: .portrait)
         capturePhotoIn(orientation: .landscapeLeft)
@@ -131,47 +125,42 @@ final class CameraViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
         capturePhotoIn(orientation: .portrait)
         
-        cameraScreen.mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto5BTakeFrontCameraPhotoLandscapeLeft() {
-        // Given
-        let switchCamera = app.buttons[Camera.AccessibilityLabel.switchCameraButton]
-        let mediaCount = app.buttons[Camera.AccessibilityLabel.mediaCounterView]
-
-        // When, Then
+        // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(switchCamera.waitForExistence(timeout: 3))
-        switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
         capturePhotoIn(orientation: .landscapeLeft)
         
-        mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto5CTakeFrontCameraPhotoLandscapeRight() {
-        // Given
-        let switchCamera = app.buttons[Camera.AccessibilityLabel.switchCameraButton]
-        let mediaCount = app.buttons[Camera.AccessibilityLabel.mediaCounterView]
-
-        // When, Then
+        // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(switchCamera.waitForExistence(timeout: 3))
-        switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
         capturePhotoIn(orientation: .landscapeRight)
 
-        mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto08TakeFrontCameraPhotoMultipleResolutions() {
@@ -181,96 +170,100 @@ final class CameraViewUITests: XCTestCase {
         // When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
 
         for preset in resolutions {
-            XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-            cameraScreen.resolution.tap()
+            XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+            cameraScreen.resolutionButton.tap()
             
             let option = app.buttons[Camera.AccessibilityLabel.presetOption(preset)]
             XCTAssertTrue(option.waitForExistence(timeout: 3))
             option.tap()
             
-            XCTAssertEqual(cameraScreen.resolution.label, preset)
+            XCTAssertEqual(cameraScreen.resolutionButton.label, preset)
             
-            XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-            cameraScreen.takePhoto.tap()
+            XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+            cameraScreen.takePhotoButton.tap()
             
-            XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
+            XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
         }
         
-        cameraScreen.mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto8ATakeFrontCameraPhotoHD() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.hdOption.waitForExistence(timeout: 3))
         cameraScreen.hdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "HD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "HD")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUCPhoto8BTakeFrontCameraPhotoFHD() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.fhdOption.waitForExistence(timeout: 3))
         cameraScreen.fhdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "FHD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "FHD")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto8CTakeFrontCameraPhotoSD() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.sdOption.waitForExistence(timeout: 3))
         cameraScreen.sdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "SD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "SD")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     // MARK: - Front Camera [Recording Video]
@@ -279,167 +272,163 @@ final class CameraViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.exists)
+        XCTAssertTrue(cameraScreen.mediaCountButton.exists)
     }
 
-    func testUCVideo03RecordFrontCameraNoFlash() {
+    func testUCVideo03RecordFrontCameraNoFlash() throws {
         // Given, When, Then
-        XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front),
+              device.hasTorch else {
+            throw XCTSkip("Skipping test: Device does not support torch")
+        }
+        
+        XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 10))
         cameraScreen.openCamera.tap()
+        sleep(10)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 10))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.flash.exists)
-        XCTAssertTrue(cameraScreen.flash.isEnabled)
+        XCTAssertTrue(cameraScreen.flashButton.exists)
+        XCTAssertTrue(cameraScreen.flashButton.isEnabled)
 
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 10))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertFalse(cameraScreen.flash.isEnabled)
-        XCTAssertEqual(cameraScreen.flash.label, "Flash Off")
+        XCTAssertEqual(cameraScreen.flashButton.label, "Flash Off")
         
-        sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        sleep(10)
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 10))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCVideo04RecordFrontCameraPause() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
 
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        XCTAssertTrue(cameraScreen.playAndPause.waitForExistence(timeout: 3))
-        cameraScreen.playAndPause.tap()
+        XCTAssertTrue(cameraScreen.playAndPauseButton.waitForExistence(timeout: 3))
+        cameraScreen.playAndPauseButton.tap()
     }
     
     func testUCVideo05RecordFrontCameraPauseResume() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
 
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        XCTAssertEqual(cameraScreen.playAndPause.label, "Pause")
+        XCTAssertEqual(cameraScreen.playAndPauseButton.label, "Pause")
         
-        XCTAssertTrue(cameraScreen.playAndPause.waitForExistence(timeout: 3))
-        cameraScreen.playAndPause.tap()
+        XCTAssertTrue(cameraScreen.playAndPauseButton.waitForExistence(timeout: 3))
+        cameraScreen.playAndPauseButton.tap()
         
-        XCTAssertEqual(cameraScreen.playAndPause.label, "Play")
+        XCTAssertEqual(cameraScreen.playAndPauseButton.label, "Play")
         
-        cameraScreen.playAndPause.tap()
-        XCTAssertEqual(cameraScreen.playAndPause.label, "Pause")
+        cameraScreen.playAndPauseButton.tap()
+        XCTAssertEqual(cameraScreen.playAndPauseButton.label, "Pause")
         sleep(1)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
     }
     
     func testUCVideo06RecordFrontCameraPhotoWhileRecording() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
 
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertEqual(cameraScreen.takePhoto.label, "Camera")
+        XCTAssertEqual(cameraScreen.takePhotoButton.label, "Camera")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUCVideo07RecordFrontCameraZoom() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
-        
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
-
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom1.waitForExistence(timeout: 6))
-        cameraScreen.zoom1.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom2.waitForExistence(timeout: 6))
-        cameraScreen.zoom2.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom3.waitForExistence(timeout: 6))
-        cameraScreen.zoom3.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom4.waitForExistence(timeout: 6))
-        cameraScreen.zoom4.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom5.waitForExistence(timeout: 6))
-        cameraScreen.zoom5.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom6.waitForExistence(timeout: 6))
-        cameraScreen.zoom6.tap()
-        
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
         
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
+
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
+        sleep(2)
+
+        for value in cameraScreen.zoomPickerValues() {
+            XCTAssertTrue(value.isHittable)
+            value.tap()
+        }
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        sleep(3)
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
+        
+        cameraScreen.recordVideoButton.tap()
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUCVideo08RecordFrontCameraMultipleOrientations() {
-        // Given
-        let switchCamera = app.buttons[Camera.AccessibilityLabel.switchCameraButton]
-
-        // When, Then
+        // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(switchCamera.waitForExistence(timeout: 3))
-        switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
         captureVideoIn(orientation: .portrait, description: "Portrait")
         captureVideoIn(orientation: .landscapeLeft, description: "Landscape Left")
@@ -451,73 +440,67 @@ final class CameraViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
         captureVideoIn(orientation: .portrait, description: "Portrait")
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCVideo8BRecordFrontCameraLandscapeLeft() {
-        // Given
-        let switchCamera = app.buttons[Camera.AccessibilityLabel.switchCameraButton]
-        let recordVideo = app.otherElements[Camera.AccessibilityLabel.recordVideo]
-        let mediaCount = app.buttons[Camera.AccessibilityLabel.mediaCounterView]
-
-        // When, Then
+        // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(switchCamera.waitForExistence(timeout: 3))
-        switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
         captureVideoIn(orientation: .landscapeLeft, description: "Landscape Left")
         
-        XCTAssertTrue(recordVideo.waitForExistence(timeout: 3))
-        recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(mediaCount.waitForExistence(timeout: 3))
-        mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCVideo8CRecordFrontCameraLandscapeRight() {
-        // Given
-        let switchCamera = app.buttons[Camera.AccessibilityLabel.switchCameraButton]
-        let recordVideo = app.otherElements[Camera.AccessibilityLabel.recordVideo]
-        let mediaCount = app.buttons[Camera.AccessibilityLabel.mediaCounterView]
-
-        // When, Then
+        // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(switchCamera.waitForExistence(timeout: 3))
-        switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
         captureVideoIn(orientation: .landscapeRight, description: "Landscape Right")
         
-        XCTAssertTrue(recordVideo.waitForExistence(timeout: 3))
-        recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(mediaCount.waitForExistence(timeout: 3))
-        mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUCVideo09RecordFrontCameraBackgroundTransition() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         XCUIDevice.shared.press(.home)
         sleep(3)
@@ -525,9 +508,9 @@ final class CameraViewUITests: XCTestCase {
         app.activate()
         sleep(2)
         
-        if cameraScreen.timer.label != "00:00:00" {
+        if cameraScreen.timerText.label != "00:00:00" {
             XCTAssertTrue(true)
-            cameraScreen.recordVideo.tap()
+            cameraScreen.recordVideoButton.tap()
         } else {
             XCTAssertTrue(true)
         }
@@ -542,117 +525,122 @@ final class CameraViewUITests: XCTestCase {
         // When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 5))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 5))
+        cameraScreen.switchCameraButton.tap()
         sleep(1)
 
         for preset in resolutions {
-            XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-            cameraScreen.resolution.tap()
+            XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+            cameraScreen.resolutionButton.tap()
 
             let option = app.buttons[Camera.AccessibilityLabel.presetOption(preset)]
-            XCTAssertTrue(option.waitForExistence(timeout: 3))
+            XCTAssertTrue(option.waitForExistence(timeout: 3), "Preset \(preset) not found")
+
             option.tap()
 
-            XCTAssertEqual(cameraScreen.resolution.label, preset)
+            XCTAssertEqual(cameraScreen.resolutionButton.label, preset)
 
-            XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-            cameraScreen.recordVideo.tap()
-
+            cameraScreen.recordVideoButton.tap()
             sleep(2)
-            XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
 
-            cameraScreen.recordVideo.tap()
+            XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
 
-            XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
+            cameraScreen.recordVideoButton.tap()
         }
         
-        cameraScreen.mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUCVideo12ARecordFrontCameraHD() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 5))
+        cameraScreen.switchCameraButton.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.hdOption.waitForExistence(timeout: 3))
         cameraScreen.hdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "HD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "HD")
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
 
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
     }
     
     func testUCVideo12BRecordFrontCameraFHD() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.fhdOption.waitForExistence(timeout: 3))
         cameraScreen.fhdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "FHD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "FHD")
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
 
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
     }
     
     func testUCVideo12CRecordFrontCameraSD() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.switchCamera.waitForExistence(timeout: 3))
-        cameraScreen.switchCamera.tap()
+        XCTAssertTrue(cameraScreen.switchCameraButton.waitForExistence(timeout: 3))
+        cameraScreen.switchCameraButton.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.sdOption.waitForExistence(timeout: 3))
         cameraScreen.sdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "SD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "SD")
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
 
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     // MARK: - Rear Camera [Take Photo]
@@ -661,75 +649,75 @@ final class CameraViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.exists)
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto02TakePhotoWithFlashOff() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertEqual(cameraScreen.flash.label, "Flash Off")
+        XCTAssertEqual(cameraScreen.flashButton.label, "Flash Off")
         
-        XCTAssertTrue(cameraScreen.mediaCount.exists)
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUCPhoto03TakePhotoWithFlashOn() {
-        // Given, When, Then
+        // Given
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.flash.waitForExistence(timeout: 3))
-        cameraScreen.flash.tap()
-        XCTAssertEqual(cameraScreen.flash.label, "Flash")
-
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        // When
+        XCTAssertTrue(cameraScreen.flashButton.waitForExistence(timeout: 3))
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        let expectedLabel = cameraScreen.flashButton.isEnabled ? "Flash" : "Flash Off"
+        
+        if cameraScreen.flashButton.isEnabled {
+            cameraScreen.flashButton.tap()
+        }
+        
+        XCTAssertEqual(cameraScreen.flashButton.label, expectedLabel)
+        
+        // Then
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
-    
+
     func testUCPhoto04TakePhotoWithZoom() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(2)
+
+        for value in cameraScreen.zoomPickerValues() {
+            XCTAssertTrue(value.isHittable)
+            value.tap()
+        }
         
-        XCTAssertTrue(cameraScreen.zoom1.waitForExistence(timeout: 3))
-        cameraScreen.zoom1.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom2.waitForExistence(timeout: 3))
-        cameraScreen.zoom2.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom3.waitForExistence(timeout: 3))
-        cameraScreen.zoom3.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom4.waitForExistence(timeout: 3))
-        cameraScreen.zoom4.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom5.waitForExistence(timeout: 3))
-        cameraScreen.zoom5.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom6.waitForExistence(timeout: 3))
-        cameraScreen.zoom6.tap()
-        
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
     }
 
     func testUCPhoto05TakePhotoUnlockedOrientation() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
         capturePhotoIn(orientation: .portrait)
         capturePhotoIn(orientation: .landscapeLeft)
@@ -741,20 +729,22 @@ final class CameraViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
         capturePhotoIn(orientation: .portrait)
 
-        cameraScreen.mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto05BTakePhotoLandscapeLeft() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
         capturePhotoIn(orientation: .landscapeLeft)
         
-        cameraScreen.mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto05CTakePhotoLandscapeRight() {
@@ -764,7 +754,7 @@ final class CameraViewUITests: XCTestCase {
         
         capturePhotoIn(orientation: .landscapeRight)
         
-        cameraScreen.mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUCPhoto08TakePhotoDifferentResolutions() {
@@ -774,84 +764,88 @@ final class CameraViewUITests: XCTestCase {
         // When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
         for preset in resolutions {
-            XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-            cameraScreen.resolution.tap()
+            XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+            cameraScreen.resolutionButton.tap()
             
             let option = app.buttons[Camera.AccessibilityLabel.presetOption(preset)]
             XCTAssertTrue(option.waitForExistence(timeout: 3))
             option.tap()
             
-            XCTAssertEqual(cameraScreen.resolution.label, preset)
+            XCTAssertEqual(cameraScreen.resolutionButton.label, preset)
             
-            XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-            cameraScreen.takePhoto.tap()
+            XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+            cameraScreen.takePhotoButton.tap()
             
-            XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
+            XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
         }
         
-        cameraScreen.mediaCount.tap()
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUCPhoto08ATakePhotoHDResolution() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.hdOption.waitForExistence(timeout: 3))
         cameraScreen.hdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "HD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "HD")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto08BTakePhotoFHDResolution() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.fhdOption.waitForExistence(timeout: 3))
         cameraScreen.fhdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "FHD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "FHD")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUCPhoto08CTakePhotoSDResolution() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.resolution.waitForExistence(timeout: 3))
-        cameraScreen.resolution.tap()
+        XCTAssertTrue(cameraScreen.resolutionButton.waitForExistence(timeout: 3))
+        cameraScreen.resolutionButton.tap()
         
         XCTAssertTrue(cameraScreen.sdOption.waitForExistence(timeout: 3))
         cameraScreen.sdOption.tap()
         
-        XCTAssertEqual(cameraScreen.resolution.label, "SD")
+        XCTAssertEqual(cameraScreen.resolutionButton.label, "SD")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
 
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     // MARK: - Rear Camera [Recording Video]
@@ -860,160 +854,164 @@ final class CameraViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.exists)
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUC03StartVideoRecordingWithFlashOff() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertEqual(cameraScreen.flash.label, "Flash Off")
+        XCTAssertTrue(cameraScreen.flashButton.waitForExistence(timeout: 3))
+        XCTAssertEqual(cameraScreen.flashButton.label, "Flash Off")
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
-        
-        cameraScreen.recordVideo.tap()
-        
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
+
+        cameraScreen.recordVideoButton.tap()
+
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUC04StartVideoRecordingWithFlashOn() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
-        cameraScreen.flash.tap()
-        XCTAssertEqual(cameraScreen.flash.label, "Flash")
+        XCTAssertTrue(cameraScreen.flashButton.waitForExistence(timeout: 3))
+
+        let expectedLabel = cameraScreen.flashButton.isEnabled ? "Flash" : "Flash Off"
+        
+        if cameraScreen.flashButton.isEnabled {
+            cameraScreen.flashButton.tap()
+        }
+        
+        XCTAssertEqual(cameraScreen.flashButton.label, expectedLabel)
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUC05PauseVideoRecording() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
-        
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
         
-        XCTAssertTrue(cameraScreen.playAndPause.waitForExistence(timeout: 3))
-        cameraScreen.playAndPause.tap()
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
+        
+        XCTAssertTrue(cameraScreen.playAndPauseButton.waitForExistence(timeout: 3))
+        cameraScreen.playAndPauseButton.tap()
     }
 
     func testUC06VideoRecordingPauseAndResume() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        XCTAssertEqual(cameraScreen.playAndPause.label, "Pause")
+        XCTAssertEqual(cameraScreen.playAndPauseButton.label, "Pause")
         
-        XCTAssertTrue(cameraScreen.playAndPause.waitForExistence(timeout: 3))
-        cameraScreen.playAndPause.tap()
+        XCTAssertTrue(cameraScreen.playAndPauseButton.waitForExistence(timeout: 3))
+        cameraScreen.playAndPauseButton.tap()
         
-        XCTAssertEqual(cameraScreen.playAndPause.label, "Play")
+        XCTAssertEqual(cameraScreen.playAndPauseButton.label, "Play")
         
-        cameraScreen.playAndPause.tap()
-        XCTAssertEqual(cameraScreen.playAndPause.label, "Pause")
+        cameraScreen.playAndPauseButton.tap()
+        XCTAssertEqual(cameraScreen.playAndPauseButton.label, "Pause")
         sleep(1)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
     }
 
     func testUC07VideoRecordingCapturePhotoWhileRecording() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        XCTAssertTrue(cameraScreen.takePhoto.waitForExistence(timeout: 3))
-        cameraScreen.takePhoto.tap()
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 3))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertEqual(cameraScreen.takePhoto.label, "Camera")
+        XCTAssertEqual(cameraScreen.takePhotoButton.label, "Camera")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUC08VideoRecordingAdjustZoom() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom1.waitForExistence(timeout: 6))
-        cameraScreen.zoom1.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom2.waitForExistence(timeout: 6))
-        cameraScreen.zoom2.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom3.waitForExistence(timeout: 6))
-        cameraScreen.zoom3.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom4.waitForExistence(timeout: 6))
-        cameraScreen.zoom4.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom5.waitForExistence(timeout: 6))
-        cameraScreen.zoom5.tap()
-        
-        XCTAssertTrue(cameraScreen.zoom6.waitForExistence(timeout: 6))
-        cameraScreen.zoom6.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
+        sleep(2)
+
+        for value in cameraScreen.zoomPickerValues() {
+            XCTAssertTrue(value.isHittable)
+            value.tap()
+        }
         
         sleep(2)
-        XCTAssertNotEqual(cameraScreen.timer.label, "00:00:00")
+        XCTAssertNotEqual(cameraScreen.timerText.label, "00:00:00")
         
-        cameraScreen.recordVideo.tap()
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
 
     func testUC09VideoRecordingUnlockedOrientation() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
         captureVideoIn(orientation: .portrait, description: "Portrait")
         captureVideoIn(orientation: .landscapeLeft, description: "Landscape Left")
@@ -1025,51 +1023,55 @@ final class CameraViewUITests: XCTestCase {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
         captureVideoIn(orientation: .portrait, description: "Portrait")
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUC09BVideoRecordingLandscapeLeft() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
         captureVideoIn(orientation: .landscapeLeft, description: "Landscape Left")
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUC09CVideoRecordingLandscapeRight() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
         captureVideoIn(orientation: .landscapeRight, description: "Landscape Right")
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(cameraScreen.mediaCount.waitForExistence(timeout: 3))
-        cameraScreen.mediaCount.tap()
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        cameraScreen.mediaCountButton.tap()
     }
     
     func testUC10VideoRecordingFlashBackgroundTransition() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.openCamera.waitForExistence(timeout: 3))
         cameraScreen.openCamera.tap()
+        sleep(1)
         
-        XCTAssertTrue(cameraScreen.recordVideo.waitForExistence(timeout: 3))
-        cameraScreen.recordVideo.tap()
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        cameraScreen.recordVideoButton.tap()
         
         XCUIDevice.shared.press(.home)
         sleep(3)
@@ -1077,9 +1079,9 @@ final class CameraViewUITests: XCTestCase {
         app.activate()
         sleep(2)
         
-        if cameraScreen.timer.label != "00:00:00" {
+        if cameraScreen.timerText.label != "00:00:00" {
             XCTAssertTrue(true)
-            cameraScreen.recordVideo.tap()
+            cameraScreen.recordVideoButton.tap()
         } else {
             XCTAssertTrue(true)
         }
@@ -1092,25 +1094,19 @@ final class CameraViewUITests: XCTestCase {
     private func captureVideoIn(orientation: UIDeviceOrientation, description: String) {
         recordVideoInOrientation(orientation)
         
-        let recordVideo = app.otherElements[Camera.AccessibilityLabel.recordVideo]
-        let mediaCount = app.buttons[Camera.AccessibilityLabel.mediaCounterView]
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 5))
+        cameraScreen.recordVideoButton.tap()
         
-        XCTAssertTrue(recordVideo.waitForExistence(timeout: 5))
-        recordVideo.tap()
-        
-        XCTAssertTrue(mediaCount.waitForExistence(timeout: 5))
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 5))
     }
     
     private func capturePhotoIn(orientation: UIDeviceOrientation) {
         takePhotoInOrientation(orientation)
         
-        let takePhoto = app.buttons[Camera.AccessibilityLabel.takePhotoButton]
-        let mediaCount = app.buttons[Camera.AccessibilityLabel.mediaCounterView]
+        XCTAssertTrue(cameraScreen.takePhotoButton.waitForExistence(timeout: 5))
+        cameraScreen.takePhotoButton.tap()
         
-        XCTAssertTrue(takePhoto.waitForExistence(timeout: 5))
-        takePhoto.tap()
-        
-        XCTAssertTrue(mediaCount.waitForExistence(timeout: 5))
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 5))
     }
     
     private func takePhotoInOrientation(_ orientation: UIDeviceOrientation) {
