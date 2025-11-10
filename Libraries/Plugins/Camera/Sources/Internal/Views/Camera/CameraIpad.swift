@@ -68,6 +68,7 @@ struct CameraIpad: View {
                         .accessibilityIdentifier(AccessibilityLabel.timerView)
                         RemainingTimeView(remainingTime: $viewModel.remainingTime)
                             .opacity(!viewModel.shouldDisplayRemainingTime ? 0 : 1)
+                            .accessibilityIdentifier(AccessibilityLabel.remainingTime)
                     }
                     .padding(.top, theme.spacingTheme.lg)
                     .selected([.paused, .running].contains(viewModel.state))

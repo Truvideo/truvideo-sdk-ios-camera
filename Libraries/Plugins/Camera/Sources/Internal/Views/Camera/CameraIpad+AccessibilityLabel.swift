@@ -27,6 +27,9 @@ extension CameraIpad {
         /// Identifier for the main recording button (video capture).
         static let recordButton = "Record Button"
         
+        /// Accessibility identifier for the label that displays the remaining recording time.
+        static let remainingTime = "Remaining Time"
+
         /// Identifier for the button that switches between front and rear cameras.
         static let switchCamera = "Switch Camera"
         

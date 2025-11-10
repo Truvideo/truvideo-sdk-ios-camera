@@ -2,6 +2,7 @@
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
+import UIKit
 import XCTest
 
 @testable import TruvideoSdkCamera
@@ -14,7 +15,7 @@ final class CameraViewConfigurationUITests: XCTestCase {
         super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments += ["-CameraSwiftUIExamplePermissionsUITest"]
+        app.launchArguments += ["-CameraSwiftUIExamplePermissionsUITest", "CameraSwiftUIExampleUITests"]
         app.launch()
         cameraScreen = CameraScreen(app: app)
     }
@@ -194,6 +195,44 @@ final class CameraViewConfigurationUITests: XCTestCase {
         cameraScreen.recordVideoButton.tap()
     }
     
+    func testUC01BTruvideoSdkCameraConfigurationModeVideoandPictureFixedDuration() {
+        // Given, When, Then
+        XCTAssertTrue(cameraScreen.configureCamera.waitForExistence(timeout: 3))
+        cameraScreen.configureCamera.tap()
+        
+        app.scrollToElement(cameraScreen.limit)
+        
+        XCTAssertTrue(cameraScreen.captureMode.waitForExistence(timeout: 3))
+        XCTAssertEqual(cameraScreen.captureMode.label, "Mode, Photo & Video")
+        
+        XCTAssertTrue(cameraScreen.limit.waitForExistence(timeout: 3))
+        XCTAssertEqual(cameraScreen.limit.label, "Limit, Unlimited")
+        
+        XCTAssertTrue(cameraScreen.durationVideo.waitForExistence(timeout: 3))
+        clearText(in: cameraScreen.durationVideo, app: app)
+        typeNumber("8", app: app)
+        
+        XCTAssertTrue(cameraScreen.cameraSDK.waitForExistence(timeout: 3))
+        cameraScreen.cameraSDK.tap()
+        
+        cameraScreen.openCamera.tap()
+        sleep(2)
+        
+        let initial = cameraScreen.timerText.label
+
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        XCTAssertEqual(initial, "00:00:00")
+        cameraScreen.recordVideoButton.tap()
+        
+        sleep(8)
+        
+        let updated = cameraScreen.remainingTimeText.label
+        XCTAssertEqual(updated, "00:00:08")
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.exists)
+        cameraScreen.mediaCountButton.tap()
+    }
+    
     func testUC02TruvideoSdkCameraConfigurationModePicture() {
         // Given, When, Then
         XCTAssertTrue(cameraScreen.configureCamera.waitForExistence(timeout: 3))
@@ -315,6 +354,56 @@ final class CameraViewConfigurationUITests: XCTestCase {
         XCTAssertTrue(cameraScreen.errorMessage.waitForExistence(timeout: 3))
         XCTAssertEqual(cameraScreen.errorMessage.label, "Error Message View")
     }
+    
+    func testUC04ATruvideoSdkCameraConfigurationModeSingleVideoFixedDuration() {
+        // Given, When, Then
+        XCTAssertTrue(cameraScreen.configureCamera.waitForExistence(timeout: 3))
+        cameraScreen.configureCamera.tap()
+        
+        app.scrollToElement(cameraScreen.limit)
+        
+        XCTAssertTrue(cameraScreen.captureMode.waitForExistence(timeout: 3))
+        cameraScreen.captureMode.tap()
+        XCTAssertEqual(cameraScreen.captureMode.label, "Mode, Photo & Video")
+        
+        cameraScreen.videoOnly.tap()
+        XCTAssertEqual(cameraScreen.captureMode.label, "Mode, Video Only")
+        
+        XCTAssertTrue(cameraScreen.limit.waitForExistence(timeout: 3))
+        cameraScreen.limit.tap()
+        
+        cameraScreen.single.tap()
+        
+        XCTAssertTrue(cameraScreen.durationVideo.waitForExistence(timeout: 3))
+        clearText(in: cameraScreen.durationVideo, app: app)
+        typeNumber("8", app: app)
+        
+        XCTAssertTrue(cameraScreen.cameraSDK.waitForExistence(timeout: 3))
+        cameraScreen.cameraSDK.tap()
+        
+        cameraScreen.openCamera.tap()
+        sleep(2)
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        XCTAssertEqual(cameraScreen.mediaCountButton.label, "0/1")
+        
+        let initial = cameraScreen.timerText.label
+
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        XCTAssertEqual(initial, "00:00:00")
+        cameraScreen.recordVideoButton.tap()
+        
+        sleep(8)
+        
+        let updated = cameraScreen.remainingTimeText.label
+        XCTAssertEqual(updated, "00:00:08")
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.waitForExistence(timeout: 3))
+        XCTAssertEqual(cameraScreen.mediaCountButton.label, "1/1")
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.exists)
+        cameraScreen.mediaCountButton.tap()
+    }
 
     func testUC05TruvideoSdkCameraConfigurationModeSingleVideoOrPicture() {
         // Given, When, Then
@@ -388,6 +477,45 @@ final class CameraViewConfigurationUITests: XCTestCase {
         XCTAssertTrue(cameraScreen.errorMessage.waitForExistence(timeout: 3))
         XCTAssertEqual(cameraScreen.errorMessage.label, "Error Message View")
     }
+
+    func testUC06ATruvideoSdkCameraConfigurationModeVideoFixedDuration() {
+        // Given, When, Then
+        XCTAssertTrue(cameraScreen.configureCamera.waitForExistence(timeout: 3))
+        cameraScreen.configureCamera.tap()
+        
+        app.scrollToElement(cameraScreen.limit)
+        
+        XCTAssertTrue(cameraScreen.captureMode.waitForExistence(timeout: 3))
+        cameraScreen.captureMode.tap()
+        XCTAssertEqual(cameraScreen.captureMode.label, "Mode, Photo & Video")
+        
+        cameraScreen.videoOnly.tap()
+        XCTAssertEqual(cameraScreen.captureMode.label, "Mode, Video Only")
+        
+        XCTAssertTrue(cameraScreen.durationVideo.waitForExistence(timeout: 3))
+        clearText(in: cameraScreen.durationVideo, app: app)
+        typeNumber("8", app: app)
+        
+        XCTAssertTrue(cameraScreen.cameraSDK.waitForExistence(timeout: 3))
+        cameraScreen.cameraSDK.tap()
+        
+        cameraScreen.openCamera.tap()
+        sleep(2)
+        
+        let initial = cameraScreen.timerText.label
+
+        XCTAssertTrue(cameraScreen.recordVideoButton.waitForExistence(timeout: 3))
+        XCTAssertEqual(initial, "00:00:00")
+        cameraScreen.recordVideoButton.tap()
+        
+        sleep(8)
+        
+        let updated = cameraScreen.remainingTimeText.label
+        XCTAssertEqual(updated, "00:00:08")
+        
+        XCTAssertTrue(cameraScreen.mediaCountButton.exists)
+        cameraScreen.mediaCountButton.tap()
+    }
 }
 
 extension XCUIApplication {
@@ -396,6 +524,46 @@ extension XCUIApplication {
         while !element.exists && attempts < maxScrolls {
             swipeUp()
             attempts += 1
+        }
+    }
+}
+
+
+extension XCTestCase {
+    func clearText(in element: XCUIElement, app: XCUIApplication) {
+        guard element.exists else { return }
+        element.tap()
+        
+        let selectAll = app.menuItems["Select All"]
+        if selectAll.waitForExistence(timeout: 0.5) {
+            selectAll.tap()
+            app.keys["delete"].tap()
+            return
+        }
+        
+        if let currentValue = element.value as? String, !currentValue.isEmpty {
+            let deleteKey = app.keys["delete"]
+            if deleteKey.exists {
+                for _ in 0..<currentValue.count {
+                    deleteKey.tap()
+                }
+            } else {
+                element.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: currentValue.count))
+            }
+        }
+        
+        UIPasteboard.general.string = ""
+        element.doubleTap()
+    }
+    
+    func typeNumber(_ number: String, app: XCUIApplication) {
+        for digit in number {
+            let key = app.keys[String(digit)]
+            if key.waitForExistence(timeout: 0.2) {
+                key.tap()
+            } else {
+                app.typeText(String(digit))
+            }
         }
     }
 }

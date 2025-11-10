@@ -44,6 +44,9 @@ extension Camera {
         /// Button that starts and stops video recording.
         static let recordVideo = "Record Video"
         
+        /// Accessibility identifier for the label that displays the remaining recording time.
+        static let remainingTime = "Remaining Time"
+        
         /// Button that switches between front and rear cameras.
         static let switchCameraButton = "Switch Camera Button"
 

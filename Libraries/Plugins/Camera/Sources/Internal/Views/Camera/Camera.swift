@@ -55,6 +55,7 @@ struct Camera: View {
                         .accessibilityIdentifier(AccessibilityLabel.timerView)
                         RemainingTimeView(remainingTime: $viewModel.remainingTime)
                             .opacity(!viewModel.shouldDisplayRemainingTime ? 0 : 1)
+                            .accessibilityIdentifier(AccessibilityLabel.remainingTime)
                     }
                     .selected([.paused, .running].contains(viewModel.state))
                 }

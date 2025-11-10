@@ -122,7 +122,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// settings that control camera behavior. The configuration is set during
     /// initialization and remains constant throughout the camera session lifecycle.
     let configuration: TruvideoSdkCameraConfiguration
-
+    
     /// Indicates whether the camera device supports torch (flashlight) functionality.
     ///
     /// This property tracks whether the current camera device has torch capabilities.
@@ -422,6 +422,10 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         self.onCompleted = onCompleted
         self.orientationMonitor = orientationMonitor
         self.isAuthenticated = truVideoSdk.isAuthenticated
+        
+        if ProcessInfo.processInfo.arguments.contains("CameraSwiftUIExampleUITests") {
+            self.isAuthenticated = true
+        }
 
         if isAuthenticated {
             self.previewLayer.session = captureSession

@@ -55,6 +55,9 @@ extension CameraConfigurationView {
         /// Accessibility label for selecting **combined photo and video** capture mode.
         static let videoAndPicture = "Video And Picture"
         
+        /// Accessibility label for selecting **video duration** to capture video.
+        static let videoDuration = "Video Duration"
+        
         /// Accessibility label for selecting **video-only** capture mode.
         static let videoOnly = "Video Only"
     }

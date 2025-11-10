@@ -40,8 +40,8 @@ struct CameraScreen {
     /// The button that opens the camera configuration options.
     var configureCamera: XCUIElement { app.buttons[CameraConfigurationView.AccessibilityLabel.configureCamera] }
     
-    /// The button to open or adjust the **Limit** configuration options.
-    var limit: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.limit)] }
+    /// The video duration text field element within the camera configuration view.
+    var durationVideo: XCUIElement { app.textFields[CameraConfigurationView.AccessibilityLabel.videoDuration] }
     
     /// The button representing the **Flash On** option.
     var flashModeOn: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.flashModeOn)] }
@@ -54,6 +54,9 @@ struct CameraScreen {
     
     /// The button to switch to the **front-facing** camera.
     var lensFacingFront: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.lensFacingFront)] }
+    
+    /// The button to open or adjust the **Limit** configuration options.
+    var limit: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.limit)] }
     
     /// The button to select a **limited** capture mode option.
     var limited: XCUIElement { app.buttons[(CameraConfigurationView.AccessibilityLabel.limited)] }
@@ -94,6 +97,9 @@ struct CameraScreen {
     
     /// The control used to start or stop video recording.
     var recordVideo: XCUIElement { toolBar.otherElements[Camera.AccessibilityLabel.recordVideo] }
+    
+    /// The remaining time label element for the standard (iPhone) camera interface.
+    var remainingTime: XCUIElement { camera.staticTexts[Camera.AccessibilityLabel.remainingTime] }
     
     /// The button used to take a photo.
     var takePhoto: XCUIElement { toolBar.buttons[Camera.AccessibilityLabel.takePhotoButton] }
@@ -184,6 +190,9 @@ struct CameraScreen {
 
     /// The control used to start or stop video recording.
     var recordVideoIpad: XCUIElement { toolBarIpad.otherElements[CameraIpad.AccessibilityLabel.recordButton] }
+    
+    /// The remaining time label element for the iPad camera interface.
+    var remainingTimeIpad: XCUIElement { cameraIpad.staticTexts[CameraIpad.AccessibilityLabel.remainingTime] }
 
     /// The timer label that appears on screen during video recording.
     var timerIpad: XCUIElement { cameraIpad.staticTexts[CameraIpad.AccessibilityLabel.timerView] }
@@ -215,6 +224,9 @@ struct CameraScreen {
     
     /// The timer label displayed during video recording.
     var timerText: XCUIElement { UIDevice.isPad ? timerIpad : timer }
+    
+    /// The UI element displaying the remaining recording time on the camera screen.
+    var remainingTimeText: XCUIElement { UIDevice.isPad ? remainingTimeIpad : remainingTime }
 
     /// A shared reference to the top toolbar depending on the device.
     var topBarButton: XCUIElement { UIDevice.isPad ? toolBarIpad : topBar }

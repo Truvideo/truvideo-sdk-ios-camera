@@ -15,7 +15,7 @@ final class CameraViewUITests: XCTestCase {
         super.setUp()
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments += ["-CameraSwiftUIExamplePermissionsUITest"]
+        app.launchArguments += ["-CameraSwiftUIExamplePermissionsUITest", "CameraSwiftUIExampleUITests"]
         app.launch()
         cameraScreen = CameraScreen(app: app)
     }
