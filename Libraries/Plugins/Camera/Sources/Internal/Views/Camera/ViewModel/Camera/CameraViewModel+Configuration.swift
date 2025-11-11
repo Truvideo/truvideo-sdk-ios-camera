@@ -114,11 +114,6 @@ extension CameraViewModel {
             self.presets = presets.map(\.preset)
             self.selectedPreset = selectedPreset
         }
-
-        let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
-
-        videoDevice.setVideoOrientation(videoOrientation)
-        updatePreviewOrientation()
     }
 
     @DeviceActor

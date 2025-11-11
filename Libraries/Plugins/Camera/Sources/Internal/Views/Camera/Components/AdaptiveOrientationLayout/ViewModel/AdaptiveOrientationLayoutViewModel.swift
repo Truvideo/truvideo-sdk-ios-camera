@@ -9,7 +9,7 @@ final class AdaptiveOrientationLayoutViewModel: ObservableObject, OrientationMon
     // MARK: - Dependencies
 
     @Dependency(\.orientationMonitor)
-    var orientationMonitor: OrientationMonitor
+    private var orientationMonitor: OrientationMonitor
 
     // MARK: - Published Properties
 
@@ -22,7 +22,6 @@ final class AdaptiveOrientationLayoutViewModel: ObservableObject, OrientationMon
     /// Creates a new instance of the `AdaptiveOrientationLayoutViewModel`.
     init() {
         orientationMonitor.add(self)
-        orientationMonitor.startMonitoring()
     }
 
     // MARK: - OrientationMonitor

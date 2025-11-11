@@ -21,15 +21,16 @@ extension AVCaptureVideoOrientation {
     ///
     /// - Parameter orientation: The device orientation to convert to video orientation
     init(from orientation: UIDeviceOrientation) {
-        switch orientation {
-        case .landscapeLeft:
-            self = .landscapeRight
+        self =
+            switch orientation {
+            case .landscapeLeft:
+                .landscapeRight
 
-        case .landscapeRight:
-            self = .landscapeLeft
+            case .landscapeRight:
+                .landscapeLeft
 
-        default:
-            self = .portrait
-        }
+            default:
+                .portrait
+            }
     }
 }

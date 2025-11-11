@@ -1,4 +1,4 @@
-    //
+//
 // Copyright © 2025 TruVideo. All rights reserved.
 //
 
@@ -7,8 +7,7 @@ import Combine
 internal import DI
 import Foundation
 internal import Telemetry
-internal import TruVideoApi
-internal import TruvideoSdk
+import TruvideoSdk
 import UIKit
 internal import Utilities
 
@@ -52,8 +51,8 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     // MARK: - Private Properties
 
     private var cancellables = Set<AnyCancellable>()
+    private let onComplete: (TruvideoSdkCameraResult) -> Void
     private let orientationMonitor: OrientationMonitor
-    private let onCompleted: (TruvideoSdkCameraResult) -> Void
 
     // MARK: - Internal Properties
 
@@ -122,7 +121,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// settings that control camera behavior. The configuration is set during
     /// initialization and remains constant throughout the camera session lifecycle.
     let configuration: TruvideoSdkCameraConfiguration
-    
+
     /// Indicates whether the camera device supports torch (flashlight) functionality.
     ///
     /// This property tracks whether the current camera device has torch capabilities.
@@ -171,7 +170,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     ///
     /// This property tracks the device's orientation and is used to adjust the camera
     /// interface layout and behavior accordingly.
-    @Published private(set) var deviceOrientation = UIDeviceOrientation.portrait
+    @Published private(set) var deviceOrientation: UIDeviceOrientation
 
     /// Indicates whether the user is currently authenticated with the TruVideo service.
     ///
@@ -179,7 +178,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// the camera functionality should be available. When `true`, the user has been
     /// successfully authenticated and can access camera features. When `false`, the
     /// user is not authenticated and camera functionality should be restricted.
-    @Published private(set) var isAuthenticated = false
+    @Published private(set) var isAuthenticated: Bool
 
     /// Combined authorization status for both audio and video devices.
     /// `true` when both camera and microphone access are granted, `false` when either is denied.
@@ -362,7 +361,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     var shouldDisplayRemainingTime: Bool {
         let timeRange = 1 ..< TruvideoSdkCameraMediaMode.maxVideoDurationAllowed
 
-        return timeRange.contains(configuration.mode.maxVideoDuration) && state == .running
+        return timeRange.contains(configuration.mode.maxVideoDuration) && [.running, .paused].contains(state)
     }
 
     // MARK: - Types
@@ -405,22 +404,24 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     ///
     /// - Parameters:
     ///   - configuration: The camera configuration containing settings and preferences.
-    ///   - orientationMonitor: The orientation monitor to use for tracking device orientation .
     ///   - truVideoSdk: The main entry point for the TruVideo SDK.
+    ///   - orientationMonitor: The orientation monitor to use for tracking device orientation .
     ///   - onCompleted: Closure to be called when the operation completes with the result.
     init(
         configuration: TruvideoSdkCameraConfiguration,
+        truVideoSdk: TruVideoSDK,
         orientationMonitor: OrientationMonitor = DeviceOrientationMonitor(),
-        truVideoSdk: TruVideoSDK = TruvideoSdk,
-        onCompleted: @escaping (TruvideoSdkCameraResult) -> Void
+        onComplete: @escaping (TruvideoSdkCameraResult) -> Void
     ) {
         let outputDirectory = URL(string: configuration.outputPath) ?? URL(fileURLWithPath: NSTemporaryDirectory())
 
         self.configuration = configuration
-        self.onCompleted = onCompleted
-        self.orientationMonitor = orientationMonitor
+        self.deviceOrientation = configuration.orientation?.deviceOrientation ?? .portrait
         self.isAuthenticated = truVideoSdk.isAuthenticated
-        
+
+        self.onComplete = onComplete
+        self.orientationMonitor = orientationMonitor
+
         if ProcessInfo.processInfo.arguments.contains("CameraSwiftUIExampleUITests") {
             self.isAuthenticated = true
         }
@@ -428,10 +429,6 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         if isAuthenticated {
             self.previewLayer.session = captureSession
             self.previewLayer.videoGravity = .resizeAspectFill
-
-            self.orientationMonitor.add(self)
-            self.orientationMonitor.startMonitoring()
-
             self.isTorchEnabled = configuration.flashMode == .on
 
             movieOutputProcessor.delegate = self
@@ -443,6 +440,12 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
             configureSessionObservers()
             subscribeToSecondsRecorded()
+            orientationDidUpdate(to: deviceOrientation)
+
+            if configuration.orientation == nil {
+                orientationMonitor.add(self)
+                orientationMonitor.startMonitoring()
+            }
         }
     }
 
@@ -470,7 +473,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             ]
         )
 
-        onCompleted(result)
+        onComplete(result)
         validationState = .valid
     }
 
@@ -500,7 +503,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
             return
         }
 
-        onCompleted(TruvideoSdkCameraResult(media: []))
+        onComplete(TruvideoSdkCameraResult(media: []))
         validationState = .valid
     }
 
@@ -521,7 +524,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
 
     /// Handles a new device orientation update and applies the corresponding rotation angle.
     ///
-    /// This method is triggered when a new `DeviceOrientationInfo` is received.
+    /// This method is triggered when a new `DeviceOrientation` is received.
     /// It updates the current orientation, calculates the transition between the
     /// previous and new orientations, and determines the appropriate rotation angle.
     /// If the orientation source comes from sensors while the device is physically
@@ -529,7 +532,7 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     ///
     /// - Parameter deviceOrientation: The latest orientation information, including its source and value.
     func didReceive(_ deviceOrientation: DeviceOrientation) {
-        if deviceOrientation.orientation != .portraitUpsideDown {
+        if deviceOrientation.orientation != .portraitUpsideDown, ![.paused, .running].contains(state) {
             orientationDidUpdate(to: deviceOrientation.orientation)
         }
     }
@@ -556,61 +559,17 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         isSnackbarPresented = true
     }
 
-    /// Updates the camera preview and video output orientation to match the device orientation.
+    /// Handles updates to the device’s physical orientation and adjusts camera
+    /// display parameters accordingly.
     ///
-    /// This method synchronizes the camera preview layer and video capture output with
-    /// the current device orientation. It ensures that the camera feed displays correctly
-    /// regardless of how the user is holding the device. The method only processes valid
-    /// orientations (landscape left/right and portrait) and ignores unsupported orientations
-    /// like portrait upside down.
-    func updatePreviewOrientation() {
-        if [.landscapeLeft, .landscapeRight, .portrait].contains(deviceOrientation) {
-            Task { @MainActor in
-                let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
-
-                previewLayer.connection?.videoOrientation = videoOrientation
-                await videoDevice.setVideoOrientation(videoOrientation)
-
-                telemetryManager.captureBreadcrumb(
-                    severity: .info,
-                    category: .cameraUI,
-                    message: "Preview orientation updated",
-                    metadata: [
-                        "orientation": .string("\(deviceOrientation)"),
-                        "videoOrientation": .string("\(videoOrientation)")
-                    ]
-                )
-            }
-        }
-    }
-
-    // MARK: - Private methods
-
-    @MainActor
-    private func endRecording() async throws {
-        state = .finished
-
-        let clip = try await movieOutputProcessor.endProcessing()
-
-        await telemetryManager.captureBreadcrumb(
-            severity: .info,
-            category: .videoRecording,
-            message: "Video recording stopped",
-            metadata: [
-                "devicePosition": .int(videoDevice.position.rawValue),
-                "duration": .double(clip.duration),
-                "clipCount": .int(medias.lazy.filter(\.isClip).count + 1),
-                "zoomFactor": .double(zoomFactor)
-            ]
-        )
-
-        medias.insert(.clip(clip), at: 0)
-
-        await videoDevice.pause()
-        await audioDevice.pause()
-    }
-
-    private func orientationDidUpdate(to orientation: UIDeviceOrientation) {
+    /// This method should be invoked whenever the device’s orientation changes.
+    /// It updates the internal `deviceOrientation` state, recalculates the camera
+    /// preview’s aspect ratio, and triggers a preview orientation refresh via
+    /// `updatePreviewOrientation()`.
+    ///
+    /// - Parameter orientation: The new `UIDeviceOrientation` reported by the
+    ///   device’s motion sensors.
+    func orientationDidUpdate(to orientation: UIDeviceOrientation) {
         defer { updatePreviewOrientation() }
 
         deviceOrientation = orientation
@@ -624,26 +583,45 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
         case .landscapeLeft, .landscapeRight:
             aspectRatio = 16 / 9
 
-        case .portrait, .portraitUpsideDown:
-            aspectRatio = 9 / 16
-
         default:
-            break
+            aspectRatio = 9 / 16
         }
     }
+
+    // MARK: - Private methods
 
     private func subscribeToSecondsRecorded() {
         movieOutputProcessor.$recordingDuration
             .filter(\.isValid)
+            .map(\.seconds)
             .receive(on: RunLoop.main)
-            .sink { [weak self] duration in
-                guard let self = self else { return }
+            .sink { [weak self] seconds in
+                guard let self else { return }
 
-                let seconds = duration.seconds
                 self.timeRecorded = seconds.toHMS()
                 self.remainingTime = max(self.configuration.mode.maxVideoDuration - seconds, 0).toHMS()
             }
             .store(in: &cancellables)
+    }
+
+    private func updatePreviewOrientation() {
+        Task { @MainActor in
+            let videoOrientation = AVCaptureVideoOrientation(from: deviceOrientation)
+
+            previewLayer.connection?.videoOrientation = videoOrientation
+
+            await videoDevice.setVideoOrientation(videoOrientation)
+
+            telemetryManager.captureBreadcrumb(
+                severity: .info,
+                category: .cameraUI,
+                message: "Preview orientation updated",
+                metadata: [
+                    "orientation": .string("\(deviceOrientation)"),
+                    "videoOrientation": .string("\(videoOrientation)")
+                ]
+            )
+        }
     }
 }
 

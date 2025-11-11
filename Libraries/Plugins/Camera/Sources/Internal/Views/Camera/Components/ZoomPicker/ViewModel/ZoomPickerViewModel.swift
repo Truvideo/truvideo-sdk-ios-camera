@@ -64,7 +64,6 @@ final class ZoomPickerViewModel: ObservableObject, OrientationMonitorSubscriber 
 
     init() {
         orientationMonitor.add(self)
-        orientationMonitor.startMonitoring()
     }
 
     /// Handles a new device orientation update and applies the corresponding rotation angle.

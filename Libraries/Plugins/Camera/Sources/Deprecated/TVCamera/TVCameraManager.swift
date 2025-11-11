@@ -582,7 +582,7 @@ class TVCameraManager: NSObject, TVCameraManagerProtocol {
         } else {
             processLastTruvideoClip(completion)
         }
-        
+
         completion()*/
     }
 
@@ -590,9 +590,6 @@ class TVCameraManager: NSObject, TVCameraManagerProtocol {
         switch currentOrientation {
         case .portrait:
             return .portrait
-
-        case .portraitUpsideDown:
-            return .portraitReverse
 
         case .landscapeLeft:
             return .landscapeLeft

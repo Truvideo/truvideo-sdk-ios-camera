@@ -24,7 +24,7 @@ struct MediaPreview: View {
                     Image(systemName: "exclamationmark.triangle")
                         .font(.system(size: 48))
                         .foregroundStyle(.red)
-                    
+
                     Text("Unable to load media.")
                         .foregroundStyle(.secondary)
                 }

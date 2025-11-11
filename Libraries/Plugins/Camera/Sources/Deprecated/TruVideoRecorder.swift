@@ -525,8 +525,6 @@ class TruVideoRecorder: NSObject {
         switch currentOrientation {
         case .portrait:
             return .portrait
-        case .portraitUpsideDown:
-            return .portraitReverse
         case .landscapeLeft:
             return .landscapeLeft
         case .landscapeRight:

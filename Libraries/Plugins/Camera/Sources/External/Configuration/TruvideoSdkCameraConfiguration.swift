@@ -6,6 +6,7 @@ import AVFoundation
 import AVKit
 import Foundation
 import UIKit
+internal import Utilities
 
 /// A configuration object that defines camera behavior and capture settings.
 ///
@@ -85,6 +86,19 @@ public class TruvideoSdkCameraConfiguration: NSObject {
     /// of items and duration for each media type.
     public let mode: TruvideoSdkCameraMediaMode
 
+    /// The interface orientation for the camera experience.
+    ///
+    /// This property determines the preferred screen orientation
+    /// during the camera session (for example, portrait or landscape).
+    /// It controls how the camera preview and interface are displayed
+    /// to match the intended capture orientation.
+    ///
+    /// When set to a specific orientation (such as `.landscapeLeft`),
+    /// the camera interface will attempt to lock to that mode.
+    /// If set to `.all`, the camera supports all device orientations
+    /// and adapts automatically based on the user's device rotation.
+    public let orientation: TruvideoSdkCameraOrientation?
+
     /// The directory path where captured media will be saved.
     ///
     /// This property specifies the file system location where
@@ -144,6 +158,7 @@ public class TruvideoSdkCameraConfiguration: NSObject {
     ///   - imageFormat: The file format for captured images (default: `.jpeg`)
     ///   - lensFacing: The camera lens to use for capture (default: `.back`)
     ///   - mode: The media capture mode and limits (default: `.videoAndPicture()`)
+    ///   - orientation: The interface orientation for the camera experience.
     ///   - outputPath: The directory path for saved media (default: `""`)
     public init(
         backResolution: TruvideoSdkCameraResolution = .hd1280x720,
@@ -154,6 +169,7 @@ public class TruvideoSdkCameraConfiguration: NSObject {
         imageFormat: TruvideoSdkCameraImageFormat = .jpeg,
         lensFacing: TruvideoSdkCameraLensFacing = .back,
         mode: TruvideoSdkCameraMediaMode = .videoAndPicture(),
+        orientation: TruvideoSdkCameraOrientation? = nil,
         outputPath: String = ""
     ) {
         self.backResolution = backResolution
@@ -164,6 +180,7 @@ public class TruvideoSdkCameraConfiguration: NSObject {
         self.imageFormat = imageFormat
         self.lensFacing = lensFacing
         self.mode = mode
+        self.orientation = orientation
         self.outputPath = outputPath
     }
 }
@@ -496,6 +513,177 @@ public enum TruvideoSdkCameraImageFormat: Int, RawRepresentable {
         default:
             return nil
         }
+    }
+}
+
+/// An enumeration representing camera orientation states.
+///
+/// This enum defines the four possible camera orientations that correspond
+/// to device orientation states. It provides a bridge between device
+/// orientation detection and camera interface orientation requirements,
+/// supporting both portrait and landscape orientations in all directions.
+///
+/// The enum uses string raw values for better readability and API consistency,
+/// with underscore-separated uppercase values following common naming
+/// conventions. It includes utility properties for converting between
+/// different orientation representations and retrieving current device state.
+@objc
+public enum TruvideoSdkCameraOrientation: Int, Codable, RawRepresentable {
+    /// Upright portrait mode.
+    ///
+    /// This case represents the standard portrait orientation where the device
+    /// is held vertically with the top of the device pointing upward. This is
+    /// the most common orientation for mobile photography and video capture.
+    case portrait
+
+    /// Landscape mode with the device rotated left.
+    ///
+    /// This case represents landscape orientation where the device is rotated
+    /// 90 degrees counterclockwise from portrait. The left edge of the device
+    /// becomes the top edge in this orientation.
+    case landscapeLeft
+
+    /// Landscape mode with the device rotated right.
+    ///
+    /// This case represents landscape orientation where the device is rotated
+    /// 90 degrees clockwise from portrait. The right edge of the device
+    /// becomes the top edge in this orientation.
+    case landscapeRight
+
+    /// The raw type that can be used to represent all values of the conforming type.
+    public typealias RawValue = String
+
+    // MARK: - Computed Properties
+
+    /// Converts the SDK-defined camera orientation to the equivalent
+    /// `UIDeviceOrientation` value used by the system.
+    ///
+    /// This property provides a convenient way to align the camera’s
+    /// configuration orientation (`TruvideoSdkCameraOrientation`)
+    /// with the physical orientation of the device reported by `UIDevice`.
+    /// It is especially useful when applying orientation-dependent logic,
+    /// such as adjusting the camera preview or synchronizing rotation
+    /// with hardware sensors.
+    var deviceOrientation: UIDeviceOrientation {
+        switch self {
+        case .landscapeLeft:
+            .landscapeLeft
+
+        case .landscapeRight:
+            .landscapeRight
+
+        case .portrait:
+            .portrait
+        }
+    }
+
+    /// The corresponding value of the raw type.
+    ///
+    /// This property returns the string representation of the orientation
+    /// enum case. The raw values use underscore-separated uppercase strings
+    /// that provide clear, human-readable representations suitable for
+    /// API communication and configuration storage.
+    ///
+    /// - Returns: The string raw value for the current orientation case
+    public var rawValue: RawValue {
+        switch self {
+        case .portrait:
+            "PORTRAIT"
+
+        case .landscapeLeft:
+            "LANDSCAPE_LEFT"
+
+        case .landscapeRight:
+            "LANDSCAPE_RIGHT"
+        }
+    }
+
+    // MARK: - Initializers
+
+    /// Creates an orientation instance from a `UIDeviceOrientation`.
+    ///
+    /// This initializer converts a `UIDeviceOrientation` to the corresponding
+    /// orientation value, mapping the device orientation to the appropriate
+    /// orientation representation. It handles all standard orientations with
+    /// a default fallback for unknown orientation values.
+    ///
+    /// - Parameter orientation: The `UIDeviceOrientation` to convert from
+    init(orientation: UIDeviceOrientation) {
+        switch orientation {
+        case .landscapeLeft:
+            self = .landscapeLeft
+
+        case .landscapeRight:
+            self = .landscapeRight
+
+        default:
+            self = .portrait
+        }
+    }
+
+    /// Creates a new instance by decoding from the given decoder.
+    ///
+    /// This initializer supports JSON deserialization by decoding the string
+    /// raw value and converting it to the appropriate orientation enum case.
+    /// If the decoded string doesn't match any valid raw value, a DecodingError
+    /// is thrown to indicate data corruption.
+    ///
+    /// - Parameter decoder: The decoder to read data from
+    /// - Throws: DecodingError.dataCorrupted if the raw value is invalid
+    public init(from decoder: any Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let rawValue = try container.decode(String.self)
+
+        guard let cameraOrientation = TruvideoSdkCameraOrientation(rawValue: rawValue) else {
+            throw DecodingError.dataCorrupted(
+                DecodingError.Context(
+                    codingPath: decoder.codingPath,
+                    debugDescription: "Invalid raw value for TruvideoSdkCameraOrientation"
+                )
+            )
+        }
+
+        self = cameraOrientation
+    }
+
+    /// Creates a new instance with the specified raw value.
+    ///
+    /// This failable initializer creates an orientation enum case from a string
+    /// raw value. It provides safe conversion from external string data by
+    /// returning nil for invalid raw values, ensuring type safety.
+    ///
+    /// - Parameter rawValue: The string raw value to convert
+    /// - Returns: The corresponding enum case, or nil if the raw value is invalid
+    public init?(rawValue: RawValue) {
+        switch rawValue.uppercased() {
+        case "PORTRAIT":
+            self = .portrait
+
+        case "LANDSCAPE_LEFT":
+            self = .landscapeLeft
+
+        case "LANDSCAPE_RIGHT":
+            self = .landscapeRight
+
+        default:
+            return nil
+        }
+    }
+
+    // MARK: - Encodable
+
+    /// Encodes this value into the given encoder.
+    ///
+    /// This method supports JSON serialization by encoding the string raw
+    /// value of the orientation enum case. The encoded value can be used
+    /// for configuration storage, API communication, or cross-platform
+    /// data exchange.
+    ///
+    /// - Parameter encoder: The encoder to write data to
+    public func encode(to encoder: any Encoder) throws {
+        var container = encoder.singleValueContainer()
+
+        try container.encode(rawValue)
     }
 }
 

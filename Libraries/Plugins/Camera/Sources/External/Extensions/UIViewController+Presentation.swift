@@ -31,9 +31,7 @@ extension UIViewController {
         preset: TruvideoSdkCameraConfiguration = TruvideoSdkCameraConfiguration(),
         onComplete: @escaping (TruvideoSdkCameraResult) -> Void
     ) {
-        let cameraView = CameraView(configuration: preset, onCompleted: onComplete)
-        let hostingController = UIHostingController(rootView: cameraView)
-
+        let hostingController = CameraHostingController(configuration: preset, onComplete: onComplete)
         hostingController.modalPresentationStyle = .fullScreen
 
         present(hostingController, animated: true)

@@ -35,7 +35,7 @@ struct TimeRecordedView: View {
         Text(timeRecorded)
             .style(theme.textTheme.callout.copyWith(color: theme.colorScheme.onSurface))
             .padding(.horizontal, theme.spacingTheme.sm)
-            .padding(.top, theme.spacingTheme.xs)
+            .padding(.vertical, theme.spacingTheme.xs)
             .background {
                 RoundedRectangle(cornerRadius: theme.radiusTheme.xs)
                     .fill(fillColor)

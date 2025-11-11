@@ -10,8 +10,8 @@ struct CameraOptions {
     var imageFormat: TruvideoSdkCameraImageFormat = .jpeg
     var mediaMode: MediaMode = .videoAndPicture
     var mediaLimit: MediaLimit = .unlimited
-    var pictureLimit: Int = 1
-    var videoLimit: Int = 1
+    var pictureLimit = 1
+    var videoLimit = 1
     var videoDuration: Double = 60
 
     enum MediaMode: String, CaseIterable, Identifiable {
@@ -45,41 +45,41 @@ struct CameraOptions {
         case .photoOnly:
             switch mediaLimit {
             case .single:
-                return .singlePicture()
-                
+                .singlePicture()
+
             case .limited:
-                return .picture(pictureCount: max(1, pictureLimit))
-                
+                .picture(pictureCount: max(1, pictureLimit))
+
             case .unlimited:
-                return .picture()
+                .picture()
             }
 
         case .videoOnly:
             switch mediaLimit {
             case .single:
-                return .singleVideo(videoDuration: Int(videoDuration))
-                
+                .singleVideo(videoDuration: Int(videoDuration))
+
             case .limited:
-                return .video(videoCount: max(1, videoLimit), videoDuration: Int(videoDuration))
-                
+                .video(videoCount: max(1, videoLimit), videoDuration: Int(videoDuration))
+
             case .unlimited:
-                return .video(videoDuration: Int(videoDuration))
+                .video(videoDuration: Int(videoDuration))
             }
 
         case .videoAndPicture:
             switch mediaLimit {
             case .single:
-                return .singleVideoOrPicture(videoDuration: Int(videoDuration))
-                
+                .singleVideoOrPicture(videoDuration: Int(videoDuration))
+
             case .limited:
-                return .videoAndPicture(
+                .videoAndPicture(
                     videoCount: max(1, videoLimit),
                     pictureCount: max(1, pictureLimit),
                     videoDuration: Int(videoDuration)
                 )
-                
+
             case .unlimited:
-                return .videoAndPicture(mediaCount: nil, videoDuration: Int(videoDuration))
+                .videoAndPicture(mediaCount: nil, videoDuration: Int(videoDuration))
             }
         }
     }

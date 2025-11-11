@@ -14,13 +14,13 @@ public final class SessionMock: Session, @unchecked Sendable {
 
     /// The number of times the `upload`data  method has been called.
     public private(set) var uploadDataCallCount = 0
-    
+
     /// The number of times the `upload`URL  method has been called.
     public private(set) var uploadFileURLCallCount = 0
 
     /// The last data payload passed to the `upload` method.
     public var lastUploadData: Data?
-    
+
     /// The last file URL  payload passed to the `upload` method.
     public var lastUploadFileURL: URL?
 
@@ -80,7 +80,7 @@ public final class SessionMock: Session, @unchecked Sendable {
     public func cancelAllRequests() {
         cancelAllRequestsCallCount += 1
     }
-    
+
     // MARK: - DataRequest
 
     /// Creates and initiates a `DataRequest` using the provided URL, HTTP method, parameters, and additional
@@ -143,7 +143,7 @@ public final class SessionMock: Session, @unchecked Sendable {
 
         return dataRequest ?? DataRequestMock()
     }
-    
+
     // MARK: - UploadRequest
 
     /// Mocks an upload request for testing purposes.
@@ -174,7 +174,7 @@ public final class SessionMock: Session, @unchecked Sendable {
 
         return uploadRequestMock ?? UploadRequestMock()
     }
-    
+
     /// Creates and initiates an `UploadRequest` for uploading `file URL` to the specified endpoint.
     ///
     /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional

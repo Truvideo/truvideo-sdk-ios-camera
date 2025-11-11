@@ -73,13 +73,13 @@ struct CameraConfigurationView: View {
 
                 if options.mediaLimit == .limited {
                     if options.mediaMode != .videoOnly {
-                        Stepper(value: $options.pictureLimit, in: 1...Int.max) {
+                        Stepper(value: $options.pictureLimit, in: 1 ... Int.max) {
                             Text("Max Photos: \(options.pictureLimit)")
                         }
                     }
 
                     if options.mediaMode != .photoOnly {
-                        Stepper(value: $options.videoLimit, in: 1...Int.max) {
+                        Stepper(value: $options.videoLimit, in: 1 ... Int.max) {
                             Text("Max Videos: \(options.videoLimit)")
                         }
                     }

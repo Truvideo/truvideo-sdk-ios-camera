@@ -43,7 +43,7 @@ class TruVideoClip {
         /// producing videos always with the portrait size, this extra validation allows us to know if the video was recorded in the correct
         /// orientation.
         let isPortrait =
-            [.portrait, .portraitReverse].contains(orientation)
+            [.portrait].contains(orientation)
             && [.portrait, .portraitUpsideDown].contains(videoOrientation)
 
         return TruvideoSdkCameraResolutionDeprecated(

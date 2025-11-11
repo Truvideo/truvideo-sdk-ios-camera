@@ -215,7 +215,7 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
     }
 
     // MARK: - LifeCycle methods
-    
+
     /// Final cleanup step executed when the instance finishes response serialization.
     func cleanup() {
         delegate?.cleanup(self)
@@ -553,7 +553,7 @@ public class HTTPURLRequest: @unchecked Sendable, Request {
     }
 
     // swiftlint:disable unavailable_function
-    
+
     /// Called when creating a `URLSessionTask` for this `Request`. Subclasses must override.
     ///
     /// - Parameters:

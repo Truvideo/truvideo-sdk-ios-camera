@@ -64,9 +64,9 @@ extension HTTPURLUploadRequest.Uploadable: UploadableBuilder {
                     failureReason: "Empty Data is not allowed for upload."
                 )
             }
-            
+
             return self
-        
+
         case let .file(url, _):
             guard url.isFileURL else {
                 throw NetworkingError(
@@ -74,9 +74,9 @@ extension HTTPURLUploadRequest.Uploadable: UploadableBuilder {
                     failureReason: "URL must be a file URL (file://)"
                 )
             }
-            
+
             return self
-            
+
         default:
             return self
         }
@@ -169,7 +169,7 @@ public protocol Session: Sendable {
         headers: HTTPHeaders?,
         middleware: RequestMiddleware?
     ) -> any UploadRequest
-    
+
     /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
     ///
     /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
@@ -190,7 +190,7 @@ public protocol Session: Sendable {
         with requestBuilder: RequestBuilder,
         middleware: RequestMiddleware?
     ) -> any UploadRequest
-    
+
     /// Creates and initiates an `UploadRequest` for uploading `file URL` to the specified endpoint.
     ///
     /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
@@ -202,7 +202,8 @@ public protocol Session: Sendable {
     ///   - url: A `URLConvertible` value representing the endpoint for the request.
     ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
     ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
-    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by
+    /// default.
     ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
     /// executed.
     /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
@@ -214,7 +215,7 @@ public protocol Session: Sendable {
         fileManager: FileManager,
         middleware: RequestMiddleware?
     ) -> any UploadRequest
-    
+
     /// Creates an `UploadRequest` to send `file URL` to a server using the provided request configuration.
     ///
     /// This method builds and initiates an `UploadRequest` by combining the provided `file URL` payload
@@ -226,7 +227,8 @@ public protocol Session: Sendable {
     ///   - fileURL: The `URL` of the file to upload.
     ///   - requestBuilder: A `RequestBuilder` instance responsible for generating the `URLRequest`
     ///     configuration (e.g., URL, HTTP method, headers).
-    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by
+    /// default.
     ///   - middleware: An optional `RequestMiddleware` that can modify or inspect the request before
     ///     execution. Defaults to `nil`.
     /// - Returns: An `UploadRequest` configured with the given `file URL` and request parameters.
@@ -235,7 +237,7 @@ public protocol Session: Sendable {
         with requestBuilder: any RequestBuilder,
         fileManager: FileManager,
         middleware: RequestMiddleware?
-     ) -> any UploadRequest
+    ) -> any UploadRequest
 }
 
 extension Session {
@@ -313,7 +315,7 @@ extension Session {
     ) -> any UploadRequest {
         upload(data, to: url, method: method, headers: headers, middleware: middleware)
     }
-    
+
     /// Creates an `UploadRequest` to send raw `Data` to a server using the provided request configuration.
     ///
     /// This method builds and initiates an `UploadRequest` by combining the provided raw `Data` payload
@@ -335,7 +337,7 @@ extension Session {
     ) -> any UploadRequest {
         upload(data, with: requestBuilder, middleware: middleware)
     }
-    
+
     /// Creates and initiates an `UploadRequest` for uploading `file URL` to the specified endpoint.
     ///
     /// This method builds a `URLRequest` using the provided URL, HTTP method, headers, and optional
@@ -347,7 +349,8 @@ extension Session {
     ///   - url: A `URLConvertible` value representing the endpoint for the request.
     ///   - method: The `HTTPMethod` for the request. Defaults to `.post`.
     ///   - headers: Additional `HTTPHeaders` to include in the request. Defaults to `nil`.
-    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by
+    /// default.
     ///   - middleware: An optional `RequestMiddleware` instance that can modify or handle the request before it is
     /// executed.
     /// - Returns: An `UploadRequest` instance representing the upload operation, ready for execution.
@@ -361,7 +364,7 @@ extension Session {
     ) -> any UploadRequest {
         upload(fileURL, to: url, method: method, headers: headers, fileManager: fileManager, middleware: middleware)
     }
-    
+
     /// Creates an `UploadRequest` to send `file URL` to a server using the provided request configuration.
     ///
     /// This method builds and initiates an `UploadRequest` by combining the provided `file URL` payload
@@ -373,7 +376,8 @@ extension Session {
     ///   - fileURL: The `URL` of the file to upload.
     ///   - requestBuilder: A `RequestBuilder` instance responsible for generating the `URLRequest`
     ///     configuration (e.g., URL, HTTP method, headers).
-    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by default.
+    ///   - fileManager: `FileManager` instance to be used by the returned `UploadRequest`. `.default` instance by
+    /// default.
     ///   - middleware: An optional `RequestMiddleware` that can modify or inspect the request before
     ///     execution. Defaults to `nil`.
     /// - Returns: An `UploadRequest` configured with the given `file URL` and request parameters.
@@ -382,7 +386,7 @@ extension Session {
         with requestBuilder: any RequestBuilder,
         fileManager: FileManager = FileManager.default,
         middleware: RequestMiddleware? = nil
-     ) -> any UploadRequest {
-         upload(fileURL, with: requestBuilder, fileManager: fileManager, middleware: middleware)
-     }
+    ) -> any UploadRequest {
+        upload(fileURL, with: requestBuilder, fileManager: fileManager, middleware: middleware)
+    }
 }

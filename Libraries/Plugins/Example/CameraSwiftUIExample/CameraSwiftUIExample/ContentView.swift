@@ -93,7 +93,7 @@ struct ContentView: View {
             completion(true)
             return
         }
-        
+
         var videoGranted = false
         var audioGranted = false
         var pendingRequests = 0
@@ -105,7 +105,7 @@ struct ContentView: View {
             if granted {
                 completion(true)
             } else {
-                if !videoGranted && !audioGranted {
+                if !videoGranted, !audioGranted {
                     alertMessage = "Camera and microphone access are required to capture media."
                 } else if !videoGranted {
                     alertMessage = "Camera access is required to preview and record media."

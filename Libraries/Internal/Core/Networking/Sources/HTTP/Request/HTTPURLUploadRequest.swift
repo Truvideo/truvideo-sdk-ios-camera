@@ -7,10 +7,11 @@ import Foundation
 /// `DataRequest` subclass which handles `Data` upload from memory, file, or stream using `URLSessionUploadTask`.
 public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked Sendable {
     // MARK: - Properties
-    
-    /// `FileManager` used to perform cleanup tasks, including the removal of multipart form encoded payloads written to disk.
+
+    /// `FileManager` used to perform cleanup tasks, including the removal of multipart form encoded payloads written to
+    /// disk.
     public let fileManager: FileManager?
-    
+
     /// `Uploadable` value used by the instance.
     public var uploadable: Uploadable?
 
@@ -40,7 +41,8 @@ public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked
     ///   - id: A unique identifier for the request.
     ///   - requestBuilder: The builder used to construct the request.
     ///   - delegate: The delegate responsible for handling retries.
-    ///   - fileManager: `FileManager` used to perform cleanup tasks, including the removal of multipart form encoded payloads written to disk.
+    ///   - fileManager: `FileManager` used to perform cleanup tasks, including the removal of multipart form encoded
+    /// payloads written to disk.
     ///   - middleware: An optional request interceptor for intercepting the request.
     ///   - monitor: An optional request monitor.
     ///   - queue: The dispatch queue for processing tasks.
@@ -91,24 +93,24 @@ public class HTTPURLUploadRequest: HTTPURLDataRequest, UploadRequest, @unchecked
     }
 
     // MARK: - Overriden methods
-    
+
     /// Final cleanup step executed when the instance finishes response serialization.
     override func cleanup() {
         defer { super.cleanup() }
-        
+
         guard
             /// The upload payload produced for this request.
             let uploadable,
-            
+
             /// Ensure the payload originates from a file URL and extract its components.
             case let .file(url, shouldRemove) = uploadable,
-            
+
             /// Whether remove the source file only when explicitly requested.
             shouldRemove
         else {
             return
         }
-        
+
         try? fileManager?.removeItem(at: url)
     }
 

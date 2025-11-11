@@ -40,6 +40,7 @@ struct CameraView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(theme.colorScheme.surfaceContainer)
+        .environmentObject(viewModel)
         .onChange(of: viewModel.validationState) { validationState in
             if validationState == .valid {
                 dismiss()
@@ -49,24 +50,11 @@ struct CameraView: View {
             Text(viewModel.localizedError)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel(AccessibilityLabel.errorMessage)
-        .environmentObject(viewModel)
     }
 
     // MARK: - Initializer
 
-    /// Creates a new instance with completion handler.
-    ///
-    /// This initializer sets up the instance with a completion callback that will be
-    /// invoked when the operation completes.
-    ///
-    /// - Parameters:
-    ///    - configuration: The camera configuration containing settings and preferences.
-    ///    - onCompleted: Closure to be called when the operation completes with the result
-    init(configuration: TruvideoSdkCameraConfiguration, onCompleted: @escaping (TruvideoSdkCameraResult) -> Void) {
-        self._viewModel = StateObject(
-            wrappedValue: CameraViewModel(configuration: configuration, onCompleted: onCompleted)
-        )
+    init(viewModel: CameraViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
     }
 }

@@ -152,7 +152,7 @@ final class DeviceOrientationMonitor: OrientationMonitor {
     @MainActor
     @objc
     func didReceiveOrientationDidChangeNotification(_ notification: Notification) {
-        if UIDevice.current.orientation.isSupported {
+        if UIDevice.current.orientation.isSupported, isRunning {
             let deviceOrientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
 
             for subscriber in subscribers.allObjects {
@@ -265,9 +265,7 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     @MainActor
     @objc
     func didReceiveOrientationDidChangeNotification(_ notification: Notification) {
-        let orientation = UIDevice.current.orientation
-
-        if isRunning, orientation.isSupported {
+        if isRunning, UIDevice.current.orientation.isSupported {
             let deviceOrientation = DeviceOrientation(orientation: UIDevice.current.orientation, source: .system)
 
             self.deviceOrientation.send(deviceOrientation)
@@ -283,9 +281,9 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
         subscribers.add(subscriber)
 
         Task { @MainActor in
-            guard deviceOrientation.value.orientation.isSupported else { return }
-
-            subscriber.didReceive(deviceOrientation.value)
+            if deviceOrientation.value.orientation.isSupported {
+                subscriber.didReceive(deviceOrientation.value)
+            }
         }
     }
 
@@ -295,14 +293,13 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     /// `updateHandler` closure whenever the device orientation changes.
     func startMonitoring() {
         if !isRunning {
-            UIDevice.current.beginGeneratingDeviceOrientationNotifications()
             isRunning = true
 
             motionManager.startDeviceMotionUpdates(
                 using: .xArbitraryZVertical,
                 to: operationQueue
             ) { [weak self] deviceMotion, error in
-                if let self {
+                if let self, isRunning {
                     guard let error else {
                         Task { @MainActor in
                             let currentOrientation = self.deviceOrientation.value.orientation
@@ -333,7 +330,6 @@ final class PhysicalOrientationMonitor: OrientationMonitor {
     /// `updateHandler` closure.
     func stopMonitoring() {
         if isRunning {
-            UIDevice.current.endGeneratingDeviceOrientationNotifications()
             motionManager.stopDeviceMotionUpdates()
             isRunning = false
         }

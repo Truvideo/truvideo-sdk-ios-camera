@@ -52,6 +52,7 @@ extension CameraViewModel {
 
                     await ensureTorchCompatibility()
                     await reportVideoRecordingResumed()
+
                     UIApplication.shared.isIdleTimerDisabled = true
                 } catch {
                     didReceiveError(error.localizedDescription)
@@ -200,6 +201,10 @@ extension CameraViewModel {
 
         await videoDevice.pause()
         await audioDevice.pause()
+
+        if configuration.orientation == nil {
+            orientationDidUpdate(to: UIDevice.current.orientation)
+        }
 
         UIApplication.shared.isIdleTimerDisabled = false
     }

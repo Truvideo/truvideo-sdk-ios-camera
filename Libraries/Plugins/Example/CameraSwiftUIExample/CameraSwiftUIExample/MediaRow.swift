@@ -32,4 +32,3 @@ struct MediaRow: View {
         return "Photo"
     }
 }
-
