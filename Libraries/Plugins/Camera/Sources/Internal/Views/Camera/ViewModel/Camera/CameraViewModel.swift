@@ -358,13 +358,11 @@ final class CameraViewModel: ObservableObject, OrientationMonitorSubscriber {
     /// - The recording state is either `.running` or `.paused`.
     ///
     /// This ensures the remaining time is shown only when the recording has
-    /// a defined time limit and is currently active or paused.
+    /// a defined time limit and is currently active.
     var shouldDisplayRemainingTime: Bool {
-        let maxVideoDurationAllowed = TruvideoSdkCameraMediaMode.maxVideoDurationAllowed
-        let maxVideoDuration = configuration.mode.maxVideoDuration
+        let timeRange = 1 ..< TruvideoSdkCameraMediaMode.maxVideoDurationAllowed
 
-        return maxVideoDuration > 0 && maxVideoDuration != maxVideoDurationAllowed
-            && [RecordingState.running, .paused].contains(state)
+        return timeRange.contains(configuration.mode.maxVideoDuration) && state == .running
     }
 
     // MARK: - Types
