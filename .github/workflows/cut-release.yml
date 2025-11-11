@@ -50,7 +50,7 @@ jobs:
 
       CHANNEL_PLIST_KEY: 'TRVReleaseChannel'
 
-      GH_TOKEN: ${{ github.token }}
+      GH_TOKEN: ${{ secrets.GH_EXTERNAL_PAT }}
 
     steps:
       - uses: actions/checkout@v4
