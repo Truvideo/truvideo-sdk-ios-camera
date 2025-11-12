@@ -74,10 +74,6 @@ final class CameraHostingController: UIHostingController<CameraView> {
 
             _supportedInterfaceOrientations = supportedInterfaceOrientations
 
-            if preferredOrientation == nil {
-                orientationMonitor.startMonitoring()
-            }
-
             viewModel.$state
                 .sink { [weak self] status in
                     guard let self else { return }
@@ -88,13 +84,22 @@ final class CameraHostingController: UIHostingController<CameraView> {
                         }
                     }
 
+                    let shouldMonitorOrientation = preferredOrientation == nil && !UIDevice.current.isPad
+
                     guard [.paused, .running].contains(status) else {
                         _supportedInterfaceOrientations = supportedInterfaceOrientations
+                        if shouldMonitorOrientation {
+                            orientationMonitor.startMonitoring()
+                        }
+
                         return
                     }
 
                     if let orientation = view.window?.windowScene?.interfaceOrientation {
                         _supportedInterfaceOrientations = UIInterfaceOrientationMask(from: orientation)
+                        if shouldMonitorOrientation {
+                            orientationMonitor.stopMonitoring()
+                        }
                     }
                 }
                 .store(in: &cancellables)
