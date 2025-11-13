@@ -30,6 +30,9 @@ jobs:
             }
             
             const isSwift = (filename) => filename.toLowerCase().endsWith('.swift');
+            const isWorkflowFile = (filename) =>
+              filename.startsWith('.github/workflows/') &&
+              (filename.endsWith('.yml') || filename.endsWith('.yaml'));
 
             const makeSwiftCommentChecker = () => {
               // track block comment state per file
@@ -89,6 +92,11 @@ jobs:
             );
 
             for (const f of files) {
+              if (isWorkflowFile(f.filename)) {
+                core.info(`Skipping workflow file: ${f.filename}`);
+                continue;
+              }
+              
               const patch = f.patch;
               if (!patch) {
                 // No patch for binaries/large files: use GitHub totals
