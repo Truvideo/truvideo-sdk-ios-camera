@@ -214,6 +214,22 @@ jobs:
             done < <( { git tag -l "${prefix}-${base}-BETA.*"; git tag -l "${prefix}-${base}-RC.*"; } )
             echo "$max"
           }
+          
+          next_global_build_number() {
+            local prefix="$1" base="$2" max=0
+            while read -r t; do
+              [ -z "$t" ] && continue
+              n="${t##*.}"
+              [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -gt "$max" ] && max="$n"
+              if [[ "$n" =~ ^[0-9]+$ ]]; then
+                [ "$n" -gt "$max" ] && max="$n" || true
+              fi
+            done < <(
+              git tag -l "${prefix}-${base}-BETA.*"
+              git tag -l "${prefix}-${base}-RC.*"
+            )
+            echo $((max + 1))
+          }
 
           gen_version_swift () {
             local destdir="$1" full="$2" channel="$3" build="$4"
@@ -295,22 +311,20 @@ jobs:
 
             if [ "$cut_type" = "beta" ]; then
               channel="BETA"
-              n="$(next_beta_n "$prefix" "$base_ver")"
-              full="${base_ver}-BETA.${n}"
-              build_num="$n"
+              build_num="$(next_global_build_number "$prefix" "$base_ver")"
+              full="${base_ver}-BETA.${build_num}"
               prerelease="true"
               title="Internal BETA release for **$prefix $base_ver**."
             elif [ "$cut_type" = "rc" ]; then
               channel="RC"
-              n="$(next_rc_n "$prefix" "$base_ver")"
-              full="${base_ver}-RC.${n}"
-              build_num="$(rc_build_for_base "$prefix" "$base_ver")"
+              build_num="$(next_global_build_number "$prefix" "$base_ver")"
+              full="${base_ver}-RC.${build_num}"
               prerelease="true"
               title="Release Candidate for **$prefix $base_ver**."
             else
               channel="PROD"
               full="${base_ver}"
-              bn="$(latest_build_for_base "$prefix" "$base_ver")"
+              bn="$(next_global_build_number "$prefix" "$base_ver")"
               [ "$bn" -gt 0 ] && build_num="$bn" || build_num="1"
               prerelease="false"
               title="Production release for **$prefix $base_ver**."
@@ -360,13 +374,45 @@ jobs:
               git commit -m "chore(release): bump ${prefix} to ${full} (${channel})"
             fi
 
-            git tag -a "$tag" -m "$title"
-            git push origin "refs/tags/${tag}"            
-            gh api "repos/${{ github.repository }}/releases" \
-              -f tag_name="$tag" \
-              -f name="$tag" \
+            external_repo=""
+            external_prefixless_tag="$full"
+
+            if [ "$key" = "cam" ]; then
+              external_repo="Truvideo/truvideo-sdk-ios-camera"
+            elif [ "$key" = "core" ]; then
+              external_repo="Truvideo/truvideo-sdk-ios-core"
+            fi
+
+            if [ -z "$external_repo" ]; then
+              echo "ERROR: unknown external repo for key '$key'"
+              exit 1
+            fi
+
+            echo "Creating external lightweight tag: $external_prefixless_tag on $external_repo"
+
+            # Push lightweight tag (no prefix)
+            git tag "$external_prefixless_tag"
+
+            # Push to the external repository
+            git push \
+              "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${external_repo}.git" \
+              "refs/tags/${external_prefixless_tag}" || {
+                echo "ERROR pushing external tag"
+                exit 1
+              }
+
+            echo "Creating release on external repo: $external_repo"
+
+            gh api \
+              -X POST \
+              "repos/${external_repo}/releases" \
+              -f tag_name="$external_prefixless_tag" \
+              -f name="$external_prefixless_tag" \
               -f body="$body" \
-              -F prerelease=$prerelease >/dev/null
+              -F prerelease=$prerelease \
+              >/dev/null
+
+            echo "External release created for $external_repo"
           }
 
           for s in ${{ steps.scope.outputs.aff }}; do
