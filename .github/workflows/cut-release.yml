@@ -388,20 +388,46 @@ jobs:
               exit 1
             fi
 
-            echo "Creating external lightweight tag: $external_prefixless_tag on $external_repo"
+            echo "== Building XCFramework for $key =="
+            # Build XCFramework (archives for device + simulator, then create XCFramework)
+            if [ "$key" = "cam" ]; then
+              SCHEME="TruvideoSdkCamera"
+              XC_OUTPUT="build/TruvideoSdkCamera.xcframework"
+            else
+              SCHEME="TruvideoSdkCore"
+              XC_OUTPUT="build/TruvideoSdkCore.xcframework"
+            fi
 
-            # Push lightweight tag (no prefix)
-            git tag "$external_prefixless_tag"
+            mkdir -p build
+            set -x
+            xcodebuild archive -scheme "$SCHEME" -destination "generic/platform=iOS" -archivePath build/ios.xcarchive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+            xcodebuild archive -scheme "$SCHEME" -destination "generic/platform=iOS Simulator" -archivePath build/sim.xcarchive SKIP_INSTALL=NO BUILD_LIBRARY_FOR_DISTRIBUTION=YES
+            xcodebuild -create-xcframework \
+              -framework "build/ios.xcarchive/Products/Library/Frameworks/${SCHEME}.framework" \
+              -framework "build/sim.xcarchive/Products/Library/Frameworks/${SCHEME}.framework" \
+              -output "$XC_OUTPUT"
+            set +x
 
-            # Push to the external repository
-            git push \
-              "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${external_repo}.git" \
-              "refs/tags/${external_prefixless_tag}" || {
-                echo "ERROR pushing external tag"
-                exit 1
-              }
+            if [ ! -d "$XC_OUTPUT" ]; then
+              echo "ERROR: xcframework not found at $XC_OUTPUT"
+              exit 1
+            fi
 
-            echo "Creating release on external repo: $external_repo"
+            echo "== Creating external lightweight tag: $external_prefixless_tag on $external_repo =="
+            # create lightweight external tag locally
+            git tag "$external_prefixless_tag" || true
+
+            # push tag to external repo
+            git push "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${external_repo}.git" "refs/tags/${external_prefixless_tag}" || {
+              echo "ERROR pushing external tag to ${external_repo}"
+              exit 1
+            }
+
+            echo "== Creating release on external repo: $external_repo and uploading artifacts =="
+            # create a release and upload xcframework zip
+            ZIP_NAME="${external_prefixless_tag}-${key}.xcframework.zip"
+            rm -f "/tmp/${ZIP_NAME}"
+            (cd $(dirname "$XC_OUTPUT") && zip -r "/tmp/${ZIP_NAME}" "$(basename "$XC_OUTPUT")")
 
             gh api \
               -X POST \
@@ -412,7 +438,166 @@ jobs:
               -F prerelease=$prerelease \
               >/dev/null
 
+            # upload artifact (xcframework zip)
+            gh release upload "$external_prefixless_tag" "/tmp/${ZIP_NAME}" --repo "${external_repo}" || {
+              echo "WARN: failed to upload xcframework zip to release ${external_prefixless_tag} in ${external_repo}"
+            }
+
             echo "External release created for $external_repo"
+
+            #
+            # --- Publish to Pod Repo (clone, update podspec, push tag & release with podspec + xcframework) ---
+            #
+            if [ "$key" = "cam" ]; then
+              POD_REPO="Truvideo/truvideo-sdk-ios-camera-pod"
+              PODSPEC_NAME="truvideo-sdk-camera.podspec"
+            else
+              POD_REPO="Truvideo/truvideo-sdk-ios-core-pod"
+              PODSPEC_NAME="truvideo-sdk-core.podspec"
+            fi
+
+            echo "== Preparing Pod repo $POD_REPO =="
+            rm -rf /tmp/podrepo || true
+            git clone "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${POD_REPO}.git" /tmp/podrepo
+            cd /tmp/podrepo
+            git config user.name "truvideo[bot]"
+            git config user.email "truvideo[bot]@users.noreply.github.com"
+
+            # copy xcframework and podspec
+            rm -rf TruvideoSdk*.xcframework || true
+            cp -R "$GITHUB_WORKSPACE/${XC_OUTPUT}" .
+            if [ -f "../${PODSPEC_NAME}" ]; then
+              cp "$GITHUB_WORKSPACE/${PODSPEC_NAME}" . || true
+            fi
+
+            # update podspec version line (simple sed)
+            sed -i '' "s/spec.version *= *'.*'/spec.version = '$external_prefixless_tag'/" "$PODSPEC_NAME" || true
+
+            # create branch named as version and commit
+            git checkout -b "$external_prefixless_tag" || git checkout "$external_prefixless_tag" || true
+            git add .
+            if ! git diff --cached --quiet; then
+              git commit -m "Release $external_prefixless_tag"
+            fi
+
+            # create and push tag (lightweight) on pod repo
+            git tag "$external_prefixless_tag" || true
+            git push "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${POD_REPO}.git" "refs/heads/${external_prefixless_tag}:refs/heads/${external_prefixless_tag}" || true
+            git push "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${POD_REPO}.git" "refs/tags/${external_prefixless_tag}" || {
+              echo "ERROR pushing tag to pod repo ${POD_REPO}"
+              exit 1
+            }
+
+            echo "== Creating release on Pod repo ${POD_REPO} =="
+            gh api -X POST "repos/${POD_REPO}/releases" \
+              -f tag_name="$external_prefixless_tag" \
+              -f name="$external_prefixless_tag" \
+              -f body="$body" \
+              -F prerelease=$prerelease >/dev/null
+
+            # upload xcframework and podspec to pod release
+            gh release upload "$external_prefixless_tag" "${XC_OUTPUT}.zip" --repo "${POD_REPO}" 2>/dev/null || true
+            # also upload the podspec
+            gh release upload "$external_prefixless_tag" "$PODSPEC_NAME" --repo "${POD_REPO}" 2>/dev/null || true
+            echo "Pod repo release created for ${POD_REPO}"
+
+            #
+            # Try pod trunk push (if using public cocoapods trunk). This requires COCOAPODS_TRUNK_TOKEN be configured.
+            #
+            if [ -n "${COCOAPODS_TRUNK_TOKEN:-}" ]; then
+              echo "Attempting pod trunk push for $PODSPEC_NAME (version $external_prefixless_tag)"
+              MAX_RETRIES=3
+              RETRY_DELAY=30
+              ATTEMPT=1
+              while [ $ATTEMPT -le $MAX_RETRIES ]; do
+                echo "pod trunk push attempt $ATTEMPT"
+                pod trunk push "$PODSPEC_NAME" --allow-warnings && break
+                echo "pod trunk push failed; sleeping $RETRY_DELAY"
+                sleep $RETRY_DELAY
+                ATTEMPT=$((ATTEMPT+1))
+              done
+              if [ $ATTEMPT -gt $MAX_RETRIES ]; then
+                echo "WARNING: pod trunk push did not succeed after $MAX_RETRIES attempts"
+              fi
+            else
+              echo "COCOAPODS_TRUNK_TOKEN not set; skipping pod trunk push (only updated pod repo)."
+            fi
+
+            #
+            # --- Update SPM repo (Package.swift) ---
+            #
+            if [ "$key" = "cam" ]; then
+              SPM_REPO="Truvideo/truvideo-sdk-ios-camera"
+              PACKAGE_FILE="Package.swift"
+              BINARY_NAME="TruvideoSdkCamera"
+            else
+              SPM_REPO="Truvideo/truvideo-sdk-ios-core"
+              PACKAGE_FILE="Package.swift"
+              BINARY_NAME="TruvideoSdkCore"
+            fi
+
+            echo "== Updating SPM repo ${SPM_REPO} =="
+            rm -rf /tmp/spm || true
+            git clone "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${SPM_REPO}.git" /tmp/spm
+            cd /tmp/spm
+            git config user.name "truvideo[bot]"
+            git config user.email "truvideo[bot]@users.noreply.github.com"
+
+            # prepare zip for download URL in Package.swift
+            RELEASE_ZIP_NAME="${external_prefixless_tag}-${key}.xcframework.zip"
+            # ensure release zip exists in external repo (it should have been uploaded above)
+            # compute checksum (use swift tool if available)
+            if command -v swift >/dev/null 2>&1; then
+              curl -L -o "/tmp/${RELEASE_ZIP_NAME}" "https://github.com/${external_repo}/releases/download/${external_prefixless_tag}/${ZIP_NAME}"
+                if [ $? -ne 0 ] || [ ! -s "/tmp/${RELEASE_ZIP_NAME}" ]; then
+                  echo "Error: Failed to download /tmp/${RELEASE_ZIP_NAME} from GitHub releases." >&2
+                  exit 1
+                fi
+              CHECKSUM=$(swift package compute-checksum "/tmp/${RELEASE_ZIP_NAME}" 2>/dev/null)
+            else
+              # fallback: sha256
+              curl -L -o "/tmp/${RELEASE_ZIP_NAME}" "https://github.com/${external_repo}/releases/download/${external_prefixless_tag}/${ZIP_NAME}"
+                if [ $? -ne 0 ] || [ ! -s "/tmp/${RELEASE_ZIP_NAME}" ]; then
+                  echo "Error: Failed to download /tmp/${RELEASE_ZIP_NAME} from GitHub releases." >&2
+                  exit 1
+                fi
+              CHECKSUM=$(shasum -a 256 "/tmp/${RELEASE_ZIP_NAME}" | awk '{print $1}')
+            fi
+
+            PACKAGE_CONTENT="// swift-tools-version:5.8
+
+            import PackageDescription
+                        
+            let package = Package(
+              name: \"${BINARY_NAME}\",
+              products: [
+                .library(name: \"${BINARY_NAME}\", targets: [\"${BINARY_NAME}Targets\"])
+              ],
+              targets: [
+                .binaryTarget(
+                  name: \"${BINARY_NAME}\",
+                  url: \"https://github.com/${external_repo}/releases/download/${external_prefixless_tag}/${ZIP_NAME}\",
+                  checksum: \"${CHECKSUM}\"
+                ),
+                .target(name: \"${BINARY_NAME}Targets\", dependencies: [\"${BINARY_NAME}\"], path: \"Sources\")
+              ]
+            )
+            "
+            echo "$PACKAGE_CONTENT" > "$PACKAGE_FILE"
+            if git show-ref --verify --quiet "refs/heads/$external_prefixless_tag"; then
+              git checkout "$external_prefixless_tag"
+            else
+              git checkout -b "$external_prefixless_tag"
+            fi
+            git add "$PACKAGE_FILE"
+            if ! git diff --cached --quiet; then
+              git commit -m "SPM: Update Package.swift for $external_prefixless_tag"
+            fi
+            git push "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${SPM_REPO}.git" "refs/heads/${external_prefixless_tag}" || true
+            git tag "$external_prefixless_tag" || true
+            git push "https://${{ secrets.GH_EXTERNAL_PAT }}@github.com/${SPM_REPO}.git" "refs/tags/${external_prefixless_tag}" || true
+            gh api -X POST "repos/${SPM_REPO}/releases" -f tag_name="$external_prefixless_tag" -f name="$external_prefixless_tag" -f body="$body" -F prerelease=$prerelease >/dev/null || true
+            echo "SPM repo updated: ${SPM_REPO}"
           }
 
           for s in ${{ steps.scope.outputs.aff }}; do
