@@ -84,6 +84,11 @@ extension CameraViewModel {
             do {
                 switch movieOutputProcessor.state {
                 case .initialized, .finished, .failed:
+                    guard configuration.mode.maxVideoDuration != 0 else {
+                        didReceiveError(Localizations.videoDurationZero)
+                        return
+                    }
+
                     guard canTakeMoreClips else {
                         didReceiveError(Localizations.maxNumberOfClipsReached)
                         return

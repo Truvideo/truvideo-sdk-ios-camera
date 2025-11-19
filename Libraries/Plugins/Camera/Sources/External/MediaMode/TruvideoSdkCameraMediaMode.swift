@@ -69,7 +69,7 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
     let maxVideoCount: Int
 
     /// The maximum duration in seconds for each video recording.
-    /// When set to 0, no duration limit is enforced.
+    /// When set to 0, video recording is disabled.
     let maxVideoDuration: TimeInterval
 
     // MARK: - Static Properties
@@ -219,7 +219,7 @@ public final class TruvideoSdkCameraMediaMode: NSObject {
     ///   - maxMediaCount: Maximum total media items (0 = no limit)
     ///   - maxPictureCount: Maximum pictures (0 = disabled, default: 0)
     ///   - maxVideoCount: Maximum videos (0 = disabled, default: 0)
-    ///   - maxVideoDuration: Maximum video duration in seconds (0 = no limit, default: 0)
+    ///   - maxVideoDuration: Maximum video duration in seconds (0 = disabled, default: 0)
     init(maxMediaCount: Int, maxPictureCount: Int = 0, maxVideoCount: Int = 0, maxVideoDuration: TimeInterval = 0) {
         self.maxMediaCount = maxMediaCount
         self.maxPictureCount = maxPictureCount

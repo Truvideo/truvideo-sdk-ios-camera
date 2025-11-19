@@ -54,6 +54,7 @@
 // U
 "Unknown" = "Unknown";
 // V
+"VideoDurationZero" = "Recording is not available because video duration is set to 0";
 // W
 // X
 // Y

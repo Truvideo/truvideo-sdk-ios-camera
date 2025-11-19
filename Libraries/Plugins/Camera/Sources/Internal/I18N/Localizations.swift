@@ -253,4 +253,15 @@ enum Localizations {
     ///
     /// - Returns: A localized string.
     static let unknown = NSLocalizedString("Unknown", bundle: .module, comment: "")
+
+    // MARK: - V
+
+    /// Video duration zero copy.
+    ///
+    /// In en, this message translates to:
+    ///
+    ///     /* Recording is not available because video duration is set to 0 */
+    ///
+    /// - Returns: A localized string.
+    static let videoDurationZero = NSLocalizedString("VideoDurationZero", bundle: .module, comment: "")
 }
