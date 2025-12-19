@@ -1,27 +1,27 @@
-// swift-tools-version: 5.8
+// swift-tools-version:5.8
 
-import PackageDescription
-
-let package = Package(
+  import PackageDescription
+              
+  let package = Package(
     name: "TruvideoSdkCamera",
     products: [
-        .library(
-            name: "TruvideoSdkCamera",
-            targets: ["TruvideoSdkCameraTargets"]),
+      .library(
+        name: "TruvideoSdkCamera",
+        targets: ["TruvideoSdkCameraTargets"])
     ],
     dependencies: [],
     targets: [
-        .binaryTarget(
-            name: "TruvideoSdkCamera",
-            url: "https://github.com/Truvideo/truvideo-sdk-ios-camera/releases/download/78.1.2/TruvideoSdkCamera.xcframework.zip",
-            checksum: "2494f6e7d02b033cbff16dd3ae73f9643150d361a58ff58c70d41a9d411c1923"
-        ),
-        .target(
-            name: "TruvideoSdkCameraTargets",
-            dependencies: [
-                .target(name: "TruvideoSdkCamera")
-            ],
-            path: "Sources"
-        )
+      .binaryTarget(
+        name: "TruvideoSdkCamera",
+        url: "https://github.com/Truvideo/truvideo-sdk-ios-camera/releases/download/79.0.0-BETA.1/TruvideoSdkCamera.xcframework.zip",
+        checksum: "0aece8ca179f6a7545dd41ddfe2e7f99ba2574cd0ee6508a313adf1673ca2b43"
+      ),
+      .target(
+        name: "TruvideoSdkCameraTargets",
+        dependencies: [
+          .target(name: "TruvideoSdkCamera")
+        ],
+        path: "Sources")
     ]
-)
+  )
+  
